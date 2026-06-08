@@ -1,0 +1,32 @@
+import AuthGuard from "@/guards/AuthGuard";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AppSidebar } from "@/components/organisms/Sidebar";
+import DashboardNavbar from "@/components/organisms/Dashboardnavbar";
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthGuard>
+      <TooltipProvider>
+        <SidebarProvider
+          style={{
+            "--sidebar-width": "240px",
+            "--sidebar-width-icon": "64px",
+          } as React.CSSProperties}
+        >
+          <AppSidebar />
+          <SidebarInset>
+            <DashboardNavbar />
+            <main className="flex-1 overflow-y-auto p-6 ds-bg">
+              {children}
+            </main>
+          </SidebarInset>
+        </SidebarProvider>
+      </TooltipProvider>
+    </AuthGuard>
+  );
+}
