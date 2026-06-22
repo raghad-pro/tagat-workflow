@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // TODO: استبدل بـ authService.me() لما الباك يضيف /auth/me
+    // TODO: استبدل بـ authApi.me() لما الباك يضيف /auth/me
     try {
       const saved = localStorage.getItem("user");
       if (saved) setUser(JSON.parse(saved));
@@ -56,6 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     handleSetUser(null);
     router.replace("/login");
   };
+
+    useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+  }, []);
 
   return (
     <AuthContext.Provider

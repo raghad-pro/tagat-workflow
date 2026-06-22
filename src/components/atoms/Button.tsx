@@ -21,7 +21,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const variantMap: Record<ButtonVariant, string> = {
   solid:   "ds-bg-primary ds-text-button",
   outline: "bg-transparent ds-border-input-color ds-text-brand",
-  ghost:   "bg-transparent ds-text-primary",
+  ghost:   "bg-[#F5F5F5] ds-text-primary",
 };
 
 const sizeMap: Record<ButtonSize, string> = {

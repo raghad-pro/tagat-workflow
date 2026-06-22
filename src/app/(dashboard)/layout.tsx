@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/organisms/Sidebar";
 import DashboardNavbar from "@/components/organisms/Dashboardnavbar";
 
+
 export default function DashboardLayout({
   children,
 }: {
@@ -14,14 +15,16 @@ export default function DashboardLayout({
       <TooltipProvider>
         <SidebarProvider
           style={{
+            // desktop: العرض الكامل — mobile: أيقونات فقط (56px)
             "--sidebar-width": "240px",
-            "--sidebar-width-icon": "64px",
+            "--sidebar-width-icon": "56px",
           } as React.CSSProperties}
         >
           <AppSidebar />
           <SidebarInset>
             <DashboardNavbar />
             <main className="flex-1 overflow-y-auto p-6 ds-bg">
+             
               {children}
             </main>
           </SidebarInset>

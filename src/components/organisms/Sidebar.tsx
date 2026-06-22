@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import Logo from "@/components/atoms/Logo";
 import {
@@ -13,7 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -29,14 +29,14 @@ import { cn } from "@/lib/utils";
 type Role = "super_admin" | "company_admin" | "employee" | "client";
 
 interface NavItem {
-  label: string;
+  key: string;
   href: string;
   icon: LucideIcon;
   roles: Role[];
 }
 
 interface NavGroup {
-  label: string;
+  key: string;
   roles: Role[];
   items: NavItem[];
 }
@@ -44,11 +44,11 @@ interface NavGroup {
 // ─── Nav Config ───────────────────────────────────────────────────────────────
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Home",
+    key: "home",
     roles: ["super_admin", "company_admin", "employee", "client"],
     items: [
       {
-        label: "Dashboard",
+        key: "dashboard",
         href: "/dashboard",
         icon: LayoutDashboard,
         roles: ["super_admin", "company_admin", "employee", "client"],
@@ -56,36 +56,51 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Subscriber Management",
-    roles: ["super_admin"],
+    key: "subscriberManagement",
+    roles: ["super_admin", "company_admin", "client"],
     items: [
-      { label: "Companies",        href: "/dashboard/companies",        icon: Building2,      roles: ["super_admin"] },
-      { label: "Company Requests", href: "/dashboard/company-requests", icon: MessageSquare,  roles: ["super_admin"] },
-      { label: "Clients",          href: "/dashboard/clients",          icon: Users,          roles: ["super_admin"] },
+      { 
+        key: "companies",       
+        href: "/companies",        
+        icon: Building2,      
+        roles: ["super_admin", "client"] 
+      },
+      { 
+        key: "companyRequests",
+        href: "/company-requests",
+        icon: MessageSquare,  
+        roles: ["super_admin", "company_admin"] 
+      },
+      { 
+        key: "clients",        
+        href: "/clients",   
+        icon: Users,     
+        roles: ["super_admin", "company_admin"] 
+      },
     ],
   },
   {
-    label: "Financial Management",
-    roles: ["super_admin", "company_admin"],
+    key: "financialManagement",
+    roles: ["super_admin", "company_admin", "client"],
     items: [
-      { label: "Invoices",            href: "/dashboard/invoices",            icon: FileText,       roles: ["super_admin", "company_admin"] },
-      { label: "Payments",            href: "/dashboard/payments",            icon: CreditCard,     roles: ["super_admin", "company_admin"] },
-      { label: "Wallets",             href: "/dashboard/wallets",             icon: Wallet,         roles: ["super_admin", "company_admin"] },
-      { label: "Wallet Transactions", href: "/dashboard/wallet-transactions", icon: ArrowLeftRight, roles: ["super_admin", "company_admin"] },
-      { label: "Currencies",          href: "/dashboard/currencies",          icon: DollarSign,     roles: ["super_admin", "company_admin"] },
+      { key: "invoices",            href: "/invoices",            icon: FileText,       roles: ["super_admin", "company_admin", "client"] },
+      { key: "payments",            href: "/payments",            icon: CreditCard,     roles: ["super_admin", "company_admin", "client"] },
+      { key: "wallets",             href: "/wallets",             icon: Wallet,         roles: ["super_admin", "company_admin"] },
+      { key: "walletTransactions", href: "/wallet-transactions", icon: ArrowLeftRight, roles: ["super_admin", "company_admin"] },
+      { key: "currencies",          href: "/currencies",          icon: DollarSign,     roles: ["super_admin", "company_admin"] },
     ],
   },
   {
-    label: "Internal Operations",
-    roles: ["super_admin", "company_admin", "employee"],
+    key: "internalOperations",
+    roles: ["super_admin", "company_admin", "employee", "client"],
     items: [
-      { label: "Roles",        href: "/dashboard/roles",        icon: ShieldCheck,   roles: ["super_admin", "company_admin"] },
-      { label: "Employees",    href: "/dashboard/employees",    icon: UserCog,       roles: ["super_admin", "company_admin"] },
-      { label: "Projects",     href: "/dashboard/projects",     icon: FolderKanban,  roles: ["super_admin", "company_admin", "employee"] },
-      { label: "Tasks",        href: "/dashboard/tasks",        icon: CheckSquare,   roles: ["super_admin", "company_admin", "employee"] },
-      { label: "Time Logs",    href: "/dashboard/time-logs",    icon: Clock,         roles: ["super_admin", "company_admin", "employee"] },
-      { label: "Developments", href: "/dashboard/developments", icon: Wrench,        roles: ["super_admin", "company_admin", "client"] },
-      { label: "Contracts",    href: "/dashboard/contracts",    icon: FileSignature, roles: ["super_admin", "company_admin", "client"] },
+      { key: "roles",        href: "/roles",        icon: ShieldCheck,   roles: ["super_admin"] },
+      { key: "employees",    href: "/employees",    icon: UserCog,       roles: ["super_admin", "company_admin"] },
+      { key: "projects",     href: "/projects",     icon: FolderKanban,  roles: ["super_admin", "company_admin", "employee", "client"] },
+      { key: "tasks",        href: "/tasks",        icon: CheckSquare,   roles: ["super_admin", "company_admin", "employee"] },
+      { key: "timeLogs",    href: "/time-logs",    icon: Clock,         roles: ["super_admin", "company_admin", "employee"] },
+      { key: "developments", href: "/developments", icon: Wrench,        roles: ["super_admin", "company_admin"] },
+      { key: "contracts",    href: "/contracts",    icon: FileSignature, roles: ["super_admin", "company_admin"] },
     ],
   },
 ];
@@ -93,11 +108,9 @@ const NAV_GROUPS: NavGroup[] = [
 // ─── Component ────────────────────────────────────────────────────────────────
 export function AppSidebar() {
   const pathname = usePathname();
+  const t = useTranslations("sidebar");
   const { user } = useAuth();
-  const { state } = useSidebar(); // "expanded" | "collapsed"
   const role = user?.role as Role | undefined;
-
-  const isCollapsed = state === "collapsed";
 
   const visibleGroups = NAV_GROUPS
     .filter((g) => !role || g.roles.includes(role))
@@ -108,45 +121,63 @@ export function AppSidebar() {
     .filter((g) => g.items.length > 0);
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className="border-e border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]"
+<Sidebar
+      collapsible="none"
+      className={cn(
+        "border-e border-[var(--sidebar-border,var(--color-border-form))]",
+        "bg-[var(--sidebar-bg,var(--color-bg-form))]",
+        "w-14 md:w-[var(--sidebar-width,240px)]",
+        "h-screen" // تأكيد أن السايدبار يأخذ كامل ارتفاع الشاشة ليشتغل السكرول داخله بشكل صحيح
+      )}
     >
       {/* ── Logo ── */}
-      <SidebarHeader className="border-b border-[var(--sidebar-border)] px-4"
-        style={{ height: "var(--navbar-height)", justifyContent: "center" }}
+      <SidebarHeader
+        className="border-b border-[var(--sidebar-border,var(--color-border-form))] px-3 md:px-4"
+        style={{ height: "var(--navbar-height, 64px)", justifyContent: "center" }}
       >
-        {isCollapsed ? (
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto"
-            style={{ background: "var(--color-bg-primary)" }}
-          >
-            <span style={{ color: "var(--color-text-button)", fontWeight: 700, fontSize: 14 }}>
-              W
-            </span>
-          </div>
-        ) : (
+        <div
+          className="flex md:hidden w-8 h-8 rounded-lg items-center justify-center mx-auto shrink-0"
+          style={{ background: "var(--color-bg-primary)" }}
+        >
+          <span style={{ color: "var(--color-text-button)", fontWeight: 700, fontSize: 14 }}>
+            W
+          </span>
+        </div>
+        <div className="hidden md:block">
           <Logo />
-        )}
+        </div>
       </SidebarHeader>
 
-      {/* ── Nav Groups ── */}
-      <SidebarContent className="px-2 py-3">
+      {/* ── Nav (تعديل السكرول هنا) ── */}
+      <SidebarContent 
+        className={cn(
+          "px-2 py-3",
+          "overflow-y-auto overflow-x-hidden", 
+          "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
+          "[&::-webkit-scrollbar]:w-1",
+          "[&::-webkit-scrollbar-thumb]:bg-gray-400/20",
+          "dark:[&::-webkit-scrollbar-thumb]:bg-white/10",
+          "[&::-webkit-scrollbar-thumb]:rounded-full",
+          "hover:[&::-webkit-scrollbar-thumb]:bg-gray-400/50",
+          "dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
+        )}
+      >
         {visibleGroups.map((group) => (
-          <SidebarGroup key={group.label} className="p-0 mb-1">
-            {/* Group Label — مخفي لما يكون collapsed */}
-            {!isCollapsed && (
-              <SidebarGroupLabel
-                className="text-[0.7rem] font-bold uppercase tracking-widest px-3 mb-1"
-                style={{ color: "var(--sidebar-group-label)" }}
-              >
-                {group.label}
-              </SidebarGroupLabel>
-            )}
+          <SidebarGroup key={group.key} className="p-0 mb-1">
 
-            {isCollapsed && (
-              <div className="my-1 border-t border-[var(--sidebar-border)]" />
-            )}
+            {/* Group label — desktop فقط */}
+            <SidebarGroupLabel
+              className={cn(
+                "text-[0.68rem] font-bold uppercase tracking-widest px-3 mb-1",
+                "hidden md:flex"
+              )}
+              style={{ color: "var(--sidebar-group-label, var(--color-text-gray-200))" }}
+            >
+              {t(group.key as Parameters<typeof t>[0])}
+            </SidebarGroupLabel>
+
+            {/* Divider — mobile فقط بدل الـ label */}
+            <div className="md:hidden my-1 border-t border-[var(--sidebar-border,var(--color-border-form))]" />
 
             <SidebarMenu>
               {group.items.map((item) => {
@@ -160,22 +191,29 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      tooltip={isCollapsed ? item.label : undefined}
+                      tooltip={undefined}
                       className={cn(
-                        "rounded-[10px] px-3 py-2 h-auto gap-2.5",
-                        "text-[var(--sidebar-item-text)] font-medium text-sm",
-                        "hover:bg-[var(--sidebar-item-hover)] hover:text-[var(--sidebar-item-active-text)]",
+                        "rounded-[10px] gap-1",
+                        "flex-col h-auto py-2 md:flex-row md:h-10 md:py-0",
+                        "justify-center md:justify-start",
+                        "px-0 md:px-3",
+                        "group/nav-item",
+                        "text-[var(--sidebar-item-text,var(--color-text-gray))] font-medium text-sm",
+                        "hover:bg-[var(--sidebar-item-hover,var(--color-bg-primary-200))]",
+                        "hover:text-[var(--sidebar-item-active-text,var(--color-text-brand))]",
                         isActive && [
-                          "bg-[var(--sidebar-item-active-bg)]",
-                          "text-[var(--sidebar-item-active-text)]",
+                          "bg-[var(--sidebar-item-active-bg,var(--color-bg-primary-200))]",
+                          "text-[var(--sidebar-item-active-text,var(--color-text-brand))]",
                           "font-bold",
-                          "hover:bg-[var(--sidebar-item-active-bg)]",
                         ]
                       )}
                     >
                       <Link href={item.href}>
                         <Icon size={18} className="shrink-0" />
-                        <span className="truncate">{item.label}</span>
+                        <span className="hidden md:block truncate">{t(item.key as Parameters<typeof t>[0])}</span>
+                        <span className="md:hidden text-[10px] leading-tight text-center w-full max-h-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/nav-item:max-h-4 group-hover/nav-item:opacity-100 truncate">
+                          {t(item.key as Parameters<typeof t>[0])}
+                        </span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -186,5 +224,6 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
     </Sidebar>
+
   );
 }

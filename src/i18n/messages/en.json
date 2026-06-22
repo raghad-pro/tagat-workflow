@@ -1,5 +1,5 @@
 {
-"auth": {
+  "auth": {
     "login": "Login",
     "login_text": "Already have an account?",
     "register": "Register",
@@ -26,7 +26,7 @@
     "password_number": "Must contain a number",
     "password_special": "Must contain a special character",
     "password_reset_success_title": "Account created successfully!",
-"password_reset_success_desc": "You can now log in with your new password.",
+    "password_reset_success_desc": "You can now log in with your new password.",
     "username": "Username",
     "username_placeholder": "Enter your username",
     "username_required": "Username must be at least 3 characters long",
@@ -47,18 +47,16 @@
     "back": "→ Back",
     "create_account": "+ Create New Account",
     "companyRegisterSuccess": "Company account created successfully",
-    
     "logout": "Logout",
     "welcome": "Welcome",
     "welcome_back": "back!",
-    "account":"New",
+    "account": "New",
     "remember_me": "Remember me",
     "loginSuccess": "Logged in successfully",
     "loginError": "Incorrect email or password",
     "registerSuccess": "Account created successfully",
     "registerError": "An error occurred while creating the account",
     "logoutSuccess": "Logged out successfully",
-
     "company_logo": "Company Logo",
     "optional": "Optional",
     "upload_logo": "Click to upload logo",
@@ -66,41 +64,31 @@
     "remove_logo": "Remove logo",
     "logo_too_large": "Image size must not exceed 2MB",
     "logo_invalid_type": "Image must be JPG, PNG or WebP",
-
     "fp_step1_label": "Email",
-  "fp_step2_label": "OTP Code",
-  "fp_step3_label": "Password",
- 
-  "fp_title_step1": "Forgot Password?",
-  "fp_title_step2": "Enter Verification Code",
-  "fp_title_step3": "New Password",
-  "fp_resend_success": "Verification code resent successfully",
- 
-  "fp_step_counter": "Step {current} of {total}",
- 
-  "fp_email_desc": "Enter your email and we'll send you a verification code",
-  "fp_otp_desc": "We sent a 4-digit verification code to",
-  "fp_new_password_desc": "Enter a new password for your account",
- 
-  "fp_send_otp": "Send Verification Code",
-  "fp_verify_otp": "Verify Code",
-  "fp_reset_password": "Reset Password",
- 
-  "fp_otp_hint": "Test code",
-  "fp_no_otp": "Didn't receive the code?",
-  "fp_resend": "Resend",
-  "fp_resending": "Sending...",
- 
-  "back_to_login": "Back to Login",
- 
-  "email_not_found": "This email is not registered",
-  "otp_invalid": "Invalid or expired verification code",
-  "otp_required": "Please enter the complete verification code",
-  "password_reset_success": "Password changed successfully",
-  "generic_error": "Something went wrong, please try again"
-
-  }
-,
+    "fp_step2_label": "OTP Code",
+    "fp_step3_label": "Password",
+    "fp_title_step1": "Forgot Password?",
+    "fp_title_step2": "Enter Verification Code",
+    "fp_title_step3": "New Password",
+    "fp_resend_success": "Verification code resent successfully",
+    "fp_step_counter": "Step {current} of {total}",
+    "fp_email_desc": "Enter your email and we'll send you a verification code",
+    "fp_otp_desc": "We sent a 4-digit verification code to",
+    "fp_new_password_desc": "Enter a new password for your account",
+    "fp_send_otp": "Send Verification Code",
+    "fp_verify_otp": "Verify Code",
+    "fp_reset_password": "Reset Password",
+    "fp_otp_hint": "Test code",
+    "fp_no_otp": "Didn't receive the code?",
+    "fp_resend": "Resend",
+    "fp_resending": "Sending...",
+    "back_to_login": "Back to Login",
+    "email_not_found": "This email is not registered",
+    "otp_invalid": "Invalid or expired verification code",
+    "otp_required": "Please enter the complete verification code",
+    "password_reset_success": "Password changed successfully",
+    "generic_error": "Something went wrong, please try again"
+  },
   "dashboard": {
     "title": "Dashboard",
     "projects": "Projects",
@@ -118,6 +106,250 @@
     "add": "Add",
     "search": "Search",
     "loading": "Loading...",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "update": "Update",
+    "close": "Close",
+    "view": "View",
+    "subscriberManagement": "Subscriber Management",
+    "companies": "Companies",
+    "companyRequests": "Company Requests",
+    "clients": "Clients",
+    "financialManagement": "Financial Management",
+    "invoices": "Invoices",
+    "payments": "Payments",
+    "wallets": "Wallets",
+    "walletTransactions": "Wallet Transactions",
+    "currencies": "Currencies",
+    "internalOperations": "Internal Operations",
+    "roles": "Roles",
+    "employees": "Employees",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "timeLogs": "Time Logs",
+    "developments": "Developments",
+    "contracts": "Contracts",
+    "systemSettings": "System Settings",
+    "actions": "Actions",
+    "dashboard": "Dashboard"
+  },
+  "development": {
+    "title": "Developments Management",
+    "subtitle": "Manage your developments",
+    "add": "Add Developments",
+    "searchPlaceholder": "Search developments...",
+    "stats": {
+      "total": "Total Developments",
+      "underReview": "Under Review",
+      "approved": "Approved"
+    },
+    "columns": {
+      "title": "Title",
+      "project": "Project",
+      "client": "Client",
+      "budget": "Budget",
+      "cost": "Cost",
+      "status": "Status"
+    }
+  },
+  "project": {
+    "title": "Projects Management",
+    "subtitle": "Manage and track all company projects.",
+    "add": "Add Projects",
+    "searchPlaceholder": "Search projects...",
+    "stats": {
+      "active": "Active Projects",
+      "completed": "Completed",
+      "delayed": "Delayed"
+    },
+    "columns": {
+      "title": "Title",
+      "company": "Company",
+      "client": "Client",
+      "budget": "Budget",
+      "employees": "Employees",
+      "status": "Status"
+    }
+  },
+  "employee": {
+    "title": "Employees Management",
+    "subtitle": "Manage company employees and roles",
+    "add": "Add Employee",
+    "searchPlaceholder": "Search employees...",
+    "stats": {
+      "total": "Total Employees",
+      "active": "Active",
+      "onLeave": "On Leave"
+    },
+    "columns": {
+      "name": "Employee Name",
+      "role": "Role",
+      "department": "Department",
+      "email": "Email",
+      "status": "Status",
+      "joinDate": "Join Date"
+    },
+    "filter": {
+      "all": "All",
+      "active": "Active",
+      "onLeave": "On Leave"
+    }
+  },
+  "contract": {
+    "title": "Contracts Management",
+    "subtitle": "Manage and track all company contracts",
+    "add": "Add Contract",
+    "searchPlaceholder": "Search contracts...",
+    "stats": {
+      "active": "Active Contracts",
+      "pending": "Pending Signature",
+      "expiring": "Expiring Soon"
+    },
+    "columns": {
+      "customerName": "Customer Name",
+      "title": "Title",
+      "project": "Project",
+      "company": "Company",
+      "status": "Status",
+      "date": "Date"
+    }
+  },
+  "task": {
+    "title": "Tasks Management",
+    "subtitle": "Overview and administration of all active tasks across projects",
+    "addTask": "Add Tasks",
+    "searchPlaceholder": "Search tasks...",
+    "stats": {
+      "utilization": "Total Budget Utilization",
+      "active": "Total Active Tasks",
+      "logged": "Logged Hours"
+    },
+    "columns": {
+      "title": "Title",
+      "project": "Project",
+      "employee": "Employee",
+      "start": "Start",
+      "end": "End",
+      "duration": "Duration",
+      "budget": "Budget",
+      "company": "Company"
+    }
+  },
+  "company": {
+    "title": "Companies Management",
+    "subtitle": "View and manage all registered companies in the system.",
+    "add": "Add a new company",
+    "searchPlaceholder": "Search companies...",
+    "stats": {
+      "total": "Total Companies",
+      "active": "Active",
+      "pending": "Pending"
+    },
+    "filter": {
+      "active": "Active",
+      "pending": "Pending"
+    },
+    "columns": {
+      "company": "Company",
+      "domain": "Domain",
+      "email": "Email",
+      "joinedDate": "Added Date",
+      "status": "Status"
+    }
+  },
+  "role": {
+    "title": "Roles Management",
+    "subtitle": "Manage system roles and permissions",
+    "add": "Add Role",
+    "searchPlaceholder": "Search roles...",
+    "stats": {
+      "total": "Total Roles",
+      "custom": "Custom Roles",
+      "system": "System Roles"
+    },
+    "columns": {
+      "roleName": "Role Name",
+      "usersCount": "Users Count",
+      "description": "Description",
+      "status": "Status"
+    }
+  },
+  "companyRequest": {
+    "title": "Company Requests",
+    "subtitle": "Manage and track incoming company requests",
+    "add": "Add Request",
+    "searchPlaceholder": "Search requests...",
+    "stats": {
+      "new": "New Requests",
+      "underReview": "Under Review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "columns": {
+      "companyName": "Company Name",
+      "applicantName": "Applicant Name",
+      "email": "Email",
+      "date": "Application Date",
+      "status": "Status"
+    },
+    "filter": {
+      "all": "All",
+      "new": "New",
+      "underReview": "Under Review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "client": {
+    "title": "Client Management",
+    "subtitle": "Manage and monitor all client accounts and requests across the platform.",
+    "add": "+ Add a new Client",
+    "totalCustomers": "Total Customers",
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "suspended": "Suspended",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "filter": {
+      "all": "All cases"
+    },
+    "customerName": "Customer Name",
+    "phoneNumber": "Phone Number",
+    "subsidiaryCompany": "Subsidiary Company",
+    "email": "Email",
+    "deleteTitle": "Delete Client",
+    "deleteMessage": "Are you sure you want to delete this client? This action cannot be undone."
+  },
+  "form": {
+    "clientName": "Client Name",
+    "emailAddress": "Email address",
+    "password": "Password",
+    "companyOptional": "Company (optional)",
+    "basicInfo": "Basic client Information",
+    "enterDetails": "Enter the client basic details"
+  },
+  "sidebar": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "subscriberManagement": "Subscriber Management",
+    "companies": "Companies",
+    "companyRequests": "Company Requests",
+    "clients": "Clients",
+    "financialManagement": "Financial Management",
+    "invoices": "Invoices",
+    "payments": "Payments",
+    "wallets": "Wallets",
+    "walletTransactions": "Wallet Transactions",
+    "currencies": "Currencies",
+    "internalOperations": "Internal Operations",
+    "roles": "Roles",
+    "employees": "Employees",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "timeLogs": "Time Logs",
+    "developments": "Developments",
+    "contracts": "Contracts",
+    "systemSettings": "System Settings"
   }
 }

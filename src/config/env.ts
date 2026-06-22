@@ -7,7 +7,7 @@ export const ENV = {
   APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || "Workflow",
   APP_VERSION: "1.0.0",
   APP_ENV: process.env.NODE_ENV || "development",
-    // TODO: استخدمه في AuthGuard لتعطيل الحماية في بيئة التطوير إذا لزم
-  DISABLE_DASHBOARD_PROTECTION: false,
+  // TODO: استخدمه في AuthGuard لتعطيل الحماية في بيئة التطوير إذا لزم
+  DISABLE_DASHBOARD_PROTECTION: process.env.NODE_ENV === "development",
   IS_MOCK: process.env.NEXT_PUBLIC_IS_MOCK === "true",
 };

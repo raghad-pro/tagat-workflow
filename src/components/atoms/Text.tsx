@@ -17,7 +17,8 @@ interface TextProps {
   leading?:    TextLeading;
   tag?:        TextTag;
   className?:  string;
-  htmlFor?:    string;          
+  htmlFor?:    string;
+  id?:         string;          
 }
 
 // ─── Maps ──────────────────────────────────────────────────────────────────────

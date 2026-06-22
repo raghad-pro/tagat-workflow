@@ -25,8 +25,7 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       // هاد الـ interceptor client-side فقط
       if (typeof window !== "undefined") {
-        tokenService.removeToken();
-        window.location.href = "/login";
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
       }
     }
     return Promise.reject(error);

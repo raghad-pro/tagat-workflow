@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppProvider from "@/providers/AppProvider";
 import { getLocale, getMessages } from "next-intl/server";
-import Navbar from "@/components/organisms/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +36,6 @@ export default async function RootLayout({
       <body>
       
         <AppProvider locale={locale} messages={messages}>
-          {/* <Navbar />  */}
           {children}
         </AppProvider>
       </body>

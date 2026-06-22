@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { authService } from "../services/authService";
+import { authApi } from "../api/auth.api";
 import type { ResetPasswordRequest } from "../types/auth.types";
 import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
@@ -14,7 +14,7 @@ export const useResetPassword = () => {
   const t = useTranslations("auth");
 
   return useMutation({
-    mutationFn: (data: ResetPasswordRequest) => authService.resetPassword(data),
+    mutationFn: (data: ResetPasswordRequest) => authApi.resetPassword(data),
 
     // ← onSuccess الـ global فاضي — الـ page callback بتتولى
     onSuccess: () => {

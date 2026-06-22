@@ -1,161 +1,142 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Upload, Building2 } from "@/assets/icons/icons";
-import { Button } from "@/components/atoms/Button";
+import { Building2, Upload } from "lucide-react";
 import { Text } from "@/components/atoms/Text";
-import { TextField } from "@/components/molecules/FormFields";
+import { ActionModal } from "@/components/molecules/ActionModal";
+import { TextField, SelectField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
-import type { AddCompanyRequest, CompanyPlan } from "../types/company.types";
+import { useTranslations } from "next-intl";
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (data: AddCompanyRequest) => Promise<void>;
-  isPending: boolean;
-}
-
-const schema = z.object({
-  name: z.string().min(2, "Company name must be at least 2 characters"),
-  subdomain: z
-    .string()
-    .min(2, "Subdomain is required")
-    .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
-  email: z.string().email("Invalid email"),
-  plan: z.enum(["Basic", "Pro", "Enterprise"]),
-  monthly_revenue: z.string().optional(),
-  renewal_date: z.string().optional(),
+const companySchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  subdomain: z.string().min(2, "Subdomain is required").regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers and hyphens"),
+  fieldOfWork: z.string().min(1, "Please select field of work"),
 });
 
-type FormValues = z.infer<typeof schema>;
+export type CompanyFormValues = z.infer<typeof companySchema>;
 
-export function AddCompanyModal({ open, onClose, onSubmit, isPending }: Props) {
+export function AddCompanyModal({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (data: CompanyFormValues) => void }) {
+  const t = useTranslations("company");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoError, setLogoError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { name: "", subdomain: "", email: "", plan: "Basic" },
+  const form = useForm<CompanyFormValues>({
+    resolver: zodResolver(companySchema),
+    defaultValues: { email: "", companyName: "", subdomain: "", fieldOfWork: "" },
   });
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (!isOpen) {
+      form.reset();
+      setLogoPreview(null);
+    }
+  }, [isOpen, form]);
+
+  const FIELDS_OF_WORK = [
+    { value: "technical", label: t("fields.technical") || "Technical" },
+    { value: "financial", label: t("fields.financial") || "Financial" },
+    { value: "educational", label: t("fields.educational") || "Educational" },
+    { value: "healthcare", label: t("fields.healthcare") || "Healthcare" },
+    { value: "other", label: t("fields.other") || "Other" },
+  ];
+
+  const onSubmit = async (data: CompanyFormValues) => {
+    onSave(data);
+    onClose();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { setLogoError("Max 2MB"); return; }
-    setLogoError("");
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { alert("File size must be less than 2MB"); return; }
+      const reader = new FileReader();
+      reader.onloadend = () => setLogoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
-
-  const handleSubmit = async (data: FormValues) => {
-    await onSubmit({
-      ...data,
-      plan: data.plan as CompanyPlan,
-      monthly_revenue: data.monthly_revenue ? Number(data.monthly_revenue) : undefined,
-      logo: logoFile,
-    });
-    form.reset();
-    setLogoPreview(null);
-    setLogoFile(null);
-  };
-
-  if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.4)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+    <ActionModal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={t("addCompanyTitle") || "Add New Company"}
+      mode="add"
+      formId="add-company-form"
+      size="xl"
+      saveLabel={t("saveCompany") || "Save Company"}
     >
-      <div className="w-full max-w-lg rounded-2xl ds-bg-form ds-border-form ds-shadow-sm overflow-y-auto max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b ds-border-form">
-          <Text size="lg" weight="bold">Add a new company</Text>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:ds-bg-gray-200 transition-colors ds-text-gray-200"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="px-6 py-5">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-4">
-
-              {/* Logo Upload */}
-              <div className="flex flex-col gap-1.5">
-                <Text size="sm" weight="bold" tag="p">
-                  Company Logo
-                  <Text tag="span" size="sm" color="gray-200" className="ms-1 text-[11px]">(Optional)</Text>
-                </Text>
-                <label
-                  htmlFor="company-logo"
-                  className="flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all"
-                  style={{
-                    borderColor: logoPreview ? "var(--color-primary)" : "var(--color-border-inputs)",
-                    background: "var(--color-bg)",
-                  }}
-                >
-                  {logoPreview ? (
-                    <>
-                      <img src={logoPreview} alt="preview" className="w-14 h-14 rounded-full object-cover" />
-                      <Text size="sm" color="gray-200">Click to change</Text>
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={20} className="ds-text-gray-200" />
-                      <Text size="sm" color="gray-200">Upload company logo</Text>
-                      <Text size="sm" color="gray-200" className="text-[11px]">PNG, JPG, WebP — max 2MB</Text>
-                    </>
-                  )}
-                  <input id="company-logo" type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
-                </label>
-                {logoError && <Text size="sm" color="error">{logoError}</Text>}
-              </div>
-
-              {/* Fields Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <TextField control={form.control} name="name" label="Company Name" placeholder="Advanced Tech Company" required icon={Building2} />
-                <TextField control={form.control} name="subdomain" label="Subdomain" placeholder="advanced-tech" required />
-                <TextField control={form.control} name="email" label="Email" placeholder="admin@company.com" type="email" required />
-
-                {/* Plan */}
-                <div className="flex flex-col gap-1.5">
-                  <Text size="sm" weight="bold" tag="label" htmlFor="plan">
-                    Plan <span className="ds-text-error ms-1">*</span>
-                  </Text>
-                  <select
-                    id="plan"
-                    {...form.register("plan")}
-                    className="h-12 px-4 rounded-xl ds-border-input-color ds-bg ds-text-sm ds-text-primary focus:outline-none focus:border-[var(--color-primary)]"
-                  >
-                    <option value="Basic">Basic</option>
-                    <option value="Pro">Pro</option>
-                    <option value="Enterprise">Enterprise</option>
-                  </select>
+      <div className="flex flex-col w-full">
+        <Form {...form}>
+          <form id="add-company-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="ds-bg-form rounded-2xl p-6 sm:p-8 shadow-sm border ds-border-form">
+              <div className="flex items-start gap-4 mb-8">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(14,165,233,0.1)" }}>
+                  <Building2 size={24} style={{ color: "#0ea5e9" }} />
                 </div>
-
-                <TextField control={form.control} name="monthly_revenue" label="Monthly Revenue ($)" placeholder="499" />
-                <TextField control={form.control} name="renewal_date" label="Renewal Date" placeholder="2026-12-15" />
+                <div>
+                  <Text size="lg" weight="bold" className="ds-text-primary">{t("basicInfo") || "Basic Company Information"}</Text>
+                  <Text size="sm" className="ds-text-gray-200 mt-0.5">{t("basicInfoSub") || "Enter the company's basic details"}</Text>
+                </div>
               </div>
 
-              {/* Footer */}
-              <div className="flex gap-3 justify-end pt-2 mt-2 border-t ds-border-form">
-                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button type="submit" variant="solid" loading={isPending}>Add Company</Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <TextField 
+                  control={form.control}
+                  name="email"
+                  label={t("labels.email") || "Email"}
+                  placeholder="mahmoud.ali@gmail.com"
+                  type="email"
+                />
+                <TextField 
+                  control={form.control}
+                  name="companyName"
+                  label={t("labels.companyName") || "Company Name"}
+                  placeholder="Example: Advanced Tech Company"
+                />
+                <TextField 
+                  control={form.control}
+                  name="subdomain"
+                  label={t("labels.subdomain") || "Subdomain"}
+                  placeholder="advanced-tech"
+                />
+                <SelectField 
+                  control={form.control}
+                  name="fieldOfWork"
+                  label={t("labels.fieldOfWork") || "Field of Work"}
+                  options={FIELDS_OF_WORK}
+                  placeholder={t("placeholders.fieldOfWork") || "Choose the field of work"}
+                />
               </div>
 
-            </form>
-          </Form>
-        </div>
+              <div className="flex flex-col gap-1.5 w-full">
+                <Text size="sm" weight="bold" tag="label" className="ds-text-main capitalize">{t("labels.companyLogo") || "Company Logo"}</Text>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex flex-col items-center justify-center py-8 rounded-xl border-2 border-dashed ds-border-form cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-bg-primary-200)] transition-all"
+                >
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
+                  {logoPreview ? (
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border ds-border-form">
+                      <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <Upload size={24} className="ds-text-gray-200" />
+                      <Text size="sm" weight="medium" className="ds-text-primary">{t("uploadLogo") || "Click to upload logo"}</Text>
+                      <Text size="sm" className="ds-text-gray-200 text-xs">PNG, JPG, WEBP - max 2MB</Text>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </form>
+        </Form>
       </div>
-    </div>
+    </ActionModal>
   );
 }

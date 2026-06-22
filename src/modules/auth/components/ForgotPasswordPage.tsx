@@ -16,9 +16,9 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/atoms/Button";
 import { Text } from "@/components/atoms/Text";
 import { TextField, PasswordField } from "@/components/molecules/FormFields";
-import { useForgotPassword } from "@/modules/auth/hooks/useForgotPassword";
-import { useVerifyOtp } from "@/modules/auth/hooks/useVerifyOtp";
-import { useResetPassword } from "@/modules/auth/hooks/useResetPassword";
+import { useForgotPassword } from "@/modules/auth/hooks/useForgotpassword";
+import { useVerifyOtp } from "@/modules/auth/hooks/useVerifyotp";
+import { useResetPassword } from "@/modules/auth/hooks/useResetpassword";
 import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ function OtpStep({
       { email, otp },
       {
         // ✅ نجح → نروح للـ step التالي
-        onSuccess: (data) => onSuccess(data.reset_token),
+        onSuccess: (data) => onSuccess(data.data.reset_token),
 
         // ❌ فشل من الـ API → نحمّر المربعات ونكتب الخطأ تحتها
         //    (الـ hook ما بيطلع toast في هاد الحالة لأنا عم نتعامل معها هنا)
@@ -412,11 +412,11 @@ export default function ForgotPasswordPage() {
 
   return (
    
-    <main
-      className="ds-bg px-4 pt-8 pb-16"
+   <main className="ds-bg flex  justify-center overflow-y-auto  w-full max-w-lg mx-auto  rounded-2xl"
       dir={dir}
     >
-      <div className="w-full max-w-md mx-auto rounded-2xl ds-bg-form ds-border-form px-10 py-12 ds-shadow-sm">
+        
+      <div className="w-full  rounded-2xl ds-bg-form ds-border-form px-10 py-12 ds-shadow-sm">
 
         {/* ── Step 1: Email ── */}
         {step === 1 && (
@@ -455,3 +455,4 @@ export default function ForgotPasswordPage() {
     </main>
   );
 }
+

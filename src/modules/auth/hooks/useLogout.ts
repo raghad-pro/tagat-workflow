@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { authService } from "../services/authService";
+import { authApi } from "../api/auth.api";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
@@ -13,7 +13,7 @@ export const useLogout = () => {
   const t = useTranslations("auth");
 
   return useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: () => authApi.logout(),
     onSuccess: () => {
       setUser(null);
       toast.success(t("logoutSuccess"));

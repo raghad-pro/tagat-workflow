@@ -356,12 +356,12 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (step === 2 && !accountType) router.replace("?step=1");
-  }, [step, accountType, router]);
+  }, [step, accountType, router]); 
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <main className="ds-bg flex  justify-center overflow-y-auto  w-full max-w-lg mx-auto min-h-screen ">
+    <main className="ds-bg flex  justify-center overflow-y-auto  w-full max-w-lg mx-auto  rounded-2xl">
       <div className="w-full  rounded-2xl ds-bg-form ds-border-form px-10 py-12"
         style={{ boxShadow: "var(--shadow-sm)" }} dir={dir}>
 

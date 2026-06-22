@@ -1,25 +1,37 @@
 "use client";
 
-import { useLocale } from "next-intl";
-import { changeLocaleAction } from "@/i18n/locale";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/atoms/Button";
 
 export default function LanguageSwitcher() {
-  const locale = useLocale();
+  const router = useRouter();
+  const [locale, setLocale] = useState<"en" | "ar">("en");
 
-  const toggleLanguage = async () => {
-    const newLocale = locale === "ar" ? "en" : "ar";
-    await changeLocaleAction(newLocale);
+  useEffect(() => {
+    // Check cookie on mount 
+    const match = document.cookie.match(/(^| )locale=([^;]+)/);
+    if (match) {
+      setLocale(match[2] as "en" | "ar");
+    }
+  }, []);
+
+  const toggleLanguage = () => {
+    const nextLocale = locale === "en" ? "ar" : "en";
+    setLocale(nextLocale);
+    // Set cookie
+    document.cookie = `locale=${nextLocale}; path=/; max-age=31536000`;
+    // Refresh the page to apply the language and direction
     window.location.reload();
   };
 
   return (
     <button
+      className="p-2 ds-text-sm font-bold text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors uppercase"
       onClick={toggleLanguage}
-      className="px-3 py-1 rounded-lg border border-[var(--color-border)] 
-                 text-[var(--color-text-primary)] text-sm font-medium
-                 hover:bg-[var(--color-bg-card)] transition-colors"
+      title="Change Language"
     >
-      {locale === "ar" ? "EN" : "عر"}
+      {locale === "en" ? "AR" : "EN"}
     </button>
   );
 }

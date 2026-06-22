@@ -2,7 +2,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { authService } from "../services/authService";
+import { authApi } from "../api/auth.api";
 import type { VerifyOtpRequest } from "../types/auth.types";
 
 // لأن الـ OtpStep في الـ page بتتولى الـ onError بنفسها:
@@ -12,7 +12,7 @@ import type { VerifyOtpRequest } from "../types/auth.types";
 
 export const useVerifyOtp = () => {
   return useMutation({
-    mutationFn: (data: VerifyOtpRequest) => authService.verifyOtp(data),
+    mutationFn: (data: VerifyOtpRequest) => authApi.verifyOtp(data),
     // لا onError هنا — الـ page بتتولى الـ error handling
   });
 };

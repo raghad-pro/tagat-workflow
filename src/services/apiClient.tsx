@@ -13,8 +13,9 @@ class apiClient {
     const res = await axiosInstance.put<T>(url, data);
     return res.data;
   }
-  async delete<T>(url: string): Promise<T> {
-    const res = await axiosInstance.delete<T>(url);
+  // ← body مرور الـ delete عبر { data } عشان Axios يحطها في request body
+  async delete<T>(url: string, body?: unknown): Promise<T> {
+    const res = await axiosInstance.delete<T>(url, body ? { data: body } : undefined);
     return res.data;
   }
 }

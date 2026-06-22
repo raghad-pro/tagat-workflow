@@ -22,6 +22,32 @@
   .ds-bg-form           { background-color: var(--color-bg-form); }
   .ds-bg                { background-color: var(--color-bg); }
   .ds-bg-gray-200       { background-color: var(--color-gray-200); }
+  /* ============== Charts ================== */
+.ds-text-success {
+  color: var(--color-success);
+}
+
+/* ============== Priority ================== */
+.ds-text-priority-high   { color: var(--color-priority-high);   }
+.ds-text-priority-medium { color: var(--color-priority-medium); }
+.ds-text-priority-low    { color: var(--color-priority-low);    }
+
+.ds-bg-priority-high   { background-color: color-mix(in srgb, var(--color-priority-high)   20%, transparent); }
+.ds-bg-priority-medium { background-color: color-mix(in srgb, var(--color-priority-medium) 20%, transparent); }
+.ds-bg-priority-low    { background-color: color-mix(in srgb, var(--color-priority-low)    20%, transparent); }
+
+/* ============== Plan ================== */
+.ds-text-plan-enterprise { color: var(--color-plan-enterprise); }
+.ds-text-plan-pro        { color: var(--color-plan-pro);        }
+.ds-text-plan-basic      { color: var(--color-plan-basic);      }
+
+.ds-bg-plan-enterprise { background-color: color-mix(in srgb, var(--color-plan-enterprise) 15%, transparent); }
+.ds-bg-plan-pro        { background-color: color-mix(in srgb, var(--color-plan-pro)        15%, transparent); }
+.ds-bg-plan-basic      { background-color: color-mix(in srgb, var(--color-plan-basic)      15%, transparent); }
+
+/* ============== Processing ================== */
+.ds-bg-processing   { background-color: var(--color-processing-bg);   }
+.ds-text-processing { color: var(--color-processing-text); }
 
   /* ── Sidebar ────────────────────────────────────────────────────────────── */
   .ds-sidebar           { background-color: var(--sidebar-bg); box-shadow: var(--shadow-sidebar); }
@@ -100,12 +126,28 @@
   .ds-text-error   { color: var(--color-error) !important; }
   .ds-bg-error     { background-color: var(--color-error-bg); }
   .ds-border-error { border: 1px solid var(--color-error) !important; box-shadow: none !important; }
-  .ds-text-success{color:var(--color-success)}
+  .ds-text-success { color: var(--color-success); }
+
+  /* ── Invoice Status ──────────────────────────────────────────────────────── */
+  .ds-invoice-paid    { color: var(--color-invoice-paid);    background-color: var(--color-invoice-paid-bg); }
+  .ds-invoice-pending { color: var(--color-invoice-pending); background-color: var(--color-invoice-pending-bg); }
+  .ds-invoice-overdue { color: var(--color-invoice-overdue); background-color: var(--color-invoice-overdue-bg); }
+
+  /* ── Action Buttons ──────────────────────────────────────────────────────── */
+  .ds-action-send   { color: var(--color-action-send);   background-color: var(--color-action-send-bg); }
+  .ds-action-delete { color: var(--color-action-delete); background-color: var(--color-action-delete-bg); }
+  .ds-action-edit   { color: var(--color-action-edit);   background-color: var(--color-action-edit-bg); }
+
+  /* ── Icon stat colors ────────────────────────────────────────────────────── */
+  .ds-icon-indigo   { color: var(--color-icon-indigo);   background-color: var(--color-icon-indigo-bg); }
+  .ds-icon-success  { color: var(--color-icon-success);  background-color: var(--color-icon-success-bg); }
+  .ds-icon-warning  { color: var(--color-icon-warning);  background-color: var(--color-icon-warning-bg); }
+  .ds-icon-danger   { color: var(--color-icon-danger);   background-color: var(--color-icon-danger-bg); }
 
   /* ── Auth background circle ─────────────────────────────────────────────── */
   .circle::before {
     content: ""; position: absolute;
-    top: 20px; right: 0;
+    top: -150px; right: -150px;
     width: 400px; height: 400px;
     box-shadow: 0px 0px 25px 20px var(--color-bg-primary-200);
     background-color: var(--color-bg-primary-200);
@@ -113,17 +155,6 @@
   }
 
   /* ── Scrollbar ──────────────────────────────────────────────────────────── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 20px; }
-  ::-webkit-scrollbar-thumb:hover { filter: brightness(0.9); }
-.ds-sidebar nav {
-  scrollbar-width: none;
-}
-
-.ds-sidebar nav::-webkit-scrollbar {
-  display: none; 
-}
   @supports (scrollbar-color: auto) {
     html { scrollbar-width: thin; scrollbar-color: var(--color-primary) transparent; }
   }

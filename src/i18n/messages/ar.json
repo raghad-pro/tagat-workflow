@@ -1,6 +1,5 @@
 {
-
-"auth": {
+  "auth": {
     "login": "تسجيل الدخول",
     "login_text": "لديك حساب بالفعل؟",
     "register": "إنشاء حساب",
@@ -22,7 +21,7 @@
     "passwords_dont_match": "كلمتا المرور غير متطابقتين",
     "forgot_password": "نسيت كلمة المرور؟",
     "password_reset_success_title": "تم تغيير كلمة المرور!",
-"password_reset_success_desc": "يمكنك الآن تسجيل الدخول بكلمة مرورك الجديدة.",
+    "password_reset_success_desc": "يمكنك الآن تسجيل الدخول بكلمة مرورك الجديدة.",
     "register_text": "لا يوجد لديك حساب؟",
     "password_uppercase": "يجب أن تحتوي على حرف كبير",
     "password_lowercase": "يجب أن تحتوي على حرف صغير",
@@ -48,18 +47,16 @@
     "back": "السابق ",
     "create_account": " إنشاء حساب جديد",
     "companyRegisterSuccess": "تم إنشاء حساب الشركة بنجاح",
-    
     "logout": "تسجيل الخروج",
     "welcome": "مرحباً بك",
     "welcome_back": "مجدداً!",
-    "account":"جديد",
-"remember_me": "تذكرني",
+    "account": "جديد",
+    "remember_me": "تذكرني",
     "loginSuccess": "تم تسجيل الدخول بنجاح",
     "loginError": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     "registerSuccess": "تم إنشاء الحساب بنجاح",
     "registerError": "حدث خطأ أثناء إنشاء الحساب",
     "logoutSuccess": "تم تسجيل الخروج",
-
     "company_logo": "شعار الشركة",
     "optional": "اختياري",
     "upload_logo": "اضغط لرفع الشعار",
@@ -67,40 +64,31 @@
     "remove_logo": "إزالة الشعار",
     "logo_too_large": "حجم الصورة يجب أن لا يتجاوز 2MB",
     "logo_invalid_type": "يجب أن تكون الصورة بصيغة JPG أو PNG أو WebP",
-
-  "fp_step1_label": "الإيميل",
-  "fp_step2_label": "رمز التحقق",
-  "fp_step3_label": "كلمة المرور",
-  "fp_resend_success": "تم إعادة إرسال رمز التحقق",
- 
-  "fp_title_step1": "نسيت كلمة المرور؟",
-  "fp_title_step2": "أدخل رمز التحقق",
-  "fp_title_step3": "كلمة مرور جديدة",
- 
-  "fp_step_counter": "الخطوة {current} من {total}",
- 
-  "fp_email_desc": "أدخل بريدك الإلكتروني وسنرسل لك رمز التحقق",
-  "fp_otp_desc": "أرسلنا رمز التحقق المكون من 4 أرقام إلى",
-  "fp_new_password_desc": "أدخل كلمة المرور الجديدة لحسابك",
- 
-  "fp_send_otp": "إرسال رمز التحقق",
-  "fp_verify_otp": "تأكيد الرمز",
-  "fp_reset_password": "تغيير كلمة المرور",
- 
-  "fp_otp_hint": "رمز التيست",
-  "fp_no_otp": "لم يصلك الرمز؟",
-  "fp_resend": "إعادة الإرسال",
-  "fp_resending": "جاري الإرسال...",
- 
-  "back_to_login": "العودة لتسجيل الدخول",
- 
-  "email_not_found": "البريد الإلكتروني غير مسجّل",
-  "otp_invalid": "رمز التحقق غير صحيح أو منتهي الصلاحية",
-  "otp_required": "يرجى إدخال رمز التحقق كاملاً",
-  "password_reset_success": "تم تغيير كلمة المرور بنجاح",
-  "generic_error": "حدث خطأ، يرجى المحاولة مرة أخرى"
+    "fp_step1_label": "الإيميل",
+    "fp_step2_label": "رمز التحقق",
+    "fp_step3_label": "كلمة المرور",
+    "fp_resend_success": "تم إعادة إرسال رمز التحقق",
+    "fp_title_step1": "نسيت كلمة المرور؟",
+    "fp_title_step2": "أدخل رمز التحقق",
+    "fp_title_step3": "كلمة مرور جديدة",
+    "fp_step_counter": "الخطوة {current} من {total}",
+    "fp_email_desc": "أدخل بريدك الإلكتروني وسنرسل لك رمز التحقق",
+    "fp_otp_desc": "أرسلنا رمز التحقق المكون من 4 أرقام إلى",
+    "fp_new_password_desc": "أدخل كلمة المرور الجديدة لحسابك",
+    "fp_send_otp": "إرسال رمز التحقق",
+    "fp_verify_otp": "تأكيد الرمز",
+    "fp_reset_password": "تغيير كلمة المرور",
+    "fp_otp_hint": "رمز التيست",
+    "fp_no_otp": "لم يصلك الرمز؟",
+    "fp_resend": "إعادة الإرسال",
+    "fp_resending": "جاري الإرسال...",
+    "back_to_login": "العودة لتسجيل الدخول",
+    "email_not_found": "البريد الإلكتروني غير مسجّل",
+    "otp_invalid": "رمز التحقق غير صحيح أو منتهي الصلاحية",
+    "otp_required": "يرجى إدخال رمز التحقق كاملاً",
+    "password_reset_success": "تم تغيير كلمة المرور بنجاح",
+    "generic_error": "حدث خطأ، يرجى المحاولة مرة أخرى"
   },
-
   "dashboard": {
     "title": "لوحة التحكم",
     "projects": "المشاريع",
@@ -118,6 +106,250 @@
     "add": "إضافة",
     "search": "بحث",
     "loading": "جاري...",
-    "error": "حدث خطأ"
+    "error": "حدث خطأ",
+    "update": "تحديث",
+    "close": "إغلاق",
+    "view": "عرض",
+    "subscriberManagement": "إدارة المشتركين",
+    "companies": "الشركات",
+    "companyRequests": "طلبات الشركات",
+    "clients": "العملاء",
+    "financialManagement": "الإدارة المالية",
+    "invoices": "الفواتير",
+    "payments": "المدفوعات",
+    "wallets": "المحافظ",
+    "walletTransactions": "معاملات المحافظ",
+    "currencies": "العملات",
+    "internalOperations": "العمليات الداخلية",
+    "roles": "الصلاحيات",
+    "employees": "الموظفون",
+    "projects": "المشاريع",
+    "tasks": "المهام",
+    "timeLogs": "سجلات الوقت",
+    "developments": "التطويرات",
+    "contracts": "العقود",
+    "systemSettings": "إعدادات النظام",
+    "actions": "الإجراءات",
+    "dashboard": "لوحة القيادة"
+  },
+  "development": {
+    "title": "إدارة التطويرات",
+    "subtitle": "إدارة التطويرات الخاصة بك",
+    "add": "إضافة تطوير",
+    "searchPlaceholder": "ابحث في التطويرات...",
+    "stats": {
+      "total": "إجمالي التطويرات",
+      "underReview": "قيد المراجعة",
+      "approved": "تمت الموافقة"
+    },
+    "columns": {
+      "title": "العنوان",
+      "project": "المشروع",
+      "client": "العميل",
+      "budget": "الميزانية",
+      "cost": "التكلفة",
+      "status": "الحالة"
+    }
+  },
+  "project": {
+    "title": "إدارة المشاريع",
+    "subtitle": "إدارة وتتبع جميع مشاريع الشركة",
+    "add": "إضافة مشروع",
+    "searchPlaceholder": "ابحث في المشاريع...",
+    "stats": {
+      "active": "المشاريع النشطة",
+      "completed": "مكتملة",
+      "delayed": "متأخرة"
+    },
+    "columns": {
+      "title": "العنوان",
+      "company": "الشركة",
+      "client": "العميل",
+      "budget": "الميزانية",
+      "employees": "الموظفون",
+      "status": "الحالة"
+    }
+  },
+  "employee": {
+    "title": "إدارة الموظفين",
+    "subtitle": "إدارة موظفي وأدوار الشركة",
+    "add": "إضافة موظف",
+    "searchPlaceholder": "ابحث في الموظفين...",
+    "stats": {
+      "total": "إجمالي الموظفين",
+      "active": "نشط",
+      "onLeave": "في إجازة"
+    },
+    "columns": {
+      "name": "اسم الموظف",
+      "role": "الدور",
+      "department": "القسم",
+      "email": "البريد الإلكتروني",
+      "status": "الحالة",
+      "joinDate": "تاريخ الانضمام"
+    },
+    "filter": {
+      "all": "الكل",
+      "active": "نشط",
+      "onLeave": "في إجازة"
+    }
+  },
+  "contract": {
+    "title": "إدارة العقود",
+    "subtitle": "إدارة وتتبع جميع عقود الشركة",
+    "add": "إضافة عقد",
+    "searchPlaceholder": "ابحث في العقود...",
+    "stats": {
+      "active": "عقود نشطة",
+      "pending": "بانتظار التوقيع",
+      "expiring": "تنتهي قريباً"
+    },
+    "columns": {
+      "customerName": "اسم العميل",
+      "title": "العنوان",
+      "project": "المشروع",
+      "company": "الشركة",
+      "status": "الحالة",
+      "date": "التاريخ"
+    }
+  },
+  "task": {
+    "title": "إدارة المهام",
+    "subtitle": "نظرة عامة وإدارة لجميع المهام النشطة في المشاريع",
+    "addTask": "إضافة مهمة",
+    "searchPlaceholder": "ابحث في المهام...",
+    "stats": {
+      "utilization": "إجمالي استهلاك الميزانية",
+      "active": "إجمالي المهام النشطة",
+      "logged": "الساعات المسجلة"
+    },
+    "columns": {
+      "title": "العنوان",
+      "project": "المشروع",
+      "employee": "الموظف",
+      "start": "البداية",
+      "end": "النهاية",
+      "duration": "المدة",
+      "budget": "الميزانية",
+      "company": "الشركة"
+    }
+  },
+  "company": {
+    "title": "إدارة الشركات",
+    "subtitle": "عرض وإدارة جميع الشركات المسجلة في النظام.",
+    "add": "إضافة شركة جديدة",
+    "searchPlaceholder": "ابحث عن الشركات...",
+    "stats": {
+      "total": "إجمالي الشركات",
+      "active": "نشطة",
+      "pending": "قيد الانتظار"
+    },
+    "filter": {
+      "active": "نشطة",
+      "pending": "قيد الانتظار"
+    },
+    "columns": {
+      "company": "الشركة",
+      "domain": "النطاق",
+      "email": "البريد الإلكتروني",
+      "joinedDate": "تاريخ الإضافة",
+      "status": "الحالة"
+    }
+  },
+  "role": {
+    "title": "إدارة الصلاحيات",
+    "subtitle": "إدارة صلاحيات وأدوار النظام",
+    "add": "إضافة صلاحية",
+    "searchPlaceholder": "ابحث في الصلاحيات...",
+    "stats": {
+      "total": "إجمالي الأدوار",
+      "custom": "أدوار مخصصة",
+      "system": "أدوار النظام"
+    },
+    "columns": {
+      "roleName": "اسم الدور",
+      "usersCount": "عدد المستخدمين",
+      "description": "الوصف",
+      "status": "الحالة"
+    }
+  },
+  "companyRequest": {
+    "title": "طلبات الشركات",
+    "subtitle": "إدارة وتتبع طلبات الشركات الواردة",
+    "add": "إضافة طلب",
+    "searchPlaceholder": "ابحث في الطلبات...",
+    "stats": {
+      "new": "طلبات جديدة",
+      "underReview": "قيد المراجعة",
+      "approved": "مقبولة",
+      "rejected": "مرفوضة"
+    },
+    "columns": {
+      "companyName": "اسم الشركة",
+      "applicantName": "اسم المتقدم",
+      "email": "البريد الإلكتروني",
+      "date": "تاريخ التقديم",
+      "status": "الحالة"
+    },
+    "filter": {
+      "all": "الكل",
+      "new": "جديد",
+      "underReview": "قيد المراجعة",
+      "approved": "مقبول",
+      "rejected": "مرفوض"
+    }
+  },
+  "client": {
+    "title": "إدارة العملاء",
+    "subtitle": "إدارة ومراقبة جميع حسابات وطلبات العملاء عبر المنصة.",
+    "add": "+ إضافة عميل جديد",
+    "totalCustomers": "إجمالي العملاء",
+    "status": {
+      "active": "نشط",
+      "pending": "قيد الانتظار",
+      "suspended": "موقوف",
+      "approved": "مقبول",
+      "rejected": "مرفوض"
+    },
+    "filter": {
+      "all": "جميع الحالات"
+    },
+    "customerName": "اسم العميل",
+    "phoneNumber": "رقم الهاتف",
+    "subsidiaryCompany": "الشركة التابعة",
+    "email": "البريد الإلكتروني",
+    "deleteTitle": "حذف عميل",
+    "deleteMessage": "هل أنت متأكد أنك تريد حذف هذا العميل؟ لا يمكن التراجع عن هذا الإجراء."
+  },
+  "form": {
+    "clientName": "اسم العميل",
+    "emailAddress": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "companyOptional": "الشركة (اختياري)",
+    "basicInfo": "المعلومات الأساسية للعميل",
+    "enterDetails": "أدخل التفاصيل الأساسية للعميل"
+  },
+  "sidebar": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة القيادة",
+    "subscriberManagement": "إدارة المشتركين",
+    "companies": "الشركات",
+    "companyRequests": "طلبات الشركات",
+    "clients": "العملاء",
+    "financialManagement": "الإدارة المالية",
+    "invoices": "الفواتير",
+    "payments": "المدفوعات",
+    "wallets": "المحافظ",
+    "walletTransactions": "معاملات المحافظ",
+    "currencies": "العملات",
+    "internalOperations": "العمليات الداخلية",
+    "roles": "الصلاحيات",
+    "employees": "الموظفون",
+    "projects": "المشاريع",
+    "tasks": "المهام",
+    "timeLogs": "سجلات الوقت",
+    "developments": "التطويرات",
+    "contracts": "العقود",
+    "systemSettings": "إعدادات النظام"
   }
 }
