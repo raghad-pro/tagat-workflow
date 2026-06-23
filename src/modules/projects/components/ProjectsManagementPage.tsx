@@ -188,8 +188,8 @@ export function ProjectsManagementPage() {
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
         onClose={closeModal}
-        title="Delete Project?"
-        message="Are you sure you want to delete this project? This action cannot be undone."
+        title={tCommon("delete") || "Delete Project"}
+        itemName={selectedRow?.name}
         isLoading={deleteProjectMutation.isPending}
         onConfirm={() => {
           if (selectedRow?.id) {

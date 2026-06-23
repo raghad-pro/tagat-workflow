@@ -189,8 +189,8 @@ export default function RolesManagementPage() {
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
         onClose={closeModal}
-        title="Delete Role?"
-        message="This action cannot be undone."
+        title={tCommon("delete") || "Delete Role"}
+        itemName={selectedRow?.name}
         isLoading={deleteRoleMutation.isPending}
         onConfirm={() => {
           if (selectedRow?.id) {

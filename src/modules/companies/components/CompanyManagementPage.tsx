@@ -14,6 +14,8 @@ import { useActionModals } from "@/hooks/useActionModals";
 import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
 import { Text } from "@/components/atoms/Text";
 import { AddCompanyModal } from "./AddCompanyModal";
+import { ViewCompanyModal } from "./ViewCompanyModal";
+import { EditCompanyModal } from "./EditCompanyModal";
 import type { Company } from "@/modules/companies/types/companies.types";
 
 const MOCK: Company[] = [
@@ -173,13 +175,53 @@ export function CompanyManagementPage() {
       <AddCompanyModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSave={(data) => {
+          const newCompany: Company = {
+            id: Date.now(),
+            name: data.companyName,
+            domain: data.subdomain + ".localhost",
+            email: data.email,
+            joinedDate: new Date().toISOString().split("T")[0],
+            status: "pending",
+            plan: "basic"
+          };
+          setCompanies((prev) => [newCompany, ...prev]);
+          setIsAddModalOpen(false);
+        }}
+      />
+
+      <ViewCompanyModal
+        isOpen={activeModal === "view"}
+        onClose={closeModal}
+        data={selectedRow}
+      />
+
+      <EditCompanyModal
+        isOpen={activeModal === "edit"}
+        onClose={closeModal}
+        data={selectedRow}
+        onUpdate={(id, data) => {
+          setCompanies((prev) =>
+            prev.map((c) =>
+              c.id === id
+                ? {
+                    ...c,
+                    name: data.companyName,
+                    domain: data.subdomain,
+                    email: data.email,
+                  }
+                : c
+            )
+          );
+          closeModal();
+        }}
       />
 
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
         onClose={closeModal}
-        title="Delete Company?"
-        message="This action cannot be undone."
+        title={t("deleteTitle")}
+        itemName={selectedRow?.name}
         onConfirm={() => {
           if (selectedRow) {
             setCompanies((prev) => prev.filter((c) => c.id !== selectedRow.id));

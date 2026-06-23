@@ -91,12 +91,21 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "subtitle": "Overview of your workspace",
+    "lastUpdated": "Last updated just now",
+    "newCompany": "New Company",
+    "monthlyCashFlow": "Monthly Cash Flow",
+    "subscriberGrowth": "Subscriber Growth",
+    "packageDistribution": "Package Distribution",
+    "recentCompanies": "Recent Companies",
+    "recentRequests": "Recent Requests",
     "projects": "Projects",
     "employees": "Employees",
     "clients": "Clients",
     "tasks": "Tasks",
     "invoices": "Invoices",
-    "settings": "Settings"
+    "settings": "Settings",
+    "showAll": "Show All"
   },
   "common": {
     "save": "Save",
@@ -130,7 +139,13 @@
     "contracts": "Contracts",
     "systemSettings": "System Settings",
     "actions": "Actions",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "status": "Status",
+    "searchPlaceholder": "Search...",
+    "noDataFound": "No data found",
+    "deleteConfirm1": "Are you sure you want to delete ",
+    "deleteConfirm2": " ?",
+    "back": "Back"
   },
   "development": {
     "title": "Developments Management",
@@ -239,6 +254,35 @@
     "subtitle": "View and manage all registered companies in the system.",
     "add": "Add a new company",
     "searchPlaceholder": "Search companies...",
+    "addCompanyTitle": "Add New Company",
+    "editCompanyTitle": "Edit Company",
+    "editCompanySubtitle": "Update company information",
+    "viewCompanyTitle": "View Company",
+    "updateCompany": "Update Company",
+    "saveCompany": "Save Company",
+    "basicInfo": "Basic Company Information",
+    "basicInfoSub": "Enter the company's basic details",
+    "uploadLogo": "Click to upload logo",
+    "deleteTitle": "Delete Company?",
+    "deleteMessage": "This action cannot be undone.",
+    "labels": {
+      "email": "Email",
+      "companyName": "Company Name",
+      "subdomain": "Subdomain",
+      "fieldOfWork": "Field of Work",
+      "companyLogo": "Company Logo",
+      "status": "Status"
+    },
+    "placeholders": {
+      "fieldOfWork": "Choose the field of work"
+    },
+    "fields": {
+      "technical": "Technical",
+      "financial": "Financial",
+      "educational": "Educational",
+      "healthcare": "Healthcare",
+      "other": "Other"
+    },
     "stats": {
       "total": "Total Companies",
       "active": "Active",
@@ -253,6 +297,68 @@
       "domain": "Domain",
       "email": "Email",
       "joinedDate": "Added Date",
+      "status": "Status"
+    }
+  },
+  "invoice": {
+    "title": "Invoices Management",
+    "subtitle": "Manage and track all billing and invoices",
+    "add": "Create Invoice",
+    "searchPlaceholder": "Search invoices by number or client...",
+    "stats": {
+      "total": "Total Invoices",
+      "paid": "Paid",
+      "pending": "Pending",
+      "overdue": "Overdue"
+    },
+    "filter": {
+      "all": "All Invoices",
+      "paid": "Paid",
+      "pending": "Pending",
+      "overdue": "Overdue"
+    },
+    "columns": {
+      "number": "Invoice Number",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "amount": "Amount",
+      "status": "Status",
+      "company": "Company"
+    }
+  },
+  "timeLog": {
+    "title": "Timesheets Dashboard",
+    "subtitle": "Overview of employee time logs and salaries",
+    "add": "Add Time Log",
+    "searchPlaceholder": "Search by employee or company...",
+    "stats": {
+      "totalHours": "Total Hours",
+      "totalSalaries": "Total Salaries",
+      "approved": "Approved",
+      "pending": "Pending",
+      "total": "Total",
+      "paid": "Paid",
+      "completion": "Completion"
+    },
+    "currencyCard": {
+      "title": "Salaries by Currency",
+      "subtitle": "Financial overview across currencies",
+      "badge": "Multi Currency"
+    },
+    "filter": {
+      "allStatus": "All Status",
+      "pending": "Pending",
+      "completed": "Completed",
+      "month": "Month",
+      "jan": "January",
+      "feb": "February"
+    },
+    "columns": {
+      "employee": "Employee",
+      "company": "Company",
+      "date": "Date",
+      "hours": "Hours",
+      "rate": "Rate",
       "status": "Status"
     }
   },
@@ -297,7 +403,8 @@
       "underReview": "Under Review",
       "approved": "Approved",
       "rejected": "Rejected"
-    }
+    },
+    "noRequests": "No join requests"
   },
   "client": {
     "title": "Client Management",

@@ -23,23 +23,13 @@ export const clientApi = {
   // ─── POST create ──────────────────────────────────────────────────────────
   // super_admin: POST /super_admin/clients  { name, email, password, company_id }
   // company:     POST /company/clients      { name, email, password }
-create: (data: AddClientRequest, role: Role = "super_admin") => {
-  const body =
-    role === "company_admin"
-      ? { name: data.name, email: data.email, password: data.password, password_confirmation: data.password }
-      : {
-          name:     data.name,
-          email:    data.email,
-          password: data.password,
-          password_confirmation: data.password,
-          // company_id فقط لو موجود — ما نبعثه undefined
-          ...(data.company_id != null && { company_id: data.company_id }),
-        };
-  return apiClient.post<{ success: boolean; message: string; data: ApiClient }>(
-    base(role),
-    body
-  );
-},
+  create: (data: AddClientRequest, role: Role = "super_admin") =>
+    apiClient.post<{ success: boolean; message: string; data: ApiClient }>(
+      base(role),
+      role === "company_admin"
+        ? { name: data.name, email: data.email, password: data.password }
+        : data
+    ),
 
   // ─── PUT update status ────────────────────────────────────────────────────
   // super_admin: PUT /super_admin/clients/:id  { company_id, status }

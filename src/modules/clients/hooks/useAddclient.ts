@@ -19,19 +19,8 @@ export const useAddClient = () => {
         style: { background: "#1d9e75", color: "#fff" },
       });
     },
-    onError: (error: any) => {
-      let msg = "Something went wrong while adding the client";
-      if (error?.response?.data?.message) {
-        msg = error.response.data.message;
-      }
-      if (error?.response?.data?.errors) {
-        const errors = error.response.data.errors;
-        const firstError = Object.values(errors)[0];
-        if (Array.isArray(firstError) && firstError[0]) {
-          msg = firstError[0];
-        }
-      }
-      toast.error(msg, {
+    onError: () => {
+      toast.error("Something went wrong while adding the client", {
         style: { background: "#F92929", color: "#fff" },
       });
     },

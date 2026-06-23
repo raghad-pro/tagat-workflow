@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Text } from "@/components/atoms/Text";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ interface ActionModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  mode: "add" | "edit" | "view";
+  mode: "add" | "edit" | "view" | "delete";
   children: React.ReactNode;
   formId?: string;
   onSubmit?: () => void;
@@ -59,8 +59,10 @@ export function ActionModal({
   if (!isOpen) return null;
 
   const isView = mode === "view";
-  const primaryActionLabel = saveLabel || (mode === "edit" ? t("update") : t("save"));
+  const primaryActionLabel = saveLabel || (mode === "delete" ? t("delete") : mode === "edit" ? t("update") : t("save"));
   const secondaryActionLabel = cancelLabel || (isView ? t("close") : t("cancel"));
+  const primaryActionIcon = mode === "delete" ? <Trash2 size={15} /> : <Send size={15} />;
+  const primaryActionVariant = mode === "delete" ? "danger" : "solid"; // assuming "danger" variant exists, otherwise I should use "solid" and override styles or check Button variants.
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -101,7 +103,7 @@ export function ActionModal({
               size="md"
               loading={isLoading}
               onClick={!formId ? onSubmit : undefined}
-              licon={!isLoading ? <Send size={15} /> : undefined}
+              licon={!isLoading ? primaryActionIcon : undefined}
               className="px-8"
             >
               {primaryActionLabel}

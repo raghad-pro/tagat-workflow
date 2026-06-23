@@ -149,8 +149,8 @@ export function ContractsManagementPage() {
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
         onClose={closeModal}
-        title="Delete Contract?"
-        message="This action cannot be undone."
+        title={t("deleteTitle") || "Delete Contract"}
+        itemName={selectedRow?.title}
         onConfirm={() => { console.log("Delete Contract", selectedRow?.id); closeModal(); }}
       />
 

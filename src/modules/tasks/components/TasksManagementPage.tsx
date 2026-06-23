@@ -194,8 +194,8 @@ export function TasksManagementPage() {
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
         onClose={closeModal}
-        title="Delete Task?"
-        message="This action cannot be undone."
+        title={tCommon("delete") || "Delete Task"}
+        itemName={selectedRow?.title}
         onConfirm={() => { console.log("Delete Task", selectedRow?.id); closeModal(); }}
       />
 

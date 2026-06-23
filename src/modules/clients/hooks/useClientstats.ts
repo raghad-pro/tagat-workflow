@@ -11,7 +11,6 @@ export const useClientStats = () => {
   return useQuery({
     queryKey: ["clients", "stats", role],
     queryFn: () => clientApi.getAll({ per_page: 100 }, role),
-    // بدون staleTime — بتتحدث مع كل invalidateQueries(["clients"])
     select: (res) => {
       const list = res?.data?.data ?? [];
       let approved = 0, pending = 0, rejected = 0;
@@ -23,7 +22,13 @@ export const useClientStats = () => {
           else if (s === "rejected") rejected++;
         });
       });
-      return { total: list.length, approved, pending, rejected };
+
+      return {
+        total: list.length,
+        approved,
+        pending,
+        rejected,
+      };
     },
   });
 };

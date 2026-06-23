@@ -1,18 +1,44 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { X, Mail, ChevronDown, Calendar } from "@/assets/icons/icons";
-import { Button } from "@/components/atoms/Button";
-import { Text } from "@/components/atoms/Text";
-import { Modal } from "@/components/molecules/Modal";
-import type { CreateInvoiceRequest, InvoiceCurrency, InvoiceStatus } from "@/modules/invoices/types/invoices.types";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useTranslations } from "next-intl";
+import { ActionModal } from "@/components/molecules/ActionModal";
+import { TextField, SelectField } from "@/components/molecules/FormFields";
+import { Form } from "@/components/ui/form";
+import { Calendar, DollarSign, FileText } from "lucide-react";
+import type { CreateInvoiceRequest } from "@/modules/invoices/types/invoices.types";
 import { useAuth } from "@/providers/AuthProvider";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const createInvoiceSchema = z.object({
+  company: z.string().optional(),
+  client: z.string().min(1, "Client is required"),
+  project: z.string().optional(),
+  currency: z.string().min(1, "Currency is required"),
+  amount: z.string().min(1, "Amount is required"),
+  status: z.string().min(1, "Status is required"),
+  invoiceDate: z.string().min(1, "Invoice date is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+}).superRefine((data, ctx) => {
+  if (data.invoiceDate && data.dueDate) {
+    if (new Date(data.invoiceDate) > new Date(data.dueDate)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invoice date cannot be after due date",
+        path: ["invoiceDate"],
+      });
+    }
+  }
+});
+
+type FormValues = z.infer<typeof createInvoiceSchema>;
+
 interface CreateInvoiceModalProps {
-  isOpen:    boolean;
-  onClose:   () => void;
-  onSave:    (data: CreateInvoiceRequest) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: CreateInvoiceRequest) => void;
   isPending?: boolean;
 }
 
@@ -35,7 +61,7 @@ const PROJECT_OPTIONS = [
   { value: "crm",     label: "CRM System"       },
 ] as const;
 
-const CURRENCY_OPTIONS: { value: InvoiceCurrency; label: string }[] = [
+const CURRENCY_OPTIONS = [
   { value: "USD", label: "USD" },
   { value: "EUR", label: "EUR" },
   { value: "GBP", label: "GBP" },
@@ -43,7 +69,7 @@ const CURRENCY_OPTIONS: { value: InvoiceCurrency; label: string }[] = [
   { value: "AED", label: "AED" },
 ];
 
-const STATUS_OPTIONS: { value: InvoiceStatus; label: string }[] = [
+const STATUS_OPTIONS = [
   { value: "Paid",    label: "Paid"    },
   { value: "Pending", label: "Pending" },
   { value: "Overdue", label: "Overdue" },
@@ -56,160 +82,76 @@ const AMOUNT_OPTIONS = [
   { value: "3000", label: "$3,000" },
 ];
 
-const EMPTY_FORM: CreateInvoiceRequest = {
-  company:     "",
-  client:      "",
-  project:     "",
-  currency:    "",
-  amount:      "",
-  invoiceDate: "",
-  dueDate:     "",
-  status:      "",
-};
-
-// ─── SelectField ─────────────────────────────────────────────────────────────
-// استخدام native select للأداء وdark mode مجاني
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder = "Select",
-  required,
-}: {
-  label:       string;
-  value:       string;
-  onChange:    (v: string) => void;
-  options:     readonly { value: string; label: string }[];
-  placeholder?: string;
-  required?:   boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Text size="sm" weight="bold" tag="label">
-        {label}
-        {required && <span className="ds-text-error ms-1">*</span>}
-      </Text>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-xl border ds-border-input-color ds-bg-form ds-text-sm ds-text-primary px-4 focus:outline-none focus:border-[var(--color-primary)] transition-colors cursor-pointer"
-          style={{ height: "var(--input-height)", paddingInlineEnd: "2.5rem" }}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-        <ChevronDown
-          size={14}
-          className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 ds-text-gray-200"
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── DateField ────────────────────────────────────────────────────────────────
-function DateField({
-  label,
-  value,
-  onChange,
-  required,
-}: {
-  label:    string;
-  value:    string;
-  onChange: (v: string) => void;
-  required?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Text size="sm" weight="bold" tag="label">
-        {label}
-        {required && <span className="ds-text-error ms-1">*</span>}
-      </Text>
-      <div className="relative">
-        <input
-          type="date"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-xl border ds-border-input-color ds-bg-form ds-text-sm ds-text-primary px-4 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
-          style={{ height: "var(--input-height)", paddingInlineEnd: "2.5rem" }}
-        />
-        <Calendar
-          size={14}
-          className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 ds-text-gray-200"
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── Modal ────────────────────────────────────────────────────────────────────
 export function CreateInvoiceModal({
   isOpen,
   onClose,
   onSave,
   isPending = false,
 }: CreateInvoiceModalProps) {
+  const t = useTranslations("invoice");
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(createInvoiceSchema),
+    mode: "onTouched",
+    defaultValues: {
+      company: "",
+      client: "",
+      project: "",
+      currency: "",
+      amount: "",
+      invoiceDate: "",
+      dueDate: "",
+      status: "",
+    },
+  });
+
   const { user } = useAuth();
   const isCompanyAdmin = user?.role === "company_admin";
 
-  const [form, setForm] = useState<CreateInvoiceRequest>(EMPTY_FORM);
-
-  const set = useCallback(
-    (field: keyof CreateInvoiceRequest) => (v: string) =>
-      setForm((prev) => ({ ...prev, [field]: v })),
-    []
-  );
-
-  const handleClose = () => {
-    setForm(EMPTY_FORM);
-    onClose();
-  };
-
-  const handleSave = () => {
-    onSave(form);
+  const handleFormSubmit = (data: FormValues) => {
+    // cast to match the CreateInvoiceRequest interface
+    onSave(data as CreateInvoiceRequest);
+    form.reset();
   };
 
   if (!isOpen) return null;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Create Invoice"
+    <ActionModal 
+      isOpen={isOpen} 
+      onClose={() => { form.reset(); onClose(); }} 
+      title={t("add") || "Create Invoice"}
+      mode="add"
+      formId="create-invoice-form"
       size="lg"
-      footer={
-        <>
-          <Button variant="ghost" size="md" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="solid"
-            size="md"
-            loading={isPending}
-            licon={!isPending ? <Mail size={14} /> : undefined}
-            onClick={handleSave}
-          >
-            Save Invoice
-          </Button>
-        </>
-      }
+      isLoading={isPending}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {!isCompanyAdmin && (
-          <SelectField label="Company"   value={form.company}     onChange={set("company")}     options={COMPANY_OPTIONS}  required />
-        )}
-        <SelectField label="Client"    value={form.client}      onChange={set("client")}      options={CLIENT_OPTIONS}   required />
-        <SelectField label="Project"   value={form.project}     onChange={set("project")}     options={PROJECT_OPTIONS}  />
-        <SelectField label="Currency"  value={form.currency}    onChange={set("currency")}    options={CURRENCY_OPTIONS} required />
-        <SelectField label="Amount"    value={form.amount}      onChange={set("amount")}      options={AMOUNT_OPTIONS}   required />
-        <SelectField label="Status"    value={form.status}      onChange={set("status")}      options={STATUS_OPTIONS}   required />
-        <DateField   label="Invoice Date" value={form.invoiceDate} onChange={set("invoiceDate")} required />
-        <DateField   label="Due Date"     value={form.dueDate}     onChange={set("dueDate")}     required />
+      <div className="flex flex-col w-full">
+        <Form {...form}>
+          <form id="create-invoice-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
+            <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {!isCompanyAdmin && (
+                  <SelectField control={form.control} name="company" label={t("columns.company") || "Company"} options={[...COMPANY_OPTIONS]} required placeholder="Select company" />
+                )}
+                <SelectField control={form.control} name="client" label="Client" options={[...CLIENT_OPTIONS]} required placeholder="Select client" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SelectField control={form.control} name="project" label="Project" options={[...PROJECT_OPTIONS]} placeholder="Select project" />
+                <SelectField control={form.control} name="currency" label="Currency" options={CURRENCY_OPTIONS} required placeholder="Select currency" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SelectField control={form.control} name="amount" label={t("columns.amount") || "Amount"} options={AMOUNT_OPTIONS} required placeholder="Select amount" />
+                <SelectField control={form.control} name="status" label={t("columns.status") || "Status"} options={STATUS_OPTIONS} required placeholder="Select status" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TextField control={form.control} name="invoiceDate" label={t("columns.issueDate") || "Invoice Date"} type="date" placeholder="" required icon={Calendar} />
+                <TextField control={form.control} name="dueDate" label={t("columns.dueDate") || "Due Date"} type="date" placeholder="" required icon={Calendar} />
+              </div>
+            </div>
+          </form>
+        </Form>
       </div>
-    </Modal>
+    </ActionModal>
   );
 }

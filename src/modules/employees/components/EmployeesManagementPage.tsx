@@ -128,7 +128,7 @@ export default function EmployeesManagementPage() {
         </PageCard>
       </PageContainer>
       <AddEmployeeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={(v) => { console.log("New Employee:", v); setIsModalOpen(false); }} />
-      <DeleteConfirmationModal isOpen={activeModal === "delete"} onClose={closeModal} title={`Delete Employee "${selectedRow?.name ?? ""}"?`} message="This action cannot be undone." onConfirm={() => { console.log("Delete Employee", selectedRow?.id); closeModal(); }} />
+      <DeleteConfirmationModal isOpen={activeModal === "delete"} onClose={closeModal} title={tCommon("delete") || "Delete Employee"} itemName={selectedRow?.name} onConfirm={() => { console.log("Delete Employee", selectedRow?.id); closeModal(); }} />
       <ViewEmployeeModal isOpen={activeModal === "view"} onClose={closeModal} data={selectedRow} />
       <EditEmployeeModal isOpen={activeModal === "edit"} onClose={closeModal} data={selectedRow} onUpdate={(id, data) => { console.log("Edit", id, data); closeModal(); }} />
     </>

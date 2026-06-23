@@ -4,15 +4,19 @@ import React from "react";
 import { ActionModal } from "@/components/molecules/ActionModal";
 import { Text } from "@/components/atoms/Text";
 import { StatusBadge } from "@/components/atoms/Statusbadge";
+import { useTranslations } from "next-intl";
 
 export function ViewTimeLogModal({ isOpen, onClose, data }: { isOpen: boolean; onClose: () => void; data: any | null }) {
+  const t = useTranslations("timeLog");
+  const tCommon = useTranslations("common");
+
   if (!data) return null;
 
   return (
     <ActionModal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title=""
+      title={tCommon("view") || "View Time Log"}
       mode="view"
       size="md"
     >
@@ -32,19 +36,19 @@ export function ViewTimeLogModal({ isOpen, onClose, data }: { isOpen: boolean; o
 
           <ul className="space-y-4 list-disc list-inside ds-text-sub">
             <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Company:</span> 
+              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("columns.company") || "Company"}:</span> 
               <span className="ds-text-main">{data.company}</span>
             </li>
             <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Date:</span> 
+              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("columns.date") || "Date"}:</span> 
               <span className="ds-text-main">{data.date}</span>
             </li>
             <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Hours:</span> 
+              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("columns.hours") || "Hours"}:</span> 
               <span className="ds-text-main">{data.hours}</span>
             </li>
             <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Rate/Hr:</span> 
+              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("columns.rate") || "Rate/Hr"}:</span> 
               <span className="ds-text-main">{data.rateHr}</span>
             </li>
             <li className="flex items-center">

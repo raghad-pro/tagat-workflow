@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { PageContainer } from "@/components/template/PageContainer";
 import { PageHeader } from "@/components/molecules/Pageheader";
 import { SearchFilterBar, type FilterOption } from "@/components/molecules/Searchfilterbar";
@@ -37,8 +37,8 @@ import { useClientStats } from "@/modules/clients/hooks/useClientstats";
 import { useAddClient } from "@/modules/clients/hooks/useAddclient";
 import { useDeleteClient } from "@/modules/clients/hooks/useDeleteclient";
 import { useUpdateClientStatus } from "@/modules/clients/hooks/useupdateclientstatus";
-import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTranslations } from "next-intl";
 
 import type {
   AddClientFormValues,
@@ -85,7 +85,7 @@ function PivotStatusPill({ status }: { status: PivotStatus }) {
   const label = status.charAt(0).toUpperCase() + status.slice(1);
   return (
     <span
-      className="inline-flex items-center w-fit gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold whitespace-nowrap"
+      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold whitespace-nowrap"
       style={{ background: cfg.bg, color: cfg.color }}
     >
       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cfg.dot }} />
@@ -117,6 +117,8 @@ function normalizeClient(raw: any): NormalizedClient {
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function ClientManagementPage() {
+  const t = useTranslations("client");
+  const tCommon = useTranslations("common");
   const { user } = useAuth();
   const isCompanyAdmin = user?.role === "company_admin";
 
@@ -138,40 +140,8 @@ export default function ClientManagementPage() {
   const { mutate: removeClient, isPending: isDeleting } = useDeleteClient();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateClientStatus();
 
-  const isSuperAdmin = user?.role === "super_admin";
-  const { data: companiesData } = useCompanies({ per_page: 100 });
-  const allCompaniesList = isSuperAdmin ? (companiesData?.data?.data ?? []).map((c: any) => ({ id: c.id, name: c.name })) : [];
-
-  // ─── normalize + filter client-side ──────────────────────────────────────────
-  const rawClients = (rawData?.data?.data ?? []).map(normalizeClient);
-  
-  // Remove orphaned clients (clients with no companies) so they don't show up in the table after being detached
-  const allClients: NormalizedClient[] = rawClients.filter((c: NormalizedClient) => {
-    const toShow = user?.role === "company_admin" 
-      ? c.companies.filter(comp => comp.id === user?.company_id)
-      : c.companies;
-    return toShow.length > 0;
-  });
-
-  // Calculate stats directly from allClients so it accurately reflects the table
-  const localStats = useMemo(() => {
-    let total = allClients.length;
-    let approved = 0, pending = 0, rejected = 0;
-    
-    allClients.forEach(c => {
-      const toShow = user?.role === "company_admin" 
-        ? c.companies.filter(comp => comp.id === user?.company_id)
-        : c.companies;
-        
-      toShow.forEach(comp => {
-        if (comp.pivot.status === "approved") approved++;
-        else if (comp.pivot.status === "pending") pending++;
-        else if (comp.pivot.status === "rejected") rejected++;
-      });
-    });
-    
-    return { total, approved, pending, rejected };
-  }, [allClients, user?.role, user?.company_id]);
+  // ── normalize + filter client-side ──────────────────────────────────────────
+  const allClients: NormalizedClient[] = (rawData?.data?.data ?? []).map(normalizeClient);
 
   const filtered = allClients.filter((c) => {
     const q = search.toLowerCase();
@@ -202,11 +172,10 @@ export default function ClientManagementPage() {
 
   const handleDelete = () => {
     if (!deleteClient) return;
-    const company_id = user?.company_id ?? deleteClient.companies[0]?.id ?? null;
-    if (!company_id && user?.role === "super_admin") return;
-    
+    // نستخدم أول شركة مرتبطة كـ company_id — لو ما في نستخدم 1
+    const company_id = deleteClient.companies[0]?.id ?? 1;
     removeClient(
-      { id: deleteClient.id, company_id: company_id as number },
+      { id: deleteClient.id, company_id },
       { onSuccess: () => setDeleteClient(null) }
     );
   };
@@ -221,32 +190,32 @@ export default function ClientManagementPage() {
     );
   };
 
-  // ─── stats cards ─────────────────────────────────────────────────────────────
+  // ── stats cards ──────────────────────────────────────────────────────────────
   const statCards: StatItem[] = [
     {
       icon:      Users,
-      value:     localStats.total,
+      value:     stats?.total ?? 0,
       label:     "Total Clients",
       iconColor: "var(--color-primary)",
       iconBg:    "var(--color-bg-primary-200)",
     },
     {
       icon:      ShieldCheck,
-      value:     localStats.approved,
+      value:     stats?.approved ?? 0,
       label:     "Approved",
       iconColor: "#059669",
       iconBg:    "rgba(52,211,153,0.12)",
     },
     {
       icon:      Clock,
-      value:     localStats.pending,
+      value:     stats?.pending ?? 0,
       label:     "Pending",
       iconColor: "#d97706",
       iconBg:    "rgba(251,191,36,0.12)",
     },
     {
       icon:      ShieldAlert,
-      value:     localStats.rejected,
+      value:     stats?.rejected ?? 0,
       label:     "Rejected",
       iconColor: "#dc2626",
       iconBg:    "rgba(239,68,68,0.10)",
@@ -303,7 +272,7 @@ export default function ClientManagementPage() {
           return <PivotStatusPill status="pending" />;
 
         return (
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-col gap-1">
             {toShow.map((c) => (
               <PivotStatusPill key={c.id} status={c.pivot.status} />
             ))}
@@ -400,7 +369,6 @@ export default function ClientManagementPage() {
         onClose={() => setAddOpen(false)}
         onSave={handleAdd}
         isPending={isAdding}
-        companies={allCompaniesList}
       />
 
       {/* ── View Modal ── */}
@@ -423,10 +391,10 @@ export default function ClientManagementPage() {
       <DeleteConfirmationModal
         isOpen={!!deleteClient}
         onClose={() => setDeleteClient(null)}
-        title="Remove Client"
-        message={`Are you sure you want to remove "${deleteClient?.name}" from the company?`}
+        title={t("deleteTitle")}
+        itemName={deleteClient?.name}
         onConfirm={handleDelete}
-        isPending={isDeleting}
+        isLoading={isDeleting}
       />
     </>
   );

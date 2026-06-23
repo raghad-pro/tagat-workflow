@@ -172,8 +172,8 @@ export default function DevelopmentsManagementPage() {
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
         onClose={closeModal}
-        title="Delete Development?"
-        message="This action cannot be undone."
+        title={tCommon("delete") || "Delete Development"}
+        itemName={selectedRow?.title}
         onConfirm={() => { console.log("Delete Development", selectedRow?.id); closeModal(); }}
       />
 

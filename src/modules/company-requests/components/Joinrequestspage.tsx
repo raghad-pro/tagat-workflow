@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { PageHeader } from "@/components/molecules/Pageheader";
-import { PageContainer } from "@/components/template/PageContainer";
+import { PageHeader }     from "@/components/molecules/Pageheader";
+import { PageContainer }  from "@/components/template/PageContainer";
 import {
   PageCard,
   PageCardSection,
@@ -11,172 +11,336 @@ import {
   PageCardFooter,
 } from "@/components/molecules/Pagecard";
 import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
-import { DataTable, TableColumn, TableAction } from "@/components/molecules/Datatable";
-import { Pagination } from "@/components/molecules/Pagination";
-import { Text } from "@/components/atoms/Text";
-import { Check, X } from "lucide-react";
-import { useJoinRequests } from "../hooks/useJoinrequests";
+import { Pagination }      from "@/components/molecules/Pagination";
+import { Text }            from "@/components/atoms/Text";
+import { StatusBadge }     from "@/components/atoms/Statusbadge";
+import { ClientAvatar }    from "@/components/atoms/Clientavatar";
+import { CheckCircle2, X } from "lucide-react";
+import { useJoinRequests }       from "../hooks/useJoinrequests";
 import { useApproveJoinRequest } from "../hooks/useApprovejoinrequest";
-import { useRejectJoinRequest } from "../hooks/useRejectjoinrequest";
-import { useAuth } from "@/providers/AuthProvider";
-import type { JoinRequest, JoinRequestsQueryParams } from "../types/company-requests.types";
+import { useRejectJoinRequest }  from "../hooks/useRejectjoinrequest";
+import { useAuth }               from "@/providers/AuthProvider";
+import { JOIN_REQUEST_STATUS_MAP } from "../types/company-requests.types";
+import type {
+  JoinRequestClient,
+  JoinRequestCompany,
+  JoinRequestStatus,
+} from "../types/company-requests.types";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-function ClientAvatar({ name }: { name: string }) {
-  const initials = name.slice(0, 1).toUpperCase();
-  const colors = ["#0ea5e9", "#6366f1", "#06b6d4", "#8b5cf6"];
-  const color = colors[name.charCodeAt(0) % colors.length];
+// ─── Action Button ────────────────────────────────────────────────────────────
+function ActionBtn({
+  onClick,
+  title,
+  hoverBg,
+  hoverColor,
+  children,
+}: {
+  onClick: () => void;
+  title: string;
+  hoverBg: string;
+  hoverColor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className="w-7 h-7 flex items-center justify-center rounded-lg ds-text-gray-200 transition-all"
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = hoverBg;
+        el.style.color = hoverColor;
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = "transparent";
+        el.style.color = "";
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ─── Company Sub-Row ──────────────────────────────────────────────────────────
+function CompanySubRow({
+  company,
+  clientId,
+  role,
+  onApprove,
+  onReject,
+  isLast,
+}: {
+  company: JoinRequestCompany;
+  clientId: number;
+  role: string;
+  onApprove: (p: { role: string; clientId: number; companyId: number }) => void;
+  onReject:  (p: { role: string; clientId: number; companyId: number }) => void;
+  isLast: boolean;
+}) {
+  const isPending = company.pivot.status === "pending";
+
   return (
     <div
-      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-      style={{ background: `${color}1A`, color }}
+      className="grid items-center gap-4 px-4 py-2.5 transition-colors hover:bg-[var(--color-bg)]"
+      style={{
+        gridTemplateColumns: "2fr 2fr 130px 80px",
+        borderBottom: !isLast ? "1px solid var(--color-border-form)" : "none",
+      }}
     >
-      {initials}
+      <Text size="sm" tag="p" className="truncate ps-2">{company.name}</Text>
+
+      <Text size="sm" color="gray-200" tag="p" className="truncate">{company.email}</Text>
+
+      <div>
+        <StatusBadge
+          status={JOIN_REQUEST_STATUS_MAP[company.pivot.status as JoinRequestStatus]}
+          label={company.pivot.status.charAt(0).toUpperCase() + company.pivot.status.slice(1)}
+        />
+      </div>
+
+      <div className="flex items-center gap-1">
+        {isPending && (
+          <>
+            <ActionBtn
+              title="Approve"
+              hoverBg="rgba(34,197,94,0.10)"
+              hoverColor="#15803d"
+              onClick={() => onApprove({ role, clientId, companyId: company.id })}
+            >
+              <CheckCircle2 size={15} />
+            </ActionBtn>
+            <ActionBtn
+              title="Reject"
+              hoverBg="rgba(239,68,68,0.10)"
+              hoverColor="#dc2626"
+              onClick={() => onReject({ role, clientId, companyId: company.id })}
+            >
+              <X size={15} />
+            </ActionBtn>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: JoinRequest["status"] }) {
-  const styles: Record<JoinRequest["status"], string> = {
-    pending:  "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400",
-    approved: "bg-green-100  dark:bg-green-900/30  text-green-700  dark:text-green-400",
-    rejected: "bg-red-100    dark:bg-red-900/30    text-red-700    dark:text-red-400",
-  };
+// ─── Client Row ───────────────────────────────────────────────────────────────
+function ClientRow({
+  client,
+  role,
+  onApprove,
+  onReject,
+  isLast,
+}: {
+  client: JoinRequestClient;
+  role: string;
+  onApprove: (p: { role: string; clientId: number; companyId: number }) => void;
+  onReject:  (p: { role: string; clientId: number; companyId: number }) => void;
+  isLast: boolean;
+}) {
+  const pendingCount = client.companies.filter((co) => co.pivot.status === "pending").length;
+
   return (
-    <div className={`inline-flex items-center justify-center px-3 py-1 rounded-md text-xs font-medium ${styles[status]}`}>
-      {status}
+    <div style={{ borderBottom: !isLast ? "2px solid var(--color-border-form)" : "none" }}>
+
+      {/* ── Client header ── */}
+      <div
+        className="grid items-center gap-4 px-4 py-3"
+        style={{ gridTemplateColumns: "2fr 6fr 80px" }}
+      >
+        {/* Avatar + name */}
+        <div className="flex items-center gap-2.5">
+          <ClientAvatar name={client.name} size="sm" />
+          <Text size="sm" weight="bold" tag="p" className="truncate">
+            {client.name}
+          </Text>
+        </div>
+
+        {/* Company chips */}
+        <div className="flex flex-wrap gap-1.5">
+          {client.companies.map((co) => (
+            <span
+              key={co.id}
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full"
+              style={{
+                background: "var(--color-bg-primary-200)",
+                color: "var(--color-primary)",
+                fontSize: "12px",
+                fontWeight: 500,
+              }}
+            >
+              {co.name}
+            </span>
+          ))}
+        </div>
+
+        {/* Pending badge */}
+        <div>
+          {pendingCount > 0 && (
+            <span
+              className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap"
+              style={{ background: "rgba(251,191,36,0.15)", color: "#d97706" }}
+            >
+              {pendingCount} pending
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ── Sub-table header ── */}
+      <div
+        className="grid gap-4 px-4 py-1.5"
+        style={{
+          gridTemplateColumns: "2fr 2fr 130px 80px",
+          background: "var(--color-bg)",
+          borderTop: "1px solid var(--color-border-form)",
+          borderBottom: "1px solid var(--color-border-form)",
+        }}
+      >
+        {["Company", "Email", "Status", "Actions"].map((h, i) => (
+          <Text
+            key={h}
+            size="sm"
+            color="gray-200"
+            tag="p"
+            className={`text-[11px] font-medium ${i === 0 ? "ps-2" : ""}`}
+          >
+            {h}
+          </Text>
+        ))}
+      </div>
+
+      {/* ── Company rows ── */}
+      {client.companies.map((co, i) => (
+        <CompanySubRow
+          key={co.id}
+          company={co}
+          clientId={client.id}
+          role={role}
+          onApprove={onApprove}
+          onReject={onReject}
+          isLast={i === client.companies.length - 1}
+        />
+      ))}
     </div>
   );
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function JoinRequestsPage() {
   const t       = useTranslations("companyRequest");
   const tCommon = useTranslations("common");
 
-  const [params, setParams] = useState<JoinRequestsQueryParams>({
-    search:   undefined,
-    page:     1,
-    per_page: PAGE_SIZE,
+  const [search, setSearch]       = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { user } = useAuth();
+  const role = user?.role ?? "super_admin";
+
+  const { data, isLoading } = useJoinRequests({
+    search: search || undefined,
+    page: 1,
+    per_page: 100, // نجيب الكل ونعمل pagination client-side على مستوى العملاء
   });
 
-  const { data, isLoading } = useJoinRequests(params);
-  const { user } = useAuth();
+  const { mutate: approve } = useApproveJoinRequest();
+  const { mutate: reject }  = useRejectJoinRequest();
 
-  const resolvedRole   = user?.role ?? "super_admin";
-  const isCompanyAdmin = resolvedRole === "company_admin";
-  
-  // بناءً على طلبك الأخير: إخفاء الطلب بعد القبول/الرفض لجميع الصلاحيات (بما فيها السوبر أدمن)
-  const rows           = (data?.rows ?? []).filter(r => r.status === "pending");
+  // فلتر البحث client-side
+  const clients = useMemo(() => {
+    const raw = data?.raw ?? [];
+    if (!search.trim()) return raw;
+    const q = search.trim().toLowerCase();
+    return raw.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.companies.some(
+          (co) =>
+            co.name.toLowerCase().includes(q) ||
+            co.email.toLowerCase().includes(q)
+        )
+    );
+  }, [data?.raw, search]);
 
-  const { mutate: approve, isPending: isApproving } = useApproveJoinRequest();
-  const { mutate: reject,  isPending: isRejecting  } = useRejectJoinRequest();
+  // Pagination على مستوى العملاء
+  const pagedClients = clients.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
-  // ─── Columns ─────────────────────────────────────────────────────────────────
-  const columns: TableColumn<JoinRequest>[] = useMemo(() => {
-    const base: TableColumn<JoinRequest>[] = [
-      {
-        key: "clientName",
-        header: t("columns.customerName"),
-        isPrimary: true,
-        render: (row) => (
-          <div className="flex items-center gap-3">
-            <ClientAvatar name={row.clientName} />
-            <Text size="sm" weight="medium" tag="span" className="ds-text-primary">
-              {row.clientName}
-            </Text>
-          </div>
-        ),
-      },
-      {
-        key: "companyEmail",
-        header: t("columns.email"),
-        render: (row) => (
-          <Text size="sm" className="ds-text-gray-200">{row.companyEmail}</Text>
-        ),
-      },
-      {
-        key: "status",
-        header: t("columns.status"),
-        render: (row) => <StatusBadge status={row.status} />,
-      },
-    ];
+  const handleSearch = (v: string) => {
+    setSearch(v);
+    setCurrentPage(1);
+  };
 
-    // حقل الشركة بيختفي لـ company_admin
-    if (!isCompanyAdmin) {
-      base.splice(2, 0, {
-        key: "companyName",
-        header: t("columns.company"),
-        render: (row) => (
-          <Text size="sm" weight="medium" className="ds-text-primary">
-            {row.companyName}
-          </Text>
-        ),
-      });
-    }
-
-    return base;
-  }, [t, isCompanyAdmin]);
-
-  // ─── Actions ─────────────────────────────────────────────────────────────────
-  const actions: TableAction<JoinRequest>[] = useMemo(() => [
-    {
-      icon: Check,
-      label: t("actions.accept"),
-      colorScheme: "edit",
-      onClick: (row) =>
-        approve({ role: resolvedRole, clientId: row.clientId, companyId: row.companyId }),
-      disabled: (row: JoinRequest) => row.status !== "pending" || isApproving,
-    },
-    {
-      icon: X,
-      label: t("actions.reject"),
-      colorScheme: "delete",
-      onClick: (row) =>
-        reject({ role: resolvedRole, clientId: row.clientId, companyId: row.companyId }),
-      disabled: (row: JoinRequest) => row.status !== "pending" || isRejecting,
-    },
-  ], [t, resolvedRole, approve, reject, isApproving, isRejecting]);
-
-  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <PageContainer isLoading={isLoading} skeletonVariant="dashboard">
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-      />
+    <PageContainer isLoading={isLoading} skeletonVariant="table" skeletonRows={PAGE_SIZE}>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
-      <div className="mt-8">
+      <div className="mt-6">
         <PageCard>
+          {/* Search */}
           <PageCardSection>
             <SearchFilterBar
-              search={params.search ?? ""}
-              onSearchChange={(v) =>
-                setParams((prev) => ({ ...prev, search: v || undefined, page: 1 }))
-              }
+              search={search}
+              onSearchChange={handleSearch}
               searchPlaceholder={t("searchPlaceholder")}
             />
           </PageCardSection>
 
-          <PageCardBody>
-            <DataTable
-              columns={columns}
-              data={rows}
-              actions={actions}
-              actionsHeader={tCommon("actions")}
-              emptyMessage={t("noRequests")}
-            />
+          {/* Main table header */}
+          <div
+            className="grid gap-4 px-4 py-3"
+            style={{
+              gridTemplateColumns: "2fr 6fr 80px",
+              borderBottom: "1px solid var(--color-border-form)",
+              background: "var(--color-bg)",
+            }}
+          >
+            {["Client Name", "Companies", ""].map((h, i) => (
+              <Text
+                key={i}
+                size="sm"
+                color="gray-200"
+                tag="p"
+                className="text-[11px] font-medium uppercase tracking-wide"
+              >
+                {h}
+              </Text>
+            ))}
+          </div>
+
+          {/* Body */}
+          <PageCardBody className="!px-0 !py-0">
+            {pagedClients.length === 0 ? (
+              <div className="py-16 text-center">
+                <Text size="sm" color="gray-200" tag="p">{t("noRequests")}</Text>
+              </div>
+            ) : (
+              pagedClients.map((client, i) => (
+                <ClientRow
+                  key={client.id}
+                  client={client}
+                  role={role}
+                  onApprove={approve}
+                  onReject={reject}
+                  isLast={i === pagedClients.length - 1}
+                />
+              ))
+            )}
           </PageCardBody>
 
+          {/* Pagination — بيستخدم data array كما هو في الـ component */}
           <PageCardFooter>
             <Pagination
-              currentPage={params.page ?? 1}
-              data={rows}
+              currentPage={currentPage}
+              data={clients}
               pageSize={PAGE_SIZE}
-              onPageChange={(p) => setParams((prev) => ({ ...prev, page: p }))}
+              onPageChange={(p) => setCurrentPage(p)}
             />
           </PageCardFooter>
         </PageCard>

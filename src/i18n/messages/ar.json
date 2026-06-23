@@ -91,12 +91,21 @@
   },
   "dashboard": {
     "title": "لوحة التحكم",
+    "subtitle": "نظرة عامة على مساحة العمل الخاصة بك",
+    "lastUpdated": "تم التحديث الآن",
+    "newCompany": "شركة جديدة",
+    "monthlyCashFlow": "التدفق النقدي الشهري",
+    "subscriberGrowth": "نمو المشتركين",
+    "packageDistribution": "توزيع الباقات",
+    "recentCompanies": "الشركات الحديثة",
+    "recentRequests": "الطلبات الحديثة",
     "projects": "المشاريع",
-    "employees": "الموظفون",
+    "employees": "الموظفين",
     "clients": "العملاء",
     "tasks": "المهام",
     "invoices": "الفواتير",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "showAll": "عرض الكل"
   },
   "common": {
     "save": "حفظ",
@@ -130,7 +139,13 @@
     "contracts": "العقود",
     "systemSettings": "إعدادات النظام",
     "actions": "الإجراءات",
-    "dashboard": "لوحة القيادة"
+    "dashboard": "لوحة التحكم",
+    "status": "الحالة",
+    "searchPlaceholder": "بحث...",
+    "noDataFound": "لا توجد بيانات",
+    "deleteConfirm1": "هل أنت متأكد من حذف ",
+    "deleteConfirm2": " ؟",
+    "back": "رجوع"
   },
   "development": {
     "title": "إدارة التطويرات",
@@ -239,6 +254,35 @@
     "subtitle": "عرض وإدارة جميع الشركات المسجلة في النظام.",
     "add": "إضافة شركة جديدة",
     "searchPlaceholder": "ابحث عن الشركات...",
+    "addCompanyTitle": "إضافة شركة جديدة",
+    "editCompanyTitle": "تعديل الشركة",
+    "editCompanySubtitle": "تحديث معلومات الشركة",
+    "viewCompanyTitle": "عرض الشركة",
+    "updateCompany": "تحديث الشركة",
+    "saveCompany": "حفظ الشركة",
+    "basicInfo": "المعلومات الأساسية للشركة",
+    "basicInfoSub": "أدخل تفاصيل الشركة الأساسية",
+    "uploadLogo": "انقر لرفع الشعار",
+    "deleteTitle": "حذف الشركة؟",
+    "deleteMessage": "لا يمكن التراجع عن هذا الإجراء.",
+    "labels": {
+      "email": "البريد الإلكتروني",
+      "companyName": "اسم الشركة",
+      "subdomain": "النطاق الفرعي",
+      "fieldOfWork": "مجال العمل",
+      "companyLogo": "شعار الشركة",
+      "status": "الحالة"
+    },
+    "placeholders": {
+      "fieldOfWork": "اختر مجال العمل"
+    },
+    "fields": {
+      "technical": "تقني",
+      "financial": "مالي",
+      "educational": "تعليمي",
+      "healthcare": "صحي",
+      "other": "أخرى"
+    },
     "stats": {
       "total": "إجمالي الشركات",
       "active": "نشطة",
@@ -253,6 +297,68 @@
       "domain": "النطاق",
       "email": "البريد الإلكتروني",
       "joinedDate": "تاريخ الإضافة",
+      "status": "الحالة"
+    }
+  },
+  "invoice": {
+    "title": "إدارة الفواتير",
+    "subtitle": "إدارة وتتبع جميع الفواتير والحسابات",
+    "add": "إنشاء فاتورة",
+    "searchPlaceholder": "ابحث برقم الفاتورة أو العميل...",
+    "stats": {
+      "total": "إجمالي الفواتير",
+      "paid": "مدفوعة",
+      "pending": "قيد الانتظار",
+      "overdue": "متأخرة"
+    },
+    "filter": {
+      "all": "كل الفواتير",
+      "paid": "مدفوعة",
+      "pending": "قيد الانتظار",
+      "overdue": "متأخرة"
+    },
+    "columns": {
+      "number": "رقم الفاتورة",
+      "issueDate": "تاريخ الإصدار",
+      "dueDate": "تاريخ الاستحقاق",
+      "amount": "المبلغ",
+      "status": "الحالة",
+      "company": "الشركة"
+    }
+  },
+  "timeLog": {
+    "title": "سجلات الوقت",
+    "subtitle": "نظرة عامة على سجلات وقت الموظفين والرواتب",
+    "add": "إضافة سجل",
+    "searchPlaceholder": "ابحث عن طريق الموظف أو الشركة...",
+    "stats": {
+      "totalHours": "إجمالي الساعات",
+      "totalSalaries": "إجمالي الرواتب",
+      "approved": "مقبول",
+      "pending": "قيد الانتظار",
+      "total": "المجموع",
+      "paid": "المدفوع",
+      "completion": "الإنجاز"
+    },
+    "currencyCard": {
+      "title": "الرواتب حسب العملة",
+      "subtitle": "نظرة مالية عامة عبر العملات",
+      "badge": "متعدد العملات"
+    },
+    "filter": {
+      "allStatus": "جميع الحالات",
+      "pending": "قيد الانتظار",
+      "completed": "مكتمل",
+      "month": "الشهر",
+      "jan": "يناير",
+      "feb": "فبراير"
+    },
+    "columns": {
+      "employee": "الموظف",
+      "company": "الشركة",
+      "date": "التاريخ",
+      "hours": "الساعات",
+      "rate": "السعر",
       "status": "الحالة"
     }
   },
@@ -297,7 +403,8 @@
       "underReview": "قيد المراجعة",
       "approved": "مقبول",
       "rejected": "مرفوض"
-    }
+    },
+    "noRequests": "لا توجد طلبات انضمام"
   },
   "client": {
     "title": "إدارة العملاء",

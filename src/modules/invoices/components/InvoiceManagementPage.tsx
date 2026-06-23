@@ -147,7 +147,7 @@ export default function InvoiceManagementPage() {
       },
       {
         key:    "dueDate",
-        header: "Due Date",
+        header: t("columns.dueDate"),
         render: (row) => <Text size="sm" color="gray-100" tag="p">{row.dueDate}</Text>,
       },
       {
