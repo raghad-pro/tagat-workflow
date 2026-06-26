@@ -10,23 +10,17 @@ import { TextField, SelectField, TextAreaField } from "@/components/molecules/Fo
 import { Form } from "@/components/ui/form";
 import { useAuth } from "@/providers/AuthProvider";
 
-const addProjectSchema = z.object({
+import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+
+const getProjectSchema = (isCompanyAdmin: boolean) => z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
   budget: z.string().min(1, "Budget is required"),
-  company: z.string().optional(),
+  company: isCompanyAdmin ? z.string().optional() : z.string().min(1, "Company is required"),
   status: z.string().min(1, "Select status"),
   notes: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof addProjectSchema>;
-
-const COMPANY_OPTIONS = [
-  { value: "advanced-tech", label: "Advanced Tech Company" },
-  { value: "innovatech", label: "Innovatech Solutions" },
-  { value: "nextgen", label: "NextGen Software" },
-  { value: "creative-minds", label: "Creative Minds Studio" },
-  { value: "green-energy", label: "Green Energy Corp" },
-];
+type FormValues = z.infer<ReturnType<typeof getProjectSchema>>;
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
@@ -54,10 +48,17 @@ export default function AddProjectModal({ isOpen, onClose, onSubmit }: AddProjec
   const isCompanyAdmin = user?.role === "company_admin";
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(addProjectSchema),
+    resolver: zodResolver(getProjectSchema(isCompanyAdmin)),
     mode: "onTouched",
     defaultValues: { title: "", budget: "", company: "", status: "", notes: "" },
   });
+
+  const { data: companiesResponse } = useCompanies({ page: 1, per_page: 100 });
+  const companies = companiesResponse?.data?.data || [];
+  const companyOptions = companies.map((c: any) => ({
+    value: c.id.toString(),
+    label: c.name || c.company_name
+  }));
 
   const handleFormSubmit = (data: FormValues) => {
     onSubmit?.(data);
@@ -86,7 +87,7 @@ export default function AddProjectModal({ isOpen, onClose, onSubmit }: AddProjec
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {!isCompanyAdmin && (
-                  <SelectField control={form.control} name="company" label="Company" options={COMPANY_OPTIONS} required placeholder="Select company" />
+                  <SelectField control={form.control} name="company" label="Company" options={companyOptions} required placeholder="Select company" />
                 )}
                 <SelectField control={form.control} name="status" label="Status" options={STATUS_OPTIONS} required placeholder="Select status" />
               </div>

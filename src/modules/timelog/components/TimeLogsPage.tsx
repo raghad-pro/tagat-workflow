@@ -13,11 +13,15 @@ import { Eye, Edit2, Trash2 } from "@/assets/icons/icons";
 import { useTranslations } from "next-intl";
 import { StatusBadge } from "@/components/atoms/Statusbadge";
 import { useActionModals } from "@/hooks/useActionModals";
+import { useAuth } from "@/providers/AuthProvider";
 import AddTimeLogModal from "./AddTimeLogModal";
 import EditTimeLogModal from "./EditTimeLogModal";
 import { ViewTimeLogModal } from "./ViewTimeLogModal";
 import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
 
+import { useTimelogs, useDeleteTimelog } from "../hooks/useTimelog";
+
+// Mock data kept for stats placeholders if API doesn't return them yet
 const MOCK_LOGS = [
   { id: 1, employee: "Ahmed Mohamed Al-Saeed", company: "Advanced Tech Company", date: "2026-06-01", hours: "3h49m", rateHr: "₪", rateTotal: "₪", status: "pending" },
   { id: 2, employee: "Basma Al-Harbi", company: "Innovatech Solutions", date: "2026-06-02", hours: "2h15m", rateHr: "₪", rateTotal: "₪", status: "completed" },
@@ -74,73 +78,97 @@ function CurrencyCard({ symbol, total, paid, pending, t }: { symbol: string, tot
 export default function TimeLogsPage() {
   const t = useTranslations("timeLog");
   const tCommon = useTranslations("common");
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company_admin";
   
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [localData, setLocalData] = useState(MOCK_LOGS);
 
-  const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } = useActionModals<typeof MOCK_LOGS[0]>();
+  const { data: timelogsResponse, isLoading } = useTimelogs({ 
+    search, 
+    status: statusFilter !== "all" ? statusFilter : undefined, 
+    month: monthFilter !== "all" ? monthFilter : undefined, 
+    page 
+  });
+  
+  const timelogs = timelogsResponse?.data || [];
+  const totalItems = timelogsResponse?.total || 0;
 
-  const columns: TableColumn<typeof MOCK_LOGS[0]>[] = useMemo(() => [
-    {
-      key: "employee",
-      header: t("columns.employee"),
-      isPrimary: true,
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <EmployeeAvatar name={row.employee} />
-          <Text size="sm" weight="medium" tag="span" className="ds-text-primary">
-            {row.employee}
-          </Text>
-        </div>
-      ),
-    },
-    {
-      key: "company",
-      header: t("columns.company"),
-      render: (row) => <Text size="sm" weight="medium" className="ds-text-primary">{row.company}</Text>,
-    },
-    {
-      key: "date",
-      header: t("columns.date"),
-      render: (row) => <Text size="sm" className="ds-text-gray-200">{row.date}</Text>,
-    },
-    {
-      key: "hours",
-      header: t("columns.hours"),
-      render: (row) => <Text size="sm" className="ds-text-gray-200">{row.hours}</Text>,
-    },
-    {
-      key: "rateHr",
-      header: t("columns.rate"),
-      render: (row) => <Text size="sm" className="ds-text-gray-200">{row.rateHr}</Text>,
-    },
-    {
-      key: "rateTotal",
-      header: t("columns.rate"),
-      render: (row) => <Text size="sm" weight="bold" className="ds-text-gray-200">{row.rateTotal}</Text>,
-    },
-    {
-      key: "status",
-      header: t("columns.status"),
-      render: (row) => <StatusBadge status={row.status as any} withDot />,
-    },
-  ], [t]);
+  const deleteTimelog = useDeleteTimelog();
+
+  const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } = useActionModals<any>();
+
+  const columns: TableColumn<any>[] = useMemo(() => {
+    const cols: TableColumn<any>[] = [
+      {
+        key: "employee",
+        header: t("columns.employee"),
+        isPrimary: true,
+        render: (row) => {
+          let empName = typeof row.employee === 'object' ? (row.employee?.name || row.employee?.user?.name || '') : (row.employee || '');
+          if (!empName && row.user) {
+            empName = typeof row.user === 'object' ? (row.user?.name || '') : row.user;
+          }
+          return (
+            <div className="flex items-center gap-3">
+              <EmployeeAvatar name={empName || '?'} />
+              <Text size="sm" weight="medium" tag="span" className="ds-text-primary">
+                {empName || '-'}
+              </Text>
+            </div>
+          );
+        },
+      },
+      {
+        key: "date",
+        header: t("columns.date"),
+        render: (row) => <Text size="sm" className="ds-text-gray-200">{row.date || row.created_at?.split('T')[0] || '-'}</Text>,
+      },
+      {
+        key: "hours",
+        header: t("columns.hours"),
+        render: (row) => <Text size="sm" className="ds-text-gray-200">{row.hours || '-'}</Text>,
+      },
+      {
+        key: "rateHr",
+        header: t("columns.rate"),
+        render: (row) => <Text size="sm" className="ds-text-gray-200">{row.rateHr || row.rate || '-'}</Text>,
+      },
+      {
+        key: "rateTotal",
+        header: t("columns.rate"),
+        render: (row) => <Text size="sm" weight="bold" className="ds-text-gray-200">{row.rateTotal || row.total || '-'}</Text>,
+      },
+      {
+        key: "status",
+        header: t("columns.status"),
+        render: (row) => <StatusBadge status={row.status as any} withDot />,
+      },
+    ];
+
+    if (!isCompanyAdmin) {
+      cols.splice(1, 0, {
+        key: "company",
+        header: t("columns.company"),
+        hideOnMobile: true,
+        render: (row) => {
+          const compName = typeof row.company === 'object' ? row.company?.name : row.project?.company?.name || row.task?.project?.company?.name || row.company;
+          return <Text size="sm" tag="span">{compName || '-'}</Text>;
+        },
+      });
+    }
+
+    return cols;
+  }, [t, isCompanyAdmin]);
 
   const actions: TableAction<typeof MOCK_LOGS[0]>[] = useMemo(() => [
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView },
     { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: openEdit },
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
   ], [tCommon, openView, openEdit, openDelete]);
-
-  const filtered = localData.filter((r) => 
-    r.employee.toLowerCase().includes(search.toLowerCase()) ||
-    r.company.toLowerCase().includes(search.toLowerCase())
-  );
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <PageContainer isLoading={false} skeletonVariant="dashboard">
@@ -159,24 +187,6 @@ export default function TimeLogsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8 mt-6">
         <div className="bg-white dark:bg-[var(--color-bg-form)] rounded-2xl p-6 border ds-border-form shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-50 dark:bg-cyan-900/20 text-cyan-500">
-            <LayoutGrid size={24} />
-          </div>
-          <div>
-            <Text size="xl" weight="bold" className="ds-text-primary leading-none mb-1">13h 43m</Text>
-            <Text size="sm" className="ds-text-gray-200 text-xs">{t("stats.totalHours")}</Text>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-[var(--color-bg-form)] rounded-2xl p-6 border ds-border-form shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500">
-            <Wallet size={24} />
-          </div>
-          <div>
-            <Text size="xl" weight="bold" className="ds-text-primary leading-none mb-1">2,022.41</Text>
-            <Text size="sm" className="ds-text-gray-200 text-xs">{t("stats.totalSalaries")}</Text>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-[var(--color-bg-form)] rounded-2xl p-6 border ds-border-form shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20 text-green-500">
             <CheckCircle2 size={24} />
           </div>
@@ -194,6 +204,24 @@ export default function TimeLogsPage() {
             <Text size="sm" className="ds-text-gray-200 text-xs">{t("stats.pending")}</Text>
           </div>
         </div>
+        <div className="bg-white dark:bg-[var(--color-bg-form)] rounded-2xl p-6 border ds-border-form shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-50 dark:bg-cyan-900/20 text-cyan-500">
+            <LayoutGrid size={24} />
+          </div>
+          <div>
+            <Text size="xl" weight="bold" className="ds-text-primary leading-none mb-1">13h 43m</Text>
+            <Text size="sm" className="ds-text-gray-200 text-xs">{t("stats.totalHours")}</Text>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[var(--color-bg-form)] rounded-2xl p-6 border ds-border-form shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500">
+            <Wallet size={24} />
+          </div>
+          <div>
+            <Text size="xl" weight="bold" className="ds-text-primary leading-none mb-1">2,022.41</Text>
+            <Text size="sm" className="ds-text-gray-200 text-xs">{t("stats.totalSalaries")}</Text>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-[var(--color-bg-form)] rounded-2xl p-6 border ds-border-form shadow-sm mb-8">
@@ -207,8 +235,8 @@ export default function TimeLogsPage() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <CurrencyCard t={t} symbol="₪" total="941.08" paid="0.00" pending="941.08" />
           <CurrencyCard t={t} symbol="$" total="1,081.33" paid="0.00" pending="1,081.33" />
+          <CurrencyCard t={t} symbol="₪" total="941.08" paid="0.00" pending="941.08" />
         </div>
       </div>
 
@@ -244,17 +272,18 @@ export default function TimeLogsPage() {
         <PageCardBody>
           <DataTable
             columns={columns}
-            data={paginated}
+            data={timelogs}
             actions={actions}
             actionsHeader={tCommon("actions")}
             emptyMessage={tCommon("noDataFound") || "No time logs found."}
+            isLoading={isLoading}
           />
         </PageCardBody>
 
         <PageCardFooter>
           <Pagination
             currentPage={page}
-            data={filtered}
+            data={Array(totalItems).fill(0)}
             pageSize={PAGE_SIZE}
             onPageChange={setPage}
           />
@@ -269,8 +298,11 @@ export default function TimeLogsPage() {
         title={tCommon("delete") || "Delete Time Log"} 
         itemName={selectedRow?.employee} 
         onConfirm={() => {
-          if (selectedRow) setLocalData(prev => prev.filter(r => r.id !== selectedRow.id));
-          closeModal();
+          if (selectedRow?.id) {
+            deleteTimelog.mutate(selectedRow.id, {
+              onSuccess: () => closeModal()
+            });
+          }
         }} 
       />
       <ViewTimeLogModal isOpen={activeModal === "view"} onClose={closeModal} data={selectedRow} />

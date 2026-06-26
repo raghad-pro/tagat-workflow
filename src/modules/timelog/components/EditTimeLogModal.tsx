@@ -10,9 +10,14 @@ import { Form } from "@/components/ui/form";
 import { User, Building, Clock, DollarSign } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useAuth } from "@/providers/AuthProvider";
+import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { useTasksData } from "@/modules/tasks/hooks/useTasks";
+import { useWatch } from "react-hook-form";
+
 const editTimeLogSchema = z.object({
-  employee: z.string().min(2, "Employee is required"),
-  company: z.string().min(1, "Company is required"),
+  employee: z.string().min(1, "Employee is required"),
+  company: z.string().optional(),
   date: z.string().min(1, "Date is required"),
   hours: z.string().min(1, "Hours is required"),
   rateHr: z.string().min(1, "Rate per hour is required"),
@@ -31,11 +36,31 @@ export default function EditTimeLogModal({ isOpen, onClose, onUpdate = () => {},
     defaultValues: { employee: "", company: "", date: "", hours: "", rateHr: "", status: "pending" },
   });
 
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company_admin";
+  const selectedCompanyId = useWatch({ control: form.control, name: "company" });
+
+  // Fetch Companies for Super Admin
+  const { data: companiesResponse } = useCompanies({ page: 1, per_page: 100 });
+  const companies = companiesResponse?.data?.data || [];
+  const companyOptions = companies.map((c: any) => ({ value: c.id.toString(), label: c.name }));
+
+  // Fetch Employees based on selected company
+  const { data: tasksDataResponse } = useTasksData(isCompanyAdmin ? undefined : (selectedCompanyId ? Number(selectedCompanyId) : undefined));
+  
+  const employeeOptions = (tasksDataResponse?.data?.employees || []).map((e: any) => ({
+    value: e.id.toString(),
+    label: e.name || e.user?.name
+  }));
+
   useEffect(() => {
     if (data && isOpen) {
+      const companyVal = typeof data.company === 'object' ? (data.company as any)?.id?.toString() : data.company;
+      const empVal = typeof data.employee === 'object' ? (data.employee as any)?.id?.toString() : data.employee;
+
       form.reset({
-        employee: data.employee || "",
-        company: data.company || "",
+        employee: empVal || "",
+        company: companyVal || "",
         date: data.date || "",
         hours: data.hours || "",
         rateHr: data.rateHr || "",
@@ -65,8 +90,10 @@ export default function EditTimeLogModal({ isOpen, onClose, onUpdate = () => {},
         <Form {...form}>
           <form id="edit-timelog-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
             <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form">
-              <TextField control={form.control} name="employee" label={t("columns.employee") || "Employee"} placeholder="" required icon={User} />
-              <TextField control={form.control} name="company" label={t("columns.company") || "Company"} placeholder="" required icon={Building} />
+              {!isCompanyAdmin && (
+                <SelectField control={form.control} name="company" label={t("columns.company") || "Company"} options={companyOptions.length ? companyOptions : [{value: "company-1", label: "Loading..."}]} required placeholder="Select company" />
+              )}
+              <SelectField control={form.control} name="employee" label={t("columns.employee") || "Employee"} options={employeeOptions.length ? employeeOptions : [{value: "emp-1", label: "Loading..."}]} required placeholder="Select employee" disabled={!isCompanyAdmin && !selectedCompanyId} />
               <TextField control={form.control} name="date" label={t("columns.date") || "Date"} placeholder="YYYY-MM-DD" required type="date" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField control={form.control} name="hours" label={t("columns.hours") || "Hours"} placeholder="e.g. 4h30m" required icon={Clock} />

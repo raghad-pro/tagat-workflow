@@ -9,6 +9,11 @@ import { ActionModal } from "@/components/molecules/ActionModal";
 import { TextField, PasswordField, SelectField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
 import type { Employee } from "../types/employees.types";
+import { UseFormSetError } from "react-hook-form";
+import { useAuth } from "@/providers/AuthProvider";
+import { useTranslations } from "next-intl";
+import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { useCompanyCurrencies } from "../hooks/useEmployees";
 
 const editEmployeeSchema = z.object({
   employeeName: z.string().min(2, "Name must be at least 2 characters"),
@@ -18,35 +23,43 @@ const editEmployeeSchema = z.object({
   password: z.string().optional(),
   hourlyRate: z.string().min(1, "Rate is required"),
   currency: z.string().min(1, "Select currency"),
-  company: z.string().min(1, "Select company"),
+  company: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof editEmployeeSchema>;
 
 const PAYMENT_OPTIONS = [
   { value: "monthly", label: "Monthly" },
-  { value: "hourly", label: "Hourly" }
-];
-const CURRENCY_OPTIONS = [
-  { value: "usd", label: "USD" },
-  { value: "ils", label: "ILS" },
-  { value: "eur", label: "EUR" }
-];
-const COMPANY_OPTIONS = [
-  { value: "advanced-tech", label: "Advanced Tech Company" },
-  { value: "innotech", label: "Innotech Solutions" },
-  { value: "nextgen", label: "NextGen Software" },
-  { value: "creative-minds", label: "Creative Minds Studio" },
+  { value: "hourly", label: "Hourly" },
+  { value: "part_time", label: "Part Time" }
 ];
 
 interface EditEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (id: number, data: any) => void;
+  onUpdate: (id: number, data: any, setError: UseFormSetError<FormValues>) => void;
   data: Employee | null;
 }
 
 export default function EditEmployeeModal({ isOpen, onClose, onUpdate, data }: EditEmployeeModalProps) {
+  const t = useTranslations("employee");
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company_admin";
+
+  const { data: companiesData } = useCompanies({ per_page: 100 });
+
+  let companies = [];
+  if (Array.isArray(companiesData?.data?.data)) {
+    companies = companiesData.data.data;
+  } else if (Array.isArray(companiesData?.data)) {
+    companies = companiesData.data;
+  }
+
+  const COMPANY_OPTIONS = companies.map((c: any) => ({
+    value: c.id?.toString(),
+    label: c.name || c.domain || c.id?.toString(),
+  }));
+
   const form = useForm<FormValues>({
     resolver: zodResolver(editEmployeeSchema),
     mode: "onTouched",
@@ -56,26 +69,56 @@ export default function EditEmployeeModal({ isOpen, onClose, onUpdate, data }: E
     },
   });
 
+  const selectedCompany = form.watch("company");
+  const { data: currenciesData } = useCompanyCurrencies(selectedCompany);
+  
+  let currencies = [];
+  if (Array.isArray(currenciesData?.data?.data)) {
+    currencies = currenciesData.data.data;
+  } else if (Array.isArray(currenciesData?.data)) {
+    currencies = currenciesData.data;
+  } else if (Array.isArray(currenciesData)) {
+    currencies = currenciesData;
+  }
+  
+  const CURRENCY_OPTIONS = currencies.map((c: any) => ({
+    value: c.id?.toString(),
+    label: c.name || c.code || c.id?.toString(),
+  }));
+
+  if (CURRENCY_OPTIONS.length === 0) {
+    CURRENCY_OPTIONS.push({ value: "1", label: "USD" });
+  }
+
+  useEffect(() => {
+    if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency")) {
+      form.setValue("currency", CURRENCY_OPTIONS[0].value);
+    }
+  }, [CURRENCY_OPTIONS.length, form]);
+
   useEffect(() => {
     if (data && isOpen) {
       form.reset({
-        employeeName: data.name || "",
-        email: "", // Not available in mock data directly, would be in real data
-        paymentType: data.paymentType.toLowerCase(),
-        jobTitle: data.job || "",
+        employeeName: data.employee_name || data.employeeName || data.name || data.user?.name || "",
+        email: data.user?.email || data.email || "",
+        paymentType: typeof data.paymentType === 'string' ? data.paymentType.toLowerCase() : (typeof data.payment_type === 'string' ? data.payment_type.toLowerCase() : ""),
+        jobTitle: data.job_title || data.jobTitle || data.job || "",
         password: "",
-        hourlyRate: data.salary.replace(/[^0-9.]/g, '') || "",
-        currency: data.currency.toLowerCase(),
-        company: "advanced-tech", // using mock mapped
+        hourlyRate: String(data.salary || data.hourly_rate || data.hourlyRate || "").replace(/[^0-9.]/g, '') || "",
+        currency: typeof data.currency === 'object' ? data.currency?.id?.toString() || "" : data.currency?.toString().toLowerCase() || "",
+        company: typeof data.company === 'object' ? data.company?.id?.toString() || "" : data.company?.toString() || "",
       });
     }
   }, [data, isOpen, form]);
 
   const handleFormSubmit = (formData: FormValues) => {
     if (!data) return;
-    onUpdate(data.id, formData);
-    onClose();
+    onUpdate(data.id, formData, form.setError);
   };
+
+  const selectedPaymentType = form.watch("paymentType");
+  const rateLabel = selectedPaymentType === "monthly" ? "Monthly Rate" : 
+                    (selectedPaymentType === "hourly" || selectedPaymentType === "part_time" ? "Hourly Rate" : t("labels.salary"));
 
   if (!isOpen || !data) return null;
 
@@ -83,7 +126,7 @@ export default function EditEmployeeModal({ isOpen, onClose, onUpdate, data }: E
     <ActionModal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title="Edit Employee"
+      title={t("editEmployeeTitle")}
       mode="edit"
       formId="edit-employee-form"
       size="lg"
@@ -93,20 +136,22 @@ export default function EditEmployeeModal({ isOpen, onClose, onUpdate, data }: E
           <form id="edit-employee-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
             <div className="rounded-2xl p-5 flex flex-col gap-5" style={{ border: "1px solid var(--color-border-form)" }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <TextField control={form.control} name="employeeName" label="Employee Name" placeholder="John Doe" required icon={User} />
-                <TextField control={form.control} name="email" label="Email" placeholder="john@example.com" type="email" required icon={Mail} />
+                <TextField control={form.control} name="employeeName" label={t("labels.name")} placeholder={t("placeholders.name")} required icon={User} />
+                <TextField control={form.control} name="email" label={t("labels.email")} placeholder={t("placeholders.email")} type="email" required icon={Mail} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="paymentType" label="Payment Type" options={PAYMENT_OPTIONS} required placeholder="Select payment type" />
-                <TextField control={form.control} name="jobTitle" label="Job Title" placeholder="Developer" required icon={Briefcase} />
+                <SelectField control={form.control} name="paymentType" label={t("labels.paymentType")} options={PAYMENT_OPTIONS} required placeholder={t("placeholders.paymentType")} />
+                <TextField control={form.control} name="jobTitle" label={t("labels.jobTitle")} placeholder={t("placeholders.jobTitle")} required icon={Briefcase} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <PasswordField control={form.control} name="password" label="New Password (optional)" placeholder="••••••••" icon={Lock} />
-                <TextField control={form.control} name="hourlyRate" label="Rate / Salary" placeholder="0.00" type="number" required icon={DollarSign} />
+                <PasswordField control={form.control} name="password" label={t("labels.password")} placeholder={t("placeholders.password")} icon={Lock} />
+                <TextField control={form.control} name="hourlyRate" label={rateLabel} placeholder={t("placeholders.salary")} type="number" required icon={DollarSign} />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="currency" label="Currency" options={CURRENCY_OPTIONS} required placeholder="Select currency" />
-                <SelectField control={form.control} name="company" label="Company" options={COMPANY_OPTIONS} required placeholder="Select company" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SelectField control={form.control} name="currency" label={t("labels.currency")} options={CURRENCY_OPTIONS} required placeholder={t("placeholders.currency")} />
+                {!isCompanyAdmin && (
+                  <SelectField control={form.control} name="company" label={t("labels.company")} options={COMPANY_OPTIONS} required placeholder={t("placeholders.company")} />
+                )}
               </div>
             </div>
           </form>

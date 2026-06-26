@@ -189,7 +189,31 @@
     "title": "إدارة الموظفين",
     "subtitle": "إدارة موظفي وأدوار الشركة",
     "add": "إضافة موظف",
-    "searchPlaceholder": "ابحث في الموظفين...",
+    "searchPlaceholder": "ابحث عن الموظفين...",
+    "addEmployeeTitle": "إضافة موظف جديد",
+    "editEmployeeTitle": "تعديل بيانات الموظف",
+    "viewEmployeeTitle": "عرض بيانات الموظف",
+    "labels": {
+      "name": "اسم الموظف",
+      "email": "البريد الإلكتروني",
+      "jobTitle": "المسمى الوظيفي",
+      "paymentType": "طريقة الدفع",
+      "password": "كلمة المرور",
+      "salary": "الراتب / التكلفة",
+      "currency": "العملة",
+      "company": "اسم الشركة",
+      "status": "الحالة"
+    },
+    "placeholders": {
+      "name": "أحمد محمد",
+      "email": "ahmed@example.com",
+      "jobTitle": "مطور برمجيات",
+      "paymentType": "اختر طريقة الدفع",
+      "password": "أدخل كلمة المرور",
+      "salary": "0.00",
+      "currency": "دولار أمريكي",
+      "company": "اختر الشركة"
+    },
     "stats": {
       "total": "إجمالي الموظفين",
       "active": "نشط",
@@ -197,6 +221,12 @@
     },
     "columns": {
       "name": "اسم الموظف",
+      "employee": "الموظف",
+      "job": "المسمى الوظيفي",
+      "currency": "العملة",
+      "salary": "الراتب",
+      "paymentType": "طريقة الدفع",
+      "company": "الشركة",
       "role": "الدور",
       "department": "القسم",
       "email": "البريد الإلكتروني",
@@ -206,7 +236,9 @@
     "filter": {
       "all": "الكل",
       "active": "نشط",
-      "onLeave": "في إجازة"
+      "inactive": "غير نشط",
+      "onLeave": "في إجازة",
+      "onboarding": "قيد الإعداد"
     }
   },
   "contract": {
@@ -233,6 +265,11 @@
     "subtitle": "نظرة عامة وإدارة لجميع المهام النشطة في المشاريع",
     "addTask": "إضافة مهمة",
     "searchPlaceholder": "ابحث في المهام...",
+    "noProjects": "لا توجد مشاريع",
+    "noEmployees": "لا يوجد موظفين",
+    "projectRequired": "يجب اختيار مشروع",
+    "employeeRequired": "يجب اختيار موظف",
+    "companyRequired": "يجب اختيار شركة",
     "stats": {
       "utilization": "إجمالي استهلاك الميزانية",
       "active": "إجمالي المهام النشطة",

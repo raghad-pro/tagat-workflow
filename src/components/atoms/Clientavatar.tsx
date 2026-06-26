@@ -29,14 +29,15 @@ const SIZE_MAP = {
 };
 
 export function ClientAvatar({ name, size = "md" }: AvatarProps) {
-  const idx = name.charCodeAt(0) % COLORS.length;
+  const safeName = name || "User";
+  const idx = (safeName.charCodeAt(0) || 0) % COLORS.length;
   const { bg, color } = COLORS[idx];
   return (
     <span
       className={`inline-flex items-center justify-center rounded-full font-bold shrink-0 ${SIZE_MAP[size]}`}
       style={{ background: bg, color }}
     >
-      {getInitials(name)}
+      {getInitials(safeName)}
     </span>
   );
 }

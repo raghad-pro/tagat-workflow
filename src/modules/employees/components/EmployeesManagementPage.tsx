@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
 import { PageContainer } from "@/components/template/PageContainer";
 import { PageHeader } from "@/components/molecules/Pageheader";
@@ -8,7 +9,7 @@ import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
 import { DataTable, TableColumn, TableAction } from "@/components/molecules/Datatable";
 import { Pagination } from "@/components/molecules/Pagination";
 import { PageCard, PageCardSection, PageCardBody, PageCardFooter } from "@/components/molecules/Pagecard";
-import { useEmployees, useEmployeeStats } from "../hooks/useEmployees";
+import { useEmployees, useEmployeeStats, useCreateEmployee, useUpdateEmployee, useDeleteEmployee } from "../hooks/useEmployees";
 import { Users, CheckCircle2, Sun, Eye, Edit2, Trash2 } from "@/assets/icons/icons";
 import { Employee } from "../types/employees.types";
 import { Text } from "@/components/atoms/Text";
@@ -39,7 +40,7 @@ function EmpStatCard({ icon: Icon, value, label, iconColor, iconBg }: { icon: Re
 function EmployeeAvatar({ name }: { name: string }) {
   const initials = (name || "U").split(" ").slice(0, 1).map((w) => w[0]).join("").toUpperCase();
   const colors = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#ec4899", "#f97316"];
-  const color = colors[name.charCodeAt(0) % colors.length];
+  const color = colors[(name || "U").charCodeAt(0) % colors.length];
   return (
     <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: color }}>
       {initials}
@@ -47,11 +48,12 @@ function EmployeeAvatar({ name }: { name: string }) {
   );
 }
 
-function PaymentBadge({ type }: { type: "Monthly" | "Hourly" }) {
+function PaymentBadge({ type }: { type: string }) {
+  const isMonthly = type === "Monthly" || type?.toLowerCase() === "monthly";
   return (
-    <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold", type === "Monthly" ? "text-green-600 bg-green-50 dark:bg-green-900/20" : "text-blue-500 bg-blue-50 dark:bg-blue-900/20")}>
-      <span className={cn("w-1.5 h-1.5 rounded-full", type === "Monthly" ? "bg-green-500" : "bg-blue-400")} />
-      {type}
+    <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold", isMonthly ? "text-green-600 bg-green-50 dark:bg-green-900/20" : "text-blue-500 bg-blue-50 dark:bg-blue-900/20")}>
+      <span className={cn("w-1.5 h-1.5 rounded-full", isMonthly ? "bg-green-500" : "bg-blue-400")} />
+      {type || "-"}
     </span>
   );
 }
@@ -70,7 +72,11 @@ export default function EmployeesManagementPage() {
   const { data: statsData } = useEmployeeStats();
   const { data: empData, isLoading, isFetching } = useEmployees({ search, page, per_page: PAGE_SIZE });
 
-  const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } = useActionModals<Employee>();
+  const createEmployee = useCreateEmployee();
+  const updateEmployee = useUpdateEmployee();
+  const deleteEmployee = useDeleteEmployee();
+
+  const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } = useActionModals<any>();
 
   const employees = empData?.data ?? [];
   const total = empData?.meta?.total ?? 0;
@@ -78,24 +84,27 @@ export default function EmployeesManagementPage() {
   const statsItems = [
     { icon: Users, value: statsData?.total ?? 247, label: t("stats.total"), iconColor: "#0ea5e9", iconBg: "rgba(14,165,233,0.12)" },
     { icon: CheckCircle2, value: statsData?.active ?? 47, label: t("stats.active"), iconColor: "#25c6da", iconBg: "rgba(37,198,218,0.12)" },
-    { icon: Sun, value: statsData?.onboarding ?? 6, label: t("stats.onboarding"), iconColor: "#f59e0b", iconBg: "rgba(245,158,11,0.12)" },
+    { icon: Sun, value: statsData?.onboarding ?? 6, label: t("stats.onLeave") || "Onboarding", iconColor: "#f59e0b", iconBg: "rgba(245,158,11,0.12)" },
   ];
 
-  const columns = useMemo<TableColumn<Employee>[]>(() => {
-    const cols: TableColumn<Employee>[] = [
-      { key: "name", header: t("columns.employee"), isPrimary: true, render: (row) => (<div className="flex items-center gap-3"><EmployeeAvatar name={row.name} /><Text size="sm" weight="medium" tag="span">{row.name}</Text></div>) },
-      { key: "job", header: t("columns.job"), hideOnMobile: true, render: (row) => <Text size="sm" tag="span">{row.job}</Text> },
-      { key: "currency", header: t("columns.currency"), hideOnMobile: true, render: (row) => <Text size="sm" tag="span">{row.currency}</Text> },
-      { key: "salary", header: t("columns.salary"), render: (row) => <Text size="sm" tag="span">{row.salary}</Text> },
-      { key: "paymentType", header: t("columns.paymentType"), render: (row) => <PaymentBadge type={row.paymentType} /> },
+  const columns = useMemo<TableColumn<any>[]>(() => {
+    const cols: TableColumn<any>[] = [
+      { key: "name", header: t("columns.employee"), isPrimary: true, render: (row) => {
+        const empName = row.employee_name || row.employeeName || row.name || row.user?.name || (row.user?.first_name ? `${row.user.first_name} ${row.user.last_name || ''}` : null) || '-';
+        return (<div className="flex items-center gap-3"><EmployeeAvatar name={empName} /><Text size="sm" weight="medium" tag="span">{empName}</Text></div>);
+      } },
+      { key: "job", header: t("columns.job"), hideOnMobile: true, render: (row) => <Text size="sm" tag="span">{row.job_title || row.jobTitle || row.job || '-'}</Text> },
+      { key: "currency", header: t("columns.currency"), hideOnMobile: true, render: (row) => <Text size="sm" tag="span">{typeof row.currency === 'object' ? (row.currency?.name || row.currency?.code) : row.currency || '-'}</Text> },
+      { key: "salary", header: t("columns.salary"), render: (row) => <Text size="sm" tag="span">{row.salary || row.hourly_rate || row.hourlyRate || '-'}</Text> },
+      { key: "paymentType", header: t("columns.paymentType"), render: (row) => <PaymentBadge type={row.paymentType || row.payment_type} /> },
     ];
     if (!isCompanyAdmin) {
-      cols.splice(1, 0, { key: "company", header: t("columns.company"), render: (row) => <Text size="sm" tag="span">{row.company}</Text> });
+      cols.splice(1, 0, { key: "company", header: t("columns.company"), render: (row) => <Text size="sm" tag="span">{typeof row.company === 'object' ? row.company?.name : row.company || '-'}</Text> });
     }
     return cols;
   }, [t, isCompanyAdmin]);
 
-  const actions = useMemo<TableAction<Employee>[]>(() => [
+  const actions = useMemo<TableAction<any>[]>(() => [
     { icon: Eye, label: tCommon("view"), colorScheme: "send", onClick: openView },
     { icon: Edit2, label: tCommon("edit"), colorScheme: "edit", onClick: openEdit },
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
@@ -127,10 +136,50 @@ export default function EmployeesManagementPage() {
           </PageCardFooter>
         </PageCard>
       </PageContainer>
-      <AddEmployeeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={(v) => { console.log("New Employee:", v); setIsModalOpen(false); }} />
-      <DeleteConfirmationModal isOpen={activeModal === "delete"} onClose={closeModal} title={tCommon("delete") || "Delete Employee"} itemName={selectedRow?.name} onConfirm={() => { console.log("Delete Employee", selectedRow?.id); closeModal(); }} />
+      <AddEmployeeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={(v, setError) => { 
+        const payload: any = { name: v.employeeName, email: v.email, payment_type: v.paymentType, job_title: v.jobTitle, password: v.password, salary: v.hourlyRate, currency_id: v.currency };
+        if (v.company) payload.company_id = v.company;
+        createEmployee.mutate(payload, { 
+          onSuccess: () => { toast.success("Employee added successfully"); setIsModalOpen(false); }, 
+          onError: (err: any) => {
+            console.error(err?.response?.data);
+            let msg = err?.response?.data?.message || err?.message || "Failed to add employee";
+            if (err?.response?.data?.errors) {
+               const errors = err.response.data.errors;
+               if (errors.email) {
+                 setError("email", { type: "server", message: errors.email[0] });
+               }
+               const firstError = Object.values(errors)[0] as any;
+               if (firstError && firstError.length) msg = firstError[0];
+            }
+            toast.error(msg); 
+          }
+        }); 
+      }} />
+      <DeleteConfirmationModal isOpen={activeModal === "delete"} onClose={closeModal} title={tCommon("delete") || "Delete Employee"} itemName={selectedRow?.employee_name || selectedRow?.employeeName || selectedRow?.name || selectedRow?.user?.name || "this employee"} onConfirm={() => { if (selectedRow?.id) { deleteEmployee.mutate(selectedRow.id, { onSuccess: () => { toast.success("Employee deleted successfully"); closeModal(); }, onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to delete employee") }); } }} />
       <ViewEmployeeModal isOpen={activeModal === "view"} onClose={closeModal} data={selectedRow} />
-      <EditEmployeeModal isOpen={activeModal === "edit"} onClose={closeModal} data={selectedRow} onUpdate={(id, data) => { console.log("Edit", id, data); closeModal(); }} />
+      <EditEmployeeModal isOpen={activeModal === "edit"} onClose={closeModal} data={selectedRow} onUpdate={(id, v, setError) => { 
+        const payload: any = { name: v.employeeName, email: v.email, payment_type: v.paymentType, job_title: v.jobTitle, salary: v.hourlyRate, currency_id: v.currency };
+        if (v.password) payload.password = v.password;
+        if (v.company) payload.company_id = v.company;
+        updateEmployee.mutate({ id, data: payload }, { 
+          onSuccess: () => { toast.success("Employee updated successfully"); closeModal(); }, 
+          onError: (err: any) => {
+            console.error(err?.response?.data);
+            let msg = err?.response?.data?.message || err?.message || "Failed to update employee";
+            if (err?.response?.data?.errors) {
+               const errors = err.response.data.errors;
+               if (errors.email) {
+                 setError("email", { type: "server", message: errors.email[0] });
+               }
+               const firstError = Object.values(errors)[0] as any;
+               if (firstError && firstError.length) msg = firstError[0];
+            }
+            toast.error(msg); 
+          }
+        }); 
+      }} />
     </>
   );
 }
+

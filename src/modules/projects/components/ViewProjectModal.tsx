@@ -27,7 +27,7 @@ export function ViewProjectModal({ isOpen, onClose, data }: { isOpen: boolean; o
                 {data.title}
               </Text>
               <Text size="sm" className="ds-text-gray-200">
-                {data.client}
+                {typeof data.client === 'object' ? (data.client as any)?.name : data.client}
               </Text>
             </div>
           </div>
@@ -35,7 +35,7 @@ export function ViewProjectModal({ isOpen, onClose, data }: { isOpen: boolean; o
           <ul className="space-y-4 list-disc list-inside ds-text-sub">
             <li className="flex items-center">
               <span className="font-bold mr-2 text-[var(--color-primary)]">Company:</span> 
-              <span className="ds-text-main">{data.company}</span>
+              <span className="ds-text-main">{typeof data.company === 'object' ? (data.company as any)?.name : data.company}</span>
             </li>
             <li className="flex items-center">
               <span className="font-bold mr-2 text-[var(--color-primary)]">Budget:</span> 

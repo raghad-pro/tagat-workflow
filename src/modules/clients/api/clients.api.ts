@@ -1,4 +1,5 @@
 import apiClient from "@/services/apiClient";
+import { getRolePrefix } from "@/utils/rolePrefix";
 import type {
   ApiClientsResponse,
   ApiClient,
@@ -8,44 +9,30 @@ import type {
   DeleteClientRequest,
 } from "../types/clients.types";
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-// الـ role بيجي من useAuth — نمرره من الـ hook
-type Role = "super_admin" | "company_admin" | string;
-
-const base = (role: Role) =>
-  role === "super_admin" ? "/super_admin/clients" : "/company/clients";
-
 export const clientApi = {
-  // ─── GET clients ──────────────────────────────────────────────────────────
-  getAll: (params?: ClientsQueryParams, role: Role = "super_admin") =>
-    apiClient.get<ApiClientsResponse>(base(role), params as Record<string, unknown>),
+  getAll: (params?: ClientsQueryParams, role = "super_admin") =>
+    apiClient.get<ApiClientsResponse>(
+      `${getRolePrefix(role)}/clients`,
+      params as Record<string, unknown>
+    ),
 
-  // ─── POST create ──────────────────────────────────────────────────────────
-  // super_admin: POST /super_admin/clients  { name, email, password, company_id }
-  // company:     POST /company/clients      { name, email, password }
-  create: (data: AddClientRequest, role: Role = "super_admin") =>
+  create: (data: AddClientRequest, role = "super_admin") =>
     apiClient.post<{ success: boolean; message: string; data: ApiClient }>(
-      base(role),
+      `${getRolePrefix(role)}/clients`,
       role === "company_admin"
         ? { name: data.name, email: data.email, password: data.password }
         : data
     ),
 
-  // ─── PUT update status ────────────────────────────────────────────────────
-  // super_admin: PUT /super_admin/clients/:id  { company_id, status }
-  // company:     PUT /company/clients/:id      { status }
-  updateStatus: (id: number, data: UpdateClientStatusRequest, role: Role = "super_admin") =>
+  updateStatus: (id: number, data: UpdateClientStatusRequest, role = "super_admin") =>
     apiClient.put<{ success: boolean; message: string; data: unknown }>(
-      `${base(role)}/${id}`,
+      `${getRolePrefix(role)}/clients/${id}`,
       role === "company_admin" ? { status: data.status } : data
     ),
 
-  // ─── DELETE ───────────────────────────────────────────────────────────────
-  // super_admin: DELETE /super_admin/clients/:id  body: { company_id }
-  // company:     DELETE /company/clients/:id      body: { company_id } (نفس الـ pattern)
-  delete: (id: number, data: DeleteClientRequest, role: Role = "super_admin") =>
+  delete: (id: number, data: DeleteClientRequest, role = "super_admin") =>
     apiClient.delete<{ success: boolean; message: string }>(
-      `${base(role)}/${id}`,
+      `${getRolePrefix(role)}/clients/${id}`,
       data
     ),
 };

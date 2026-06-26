@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useAuth } from "@/providers/AuthProvider";
 import { PageContainer } from "@/components/template/PageContainer";
 import { PageHeader } from "@/components/molecules/Pageheader";
 import { SearchFilterBar, type FilterOption } from "@/components/molecules/Searchfilterbar";
@@ -25,63 +27,54 @@ import {
   Trash2,
 } from "@/assets/icons/icons";
 import { ClientAvatar } from "@/components/atoms/Clientavatar";
-import { StatusBadge } from "@/components/atoms/Statusbadge";
 
-import { AddClientModal } from "./Addclientmodal";
-import { ViewClientModal } from "./Viewclientmodal";
-import { EditClientModal } from "./Editclientmodal";
+import { AddClientModal }          from "./Addclientmodal";
+import { ViewClientModal }         from "./Viewclientmodal";
+import { EditClientModal }         from "./Editclientmodal";
 import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
 
-import { useClients } from "@/modules/clients/hooks/useClients";
-import { useClientStats } from "@/modules/clients/hooks/useClientstats";
-import { useAddClient } from "@/modules/clients/hooks/useAddclient";
-import { useDeleteClient } from "@/modules/clients/hooks/useDeleteclient";
+import { useClients }            from "@/modules/clients/hooks/useClients";
+import { useClientStats }        from "@/modules/clients/hooks/useClientstats";
+import { useAddClient }          from "@/modules/clients/hooks/useAddclient";
+import { useDeleteClient }       from "@/modules/clients/hooks/useDeleteclient";
 import { useUpdateClientStatus } from "@/modules/clients/hooks/useupdateclientstatus";
-import { useAuth } from "@/providers/AuthProvider";
-import { useTranslations } from "next-intl";
 
 import type {
   AddClientFormValues,
   UpdateClientStatusRequest,
 } from "@/modules/clients/types/clients.types";
 
-// ─── types ─────────────────────────────────────────────────────────────────────
-// النوع المبسط اللي بنتعامل معه داخل الـ page
+// ─── Types ─────────────────────────────────────────────────────────────────────
 type PivotStatus = "pending" | "approved" | "rejected";
 
-type NormalizedClient = {
-  id: number;
-  name: string;
-  email: string;
-  companies: Array<{
-    id: number;
-    name: string;
-    pivot: { status: PivotStatus };
-  }>;
-  // الحالة الرئيسية للعرض (أول شركة أو pending)
+interface NormalizedClient {
+  id:            number;
+  name:          string;
+  email:         string;
+  companies:     Array<{ id: number; name: string; pivot: { status: PivotStatus } }>;
   primaryStatus: PivotStatus;
-  createdAt: string;
-};
+  createdAt:     string;
+}
 
-// ─── constants ─────────────────────────────────────────────────────────────────
+// ─── Constants ─────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 5;
 
 const STATUS_OPTIONS: FilterOption[] = [
   { value: "all",      label: "All cases" },
-  { value: "approved", label: "Approved" },
-  { value: "pending",  label: "Pending" },
-  { value: "rejected", label: "Rejected" },
+  { value: "approved", label: "Approved"  },
+  { value: "pending",  label: "Pending"   },
+  { value: "rejected", label: "Rejected"  },
 ];
 
-// ─── status badge styles (approved/pending/rejected) ──────────────────────────
 const STATUS_CONFIG: Record<PivotStatus, { bg: string; color: string; dot: string }> = {
-  approved: { bg: "rgba(52,211,153,0.12)", color: "#059669",              dot: "#34d399" },
-  pending:  { bg: "rgba(251,191,36,0.12)", color: "#d97706",              dot: "#f59e0b" },
-  rejected: { bg: "rgba(239,68,68,0.10)", color: "var(--color-error)",    dot: "#ef4444" },
+  approved: { bg: "rgba(52,211,153,0.12)", color: "#059669",            dot: "#34d399" },
+  pending:  { bg: "rgba(251,191,36,0.12)", color: "#d97706",            dot: "#f59e0b" },
+  rejected: { bg: "rgba(239,68,68,0.10)",  color: "var(--color-error)", dot: "#ef4444" },
 };
 
+// ─── Status Pill ───────────────────────────────────────────────────────────────
 function PivotStatusPill({ status }: { status: PivotStatus }) {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
+  const cfg   = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   const label = status.charAt(0).toUpperCase() + status.slice(1);
   return (
     <span
@@ -94,75 +87,60 @@ function PivotStatusPill({ status }: { status: PivotStatus }) {
   );
 }
 
-// ─── helper: normalize raw API client ─────────────────────────────────────────
+// ─── Normalize raw API client ──────────────────────────────────────────────────
 function normalizeClient(raw: any): NormalizedClient {
   const companies = (raw.companies ?? []).map((c: any) => ({
-    id: c.id,
-    name: c.name,
+    id:    c.id,
+    name:  c.name,
     pivot: { status: (c.pivot?.status ?? "pending") as PivotStatus },
   }));
 
-  const primaryStatus: PivotStatus =
-    companies.length > 0 ? companies[0].pivot.status : "pending";
-
   return {
-    id: raw.id,
-    name: raw.name,
-    email: raw.user?.email ?? raw.email ?? "",
+    id:            raw.id,
+    name:          raw.name,
+    email:         raw.user?.email ?? raw.email ?? "",
     companies,
-    primaryStatus,
-    createdAt: raw.created_at ?? "",
+    primaryStatus: companies.length > 0 ? companies[0].pivot.status : "pending",
+    createdAt:     raw.created_at ?? "",
   };
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function ClientManagementPage() {
-  const t = useTranslations("client");
-  const tCommon = useTranslations("common");
+  const t       = useTranslations("client");
   const { user } = useAuth();
   const isCompanyAdmin = user?.role === "company_admin";
 
+  // ── Filters state ────────────────────────────────────────────────────────────
   const [search, setSearch]             = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage]   = useState(1);
 
-  // modal state
-  const [addOpen,    setAddOpen]    = useState(false);
-  const [viewClient, setViewClient] = useState<NormalizedClient | null>(null);
-  const [editClient, setEditClient] = useState<NormalizedClient | null>(null);
+  // ── Modal state ──────────────────────────────────────────────────────────────
+  const [addOpen,      setAddOpen]      = useState(false);
+  const [viewClient,   setViewClient]   = useState<NormalizedClient | null>(null);
+  const [editClient,   setEditClient]   = useState<NormalizedClient | null>(null);
   const [deleteClient, setDeleteClient] = useState<NormalizedClient | null>(null);
 
-  // ── data ────────────────────────────────────────────────────────────────────
-  const { data: rawData, isLoading, isFetching } = useClients({});
-  const { data: stats, isLoading: statsLoading }  = useClientStats();
+  // ── Data — server-side search ─────────────────────────────────────────────────
+  const { data: rawData, isLoading, isFetching } = useClients({
+    search:   search   || undefined,
+    status:   statusFilter !== "all" ? statusFilter : undefined,
+    page:     currentPage,
+    per_page: PAGE_SIZE,
+  });
 
-  const { mutate: addClient,    isPending: isAdding }   = useAddClient();
+  const { data: stats, isLoading: statsLoading } = useClientStats();
+
+  const { mutate: addClient,    isPending: isAdding   } = useAddClient();
   const { mutate: removeClient, isPending: isDeleting } = useDeleteClient();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateClientStatus();
 
-  // ── normalize + filter client-side ──────────────────────────────────────────
-  const allClients: NormalizedClient[] = (rawData?.data?.data ?? []).map(normalizeClient);
+  // ── Normalize ─────────────────────────────────────────────────────────────────
+  const clients: NormalizedClient[] = (rawData?.data?.data ?? []).map(normalizeClient);
+  const total = rawData?.data?.total ?? 0;
 
-  const filtered = allClients.filter((c) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      c.name.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
-      c.companies.some((comp) => comp.name.toLowerCase().includes(q));
-
-    const matchStatus =
-      statusFilter === "all" ||
-      c.companies.some((comp) => comp.pivot.status === statusFilter);
-
-    return matchSearch && matchStatus;
-  });
-
-  const total      = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const pageData   = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  // ── handlers ────────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleSearch = (v: string) => { setSearch(v);       setCurrentPage(1); };
   const handleStatus = (v: string) => { setStatusFilter(v); setCurrentPage(1); };
 
@@ -172,7 +150,6 @@ export default function ClientManagementPage() {
 
   const handleDelete = () => {
     if (!deleteClient) return;
-    // نستخدم أول شركة مرتبطة كـ company_id — لو ما في نستخدم 1
     const company_id = deleteClient.companies[0]?.id ?? 1;
     removeClient(
       { id: deleteClient.id, company_id },
@@ -180,21 +157,18 @@ export default function ClientManagementPage() {
     );
   };
 
-  const handleUpdateStatus = (
-    id: number,
-    data: UpdateClientStatusRequest
-  ) => {
+  const handleUpdateStatus = (id: number, data: UpdateClientStatusRequest) => {
     updateStatus(
       { id, data },
       { onSuccess: () => setEditClient(null) }
     );
   };
 
-  // ── stats cards ──────────────────────────────────────────────────────────────
+  // ── Stats cards ───────────────────────────────────────────────────────────────
   const statCards: StatItem[] = [
     {
       icon:      Users,
-      value:     stats?.total ?? 0,
+      value:     stats?.total    ?? 0,
       label:     "Total Clients",
       iconColor: "var(--color-primary)",
       iconBg:    "var(--color-bg-primary-200)",
@@ -208,7 +182,7 @@ export default function ClientManagementPage() {
     },
     {
       icon:      Clock,
-      value:     stats?.pending ?? 0,
+      value:     stats?.pending  ?? 0,
       label:     "Pending",
       iconColor: "#d97706",
       iconBg:    "rgba(251,191,36,0.12)",
@@ -222,7 +196,7 @@ export default function ClientManagementPage() {
     },
   ];
 
-  // ── table columns ────────────────────────────────────────────────────────────
+  // ── Table columns ─────────────────────────────────────────────────────────────
   const columns: TableColumn<NormalizedClient>[] = [
     {
       key:       "name",
@@ -242,7 +216,7 @@ export default function ClientManagementPage() {
         </div>
       ),
     },
-    // عمود الشركات — للـ super_admin بس
+    // Companies column — super_admin only
     ...(!isCompanyAdmin
       ? [{
           key:    "companies",
@@ -263,13 +237,11 @@ export default function ClientManagementPage() {
       key:    "status",
       header: "Status",
       render: (row) => {
-        // الـ company_admin بيشوف حالته هو فقط
         const toShow = isCompanyAdmin
           ? row.companies.filter((c) => c.id === user?.company_id)
           : row.companies;
 
-        if (toShow.length === 0)
-          return <PivotStatusPill status="pending" />;
+        if (toShow.length === 0) return <PivotStatusPill status="pending" />;
 
         return (
           <div className="flex flex-col gap-1">
@@ -303,7 +275,7 @@ export default function ClientManagementPage() {
     },
   ];
 
-  // ── render ───────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
       <PageContainer
@@ -333,9 +305,9 @@ export default function ClientManagementPage() {
               searchPlaceholder="Search by name, email or company..."
               filters={[
                 {
-                  value:   statusFilter,
+                  value:    statusFilter,
                   onChange: handleStatus,
-                  options: STATUS_OPTIONS,
+                  options:  STATUS_OPTIONS,
                 },
               ]}
             />
@@ -344,7 +316,7 @@ export default function ClientManagementPage() {
           <PageCardBody>
             <DataTable
               columns={columns}
-              data={pageData}
+              data={clients}
               actions={actions}
               actionsHeader="Actions"
               isLoading={isFetching}
@@ -363,31 +335,34 @@ export default function ClientManagementPage() {
         </PageCard>
       </PageContainer>
 
-      {/* ── Add Modal ── */}
+      {/* Add Modal */}
       <AddClientModal
         isOpen={addOpen}
         onClose={() => setAddOpen(false)}
-        onSave={handleAdd}
+        onAdd={handleAdd}
         isPending={isAdding}
+        isSuperAdmin={!isCompanyAdmin}
       />
 
-      {/* ── View Modal ── */}
+      {/* View Modal */}
       <ViewClientModal
         isOpen={!!viewClient}
         onClose={() => setViewClient(null)}
-        data={viewClient}
+        client={viewClient}
       />
 
-      {/* ── Edit / Update Status Modal ── */}
+      {/* Edit Modal */}
       <EditClientModal
         isOpen={!!editClient}
         onClose={() => setEditClient(null)}
         data={editClient}
         onUpdate={handleUpdateStatus}
         isPending={isUpdating}
+        isCompanyAdmin={isCompanyAdmin}
+        userCompanyId={user?.company_id ?? undefined}
       />
 
-      {/* ── Delete Confirm ── */}
+      {/* Delete Modal */}
       <DeleteConfirmationModal
         isOpen={!!deleteClient}
         onClose={() => setDeleteClient(null)}

@@ -9,10 +9,10 @@ import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
 import { DataTable, TableColumn, TableAction } from "@/components/molecules/Datatable";
 import { Pagination } from "@/components/molecules/Pagination";
 import { Text } from "@/components/atoms/Text";
-import { useTasks, useTaskStats } from "../hooks/useTasks";
 import { useQueryClient } from "@tanstack/react-query";
 import { DUMMY_STATS } from "../data/mockData";
 import { Task } from "../types/tasks.types";
+import { useTasks, useTaskStats, useCreateTask, useUpdateTask, useDeleteTask, useTasksData } from "../hooks/useTasks";
 import AddTaskModal from "./AddTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import { ViewTaskModal } from "./ViewTaskModal";
@@ -38,46 +38,106 @@ export function TasksManagementPage() {
   const { data: statsData }      = useTaskStats();
   const stats                    = statsData || DUMMY_STATS;
 
-  const columns: TableColumn<Task>[] = useMemo(() => {
-    const cols: TableColumn<Task>[] = [
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+
+  const { data: tasksDataResponse } = useTasksData();
+  const employeesList = tasksDataResponse?.data?.employees || [];
+
+  const columns: TableColumn<any>[] = useMemo(() => {
+    const cols: TableColumn<any>[] = [
       {
         key: "title",
         header: t("columns.title"),
         isPrimary: isCompanyAdmin,
-        render: (row) => <Text size="sm" weight="medium">{row.title}</Text>,
+        render: (row) => <Text size="sm" weight="medium">{row.title || row.name || '-'}</Text>,
       },
       {
         key: "project",
         header: t("columns.project"),
         hideOnMobile: true,
-        render: (row) => <Text size="sm" color="gray-200">{row.project}</Text>,
+        render: (row) => <Text size="sm" color="gray-200">{typeof row.project === 'object' ? (row.project?.title || row.project?.name) : row.project || '-'}</Text>,
       },
       {
         key: "employee",
         header: t("columns.employee"),
-        render: (row) => <Text size="sm" color="gray-200">{row.employee}</Text>,
+        render: (row) => {
+          let empName = '-';
+          if (row.users && Array.isArray(row.users) && row.users.length > 0) {
+            empName = row.users.map((u: any) => u.name || u.user?.name || u).join(', ');
+          } else if (row.employees && Array.isArray(row.employees) && row.employees.length > 0) {
+            empName = row.employees.map((u: any) => u.name || u.user?.name || u).join(', ');
+          } else {
+            // Check for nested objects first
+            const empObj = row.employee || row.user || row.assignedTo || (typeof row.assigned_to === 'object' ? row.assigned_to : null);
+            if (empObj && typeof empObj === 'object') {
+              empName = empObj.name || empObj.user?.name || empObj.title || '-';
+            } else {
+            // Fallback to primitive fields if no object exists
+            const rawEmp = row.employee || row.assignedTo || row.assigned_to || row.user || '-';
+            
+            // Try to resolve from tasksData if we have a number ID
+            if (typeof rawEmp === 'number' || !isNaN(Number(rawEmp))) {
+              const found = employeesList.find((e: any) => e.id?.toString() === rawEmp?.toString());
+              if (found) {
+                empName = found.name || found.user?.name || rawEmp;
+              } else {
+                empName = rawEmp;
+              }
+            } else {
+              empName = rawEmp;
+            }
+          }
+          }
+          return <Text size="sm" color="gray-200">{empName}</Text>;
+        },
       },
       {
         key: "start",
         header: t("columns.start"),
         hideOnMobile: true,
-        render: (row) => <Text size="sm" color="gray-200">{row.start}</Text>,
+        render: (row) => {
+          const date = row.task_date || row.taskDate || "";
+          const time = row.start_time || row.start || "";
+          return <Text size="sm" color="gray-200">{date} {time}</Text>;
+        },
       },
       {
         key: "end",
         header: t("columns.end"),
         hideOnMobile: true,
-        render: (row) => <Text size="sm" color="gray-200">{row.end}</Text>,
+        render: (row) => {
+          const date = row.task_date || row.taskDate || "";
+          const time = row.end_time || row.end || "";
+          return <Text size="sm" color="gray-200">{date} {time}</Text>;
+        },
       },
       {
         key: "duration",
         header: t("columns.duration"),
-        render: (row) => <Text size="sm" color="gray-200">{row.duration}</Text>,
+        render: (row) => {
+          const startTime = row.start_time || row.start;
+          const endTime = row.end_time || row.end;
+          
+          if (startTime && endTime) {
+            const [sh, sm] = startTime.split(':').map(Number);
+            const [eh, em] = endTime.split(':').map(Number);
+            if (!isNaN(sh) && !isNaN(eh)) {
+              let diffMin = (eh * 60 + em) - (sh * 60 + sm);
+              if (diffMin < 0) diffMin += 24 * 60;
+              const hours = Math.floor(diffMin / 60);
+              const mins = diffMin % 60;
+              return <Text size="sm" color="gray-200" weight="medium" className="text-[var(--color-primary)]">{hours}h {mins}m</Text>;
+            }
+          }
+          return <Text size="sm" color="gray-200">{row.duration || '-'}</Text>;
+        },
       },
       {
         key: "budget",
         header: t("columns.budget"),
-        render: (row) => <Text size="sm" weight="bold" className="ds-text-primary">{row.budget}</Text>,
+        render: (row) => <Text size="sm" weight="bold" className="ds-text-primary">{row.budget || (row.project?.budget) || '-'}</Text>,
       },
     ];
 
@@ -86,7 +146,10 @@ export function TasksManagementPage() {
         key: "company",
         header: t("columns.company"),
         isPrimary: true,
-        render: (row) => <Text size="sm" weight="bold">{row.company}</Text>,
+        render: (row) => {
+          const cName = typeof row.company === 'object' ? row.company?.name : row.project?.company?.name || row.company;
+          return <Text size="sm" weight="bold">{cName || '-'}</Text>;
+        },
       });
     }
 
@@ -168,26 +231,28 @@ export function TasksManagementPage() {
       <AddTaskModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={(v) => { 
-          queryClient.setQueryData(["tasks", { search, page: currentPage, per_page: PAGE_SIZE }], (old: any) => {
-            if (!old) return old;
-            const newTask = {
-              id: Date.now(),
-              title: v.title,
-              company: v.company,
-              project: v.project,
-              employee: v.employee,
-              start: v.start,
-              end: v.end,
-              duration: v.duration,
-              budget: v.budget,
-            };
-            return {
-              ...old,
-              data: [newTask, ...old.data]
-            };
+        onSubmit={(v, setError) => {
+          const payload: any = {
+            project_id: v.project,
+            assigned_to: v.employee,
+            title: v.title,
+            description: v.notes,
+            status: "pending",
+            task_date: new Date().toISOString().split('T')[0],
+            start_time: v.start,
+            end_time: v.end,
+          };
+          if (v.company) payload.company_id = v.company;
+          createTask.mutate(payload, {
+            onSuccess: () => setIsModalOpen(false),
+            onError: (err: any) => {
+              if (err?.response?.data?.errors && setError) {
+                Object.entries(err.response.data.errors).forEach(([key, val]: any) => {
+                  setError(key === 'assigned_to' ? 'employee' : key === 'project_id' ? 'project' : key === 'task_date' ? 'taskDate' : key, { type: 'server', message: val[0] });
+                });
+              }
+            }
           });
-          setIsModalOpen(false); 
         }}
       />
 
@@ -196,7 +261,13 @@ export function TasksManagementPage() {
         onClose={closeModal}
         title={tCommon("delete") || "Delete Task"}
         itemName={selectedRow?.title}
-        onConfirm={() => { console.log("Delete Task", selectedRow?.id); closeModal(); }}
+        onConfirm={() => {
+          if (selectedRow?.id) {
+            deleteTask.mutate(selectedRow.id, {
+              onSuccess: () => closeModal()
+            });
+          }
+        }}
       />
 
       <ViewTaskModal
@@ -209,15 +280,28 @@ export function TasksManagementPage() {
         isOpen={activeModal === "edit"}
         onClose={closeModal}
         data={selectedRow}
-        onUpdate={(id: number, data: any) => { 
-          queryClient.setQueryData(["tasks", { search, page: currentPage, per_page: PAGE_SIZE }], (old: any) => {
-            if (!old) return old;
-            return {
-              ...old,
-              data: old.data.map((p: any) => p.id === id ? { ...p, ...data } : p)
-            };
+        onUpdate={(id: number, v: any, setError: any) => {
+          const payload: any = {
+            project_id: v.project,
+            assigned_to: v.employee,
+            title: v.title,
+            description: v.notes,
+            status: v.status || "pending",
+            task_date: selectedRow?.task_date || selectedRow?.taskDate || new Date().toISOString().split('T')[0],
+            start_time: v.start,
+            end_time: v.end,
+          };
+          if (v.company) payload.company_id = v.company;
+          updateTask.mutate({ id, data: payload }, {
+            onSuccess: () => closeModal(),
+            onError: (err: any) => {
+              if (err?.response?.data?.errors && setError) {
+                Object.entries(err.response.data.errors).forEach(([key, val]: any) => {
+                  setError(key === 'assigned_to' ? 'employee' : key === 'project_id' ? 'project' : key === 'task_date' ? 'taskDate' : key, { type: 'server', message: val[0] });
+                });
+              }
+            }
           });
-          closeModal(); 
         }}
       />
     </div>

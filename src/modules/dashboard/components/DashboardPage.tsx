@@ -1,83 +1,45 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Text } from "@/components/atoms/Text";
-import { PageContainer } from "@/components/template/PageContainer";
-import { PageHeader } from "@/components/molecules/Pageheader";
-import { useTranslations } from "next-intl";
-import { useDashboard } from "../hooks/useDashboard";
-import { DashboardStatsRow } from "./DashboardStatsRow";
-import { CashFlowChart, CashFlowLegend } from "./CashFlowChart";
-import { ChurnChart, ChurnLegend } from "./ChurnChart";
-import { PackageDistributionCard } from "./PackageDistributionCard";
-import { RecentCompaniesList } from "./RecentCompaniesList";
-import { RecentRequestsList } from "./RecentRequestsList";
-import { DashboardCard, ShowAll } from "./DashboardCard";
-import { Plus } from "lucide-react";
+import { useEffect }           from "react";
+import { useRouter }           from "next/navigation";
+import { CompanyDashboard }    from "./CompanyDashboard";
+import { SuperAdminDashboard } from "./SuperAdminDashboard";
+import { EmployeeDashboard }   from "./EmployeeDashboard";
+import { ClientDashboard }     from "./ClientDashboard";
+import { useAuth }             from "@/providers/AuthProvider";
+import { tokenService }        from "@/services/tokenServices";
+import { PageSkeleton }        from "@/components/atoms/PageSkeleton";
 
-export default function DashboardPage() {
-  const t = useTranslations("dashboard");
-  const { data, isLoading } = useDashboard();
+export function DashboardPage() {
+  const { user, isLoading } = useAuth();
+  const token = tokenService.getToken();
   const router = useRouter();
 
-  return (
-    <PageContainer isLoading={isLoading} skeletonVariant="dashboard">
-      <div className="flex flex-col gap-6">
+  useEffect(() => {
+    if (!isLoading && (!user || !token)) {
+      router.replace("/login");
+    }
+  }, [isLoading, user, token, router]);
 
-        {/* Header */}
-        <PageHeader 
-          title={t("title")} 
-          subtitle={t("subtitle")}
-          actions={[
-            {
-              label: t("newCompany"),
-              icon: Plus,
-              variant: "solid",
-              onClick: () => router.push("/companies/add"),
-            }
-          ]}
-        />
+  // Show skeleton while loading OR while redirecting (user just logged out)
+  if (isLoading || !user || !token) {
+    return <PageSkeleton variant="dashboard" />;
+  }
 
-        {/* Main grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-          {/* Left column */}
-          <div className="xl:col-span-2 flex flex-col gap-6">
-            {data && <DashboardStatsRow stats={data.stats} />}
-
-            <DashboardCard title={t("monthlyCashFlow")} action={<CashFlowLegend />}>
-              {data && <CashFlowChart data={data.cashFlow} />}
-            </DashboardCard>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DashboardCard title={t("subscriberGrowth")} action={<ChurnLegend />}>
-                {data && <ChurnChart data={data.churn} />}
-              </DashboardCard>
-
-              <DashboardCard title={t("packageDistribution")}>
-                {data && <PackageDistributionCard data={data.packageDistribution} />}
-              </DashboardCard>
-            </div>
-          </div>
-
-          {/* Right column */}
-          <div className="flex flex-col gap-5">
-            <DashboardCard
-              title={t("recentCompanies")}
-              action={<ShowAll href="/companies" />}
-            >
-              {data && <RecentCompaniesList companies={data.recentCompanies} />}
-            </DashboardCard>
-
-            <DashboardCard
-              title={t("recentRequests")}
-              action={<ShowAll href="/company-requests" />}
-            >
-              {data && <RecentRequestsList requests={data.recentRequests} />}
-            </DashboardCard>
-          </div>
+  switch (user.role) {
+    case "super_admin":
+      return <SuperAdminDashboard role={user.role} token={token} />;
+    case "company_admin":
+      return <CompanyDashboard role={user.role} token={token} />;
+    case "employee":
+      return <EmployeeDashboard role={user.role} token={token} />;
+    case "client":
+      return <ClientDashboard role={user.role} token={token} />;
+    default:
+      return (
+        <div className="p-8 text-center ds-text-priority-high">
+          Unknown role
         </div>
-      </div>
-    </PageContainer>
-  );
+      );
+  }
 }

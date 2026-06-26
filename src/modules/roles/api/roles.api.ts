@@ -1,50 +1,47 @@
-import type { Role, RoleStats, RolesQueryParams } from "../types/roles.types";
 import apiClient from "@/services/apiClient";
+import { getRolePrefix } from "@/utils/rolePrefix";
+import type { Role, RoleStats, RolesQueryParams } from "../types/roles.types";
 
 export const roleApi = {
-  getAll: async (params?: RolesQueryParams) => {
-    // Pass params inside the Axios config object
-    const response = await apiClient.get('/api/v1/super_admin/roles', { params });
-    
-    // response.data contains the actual payload
+  getAll: async (role: string, params?: RolesQueryParams) => {
+    const response = await apiClient.get(
+      `${getRolePrefix(role)}/roles`,
+      { params }
+    );
     const payload = response.data;
-    
-    // Fallback if API returns an array directly instead of { data, meta }
+
     if (Array.isArray(payload)) {
       return { data: payload, meta: { total: payload.length } };
     }
-    
+
     return {
       data: payload?.data || [],
-      meta: payload?.meta || { total: payload?.data?.length || 0 }
+      meta: payload?.meta || { total: payload?.data?.length || 0 },
     };
   },
 
-  getStats: async (): Promise<RoleStats> => {
-    // Since there is no dedicated stats endpoint, we fetch all roles to compute stats
-    // In a real scenario, this should be handled by a dedicated backend endpoint if data is large.
-    const res = await roleApi.getAll();
+  getStats: async (role: string): Promise<RoleStats> => {
+    const res   = await roleApi.getAll(role);
     const roles = res.data;
-    
     return {
-      total: roles.length,
-      systemRoles: roles.filter(r => r.type === 'system').length,
-      customRoles: roles.filter(r => r.type === 'custom').length
+      total:       roles.length,
+      systemRoles: roles.filter((r: any) => r.type === "system").length,
+      customRoles: roles.filter((r: any) => r.type === "custom").length,
     };
   },
 
-  create: async (data: Partial<Role>) => {
-    const response = await apiClient.post('/api/v1/super_admin/roles', data);
+  create: async (role: string, data: Partial<Role>) => {
+    const response = await apiClient.post(`${getRolePrefix(role)}/roles`, data);
     return response.data;
   },
 
-  update: async (id: number | string, data: Partial<Role>) => {
-    const response = await apiClient.put(`/api/v1/super_admin/roles/${id}`, data);
+  update: async (role: string, id: number | string, data: Partial<Role>) => {
+    const response = await apiClient.put(`${getRolePrefix(role)}/roles/${id}`, data);
     return response.data;
   },
 
-  delete: async (id: number | string) => {
-    const response = await apiClient.delete(`/api/v1/super_admin/roles/${id}`);
+  delete: async (role: string, id: number | string) => {
+    const response = await apiClient.delete(`${getRolePrefix(role)}/roles/${id}`);
     return response.data;
-  }
+  },
 };

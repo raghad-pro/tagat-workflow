@@ -16,9 +16,9 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/atoms/Button";
 import { Text } from "@/components/atoms/Text";
 import { TextField, PasswordField } from "@/components/molecules/FormFields";
-import { useForgotPassword } from "@/modules/auth/hooks/useForgotpassword";
-import { useVerifyOtp } from "@/modules/auth/hooks/useVerifyotp";
-import { useResetPassword } from "@/modules/auth/hooks/useResetpassword";
+import { useForgotPassword } from "@/modules/auth/hooks/useForgotPassword";
+import { useVerifyOtp } from "@/modules/auth/hooks/useVerifyOtp";
+import { useResetPassword } from "@/modules/auth/hooks/useResetPassword";
 import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

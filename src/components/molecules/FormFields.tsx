@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 
 // ─── Shared styles ─────────────────────────────────────────────────────────────
 const inputBase = cn(
-  "ds-border-input-color ds-text-sm ds-text-primary",
+  "w-full ds-border-input-color ds-text-sm ds-text-primary",
   "focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-none",
   "focus-visible:border-[var(--color-primary)]"
 );
@@ -225,15 +225,25 @@ export function SelectField<T extends FieldValues>({
               </SelectTrigger>
             </FormControl>
             <SelectContent usePortal={false} position="popper" sideOffset={4} className="ds-bg-form shadow-lg overflow-y-auto max-h-[250px] custom-scrollbar w-[var(--radix-select-trigger-width)]" style={{ border: "1px solid var(--color-border-form)", borderRadius: "8px" }}>
-              {options.map((option) => (
+              {options.length > 0 ? (
+                options.map((option) => (
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value}
+                    className="ds-text-main py-3 px-3 mx-1 border-b ds-border-form last:border-b-0 hover:bg-[var(--color-bg-primary-200)] focus:bg-[var(--color-bg-primary-200)] cursor-pointer rounded-none text-sm font-medium transition-colors"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))
+              ) : (
                 <SelectItem 
-                  key={option.value} 
-                  value={option.value}
-                  className="ds-text-main py-3 px-3 mx-1 border-b ds-border-form last:border-b-0 hover:bg-[var(--color-bg-primary-200)] focus:bg-[var(--color-bg-primary-200)] cursor-pointer rounded-none text-sm font-medium transition-colors"
+                  value="no-data" 
+                  disabled
+                  className="ds-text-main py-3 px-3 mx-1 border-b ds-border-form last:border-b-0 cursor-not-allowed rounded-none text-sm font-medium opacity-50"
                 >
-                  {option.label}
+                  {placeholder || "No options available"}
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
 

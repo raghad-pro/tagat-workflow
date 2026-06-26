@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import ThemeButton from "@/components/atoms/ThemeButton";
-import LanguageSwitcher from "@/components/atoms/LanguageSwitcher";
+import LanguageSwitcher from "@/components/atoms/languageSwitcher";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/atoms/Button";
 import { useAuth } from "@/providers/AuthProvider";

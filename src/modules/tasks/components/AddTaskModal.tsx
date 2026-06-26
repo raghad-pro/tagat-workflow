@@ -9,12 +9,14 @@ import { TextField, SelectField, TextAreaField } from "@/components/molecules/Fo
 import { Form } from "@/components/ui/form";
 import { Briefcase, Clock } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
+import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { useTasksData, useProjectEmployees } from "../hooks/useTasks";
 import { useTranslations } from "next-intl";
 
-const addTaskSchema = z.object({
-  company: z.string().optional(),
-  project: z.string().min(1, "Project is required"),
-  employee: z.string().min(1, "Employee is required"),
+const getTaskSchema = (t: any, isCompanyAdmin: boolean) => z.object({
+  company: isCompanyAdmin ? z.string().optional() : z.string().min(1, t("companyRequired") || "Company is required"),
+  project: z.string().min(1, t("projectRequired")).refine(val => val !== "no-data", t("projectRequired")),
+  employee: z.string().min(1, t("employeeRequired")).refine(val => val !== "no-data", t("employeeRequired")),
   title: z.string().min(2, "Title is required"),
   start: z.string().min(1, "Start time is required"),
   end: z.string().min(1, "End time is required"),
@@ -47,24 +49,91 @@ const addTaskSchema = z.object({
   }
 });
 
-type FormValues = z.infer<typeof addTaskSchema>;
+type FormValues = z.infer<ReturnType<typeof getTaskSchema>>;
 
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: any, setError?: any) => void;
 }
 
 export default function AddTaskModal({ isOpen, onClose, onSubmit }: AddTaskModalProps) {
   const t = useTranslations("task");
+  
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company_admin";
+
   const form = useForm<FormValues>({
-    resolver: zodResolver(addTaskSchema),
+    resolver: zodResolver(getTaskSchema(t, isCompanyAdmin)),
     mode: "onTouched",
     defaultValues: { company: "", project: "", employee: "", title: "", start: "", end: "", duration: "", notes: "" },
   });
 
-  const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "company_admin";
+  const selectedCompanyId = useWatch({ control: form.control, name: "company" });
+
+  // Fetch Companies for Super Admin
+  const { data: companiesResponse } = useCompanies({ page: 1, per_page: 100 });
+  const companies = companiesResponse?.data?.data || [];
+  const companyOptions = companies.map((c: any) => ({ value: c.id.toString(), label: c.name }));
+
+  // Fetch Projects and Employees based on selected company (or directly if company admin)
+  const { data: tasksDataResponse, isLoading: isLoadingProjects } = useTasksData(isCompanyAdmin ? undefined : (selectedCompanyId ? Number(selectedCompanyId) : undefined));
+  
+  const rawProjects = tasksDataResponse?.projects || tasksDataResponse?.data?.projects || [];
+  let projectOptions = rawProjects.map((p: any) => ({
+    value: p.id.toString(),
+    label: p.title || p.name
+  }));
+  
+  if (projectOptions.length === 0) {
+    projectOptions = [{ value: "no-data", label: t("noProjects") || "No projects" }];
+  }
+
+  const selectedProjectId = useWatch({ control: form.control, name: "project" });
+
+  useEffect(() => {
+    // Only reset if it's a valid old project to avoid fighting with no-data
+    if (form.getValues("project") !== "no-data") form.setValue("project", "");
+    if (form.getValues("employee") !== "no-data") form.setValue("employee", "");
+  }, [selectedCompanyId, form]);
+
+  useEffect(() => {
+    if (form.getValues("employee") !== "no-data") form.setValue("employee", "");
+  }, [selectedProjectId, form]);
+
+  const { data: projectEmployeesResponse, isLoading: isLoadingEmployees } = useProjectEmployees(
+    selectedProjectId && selectedProjectId !== "no-data" ? Number(selectedProjectId) : null
+  );
+  
+  const rawEmployees = projectEmployeesResponse?.employees || projectEmployeesResponse?.data?.employees || [];
+  let employeeOptions = rawEmployees.map((e: any) => ({
+    value: e.id.toString(),
+    label: e.name || e.user?.name
+  }));
+
+  if (employeeOptions.length === 0) {
+    employeeOptions = [{ value: "no-data", label: t("noEmployees") || "No employees" }];
+  }
+
+  const projLen = projectOptions.length;
+  const projFirstVal = projectOptions[0]?.value;
+  useEffect(() => {
+    if (projLen === 1 && projFirstVal === "no-data") {
+      if (form.getValues("project") !== "no-data") form.setValue("project", "no-data");
+    } else if (form.getValues("project") === "no-data") {
+      form.setValue("project", "");
+    }
+  }, [projLen, projFirstVal, form]);
+
+  const empLen = employeeOptions.length;
+  const empFirstVal = employeeOptions[0]?.value;
+  useEffect(() => {
+    if (empLen === 1 && empFirstVal === "no-data") {
+      if (form.getValues("employee") !== "no-data") form.setValue("employee", "no-data");
+    } else if (form.getValues("employee") === "no-data") {
+      form.setValue("employee", "");
+    }
+  }, [empLen, empFirstVal, form]);
 
   // Watch start and end times to calculate duration
   const startVal = useWatch({ control: form.control, name: "start" });
@@ -87,9 +156,12 @@ export default function AddTaskModal({ isOpen, onClose, onSubmit }: AddTaskModal
   }, [startVal, endVal, form]);
 
   const handleFormSubmit = (data: FormValues) => {
-    if (onSubmit) onSubmit(data);
-    onClose();
-    form.reset();
+    if (onSubmit) {
+      onSubmit(data, form.setError);
+    } else {
+      onClose();
+      form.reset();
+    }
   };
 
   if (!isOpen) return null;
@@ -108,13 +180,11 @@ export default function AddTaskModal({ isOpen, onClose, onSubmit }: AddTaskModal
           <form id="add-task-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
             <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {!isCompanyAdmin && (
-                  <SelectField control={form.control} name="company" label={t("columns.company") || "Company"} options={[{value:"company-1", label:"Company 1"}]} required placeholder="Select company" />
-                )}
-                <SelectField control={form.control} name="project" label={t("columns.project") || "Project"} options={[{value:"proj-1", label:"Project 1"}]} required placeholder="Select project" />
+                <SelectField control={form.control} name="company" label={t("columns.company") || "Company"} options={companyOptions} required placeholder="Select company" />
+                <SelectField control={form.control} name="project" label={t("columns.project") || "Project"} options={projectOptions} required placeholder="Select project" disabled={(!isCompanyAdmin && !selectedCompanyId) || (projectOptions.length === 1 && projectOptions[0].value === "no-data")} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="employee" label={t("columns.employee") || "Employee"} options={[{value:"emp-1", label:"Employee 1"}]} required placeholder="Select employee" />
+                <SelectField control={form.control} name="employee" label={t("columns.employee") || "Employee"} options={employeeOptions} required placeholder="Select employee" disabled={!selectedProjectId || selectedProjectId === "no-data" || (employeeOptions.length === 1 && employeeOptions[0].value === "no-data")} />
                 <TextField control={form.control} name="title" label={t("columns.title") || "Title"} placeholder="Enter task title" required icon={Briefcase} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

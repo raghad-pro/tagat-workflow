@@ -14,8 +14,10 @@ export default function GuestGuard({ children }: { children: React.ReactNode }) 
       router.replace("/dashboard");
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // لو بعد Loading لسا مش Authenticated → عرض الصفحة (login/register)
   if (isLoading) return <PageSkeleton variant="dashboard" />;
-  if (!isAuthenticated) return <PageSkeleton variant="dashboard" />;
+  if (isAuthenticated) return <PageSkeleton variant="dashboard" />;
 
   return <>{children}</>;
 }

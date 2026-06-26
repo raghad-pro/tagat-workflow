@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,7 +9,10 @@ import { ActionModal } from "@/components/molecules/ActionModal";
 import { TextField, PasswordField, SelectField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
 import type { AddEmployeeFormValues } from "../types/employees.types";
+import { UseFormSetError } from "react-hook-form";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTranslations } from "next-intl";
+import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 
 const addEmployeeSchema = z.object({
   employeeName: z.string().min(2, "Name must be at least 2 characters"),
@@ -24,32 +27,39 @@ const addEmployeeSchema = z.object({
 
 type FormValues = z.infer<typeof addEmployeeSchema>;
 
+import { useCompanyCurrencies } from "../hooks/useEmployees";
+
 const PAYMENT_OPTIONS = [
   { value: "monthly", label: "Monthly" },
-  { value: "hourly", label: "Hourly" }
-];
-const CURRENCY_OPTIONS = [
-  { value: "usd", label: "USD" },
-  { value: "ils", label: "ILS" },
-  { value: "eur", label: "EUR" }
-];
-const COMPANY_OPTIONS = [
-  { value: "advanced-tech", label: "Advanced Tech Company" },
-  { value: "innotech", label: "Innotech Solutions" },
-  { value: "nextgen", label: "NextGen Software" },
-  { value: "creative-minds", label: "Creative Minds Studio" },
+  { value: "hourly", label: "Hourly" },
+  { value: "part_time", label: "Part Time" }
 ];
 
 interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (values: AddEmployeeFormValues) => void;
+  onSubmit?: (values: FormValues, setError: UseFormSetError<FormValues>) => void;
 }
 
 export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmployeeModalProps) {
   const { user } = useAuth();
   const isCompanyAdmin = user?.role === "company_admin";
 
+  const { data: companiesData } = useCompanies({ per_page: 100 });
+  
+  let companies = [];
+  if (Array.isArray(companiesData?.data?.data)) {
+    companies = companiesData.data.data;
+  } else if (Array.isArray(companiesData?.data)) {
+    companies = companiesData.data;
+  }
+  
+  const COMPANY_OPTIONS = companies.map((c: any) => ({
+    value: c.id?.toString(),
+    label: c.name || c.domain || c.id?.toString(),
+  }));
+
+  const t = useTranslations("employee");
   const form = useForm<FormValues>({
     resolver: zodResolver(addEmployeeSchema),
     mode: "onTouched",
@@ -59,11 +69,45 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
     },
   });
 
+  const selectedCompany = form.watch("company");
+  const { data: currenciesData } = useCompanyCurrencies(selectedCompany);
+  
+  let currencies = [];
+  if (Array.isArray(currenciesData?.data?.data)) {
+    currencies = currenciesData.data.data;
+  } else if (Array.isArray(currenciesData?.data)) {
+    currencies = currenciesData.data;
+  } else if (Array.isArray(currenciesData)) {
+    currencies = currenciesData;
+  }
+  
+  const CURRENCY_OPTIONS = currencies.map((c: any) => ({
+    value: c.id?.toString(),
+    label: c.name || c.code || c.id?.toString(),
+  }));
+
+  if (CURRENCY_OPTIONS.length === 0) {
+    CURRENCY_OPTIONS.push({ value: "1", label: "USD" });
+  }
+
+  useEffect(() => {
+    if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency")) {
+      form.setValue("currency", CURRENCY_OPTIONS[0].value);
+    }
+  }, [CURRENCY_OPTIONS.length, form]);
+
   const handleFormSubmit = (data: FormValues) => {
-    onSubmit?.(data);
-    onClose();
-    form.reset();
+    if (onSubmit) {
+      onSubmit(data, form.setError);
+    } else {
+      onClose();
+      form.reset();
+    }
   };
+
+  const selectedPaymentType = form.watch("paymentType");
+  const rateLabel = selectedPaymentType === "monthly" ? "Monthly Rate" : 
+                    (selectedPaymentType === "hourly" || selectedPaymentType === "part_time" ? "Hourly Rate" : t("labels.salary"));
 
   if (!isOpen) return null;
 
@@ -71,7 +115,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
     <ActionModal 
       isOpen={isOpen} 
       onClose={() => { form.reset(); onClose(); }} 
-      title="Add New Employee"
+      title={t("addEmployeeTitle")}
       mode="add"
       formId="add-employee-form"
       size="lg"
@@ -81,21 +125,21 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
           <form id="add-employee-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
             <div className="rounded-2xl p-5 flex flex-col gap-5" style={{ border: "1px solid var(--color-border-form)" }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <TextField control={form.control} name="employeeName" label="Employee Name" placeholder="John Doe" required icon={User} />
-                <TextField control={form.control} name="email" label="Email" placeholder="john@example.com" type="email" required icon={Mail} />
+                <TextField control={form.control} name="employeeName" label={t("labels.name")} placeholder={t("placeholders.name")} required icon={User} />
+                <TextField control={form.control} name="email" label={t("labels.email")} placeholder={t("placeholders.email")} type="email" required icon={Mail} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="paymentType" label="Payment Type" options={PAYMENT_OPTIONS} required placeholder="Select payment type" />
-                <TextField control={form.control} name="jobTitle" label="Job Title" placeholder="Developer" required icon={Briefcase} />
+                <SelectField control={form.control} name="paymentType" label={t("labels.paymentType")} options={PAYMENT_OPTIONS} required placeholder={t("placeholders.paymentType")} />
+                <TextField control={form.control} name="jobTitle" label={t("labels.jobTitle")} placeholder={t("placeholders.jobTitle")} required icon={Briefcase} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <PasswordField control={form.control} name="password" label="Password" placeholder="••••••••" required icon={Lock} />
-                <TextField control={form.control} name="hourlyRate" label="Rate / Salary" placeholder="0.00" type="number" required icon={DollarSign} />
+                <PasswordField control={form.control} name="password" label={t("labels.password")} placeholder={t("placeholders.password")} required icon={Lock} />
+                <TextField control={form.control} name="hourlyRate" label={rateLabel} placeholder={t("placeholders.salary")} type="number" required icon={DollarSign} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="currency" label="Currency" options={CURRENCY_OPTIONS} required placeholder="USD" />
+                <SelectField control={form.control} name="currency" label={t("labels.currency")} options={CURRENCY_OPTIONS} required placeholder={t("placeholders.currency")} />
                 {!isCompanyAdmin && (
-                  <SelectField control={form.control} name="company" label="Company Name" options={COMPANY_OPTIONS} required placeholder="Select Company" />
+                  <SelectField control={form.control} name="company" label={t("labels.company")} options={COMPANY_OPTIONS} required placeholder={t("placeholders.company")} />
                 )}
               </div>
             </div>

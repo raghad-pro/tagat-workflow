@@ -190,6 +190,30 @@
     "subtitle": "Manage company employees and roles",
     "add": "Add Employee",
     "searchPlaceholder": "Search employees...",
+    "addEmployeeTitle": "Add New Employee",
+    "editEmployeeTitle": "Edit Employee",
+    "viewEmployeeTitle": "View Employee",
+    "labels": {
+      "name": "Employee Name",
+      "email": "Email",
+      "jobTitle": "Job Title",
+      "paymentType": "Payment Type",
+      "password": "Password",
+      "salary": "Rate / Salary",
+      "currency": "Currency",
+      "company": "Company Name",
+      "status": "Status"
+    },
+    "placeholders": {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "jobTitle": "Developer",
+      "paymentType": "Select payment type",
+      "password": "Enter password",
+      "salary": "0.00",
+      "currency": "USD",
+      "company": "Select Company"
+    },
     "stats": {
       "total": "Total Employees",
       "active": "Active",
@@ -197,6 +221,12 @@
     },
     "columns": {
       "name": "Employee Name",
+      "employee": "Employee",
+      "job": "Job Title",
+      "currency": "Currency",
+      "salary": "Salary",
+      "paymentType": "Payment Type",
+      "company": "Company",
       "role": "Role",
       "department": "Department",
       "email": "Email",
@@ -206,7 +236,9 @@
     "filter": {
       "all": "All",
       "active": "Active",
-      "onLeave": "On Leave"
+      "inactive": "Inactive",
+      "onLeave": "On Leave",
+      "onboarding": "Onboarding"
     }
   },
   "contract": {
@@ -233,6 +265,11 @@
     "subtitle": "Overview and administration of all active tasks across projects",
     "addTask": "Add Tasks",
     "searchPlaceholder": "Search tasks...",
+    "noProjects": "No projects",
+    "noEmployees": "No employees",
+    "projectRequired": "Must select a project",
+    "employeeRequired": "Must select an employee",
+    "companyRequired": "Must select a company",
     "stats": {
       "utilization": "Total Budget Utilization",
       "active": "Total Active Tasks",

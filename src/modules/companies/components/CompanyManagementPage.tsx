@@ -16,15 +16,7 @@ import { Text } from "@/components/atoms/Text";
 import { AddCompanyModal } from "./AddCompanyModal";
 import { ViewCompanyModal } from "./ViewCompanyModal";
 import { EditCompanyModal } from "./EditCompanyModal";
-import type { Company } from "@/modules/companies/types/companies.types";
-
-const MOCK: Company[] = [
-  { id: 1, name: "Zeinab buon",    domain: "zeinabcom.localhost",    email: "zeinab@gmail.com",  joinedDate: "2023-10-15", status: "active", plan: "basic" },
-  { id: 2, name: "Omar Al-Faraj",  domain: "omarhashim.localhost",   email: "omar@example.com",  joinedDate: "2023-11-02", status: "pending", plan: "basic" },
-  { id: 3, name: "Amir Han",       domain: "amirhan.localhost",      email: "amir@example.com",  joinedDate: "2023-11-05", status: "active", plan: "pro" },
-  { id: 4, name: "Nour Al-Jazeera",domain: "nouraljazeera.localhost",email: "nour@example.com",  joinedDate: "2023-11-07", status: "active", plan: "enterprise" },
-  { id: 5, name: "Layla Salim",    domain: "laylasalim.localhost",   email: "layla@example.com", joinedDate: "2023-11-06", status: "pending", plan: "basic" },
-];
+import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany } from "../hooks/useCompanies";
 
 const PAGE_SIZE = 4;
 
@@ -46,9 +38,16 @@ export function CompanyManagementPage() {
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [companies, setCompanies] = useState<Company[]>(MOCK);
 
-  const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } = useActionModals<Company>();
+  const { data: companiesResponse, isLoading } = useCompanies({ search, status: status !== "all" ? status : undefined, page, per_page: PAGE_SIZE });
+  const companies = companiesResponse?.data?.data || [];
+  const totalItems = companiesResponse?.data?.total || 0;
+
+  const createCompany = useCreateCompany();
+  const updateCompany = useUpdateCompany();
+  const deleteCompany = useDeleteCompany();
+
+  const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } = useActionModals<any>();
 
   const handleSearch = useCallback((v: string) => { setSearch(v); setPage(1); }, []);
   const handleStatus = useCallback((v: string) => { setStatus(v); setPage(1); }, []);
@@ -119,14 +118,6 @@ export function CompanyManagementPage() {
     },
   ], [status, handleStatus, t, tCommon]);
 
-  const filtered = companies.filter((c) => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = status === "all" || c.status === status;
-    return matchSearch && matchStatus;
-  });
-
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
@@ -156,16 +147,17 @@ export function CompanyManagementPage() {
 
         <DataTable
           columns={columns}
-          data={paginated}
+          data={companies}
           actions={actions}
           actionsHeader={tCommon("actions")}
           emptyMessage={tCommon("noDataFound")}
+          isLoading={isLoading}
         />
 
         <div className="p-4 border-t flex justify-end" style={{ borderColor: "var(--color-border-form)" }}>
           <Pagination
             currentPage={page}
-            data={filtered}
+            data={Array(totalItems).fill(0)}
             pageSize={PAGE_SIZE}
             onPageChange={setPage}
           />
@@ -176,17 +168,13 @@ export function CompanyManagementPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={(data) => {
-          const newCompany: Company = {
-            id: Date.now(),
+          createCompany.mutate({
             name: data.companyName,
             domain: data.subdomain + ".localhost",
             email: data.email,
-            joinedDate: new Date().toISOString().split("T")[0],
-            status: "pending",
-            plan: "basic"
-          };
-          setCompanies((prev) => [newCompany, ...prev]);
-          setIsAddModalOpen(false);
+          }, {
+            onSuccess: () => setIsAddModalOpen(false)
+          });
         }}
       />
 
@@ -201,19 +189,16 @@ export function CompanyManagementPage() {
         onClose={closeModal}
         data={selectedRow}
         onUpdate={(id, data) => {
-          setCompanies((prev) =>
-            prev.map((c) =>
-              c.id === id
-                ? {
-                    ...c,
-                    name: data.companyName,
-                    domain: data.subdomain,
-                    email: data.email,
-                  }
-                : c
-            )
-          );
-          closeModal();
+          updateCompany.mutate({
+            id,
+            data: {
+              name: data.companyName,
+              domain: data.subdomain,
+              email: data.email,
+            }
+          }, {
+            onSuccess: () => closeModal()
+          });
         }}
       />
 
@@ -223,10 +208,11 @@ export function CompanyManagementPage() {
         title={t("deleteTitle")}
         itemName={selectedRow?.name}
         onConfirm={() => {
-          if (selectedRow) {
-            setCompanies((prev) => prev.filter((c) => c.id !== selectedRow.id));
+          if (selectedRow?.id) {
+            deleteCompany.mutate(selectedRow.id, {
+              onSuccess: () => closeModal()
+            });
           }
-          closeModal();
         }}
       />
     </div>

@@ -1,13 +1,17 @@
 "use client";
 
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { taskApi } from "../api/tasks.api";
 import type { TasksQueryParams } from "../types/tasks.types";
+import { useAuth } from "@/providers/AuthProvider";
 
 export const useTasks = (params: TasksQueryParams) => {
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
   return useQuery({
-    queryKey: ["tasks", params],
-    queryFn: () => taskApi.getAll(params),
+    queryKey: ["tasks", role, params],
+    queryFn: () => taskApi.getAll(role, params),
     placeholderData: keepPreviousData,
   });
 };
@@ -16,5 +20,69 @@ export const useTaskStats = () => {
   return useQuery({
     queryKey: ["task-stats"],
     queryFn: () => taskApi.getStats(),
+  });
+};
+
+export const useTasksData = (companyId?: number) => {
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
+  return useQuery({
+    queryKey: ["tasks-data", role, companyId],
+    queryFn: () => taskApi.getTasksData(role, companyId),
+    enabled: role === "super_admin" ? !!companyId : true,
+  });
+};
+
+export const useProjectEmployees = (projectId: number | null) => {
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
+  return useQuery({
+    queryKey: ["project-employees", role, projectId],
+    queryFn: () => taskApi.getProjectEmployees(role, projectId!),
+    enabled: !!projectId,
+  });
+};
+
+export const useCreateTask = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => taskApi.create(role, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task-stats"] });
+    },
+  });
+};
+
+export const useUpdateTask = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, any> }) => taskApi.update(role, id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task-stats"] });
+    },
+  });
+};
+
+export const useDeleteTask = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
+  return useMutation({
+    mutationFn: (id: number) => taskApi.delete(role, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task-stats"] });
+    },
   });
 };
