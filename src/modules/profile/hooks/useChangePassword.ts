@@ -10,9 +10,9 @@ export const useChangePassword = () => {
   return useMutation({
     mutationFn: async (data: ChangePasswordRequest) => {
       if (!user?.role) throw new Error("Role is missing");
-      return profileApi.changePassword(user.role, data);
+      return profileApi.updatePassword(user.role, data as any);
     },
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       toast.success(res.message || "Password changed successfully");
     },
     onError: (error: any) => {

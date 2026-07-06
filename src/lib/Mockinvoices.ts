@@ -6,7 +6,7 @@ import type {
   CreateInvoiceRequest,
 } from "@/modules/invoices/types/invoices.types";
 
-let MOCK_INVOICES_DB: Invoice[] = [
+let MOCK_INVOICES_DB: any[] = [
   { id: "1",  invoiceNumber: "#INV-2026-0234", company: "Advanced Tech Company", issueDate: "2026-06-06 10:30", dueDate: "2026-06-06 10:30", amount: 1500, currency: "USD", status: "Overdue",  client: "Ali Hassan",    project: "Website Redesign" },
   { id: "2",  invoiceNumber: "#INV-2026-0235", company: "Advanced Tech Company", issueDate: "2026-06-06 10:30", dueDate: "2026-06-10 10:30", amount: 1500, currency: "USD", status: "Overdue",  client: "Sara Ahmed",    project: "Mobile App"       },
   { id: "3",  invoiceNumber: "#INV-2026-0236", company: "Advanced Tech Company", issueDate: "2026-06-06 10:30", dueDate: "2026-06-15 10:30", amount: 1500, currency: "USD", status: "Overdue",  client: "Mohammed Ali",  project: "CRM System"       },
@@ -46,7 +46,7 @@ export async function mockGetInvoices(
   return {
     data: filtered.slice(start, start + per_page),
     meta: { total, page, per_page },
-  };
+  } as any;
 }
 
 export async function mockGetInvoiceStats(): Promise<InvoiceStats> {
@@ -58,12 +58,12 @@ export async function mockGetInvoiceStats(): Promise<InvoiceStats> {
   };
 }
 
-export async function mockCreateInvoice(data: CreateInvoiceRequest): Promise<Invoice> {
+export async function mockCreateInvoice(data: any): Promise<Invoice> {
   const lastNum = MOCK_INVOICES_DB.length
     ? parseInt(MOCK_INVOICES_DB[0].invoiceNumber.replace(/\D/g, ""), 10)
     : 300;
 
-  const newInvoice: Invoice = {
+  const newInvoice: any = {
     id:            String(Date.now()),
     invoiceNumber: `#INV-${new Date().getFullYear()}-${String(lastNum + 1).padStart(4, "0")}`,
     company:       data.company,

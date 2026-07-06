@@ -73,7 +73,18 @@ export interface AddEmployeeFormValues {
   password:     string;
   hourlyRate:   string;
   currency:     string;
-  company:      string;
+  company?:     string;
+}
+
+export interface EditEmployeeFormValues {
+  employeeName: string;
+  email:        string;
+  paymentType:  string;
+  jobTitle:     string;
+  hourlyRate:   string;
+  currency:     string;
+  password?:    string;
+  company?:     string;
 }
 
 // ─── API Response ──────────────────────────────────────────────────────────────

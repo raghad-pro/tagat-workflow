@@ -25,7 +25,7 @@ export const ProfileDetailsForm = () => {
   const { data: profileResponse, isLoading } = useGetProfile();
   const { mutate: updateProfile, isPending } = useUpdateProfile();
 
-  const profile = profileResponse?.data;
+  const profile = (profileResponse as any)?.data || profileResponse;
 
   const form = useForm<UpdateProfileValues>({
     resolver: zodResolver(updateProfileSchema),

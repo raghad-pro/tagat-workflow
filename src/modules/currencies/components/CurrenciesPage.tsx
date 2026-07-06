@@ -73,7 +73,7 @@ export function CurrenciesPage() {
   const currencies = filteredCurrencies.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const firstCurrency = currencies.length > 0 ? currencies[0] : null;
 
-  const activeRegionsCount = new Set(rawCurrencies.filter(c => c.company_id).map(c => c.company_id)).size;
+  const activeRegionsCount = new Set(rawCurrencies.filter((c: any) => c.company_id).map((c: any) => c.company_id)).size;
 
   const stats: StatItem[] = [
     {

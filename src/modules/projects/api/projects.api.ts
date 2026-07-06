@@ -7,7 +7,7 @@ export const projectApi = {
     const response = await apiClient.get(
       `${getRolePrefix(role)}/projects`,
       { params }
-    );
+    ) as any;
     const payload = response.data;
 
     if (Array.isArray(payload)) {
@@ -31,17 +31,17 @@ export const projectApi = {
   },
 
   create: async (role: string, data: Partial<Project>) => {
-    const response = await apiClient.post(`${getRolePrefix(role)}/projects`, data);
+    const response = await apiClient.post(`${getRolePrefix(role)}/projects`, data) as any;
     return response.data;
   },
 
   update: async (role: string, id: number | string, data: Partial<Project>) => {
-    const response = await apiClient.put(`${getRolePrefix(role)}/projects/${id}`, data);
+    const response = await apiClient.put(`${getRolePrefix(role)}/projects/${id}`, data) as any;
     return response.data;
   },
 
   delete: async (role: string, id: number | string) => {
-    const response = await apiClient.delete(`${getRolePrefix(role)}/projects/${id}`);
+    const response = await apiClient.delete(`${getRolePrefix(role)}/projects/${id}`) as any;
     return response.data;
   },
 };

@@ -659,5 +659,27 @@
     "roleRaghad": "مطور واجهات أمامية Frontend",
     "teamAhmed": "أحمد شنان",
     "roleAhmed": "مطور خلفي Backend"
+  },
+  "currencies": {
+    "title": "العملات",
+    "subtitle": "إدارة وتتبع العملات عبر المناطق المختلفة",
+    "totalCurrencies": "إجمالي العملات",
+    "activeRegions": "المناطق النشطة",
+    "primaryCurrency": "العملة الأساسية",
+    "name": "الاسم",
+    "company": "الشركة",
+    "symbol": "الرمز",
+    "code": "الكود",
+    "editCurrency": "تعديل العملة",
+    "addCurrency": "إضافة عملة",
+    "searchPlaceholder": "ابحث عن العملات...",
+    "noCurrencies": "لا توجد عملات.",
+    "deleteTitle": "حذف العملة",
+    "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه العملة؟",
+    "requiredField": "هذا الحقل مطلوب",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "currencyName": "اسم العملة",
+    "selectCompany": "اختر الشركة"
   }
 }

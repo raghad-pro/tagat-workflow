@@ -406,7 +406,7 @@ export default function RegisterPage() {
 
   const rawStep = Number(searchParams.get("step"));
   const rawType = searchParams.get("type");
-  const step = rawStep === 1 || rawStep === 2 ? rawStep : 1;
+  const step = rawStep === 1 || rawStep === 2 || rawStep === 3 ? rawStep : 1;
   const accountType: AccountType = rawType === "company" || rawType === "client" ? rawType : null;
 
   useEffect(() => {

@@ -35,19 +35,19 @@ export const authApi = {
 
   logout: async () => {
     const response = await apiClient.post<MessageResponse>("/logout");
-    return response.data;
+    return (response as any).data || response;
   },
 
   // ─── Forgot Password ─────────────────────────────────────────────────────────
   forgotPassword: async (data: ForgotPasswordRequest) => {
     const response = await apiClient.post<MessageResponse>("/forgot-password", data);
-    return response.data;
+    return (response as any).data || response;
   },
 
   
   resendVerificationCode: async (data: { email: string }) => {
     const response = await apiClient.post<{ status: number; message: string }>('/resend-verification-code', data);
-    return response.data;
+    return (response as any).data || response;
   },
 
   verifyEmailOtp: async (data: VerifyOtpRequest) => {
@@ -62,6 +62,6 @@ export const authApi = {
 
   resetPassword: async (data: ResetPasswordRequest) => {
     const response = await apiClient.post<MessageResponse>("/reset-password", data);
-    return response.data;
+    return (response as any).data || response;
   },
 };

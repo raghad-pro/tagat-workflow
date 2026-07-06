@@ -28,15 +28,16 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   data: Development | null;
+  onUpdate?: (id: number, data: any) => void;
 }
 
-export default function EditDevelopmentModal({ isOpen, onClose, data }: Props) {
+export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }: Props) {
   const { mutate: updateDevelopment, isPending } = useUpdateDevelopment();
   const t = useTranslations("development");
   const tCommon = useTranslations("common");
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(editDevelopmentSchema),
+    resolver: zodResolver(editDevelopmentSchema) as any,
     mode: "onTouched",
     defaultValues: {
       project_id: 1,
@@ -150,7 +151,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data }: Props) {
     if (!data) return;
     updateDevelopment(
       { id: data.id, data: formData },
-      { onSuccess: onClose }
+      { onSuccess: () => { onClose(); onUpdate?.(data.id, formData); } }
     );
   };
 

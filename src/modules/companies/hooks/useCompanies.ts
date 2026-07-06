@@ -19,7 +19,7 @@ export const useCompanyStats = () => {
       // Fetch a large page to compute stats from local data as requested
       const res = await companyApi.getAll({ per_page: 50, page: 1 } as any);
       const list = res?.data?.data ?? [];
-      const meta = res?.data?.meta ?? res?.data;
+      const meta = (res?.data as any)?.meta ?? res?.data;
 
       let active = 0;
       let pending = 0;

@@ -8,7 +8,6 @@ import { User, Mail, Lock, Briefcase, DollarSign, Building } from "lucide-react"
 import { ActionModal } from "@/components/molecules/ActionModal";
 import { TextField, PasswordField, SelectField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
-import type { AddEmployeeFormValues } from "../types/employees.types";
 import { UseFormSetError } from "react-hook-form";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTranslations } from "next-intl";
@@ -25,7 +24,7 @@ const addEmployeeSchema = z.object({
   company: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof addEmployeeSchema>;
+export type AddEmployeeFormValues = z.infer<typeof addEmployeeSchema>;
 
 import { useCompanyCurrencies } from "../hooks/useEmployees";
 
@@ -38,7 +37,7 @@ const PAYMENT_OPTIONS = [
 interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (values: FormValues, setError: UseFormSetError<FormValues>) => void;
+  onSubmit?: (values: AddEmployeeFormValues, setError: UseFormSetError<AddEmployeeFormValues>) => void;
 }
 
 export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmployeeModalProps) {
@@ -47,7 +46,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
   
-  let companies = [];
+  let companies: any[] = [];
   if (Array.isArray(companiesData?.data?.data)) {
     companies = companiesData.data.data;
   } else if (Array.isArray(companiesData?.data)) {
@@ -61,7 +60,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
 
   const t = useTranslations("employee");
   const tCurrencies = useTranslations("currencies");
-  const form = useForm<FormValues>({
+  const form = useForm<AddEmployeeFormValues>({
     resolver: zodResolver(addEmployeeSchema),
     mode: "onTouched",
     defaultValues: {
@@ -106,7 +105,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
     }
   }, [CURRENCY_OPTIONS.length, form]);
 
-  const handleFormSubmit = (data: FormValues) => {
+  const handleFormSubmit = (data: AddEmployeeFormValues) => {
     if (onSubmit) {
       onSubmit(data, form.setError);
     } else {

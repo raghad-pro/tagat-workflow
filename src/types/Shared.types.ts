@@ -12,7 +12,8 @@ export type GenericStatus =
   | "failed"
   | "success"
   | "processing"
-  | "approved";
+  | "approved"
+  | "cancelled";
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 export interface StatCardData {

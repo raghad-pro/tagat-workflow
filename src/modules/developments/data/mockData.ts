@@ -1,6 +1,6 @@
-import { Development, DevelopmentStats } from "../types/developments.types";
+import { Development } from "../types/developments.types";
 
-export const DUMMY_DEVELOPMENTS: Development[] = [
+export const DUMMY_DEVELOPMENTS: any[] = [
   {
     id: 1,
     title: "Websit profile",
@@ -30,7 +30,7 @@ export const DUMMY_DEVELOPMENTS: Development[] = [
   },
 ];
 
-export const DUMMY_STATS: DevelopmentStats = {
+export const DUMMY_STATS: any = {
   total: 142,
   underReview: 1204,
   approved: 45290,

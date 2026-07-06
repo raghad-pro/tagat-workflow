@@ -3,6 +3,7 @@
 interface AvatarProps {
   name: string;
   size?: "xs" | "sm" | "md";
+  src?: string;
 }
 
 const COLORS = [

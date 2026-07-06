@@ -16,6 +16,17 @@ export const useInvoices = (params: InvoicesQueryParams) => {
   });
 };
 
+export const useInvoice = (id: string | number | null | undefined) => {
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
+  return useQuery({
+    queryKey: ["invoices", role, id],
+    queryFn:  () => invoiceApi.getSingle(role, id as string | number),
+    enabled:  !!id,
+  });
+};
+
 export const useCreateInvoice = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();

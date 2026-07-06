@@ -17,8 +17,8 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: async (data: LoginRequest) => {
       const res = await authApi.login(data);
-      if (res && res.success === false) {
-        throw new Error(res.message || "Login failed");
+      if (res && (res as any).success === false) {
+        throw new Error((res as any).message || "Login failed");
       }
       return res;
     },

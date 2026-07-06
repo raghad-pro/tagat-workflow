@@ -57,7 +57,7 @@ export default function TimesheetsPage() {
     month: monthFilter !== "all" ? monthFilter : undefined, 
     page,
     per_page: PAGE_SIZE
-  });
+  } as any);
   
   let Timesheets = TimesheetsResponse?.data || [];
   const totalItems = TimesheetsResponse?.total || 0;

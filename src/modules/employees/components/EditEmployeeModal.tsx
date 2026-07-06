@@ -26,7 +26,7 @@ const editEmployeeSchema = z.object({
   company: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof editEmployeeSchema>;
+export type EditEmployeeFormValues = z.infer<typeof editEmployeeSchema>;
 
 const PAYMENT_OPTIONS = [
   { value: "monthly", label: "Monthly" },
@@ -37,7 +37,7 @@ const PAYMENT_OPTIONS = [
 interface EditEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (id: number, data: any, setError: UseFormSetError<FormValues>) => void;
+  onUpdate: (id: number, data: any, setError: UseFormSetError<EditEmployeeFormValues>) => void;
   data: Employee | null;
 }
 
@@ -49,7 +49,7 @@ export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: E
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
 
-  let companies = [];
+  let companies: any[] = [];
   if (Array.isArray(companiesData?.data?.data)) {
     companies = companiesData.data.data;
   } else if (Array.isArray(companiesData?.data)) {
@@ -61,7 +61,7 @@ export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: E
     label: c.name || c.domain || c.id?.toString(),
   }));
 
-  const form = useForm<FormValues>({
+  const form = useForm<EditEmployeeFormValues>({
     resolver: zodResolver(editEmployeeSchema),
     mode: "onTouched",
     defaultValues: {
@@ -132,7 +132,7 @@ export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: E
     }
   }, [data, isOpen, form]);
 
-  const handleFormSubmit = (formData: FormValues) => {
+  const handleFormSubmit = (formData: EditEmployeeFormValues) => {
     if (!data) return;
     onUpdate(data.id, formData, form.setError);
   };

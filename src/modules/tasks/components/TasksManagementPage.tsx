@@ -70,11 +70,11 @@ function getEmployeeName(task: Task, employeesList: TaskEmployee[], currentUser?
   const raw = task.employee ?? task.assignedTo ?? task.assigned_to;
   if (!raw) return "-";
 
-  const rawId = typeof raw === "object" ? String(raw.id || raw.user_id || "") : String(raw);
+  const rawId = typeof raw === "object" ? String((raw as any).id || (raw as any).user_id || "") : String(raw);
 
   // If we already have the name inside the object, use it
   if (typeof raw === "object") {
-    const objName = raw.name ?? raw.employee_name ?? raw.user?.name;
+    const objName = (raw as any).name ?? (raw as any).employee_name ?? (raw as any).user?.name;
     if (objName) return objName;
   }
 

@@ -24,12 +24,15 @@ import { PageContainer } from "@/components/template/PageContainer";
 
 // ── Local components ──────────────────────────────────────────────────────────
 import { CreateInvoiceModal } from "./Createinvoicemodal";
+import { ViewInvoiceModal } from "./ViewInvoiceModal";
+import { EditInvoiceModal } from "./EditInvoiceModal";
 import { useAuth } from "@/providers/AuthProvider";
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 import { useInvoices }       from "@/modules/invoices/hooks/useInvoices";
 import { useInvoiceStats }   from "@/modules/invoices/hooks/useInvoiceStats";
 import { useCreateInvoice }  from "@/modules/invoices/hooks/useCreateInvoice";
+import { useUpdateInvoice }  from "@/modules/invoices/hooks/useUpdateInvoice";
 import { useDeleteInvoice }  from "@/modules/invoices/hooks/useDeleteInvoice";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -67,9 +70,13 @@ export default function InvoiceManagementPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage]   = useState(1);
   const [showModal, setShowModal]       = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editInvoice, setEditInvoice]   = useState<Invoice | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewInvoice, setViewInvoice]   = useState<Invoice | null>(null);
 
   const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "company_admin";
+  const isCompanyAdmin = user?.role === "company";
 
   const statusFilterOptions: FilterOption[] = useMemo(() => [
     { value: "all",     label: t("filter.all") },
@@ -83,17 +90,23 @@ export default function InvoiceManagementPage() {
     data: invoicesData,
     isLoading: isInvoicesLoading,
     isFetching: isInvoicesFetching,
-  } = useInvoices({ search, status: statusFilter, page: currentPage, per_page: PAGE_SIZE });
+  } = useInvoices({ 
+    search, 
+    status: statusFilter === "all" ? undefined : statusFilter, 
+    page: currentPage, 
+    per_page: PAGE_SIZE 
+  });
 
   const { data: statsData, isLoading: isStatsLoading } = useInvoiceStats();
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const { mutate: createInvoice, isPending: isCreating } = useCreateInvoice();
+  const { mutate: updateInvoice, isPending: isUpdating } = useUpdateInvoice();
   const { mutate: deleteInvoice }                        = useDeleteInvoice();
 
   const invoices   = invoicesData?.data ?? [];
-  const total      = invoicesData?.meta?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const total      = invoicesData?.total ?? 0;
+  const totalPages = invoicesData?.last_page ?? 1;
 
   // ── Stats cards ─────────────────────────────────────────────────────────────
   const stats: StatItem[] = useMemo(() => [
@@ -131,30 +144,32 @@ export default function InvoiceManagementPage() {
   const columns: TableColumn<Invoice>[] = useMemo(() => {
     const cols: TableColumn<Invoice>[] = [
       {
-        key:       "invoiceNumber",
+        key:       "id", // or invoiceNumber if they provide it
         header:    t("columns.number"),
         isPrimary: true,
         render: (row) => (
           <Text size="sm" weight="medium" color="brand" tag="p" className="cursor-pointer hover:underline">
-            {row.invoiceNumber}
+            #{row.id}
           </Text>
         ),
       },
       {
-        key:    "issueDate",
+        key:    "invoice_date",
         header: t("columns.issueDate"),
-        render: (row) => <Text size="sm" color="gray-100" tag="p">{row.issueDate}</Text>,
+        render: (row) => <Text size="sm" color="gray-100" tag="p">{row.invoice_date}</Text>,
       },
       {
-        key:    "dueDate",
+        key:    "due_date",
         header: t("columns.dueDate"),
-        render: (row) => <Text size="sm" color="gray-100" tag="p">{row.dueDate}</Text>,
+        render: (row) => <Text size="sm" color="gray-100" tag="p">{row.due_date}</Text>,
       },
       {
         key:    "amount",
         header: t("columns.amount"),
         render: (row) => (
-          <Text size="sm" weight="medium" tag="p">${row.amount.toLocaleString('en-US')}</Text>
+          <Text size="sm" weight="medium" tag="p">
+            {row.currency?.symbol ?? "$"}{Number(row.amount).toLocaleString('en-US')}
+          </Text>
         ),
       },
       {
@@ -162,8 +177,8 @@ export default function InvoiceManagementPage() {
         header: t("columns.status"),
         render: (row) => (
           <StatusBadge
-            status={INVOICE_STATUS_TO_GENERIC[row.status as InvoiceStatus]}
-            label={INVOICE_STATUS_LABEL[row.status as InvoiceStatus]}
+            status={INVOICE_STATUS_TO_GENERIC[row.status] ?? "pending"}
+            label={INVOICE_STATUS_LABEL[row.status] ?? row.status}
           />
         ),
       },
@@ -173,17 +188,24 @@ export default function InvoiceManagementPage() {
       cols.splice(1, 0, {
         key:    "company",
         header: t("columns.company"),
-        render: (row) => <Text size="sm" tag="p">{row.company}</Text>,
+        render: (row) => <Text size="sm" tag="p">{row.company?.name ?? "—"}</Text>,
       });
     }
+
+    // Always show client
+    cols.splice(!isCompanyAdmin ? 2 : 1, 0, {
+      key:    "client",
+      header: t("columns.client") || "Client",
+      render: (row) => <Text size="sm" tag="p">{row.client?.name ?? "—"}</Text>,
+    });
 
     return cols;
   }, [t, isCompanyAdmin]);
 
   // ── Actions ─────────────────────────────────────────────────────────────────
   const actions: TableAction<Invoice>[] = useMemo(() => [
-    { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: (_row) => {} },
-    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: (_row) => {} },
+    { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: (row) => { setViewInvoice(row); setShowViewModal(true); } },
+    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: (row) => { setEditInvoice(row); setShowEditModal(true); } },
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: (row) => deleteInvoice(row.id) },
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [deleteInvoice, tCommon]);
@@ -200,12 +222,42 @@ export default function InvoiceManagementPage() {
   }, []);
 
   const handleCreate = useCallback(
-    (data: CreateInvoiceRequest) => {
+    (data: CreateInvoiceRequest, form: any) => {
       createInvoice(data, {
         onSuccess: () => setShowModal(false),
+        onError: (error: any) => {
+          const errors = error.response?.data?.errors;
+          if (errors?.remaining_budget) {
+            form.setError("amount", {
+              type: "server",
+              message: t("budgetExceeded", { budget: errors.remaining_budget }) || `You have exceeded the budget. Remaining: ${errors.remaining_budget}`,
+            });
+          }
+        }
       });
     },
-    [createInvoice]
+    [createInvoice, t]
+  );
+
+  const handleUpdate = useCallback(
+    (id: number | string, data: Partial<CreateInvoiceRequest>, form: any) => {
+      updateInvoice({ id, data }, {
+        onSuccess: () => {
+          setShowEditModal(false);
+          setEditInvoice(null);
+        },
+        onError: (error: any) => {
+          const errors = error.response?.data?.errors;
+          if (errors?.remaining_budget) {
+            form.setError("amount", {
+              type: "server",
+              message: t("budgetExceeded", { budget: errors.remaining_budget }) || `You have exceeded the budget. Remaining: ${errors.remaining_budget}`,
+            });
+          }
+        }
+      });
+    },
+    [updateInvoice, t]
   );
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -274,6 +326,24 @@ export default function InvoiceManagementPage() {
         onClose={() => setShowModal(false)}
         onSave={handleCreate}
         isPending={isCreating}
+      />
+
+      {/* Edit Modal */}
+      {editInvoice && (
+        <EditInvoiceModal
+          isOpen={showEditModal}
+          onClose={() => { setShowEditModal(false); setEditInvoice(null); }}
+          onSave={(data: any, form: any) => handleUpdate(editInvoice.id, data, form)}
+          isPending={isUpdating}
+          invoice={editInvoice}
+        />
+      )}
+
+      {/* View Modal */}
+      <ViewInvoiceModal
+        isOpen={showViewModal}
+        onClose={() => { setShowViewModal(false); setViewInvoice(null); }}
+        invoiceId={viewInvoice?.id || null}
       />
 
     </PageContainer>

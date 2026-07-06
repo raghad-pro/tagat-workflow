@@ -89,7 +89,7 @@ export function CompanyManagementPage() {
     ];
   }, [t, apiStats]);
 
-  const columns: TableColumn<Company>[] = useMemo(() => [
+  const columns: TableColumn<any>[] = useMemo(() => [
     {
       key: "name",
       header: t("columns.company"),
@@ -126,7 +126,7 @@ export function CompanyManagementPage() {
     },
   ], [t]);
 
-  const actions: TableAction<Company>[] = useMemo(() => [
+  const actions: TableAction<any>[] = useMemo(() => [
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView },
     { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: openEdit },
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },

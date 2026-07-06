@@ -170,7 +170,7 @@ async function fetchSuperAdminDashboard(
     .slice(-6)
     .map(([month, amount]) => ({ month, amount }));
   
-  const superAdminData: SuperAdminDashboardData = {
+  const superAdminData: any = {
     companiesCount: rawDashboardData?.companiesCount ?? 0,
     projectsCount: rawDashboardData?.projectsCount ?? 0,
     clientsCount: rawDashboardData?.clientsCount ?? 0,
@@ -443,8 +443,8 @@ async function fetchEmployeeDashboard(
         let diff = h2 * 60 + (m2 || 0) - (h1 * 60 + (m1 || 0));
         if (diff < 0) diff += 24 * 60; // handle cross midnight
         diffHours = diff / 60;
-      } else if (t.duration) {
-        diffHours = Number(t.duration) || 0;
+      } else if ((t as any).duration) {
+        diffHours = Number((t as any).duration) || 0;
       }
       trendBuckets[dString] += diffHours;
     }

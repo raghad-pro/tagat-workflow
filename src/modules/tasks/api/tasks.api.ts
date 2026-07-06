@@ -20,7 +20,7 @@ export const taskApi = {
   getAll: async (role: string, params?: TasksQueryParams) => {
     const response = await apiClient.get<ApiResponse<PaginatedData<Task> | Task[]>>(
       `${getRolePrefix(role)}/tasks`,
-      params
+      { params } as any
     );
     const responseData = response.data;
 

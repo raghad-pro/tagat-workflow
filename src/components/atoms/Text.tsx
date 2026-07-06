@@ -18,7 +18,8 @@ interface TextProps {
   tag?:        TextTag;
   className?:  string;
   htmlFor?:    string;
-  id?:         string;          
+  id?:         string;
+  style?:      React.CSSProperties;          
 }
 
 // ─── Maps ──────────────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ export function Text({
   tag:Tag  = "p",
   className,
   htmlFor,
+  style,
 }: TextProps) {
   return (
     <Tag
@@ -71,6 +73,7 @@ export function Text({
         className
       )}
       {...(Tag === "label" && htmlFor ? { htmlFor } : {})}
+      style={style}
     >
       {children}
     </Tag>

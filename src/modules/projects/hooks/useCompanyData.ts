@@ -33,7 +33,7 @@ export const useCompanyDataInfo = (companyId: string | number | undefined | null
       const url = companyId
         ? `${getRolePrefix(role)}/company-data/${companyId}`
         : `${getRolePrefix(role)}/company-data`;
-      const response = await apiClient.get(url);
+      const response = await apiClient.get(url) as any;
       return response.data;
     },
     enabled: !!companyId,
@@ -114,7 +114,7 @@ export const useClientProjects = (clientId: string | number | undefined | null) 
     queryKey: ["client-projects", role, clientId],
     queryFn: async () => {
       const url = `${getRolePrefix(role)}/clients/${clientId}/projects`;
-      const response = await apiClient.get(url);
+      const response = await apiClient.get(url) as any;
       return response.data?.projects || response.data?.data?.projects || [];
     },
     enabled: !!clientId,
@@ -133,7 +133,7 @@ export const useProjectData = (projectId: string | number | undefined | null) =>
     queryKey: ["project-data", role, projectId],
     queryFn: async () => {
       const url = `${getRolePrefix(role)}/project-data/${projectId}`;
-      const response = await apiClient.get(url);
+      const response = await apiClient.get(url) as any;
       return response.data?.data || response.data;
     },
     enabled: !!projectId,

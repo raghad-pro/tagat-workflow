@@ -64,26 +64,28 @@ export function ClientDashboard({ role, token }: Props) {
   ];
 
   const companiesColumns: TableColumn<any>[] = [
-    { header: "Company", accessor: "name" },
+    { key: "name", header: "Company" },
     {
+      key: "status",
       header: "Status",
-      accessor: (co) => (
+      render: (co) => (
         <StatusBadge
           status={co.status === "approved" ? "active" : co.status === "rejected" ? "rejected" : "pending"}
           label={co.status.charAt(0).toUpperCase() + co.status.slice(1)}
         />
       ),
     },
-    { header: "Request Date", accessor: (co) => co.request_date || "—" },
+    { key: "request_date", header: "Request Date", render: (co) => co.request_date || "—" },
   ];
 
   const invoicesColumns: TableColumn<any>[] = [
-    { header: "#", accessor: (inv) => inv.invoice_number || `#${inv.id}` },
+    { key: "id", header: "#", render: (inv) => inv.invoice_number || `#${inv.id}` },
     {
+      key: "amount",
       header: "Amount",
-      accessor: (inv) => Number(inv.amount).toLocaleString("en-US", { minimumFractionDigits: 2 }),
+      render: (inv) => Number(inv.amount).toLocaleString("en-US", { minimumFractionDigits: 2 }),
     },
-    { header: "Date", accessor: (inv) => inv.invoice_date || "—" },
+    { key: "invoice_date", header: "Date", render: (inv) => inv.invoice_date || "—" },
   ];
 
   return (

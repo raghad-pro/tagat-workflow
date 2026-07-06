@@ -5,7 +5,7 @@ import { Text } from "@/components/atoms/Text";
 import type { DashboardStats } from "../types/dashboard.types";
 
 interface MiniStatCardProps {
-  icon: React.ElementType;
+  icon: React.ElementType<any>;
   label: string;
   value: string;
   sub: string;
@@ -14,10 +14,11 @@ interface MiniStatCardProps {
 }
 
 function MiniStatCard({ icon: Icon, label, value, sub, trend, trendColor }: MiniStatCardProps) {
+  const IconEl = Icon as any;
   return (
     <div className="rounded-2xl p-4 flex gap-3 ds-bg-form ds-border-form ds-shadow-sm">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ds-bg-primary-200">
-        <Icon size={16} className="ds-text-brand" />
+        <IconEl size={16} className="ds-text-brand" />
       </div>
       <div className="flex flex-col gap-0.5 min-w-0">
         <Text size="sm" color="gray-200" className="text-[11px] leading-tight">{label}</Text>

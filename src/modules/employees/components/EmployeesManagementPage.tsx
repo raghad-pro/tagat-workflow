@@ -31,6 +31,8 @@ import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmati
 import { ViewEmployeeModal } from "./ViewEmployeeModal";
 import EditEmployeeModal from "./EditEmployeeModal";
 import type { Employee, EmployeeStatus } from "../types/employees.types";
+import type { AddEmployeeFormValues } from "./AddEmployeeModal";
+import type { EditEmployeeFormValues } from "./EditEmployeeModal";
 import { UseFormSetError } from "react-hook-form";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -80,7 +82,7 @@ function EmpStatCard({
   iconColor,
   iconBg,
 }: {
-  icon:      React.ElementType;
+  icon:      React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>;
   value:     number;
   label:     string;
   iconColor: string;
@@ -263,8 +265,8 @@ export default function EmployeesManagementPage() {
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleCreate = useCallback((
-    v: Record<string, string>,
-    setError: UseFormSetError<any>
+    v: AddEmployeeFormValues,
+    setError: UseFormSetError<AddEmployeeFormValues>
   ) => {
     const payload: Record<string, unknown> = {
       name:        v.employeeName,
@@ -299,8 +301,8 @@ export default function EmployeesManagementPage() {
 
   const handleUpdate = useCallback((
     id: number,
-    v: Record<string, string>,
-    setError: UseFormSetError<any>
+    v: EditEmployeeFormValues,
+    setError: UseFormSetError<EditEmployeeFormValues>
   ) => {
     const payload: Record<string, unknown> = {
       name:        v.employeeName,

@@ -157,7 +157,7 @@ export default function AddTaskModal({
   const { data: projectEmployeesResponse, isLoading: isEmployeesLoading } = useProjectEmployees(projectIdForQuery);
   
   let rawEmployees: any[] = [];
-  const payload = projectEmployeesResponse?.data;
+  const payload = (projectEmployeesResponse as any)?.data || projectEmployeesResponse;
   if (Array.isArray(payload)) {
     rawEmployees = payload;
   } else if (payload?.employees && Array.isArray(payload.employees)) {

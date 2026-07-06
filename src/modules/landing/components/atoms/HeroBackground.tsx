@@ -74,7 +74,9 @@ function DataConstellation() {
       {/* Points */}
       <points>
         <bufferGeometry>
+          {/* @ts-ignore */}
           <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
+          {/* @ts-ignore */}
           <bufferAttribute attach="attributes-color" count={colors.length / 3} array={colors} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial size={0.15} vertexColors transparent opacity={0.9} sizeAttenuation={true} />
@@ -83,6 +85,7 @@ function DataConstellation() {
       {/* Lines connecting points */}
       <lineSegments>
         <bufferGeometry>
+          {/* @ts-ignore */}
           <bufferAttribute attach="attributes-position" count={lines.length / 3} array={lines} itemSize={3} />
         </bufferGeometry>
         <lineBasicMaterial color="#ffffff" transparent opacity={0.1} />
@@ -95,7 +98,7 @@ function DataConstellation() {
           position={item.pos as [number, number, number]} 
           color={item.color} 
           fontSize={0.4} 
-          opacity={0.8}
+          fillOpacity={0.8}
         >
           {item.text}
         </Text>

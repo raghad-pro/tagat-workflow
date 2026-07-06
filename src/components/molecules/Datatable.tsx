@@ -21,7 +21,7 @@ export interface TableColumn<T = Record<string, unknown>> {
 
 
 export interface TableAction<T = Record<string, unknown>> {
-  icon: React.ElementType;
+  icon: React.ElementType<any>;
   label?: string;
   colorScheme?: "send" | "edit" | "delete";
   onClick: (row: T) => void;
@@ -63,7 +63,7 @@ function ActionIconBtn<T>({
 }) {
   if (action.hidden?.(row)) return null;
 
-  const Icon = action.icon;
+  const Icon = action.icon as any;
   const scheme = action.colorScheme ?? "send";
    const isDisabled = action.disabled?.(row) ?? false;
 

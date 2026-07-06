@@ -46,7 +46,7 @@ interface BaseFieldProps<T extends FieldValues> {
 
 // ─── TextField ─────────────────────────────────────────────────────────────────
 interface TextFieldProps<T extends FieldValues> extends BaseFieldProps<T> {
-  type?: "text" | "email" | "number" | "date" | "password" | "tel";
+  type?: "text" | "email" | "number" | "date" | "password" | "tel" | "time";
   checkExistsUrl?: string;
 }
  
@@ -428,7 +428,7 @@ export function MultiSelectField<T extends FieldValues>({
                     key={option.value}
                     className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--color-bg-primary-200)] cursor-pointer rounded-lg transition-colors"
                     onClick={() => {
-                      const current = Array.isArray(field.value) ? field.value : [];
+                      const current: any[] = Array.isArray(field.value) ? field.value : [];
                       const selected = current.includes(option.value);
                       const newValue = selected
                         ? current.filter((val: string) => val !== option.value)
@@ -436,7 +436,7 @@ export function MultiSelectField<T extends FieldValues>({
                       field.onChange(newValue);
                     }}
                   >
-                    <Checkbox checked={Array.isArray(field.value) ? field.value.includes(option.value) : false} />
+                    <Checkbox checked={Array.isArray(field.value) ? (field.value as any[]).includes(option.value) : false} />
                     <span className="text-sm">{option.label}</span>
                   </div>
                 ))}

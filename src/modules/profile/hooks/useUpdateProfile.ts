@@ -15,7 +15,7 @@ export const useUpdateProfile = () => {
       if (!user?.role) throw new Error("Role is missing");
       return profileApi.updateProfile(user.role, data);
     },
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       toast.success(res.message || "Profile updated successfully");
       queryClient.invalidateQueries({ queryKey: ["profile", user?.role] });
       

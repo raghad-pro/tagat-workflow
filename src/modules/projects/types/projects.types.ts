@@ -43,7 +43,8 @@ export interface ProjectStats {
 }
 
 export interface ProjectsQueryParams {
-  page?:     number;
-  search?:   string;
-  per_page?: number;
+  page?:       number;
+  search?:     string;
+  per_page?:   number;
+  company_id?: number;
 }

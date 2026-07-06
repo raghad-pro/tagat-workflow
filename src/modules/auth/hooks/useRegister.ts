@@ -12,8 +12,8 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: async (data: RegisterRequest) => {
       const res = await authApi.register(data);
-      if (res && res.success === false) {
-        throw new Error(res.message || "Registration failed");
+      if (res && (res as any).success === false) {
+        throw new Error((res as any).message || "Registration failed");
       }
       return res;
     },

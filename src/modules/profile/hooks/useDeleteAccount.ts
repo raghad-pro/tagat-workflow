@@ -13,7 +13,7 @@ export const useDeleteAccount = () => {
       if (!user?.role) throw new Error("Role is missing");
       return profileApi.deleteAccount(user.role);
     },
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       toast.success(res.message || "Account deleted successfully");
       logout(); // clear state and tokens
       router.replace("/login");

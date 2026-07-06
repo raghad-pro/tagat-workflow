@@ -20,9 +20,11 @@ export interface TaskCompany {
 
 // ─── Employee reference ────────────────────────────────────────────────────────
 export interface TaskEmployee {
-  id:    number;
-  name?: string;
-  user?: { name: string };
+  id:             number;
+  user_id?:       number;
+  name?:          string;
+  employee_name?: string;
+  user?:          { name: string };
 }
 
 // ─── Task ──────────────────────────────────────────────────────────────────────

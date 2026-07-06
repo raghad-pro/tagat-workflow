@@ -8,7 +8,7 @@ export const employeeApi = {
       `${getRolePrefix(role)}/employees`,
       { params }
     );
-    const payload = response.data;
+    const payload = (response as any).data;
 
     if (Array.isArray(payload)) {
       return { data: payload, meta: { total: payload.length } };
@@ -32,17 +32,17 @@ export const employeeApi = {
 
   create: async (role: string, data: Partial<Employee>) => {
     const response = await apiClient.post(`${getRolePrefix(role)}/employees`, data);
-    return response.data;
+    return (response as any).data;
   },
 
   update: async (role: string, id: number | string, data: Partial<Employee>) => {
     const response = await apiClient.put(`${getRolePrefix(role)}/employees/${id}`, data);
-    return response.data;
+    return (response as any).data;
   },
 
   delete: async (role: string, id: number | string) => {
     const response = await apiClient.delete(`${getRolePrefix(role)}/employees/${id}`);
-    return response.data;
+    return (response as any).data;
   },
 
   getCompanyData: async (role: string, companyId?: string | number) => {
@@ -50,7 +50,7 @@ export const employeeApi = {
       ? `${getRolePrefix(role)}/company-data/${companyId}`
       : `${getRolePrefix(role)}/company-data`;
     const response = await apiClient.get(url);
-    return response.data;
+    return (response as any).data;
   },
 
   getCompanyCurrencies: async (role: string, companyId?: string | number) => {
@@ -61,7 +61,7 @@ export const employeeApi = {
         : `${getRolePrefix(role)}/currencies`;
     try {
       const response = await apiClient.get(url);
-      return response.data;
+      return (response as any).data;
     } catch {
       return { data: [] };
     }

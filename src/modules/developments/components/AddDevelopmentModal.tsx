@@ -26,15 +26,16 @@ type FormValues = z.infer<typeof addDevelopmentSchema>;
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit?: (v: any) => void;
 }
 
-export default function AddDevelopmentModal({ isOpen, onClose }: Props) {
+export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props) {
   const { mutate: createDevelopment, isPending } = useCreateDevelopment();
   const t = useTranslations("development");
   const tCommon = useTranslations("common");
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(addDevelopmentSchema),
+    resolver: zodResolver(addDevelopmentSchema) as any,
     mode: "onTouched",
     defaultValues: {
       project_id: "" as any,
@@ -126,9 +127,10 @@ export default function AddDevelopmentModal({ isOpen, onClose }: Props) {
 
   const handleFormSubmit = (data: FormValues) => {
     createDevelopment(data, {
-      onSuccess: () => {
+      onSuccess: (result) => {
         form.reset();
         onClose();
+        onSubmit?.(result);
       },
     });
   };

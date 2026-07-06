@@ -75,4 +75,11 @@ export const invoiceApi = {
     );
     return response.data;
   },
+
+  getClientProjects: async (role: string, clientId: string | number) => {
+    const response = await apiClient.get<ApiResponse<{ projects: any[] }>>(
+      `${getRolePrefix(role)}/clients/${clientId}/projects`
+    );
+    return response.data;
+  },
 };
