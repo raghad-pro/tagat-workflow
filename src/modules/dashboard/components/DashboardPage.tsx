@@ -26,10 +26,12 @@ export function DashboardPage() {
     return <PageSkeleton variant="dashboard" />;
   }
 
-  switch (user.role) {
+  let currentRole = user.role?.toLowerCase();
+
+  switch (currentRole) {
     case "super_admin":
       return <SuperAdminDashboard role={user.role} token={token} />;
-    case "company_admin":
+    case "company":
       return <CompanyDashboard role={user.role} token={token} />;
     case "employee":
       return <EmployeeDashboard role={user.role} token={token} />;

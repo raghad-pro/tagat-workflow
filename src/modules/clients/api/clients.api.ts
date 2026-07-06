@@ -19,7 +19,7 @@ export const clientApi = {
   create: (data: AddClientRequest, role = "super_admin") =>
     apiClient.post<{ success: boolean; message: string; data: ApiClient }>(
       `${getRolePrefix(role)}/clients`,
-      role === "company_admin"
+      role === "company"
         ? { name: data.name, email: data.email, password: data.password }
         : data
     ),
@@ -27,7 +27,7 @@ export const clientApi = {
   updateStatus: (id: number, data: UpdateClientStatusRequest, role = "super_admin") =>
     apiClient.put<{ success: boolean; message: string; data: unknown }>(
       `${getRolePrefix(role)}/clients/${id}`,
-      role === "company_admin" ? { status: data.status } : data
+      role === "company" ? { status: data.status } : data
     ),
 
   delete: (id: number, data: DeleteClientRequest, role = "super_admin") =>

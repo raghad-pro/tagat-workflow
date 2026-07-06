@@ -8,21 +8,17 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 export const useLogout = () => {
-  const { setUser } = useAuth();
-  const router = useRouter();
+  const { logout } = useAuth();
   const t = useTranslations("auth");
 
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSuccess: () => {
-      setUser(null);
+      logout();
       toast.success(t("logoutSuccess"));
-      router.replace("/login");
     },
     onError: () => {
-      // حتى لو الباك إند رجع error بنمسح التوكن ونروح للوقين
-      setUser(null);
-      router.replace("/login");
+      logout();
     },
   });
 };

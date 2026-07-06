@@ -96,21 +96,12 @@ function UserDropdown() {
           {/* Menu items */}
           <div className="py-1.5">
             <Link
-              href="/dashboard/profile"
+              href="/profile"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-5 py-3 ds-text-sm ds-text-primary hover:bg-[var(--color-bg)] transition-colors"
             >
               <User size={17} className="ds-text-gray-100 shrink-0" />
               <Text size="sm" tag="span">Profile</Text>
-            </Link>
-
-            <Link
-              href="/dashboard/settings"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-5 py-3 ds-text-sm ds-text-primary hover:bg-[var(--color-bg)] transition-colors"
-            >
-              <Settings size={17} className="ds-text-gray-100 shrink-0" />
-              <Text size="sm" tag="span">Settings</Text>
             </Link>
           </div>
 

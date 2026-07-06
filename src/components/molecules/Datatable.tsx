@@ -6,6 +6,7 @@ import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { Pagination } from "./Pagination";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,12 @@ interface DataTableProps<T extends { id: number | string }> {
   actionsHeader?: string;
   emptyMessage?: string;
   isLoading?: boolean;
+  pagination?: {
+    currentPage: number;
+    pageSize: number;
+    totalItems: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 // ─── Color scheme map → ds-action-* utilities ─────────────────────────────────
@@ -114,7 +121,7 @@ function DesktopTable<T extends { id: number | string }>({
   const totalCols = columns.length + (hasActions ? 1 : 0);
 
   return (
-    <div className="hidden md:block overflow-x-auto">
+    <div className="hidden md:block overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <table className="w-full border-collapse">
 
         {/* ── Head ── */}
@@ -274,13 +281,31 @@ function MobileCards<T extends { id: number | string }>({
 }
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
-export function DataTable<T extends { id: number | string }>(
-  props: DataTableProps<T>
-) {
+export function DataTable<T extends { id: number | string }>({
+  pagination,
+  ...props
+}: DataTableProps<T>) {
+  const displayData = React.useMemo(() => {
+    if (!pagination || props.data.length <= pagination.pageSize) {
+      return props.data;
+    }
+    const start = (pagination.currentPage - 1) * pagination.pageSize;
+    const end = start + pagination.pageSize;
+    return props.data.slice(start, end);
+  }, [props.data, pagination]);
+
   return (
-    <>
-      <DesktopTable {...props} />
-      <MobileCards {...props} />
-    </>
+    <div className="flex flex-col w-full">
+      <DesktopTable {...props} data={displayData} />
+      <MobileCards {...props} data={displayData} />
+      {pagination && (pagination.totalItems > pagination.pageSize || pagination.currentPage > 1) && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          data={Array(pagination.totalItems).fill(0)}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.onPageChange}
+        />
+      )}
+    </div>
   );
 }

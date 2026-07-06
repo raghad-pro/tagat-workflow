@@ -7,7 +7,7 @@ import type {
 
 // الـ backend بيعرف الـ role من الـ token تلقائياً
 // super_admin  → /super_admin/requests
-// company_admin → /company/requests
+// company → /company/requests
 // بس بنحتاج الـ role لـ approve/reject بعد ما بيرجع من أول response
 const getBasePath = (role: string) =>
   role === "super_admin" ? "/super_admin/requests" : "/company/requests";

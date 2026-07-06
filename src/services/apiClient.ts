@@ -1,26 +1,33 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://workflow.aliservice.site/api/v1';
+import axiosInstance from "./axiosConfig";
 
-export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  // In a real app, you would get this token from cookies, NextAuth session, or localStorage
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const headers: HeadersInit = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-    ...options.headers,
-  };
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || 'API Error');
+class ApiClient {
+  async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+    const res = await axiosInstance.get<T>(url, { params });
+    return res.data;
   }
 
-  return data as T;
+  async post<T>(url: string, data?: unknown): Promise<T> {
+    const res = await axiosInstance.post<T>(url, data);
+    return res.data;
+  }
+
+  async put<T>(url: string, data?: unknown): Promise<T> {
+    const res = await axiosInstance.put<T>(url, data);
+    return res.data;
+  }
+
+  async patch<T>(url: string, data?: unknown): Promise<T> {
+    const res = await axiosInstance.patch<T>(url, data);
+    return res.data;
+  }
+
+  async delete<T>(url: string, body?: unknown): Promise<T> {
+    const res = await axiosInstance.delete<T>(
+      url,
+      body ? { data: body } : undefined
+    );
+    return res.data;
+  }
 }
+
+export default new ApiClient();

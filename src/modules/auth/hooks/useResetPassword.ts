@@ -24,11 +24,12 @@ export const useResetPassword = () => {
 
     // ③ بنستخدم id ثابت عشان لما المستخدم يضغط أكثر من مرة
     //   نفس الـ toast بيتحدث (مع animation خفيفة) بدل ما يتراكم
-    onError: (error: Error) => {
-      if (error.message === "invalid_otp") {
+    onError: (error: any) => {
+      const errorMsg = error?.response?.data?.message || error.message;
+      if (errorMsg === "Invalid OTP" || errorMsg === "invalid_otp") {
         toast.error(t("otp_invalid"), { id: "reset-password-error" });
       } else {
-        toast.error(t("generic_error"), { id: "reset-password-error" });
+        toast.error(errorMsg || t("generic_error"), { id: "reset-password-error" });
       }
     },
   });

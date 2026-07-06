@@ -25,6 +25,7 @@ const STATUS_CONFIG: Record<
   failed:      { label: "Failed",       bg: "rgba(239,68,68,0.10)",   color: "var(--color-error)",   dot: "#ef4444"              },
   success:     { label: "Success",      bg: "rgba(52,211,153,0.12)",  color: "#059669",              dot: "#34d399"              },
   processing:  { label: "Processing",   bg: "rgba(251,191,36,0.12)",  color: "#d97706",              dot: "#f59e0b"              },
+  approved:    { label: "Approved",     bg: "rgba(34,197,94,0.10)",   color: "#15803d",              dot: "#22c55e"              },
 };
 
 export function StatusBadge({ status, label, withDot = false }: StatusBadgeProps) {

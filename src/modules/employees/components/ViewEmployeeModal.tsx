@@ -1,14 +1,15 @@
 "use client";
 
 import React from "react";
-import { ActionModal } from "@/components/molecules/ActionModal";
 import { Text } from "@/components/atoms/Text";
-import { ClientAvatar } from "@/components/atoms/Clientavatar";
-import type { Employee } from "../types/employees.types";
+import { ViewDetailsLayout, InfoRow } from "@/components/molecules/ViewDetailsLayout";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/providers/AuthProvider";
 
 export function ViewEmployeeModal({ isOpen, onClose, data }: { isOpen: boolean; onClose: () => void; data: any | null }) {
   const t = useTranslations("employee");
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
 
   if (!data) return null;
 
@@ -20,51 +21,38 @@ export function ViewEmployeeModal({ isOpen, onClose, data }: { isOpen: boolean; 
   const currencyCode = typeof data.currency === 'object' ? (data.currency?.name || data.currency?.code) : data.currency || '';
 
   return (
-    <ActionModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <ViewDetailsLayout
+      isOpen={isOpen}
+      onClose={onClose}
       title={t("viewEmployeeTitle")}
-      mode="view"
-      size="md"
+      avatarName={empName}
+      headerTitle={empName}
+      headerSubtitle={jobTitle}
     >
-      <div className="flex flex-col w-full px-2">
-        <div className="ds-bg-form rounded-2xl p-6 shadow-sm border ds-border-form">
-          <div className="flex items-center gap-4 mb-6">
-            <ClientAvatar 
-              name={empName} 
-            />
-            <Text size="xl" weight="bold" tag="h3" className="ds-text-primary">
-              {empName}
-            </Text>
-          </div>
+      <InfoRow label={t("labels.jobTitle")}>
+        <Text size="sm" tag="span">{jobTitle}</Text>
+      </InfoRow>
+      
+      {isSuperAdmin && (
+        <InfoRow label={t("labels.company")}>
+          <Text size="sm" tag="span">{companyName}</Text>
+        </InfoRow>
+      )}
 
-          <ul className="space-y-4 list-disc list-inside ds-text-sub">
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("labels.jobTitle")}:</span> 
-              <span className="ds-text-main">{jobTitle}</span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("labels.company")}:</span> 
-              <span className="ds-text-main">{companyName}</span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("labels.paymentType")}:</span> 
-              <span className="ds-text-main">{paymentType}</span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("labels.salary")}:</span> 
-              <span className="ds-text-main">{salary} {currencyCode}</span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">{t("labels.status")}:</span> 
-              <span className="capitalize bg-gray-100 dark:bg-gray-800 text-[var(--color-primary)] px-3 py-1 rounded-full text-sm font-medium">
-                {data.status || 'Active'}
-              </span>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </ActionModal>
+      <InfoRow label={t("labels.paymentType")}>
+        <Text size="sm" tag="span">{paymentType}</Text>
+      </InfoRow>
+
+      <InfoRow label={t("labels.salary")}>
+        <Text size="sm" tag="span">{salary} {currencyCode}</Text>
+      </InfoRow>
+
+      <InfoRow label={t("labels.status")}>
+        <span className="capitalize bg-gray-100 dark:bg-gray-800 text-[var(--color-primary)] px-3 py-1 rounded-full text-sm font-medium">
+          {data.status || 'Active'}
+        </span>
+      </InfoRow>
+    </ViewDetailsLayout>
   );
 }
 

@@ -37,14 +37,34 @@ export const companyApi = {
     apiClient.get<CompanyStats>("/super_admin/companies/stats"),
 
   // ─── POST /super_admin/companies ──────────────────────────────────────────
-  create: (data: AddCompanyRequest) =>
-    apiClient.post<{ success: boolean; data: Company }>("/super_admin/companies", data),
+  create: (data: AddCompanyRequest) => {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("domain", data.domain);
+    formData.append("fieldOfWork", data.fieldOfWork);
+    if (data.logo) {
+      formData.append("logo", data.logo);
+    }
+    return apiClient.post<{ success: boolean; data: Company }>("/super_admin/companies", formData);
+  },
 
   // ─── DELETE /super_admin/companies/:id ────────────────────────────────────
   delete: (id: number) =>
     apiClient.delete<void>(`/super_admin/companies/${id}`),
 
   // ─── PUT /super_admin/companies/:id ───────────────────────────────────────
-  update: (id: number, data: Partial<AddCompanyRequest>) =>
-    apiClient.put<{ success: boolean; data: Company }>(`/super_admin/companies/${id}`, data),
+  update: (id: number, data: Partial<AddCompanyRequest>) => {
+    const formData = new FormData();
+    if (data.name) formData.append("name", data.name);
+    if (data.email) formData.append("email", data.email);
+    if (data.domain) formData.append("domain", data.domain);
+    if (data.fieldOfWork) formData.append("fieldOfWork", data.fieldOfWork);
+    if (data.logo) {
+      formData.append("logo", data.logo);
+    }
+    // Laravel requires _method=PUT when sending FormData to a PUT route
+    formData.append("_method", "PUT");
+    return apiClient.post<{ success: boolean; data: Company }>(`/super_admin/companies/${id}`, formData);
+  },
 };

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ENV } from "@/config/env";
 
-const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password"];
+const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/verify"];
 const DEFAULT_REDIRECT = "/dashboard";
 
 export function middleware(request: NextRequest) {
@@ -12,11 +12,11 @@ export function middleware(request: NextRequest) {
 
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
-  );
+  ) || pathname === "/";
 
-  if (token && isPublicRoute) {
-    return NextResponse.redirect(new URL(DEFAULT_REDIRECT, request.url));
-  }
+  // if (token && isPublicRoute && pathname !== "/") {
+  //   return NextResponse.redirect(new URL(DEFAULT_REDIRECT, request.url));
+  // }
 
   if (!token && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", request.url));

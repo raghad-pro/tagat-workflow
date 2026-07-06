@@ -5,6 +5,8 @@ import { AppSidebar } from "@/components/organisms/Sidebar";
 import DashboardNavbar from "@/components/organisms/Dashboardnavbar";
 
 
+import RouteGuard from "@/guards/RouteGuard";
+
 export default function DashboardLayout({
   children,
 }: {
@@ -24,8 +26,7 @@ export default function DashboardLayout({
           <SidebarInset>
             <DashboardNavbar />
             <main className="flex-1 overflow-y-auto p-6 ds-bg">
-             
-              {children}
+              <RouteGuard>{children}</RouteGuard>
             </main>
           </SidebarInset>
         </SidebarProvider>

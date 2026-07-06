@@ -7,7 +7,7 @@ import { z } from "zod";
 import { User, Mail, Lock } from "lucide-react";
 import { Text } from "@/components/atoms/Text";
 import { ActionModal } from "@/components/molecules/ActionModal";
-import { TextField, PasswordField } from "@/components/molecules/FormFields";
+import { TextField, PasswordField, SelectField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
 import type { AddClientFormValues } from "@/modules/clients/types/clients.types";
 
@@ -16,7 +16,7 @@ const schema = z.object({
   name:       z.string().min(2, "Name must be at least 2 characters"),
   email:      z.string().min(1, "Email is required").email("Invalid email address"),
   password:   z.string().min(8, "Password must be at least 8 characters"),
-  company_id: z.number().optional(),
+  company_id: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -47,11 +47,12 @@ export function AddClientModal({
   });
 
   const onSubmit = (data: FormValues) => {
+    const validCompanyId = data.company_id ? parseInt(data.company_id, 10) : undefined;
     onAdd({
       name:     data.name,
       email:    data.email,
       password: data.password,
-      ...(isSuperAdmin && data.company_id != null ? { company_id: data.company_id } : {}),
+      ...(isSuperAdmin && validCompanyId != null ? { company_id: validCompanyId } : {}),
     });
   };
 
@@ -128,44 +129,14 @@ export function AddClientModal({
               icon={Lock}
             />
 
-            {/* Company selector — super_admin only */}
             {isSuperAdmin && companies.length > 0 && (
-              <div className="flex flex-col gap-1.5">
-                <Text size="sm" weight="bold" tag="label" htmlFor="company_id">
-                  Assign to Company
-                  <Text tag="span" size="sm" color="gray-200" className="text-[12px] ms-1">
-                    (optional)
-                  </Text>
-                </Text>
-                <div className="relative">
-                  <select
-                    id="company_id"
-                    {...form.register("company_id", { valueAsNumber: true })}
-                    className="w-full appearance-none rounded-xl ds-text-sm ds-text-primary px-4 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
-                    style={{
-                      height:     "var(--input-height)",
-                      border:     "1px solid var(--color-border-inputs)",
-                      background: "var(--color-bg-form)",
-                    }}
-                  >
-                    <option value="">— Select a company —</option>
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path
-                        d="M3 5L7 9L11 5"
-                        stroke="var(--color-text-gray-200)"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
+              <SelectField
+                control={form.control}
+                name="company_id"
+                label="Assign to Company (optional)"
+                placeholder="— Select a company —"
+                options={companies.map(c => ({ value: c.id.toString(), label: c.name }))}
+              />
             )}
           </form>
         </Form>

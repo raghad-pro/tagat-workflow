@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useEffect } from "react";
 
-type Role = "super_admin" | "company_admin" | "employee" | "client";
+type Role = "super_admin" | "company" | "employee" | "client";
 
 export default function RoleGuard({
   children,
@@ -13,14 +13,14 @@ export default function RoleGuard({
   children: React.ReactNode;
   allowedRoles: Role[];
 }) {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+  const { user, isLoading, logout } = useAuth();
 
   useEffect(() => {
     if (!isLoading && user && !allowedRoles.includes(user.role)) {
-      router.replace("/dashboard");
+      // User requested to redirect to login, which means logging them out completely
+      logout();
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, logout, allowedRoles]);
 
   if (isLoading) return null;
   if (!user || !allowedRoles.includes(user.role)) return null;

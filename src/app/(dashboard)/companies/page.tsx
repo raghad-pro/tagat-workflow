@@ -1,9 +1,7 @@
-// import AddCompanyModal  from "@/modules/companies/components/AddCompanyModal";
-// import AddCompanyPage from "@/modules/companies/components/AddCompanyPage";
-import { CompanyManagementPage } from "@/modules/companies/components/CompanyManagementPage";
+import { CompaniesWrapper } from "@/modules/companies/components/CompaniesWrapper";
 
 export default function page(){
     return(
-        <CompanyManagementPage/>
+        <CompaniesWrapper/>
     )
 }

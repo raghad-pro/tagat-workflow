@@ -1,5 +1,8 @@
 "use client";
-import { LucideIcon } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { useFormContext } from "react-hook-form";
+import apiClient from "@/services/apiClient";
+import { LucideIcon, ChevronsUpDown, Loader2 } from "lucide-react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 import {
   FormControl,
@@ -19,6 +22,9 @@ import {
 import { PasswordInput } from "@/components/molecules/PasswordInput";
 import { Text } from "@/components/atoms/Text";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // ─── Shared styles ─────────────────────────────────────────────────────────────
 const inputBase = cn(
@@ -34,12 +40,14 @@ interface BaseFieldProps<T extends FieldValues> {
   label:        string;
   placeholder?: string;
   required?:    boolean;
-  icon?:        LucideIcon
+  icon?:        LucideIcon;
+  disabled?:    boolean;
 }
 
 // ─── TextField ─────────────────────────────────────────────────────────────────
 interface TextFieldProps<T extends FieldValues> extends BaseFieldProps<T> {
   type?: "text" | "email" | "number" | "date" | "password" | "tel";
+  checkExistsUrl?: string;
 }
  
 export function TextField<T extends FieldValues>({
@@ -50,7 +58,53 @@ export function TextField<T extends FieldValues>({
   required,
   type = "text",
   icon: Icon,
+  checkExistsUrl,
+  disabled,
 }: TextFieldProps<T>) {
+  const formContext = useFormContext<T>();
+  const [asyncError, setAsyncError] = useState<string | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleChange = (field: any, e: React.ChangeEvent<HTMLInputElement>) => {
+    field.onChange(e);
+    
+    if (checkExistsUrl) {
+      const value = e.target.value;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      
+      if (!value) {
+        setAsyncError(null);
+        formContext.clearErrors(name);
+        return;
+      }
+      
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const res: any = await apiClient.post(checkExistsUrl, { [name]: value });
+          const errorMessage = type === "email" ? "قيمة الحقل البريد الالكتروني مُستخدمة من قبل" : "قيمة الحقل مُستخدمة من قبل";
+          
+          if (res?.exists || res?.data?.exists || res?.is_used) {
+            setAsyncError(errorMessage);
+            formContext.setError(name, { type: "server", message: errorMessage });
+          } else {
+            setAsyncError(null);
+            formContext.clearErrors(name);
+          }
+        } catch (error: any) {
+          const errorMessage = type === "email" ? "قيمة الحقل البريد الالكتروني مُستخدمة من قبل" : "قيمة الحقل مُستخدمة من قبل";
+          // Backend returns 422 if it exists
+          if (error?.response?.status === 422 || error?.response?.status === 400 || (error?.response?.status === 200 && error?.response?.data?.exists)) {
+            setAsyncError(errorMessage);
+            formContext.setError(name, { type: "server", message: errorMessage });
+          } else {
+            setAsyncError(null);
+            formContext.clearErrors(name);
+          }
+        }
+      }, 500);
+    }
+  };
+
   return (
     <FormField
       control={control}
@@ -67,13 +121,12 @@ export function TextField<T extends FieldValues>({
 
           <div className="relative flex items-center">
            
-          
             {Icon && (
               <Icon 
                 size={18} 
                 className={cn(
                   "absolute ms-3  top-1/2 -translate-y-1/2  pointer-events-none ds-text-primary" ,
-                  fieldState.error ? " ds-text-error" : "ds-text-primary"
+                  (fieldState.error || asyncError) ? " ds-text-error" : "ds-text-primary"
                 )}
               />
             )}
@@ -85,19 +138,24 @@ export function TextField<T extends FieldValues>({
               className={cn(
                 inputBase,
                 Icon && "ps-10",
-                fieldState.error && "ds-border-error"
+                (fieldState.error || asyncError) && "ds-border-error",
+                disabled && "opacity-50 cursor-not-allowed bg-[var(--color-bg-primary-100)]"
               )}
               style={{ height: "var(--input-height)" }}
-              aria-invalid={!!fieldState.error}
+              aria-invalid={!!(fieldState.error || asyncError)}
+              disabled={disabled}
+              autoComplete="off"
               {...field}
+              onChange={(e) => handleChange(field, e)}
+              onBlur={field.onBlur}
             />
            
           </div>
 
          
-    {fieldState.error && (
+    {(fieldState.error || asyncError) && (
             <Text size="sm" color="error" className="mt-1 block">
-              {fieldState.error.message}
+              {asyncError || fieldState.error?.message}
             </Text>
     )}
 
@@ -147,6 +205,7 @@ export function PasswordField<T extends FieldValues>({
               placeholder={placeholder}
               hasError={!!fieldState.error}
               aria-invalid={!!fieldState.error}
+              autoComplete="new-password"
               {...field}
                 className={cn(
                 Icon && "ps-10",
@@ -187,6 +246,7 @@ export function SelectField<T extends FieldValues>({
   required,
   options,
   icon: Icon,
+  disabled,
 }: SelectFieldProps<T>) {
   return (
     <FormField
@@ -201,7 +261,7 @@ export function SelectField<T extends FieldValues>({
             </Text>
           </FormLabel>
 
-          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+          <Select onValueChange={field.onChange} defaultValue={(!field.value || field.value === "" || field.value === 0) ? undefined : field.value?.toString()} value={(!field.value || field.value === "" || field.value === 0) ? undefined : field.value?.toString()} disabled={disabled}>
             <FormControl>
               <SelectTrigger
                 className={cn(
@@ -310,4 +370,88 @@ export function TextAreaField<T extends FieldValues>({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ── MultiSelectField ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+export function MultiSelectField<T extends FieldValues>({
+  control,
+  name,
+  label,
+  placeholder,
+  required,
+  options,
+  icon: Icon,
+  disabled,
+}: SelectFieldProps<T>) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FormItem className="flex flex-col gap-1.5 w-full">
+          <FormLabel>
+            <Text size="sm" weight="bold" tag="label">
+              {label}
+              {required && <span className="ds-text-error ms-1">*</span>}
+            </Text>
+          </FormLabel>
 
+          <Popover>
+            <PopoverTrigger asChild>
+              <FormControl>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  disabled={disabled}
+                  className={cn(
+                    inputBase,
+                    "justify-between h-12 w-full bg-transparent text-left font-normal",
+                    Icon && "pl-10",
+                    !(field.value && field.value.length > 0) && "text-muted-foreground",
+                    fieldState.error && "ds-border-error"
+                  )}
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    {Icon && <Icon className="absolute left-3 h-5 w-5 opacity-50" />}
+                    {field.value && field.value.length > 0
+                      ? `${field.value.length} selected`
+                      : placeholder || "Select options"}
+                  </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </FormControl>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0 border-none rounded-xl shadow-lg ds-bg-form" align="start" style={{ border: "1px solid var(--color-border-form)", borderRadius: "8px" }}>
+              <div className="max-h-60 overflow-y-auto p-2 flex flex-col gap-1 rounded-xl">
+                {options.map((option) => (
+                  <div
+                    key={option.value}
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--color-bg-primary-200)] cursor-pointer rounded-lg transition-colors"
+                    onClick={() => {
+                      const current = Array.isArray(field.value) ? field.value : [];
+                      const selected = current.includes(option.value);
+                      const newValue = selected
+                        ? current.filter((val: string) => val !== option.value)
+                        : [...current, option.value];
+                      field.onChange(newValue);
+                    }}
+                  >
+                    <Checkbox checked={Array.isArray(field.value) ? field.value.includes(option.value) : false} />
+                    <span className="text-sm">{option.label}</span>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          {fieldState.error && (
+            <Text size="sm" color="error" className="mt-1 block">
+              {fieldState.error.message}
+            </Text>
+          )}
+
+        </FormItem>
+      )}
+    />
+  );
+}

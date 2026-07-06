@@ -38,6 +38,7 @@ import { useClientStats }        from "@/modules/clients/hooks/useClientstats";
 import { useAddClient }          from "@/modules/clients/hooks/useAddclient";
 import { useDeleteClient }       from "@/modules/clients/hooks/useDeleteclient";
 import { useUpdateClientStatus } from "@/modules/clients/hooks/useupdateclientstatus";
+import { useCompanies }          from "@/modules/companies/hooks/useCompanies";
 
 import type {
   AddClientFormValues,
@@ -57,7 +58,7 @@ interface NormalizedClient {
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 4;
 
 const STATUS_OPTIONS: FilterOption[] = [
   { value: "all",      label: "All cases" },
@@ -109,7 +110,7 @@ function normalizeClient(raw: any): NormalizedClient {
 export default function ClientManagementPage() {
   const t       = useTranslations("client");
   const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "company_admin";
+  const isSuperAdmin = user?.role === "super_admin";
 
   // ── Filters state ────────────────────────────────────────────────────────────
   const [search, setSearch]             = useState("");
@@ -126,9 +127,12 @@ export default function ClientManagementPage() {
   const { data: rawData, isLoading, isFetching } = useClients({
     search:   search   || undefined,
     status:   statusFilter !== "all" ? statusFilter : undefined,
-    page:     currentPage,
-    per_page: PAGE_SIZE,
-  });
+    page:     1,
+    per_page: 50, // Fetch all for local pagination
+  } as any);
+
+  const { data: companiesResponse } = useCompanies({ per_page: 50, page: 1 } as any);
+  const companiesList = companiesResponse?.data?.data || [];
 
   const { data: stats, isLoading: statsLoading } = useClientStats();
 
@@ -137,8 +141,11 @@ export default function ClientManagementPage() {
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateClientStatus();
 
   // ── Normalize ─────────────────────────────────────────────────────────────────
-  const clients: NormalizedClient[] = (rawData?.data?.data ?? []).map(normalizeClient);
-  const total = rawData?.data?.total ?? 0;
+  const allClients: NormalizedClient[] = (rawData?.data?.data ?? []).map(normalizeClient);
+  const total = allClients.length;
+  
+  // ── Local Pagination ──────────────────────────────────────────────────────────
+  const clients = allClients.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleSearch = (v: string) => { setSearch(v);       setCurrentPage(1); };
@@ -217,7 +224,7 @@ export default function ClientManagementPage() {
       ),
     },
     // Companies column — super_admin only
-    ...(!isCompanyAdmin
+    ...(isSuperAdmin
       ? [{
           key:    "companies",
           header: "Companies",
@@ -225,9 +232,9 @@ export default function ClientManagementPage() {
             row.companies.length === 0 ? (
               <Text size="sm" color="gray-200" tag="p">—</Text>
             ) : (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-0">
                 {row.companies.map((c) => (
-                  <Text key={c.id} size="sm" tag="p">{c.name}</Text>
+                  <Text key={c.id} size="sm" tag="p" className="truncate">{c.name}</Text>
                 ))}
               </div>
             ),
@@ -237,14 +244,20 @@ export default function ClientManagementPage() {
       key:    "status",
       header: "Status",
       render: (row) => {
-        const toShow = isCompanyAdmin
+        const toShow = !isSuperAdmin
           ? row.companies.filter((c) => c.id === user?.company_id)
           : row.companies;
 
-        if (toShow.length === 0) return <PivotStatusPill status="pending" />;
+        if (toShow.length === 0) {
+          return (
+            <div className="flex items-start">
+              <PivotStatusPill status="pending" />
+            </div>
+          );
+        }
 
         return (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col items-start gap-1">
             {toShow.map((c) => (
               <PivotStatusPill key={c.id} status={c.pivot.status} />
             ))}
@@ -341,7 +354,8 @@ export default function ClientManagementPage() {
         onClose={() => setAddOpen(false)}
         onAdd={handleAdd}
         isPending={isAdding}
-        isSuperAdmin={!isCompanyAdmin}
+        isSuperAdmin={isSuperAdmin}
+        companies={companiesList}
       />
 
       {/* View Modal */}
@@ -358,7 +372,7 @@ export default function ClientManagementPage() {
         data={editClient}
         onUpdate={handleUpdateStatus}
         isPending={isUpdating}
-        isCompanyAdmin={isCompanyAdmin}
+        isCompanyAdmin={!isSuperAdmin}
         userCompanyId={user?.company_id ?? undefined}
       />
 

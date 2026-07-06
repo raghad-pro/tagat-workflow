@@ -46,7 +46,7 @@ export function DeleteConfirmationModal({
             {t("deleteConfirm2") || " ?"}
           </Text>
         ) : message ? (
-          <Text size="md" color="gray-400" tag="p" className="mb-4">
+          <Text size="base" color="gray" tag="p" className="mb-4">
             {message}
           </Text>
         ) : null}

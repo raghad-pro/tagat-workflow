@@ -53,8 +53,17 @@ export default function RolesManagementPage() {
   const createRoleMutation = useCreateRole();
   const updateRoleMutation = useUpdateRole();
 
-  const roles = rolesData?.data ?? [];
-  const total = rolesData?.meta?.total ?? 0;
+  const rolesDataRaw = rolesData?.data ?? [];
+  const total = rolesData?.meta?.total ?? rolesDataRaw.length;
+
+  const roles = useMemo(() => {
+    // If the API didn't paginate (returned all items), paginate locally
+    if (rolesDataRaw.length > PAGE_SIZE && rolesDataRaw.length === total) {
+      const startIndex = (page - 1) * PAGE_SIZE;
+      return rolesDataRaw.slice(startIndex, startIndex + PAGE_SIZE);
+    }
+    return rolesDataRaw;
+  }, [rolesDataRaw, page, total]);
 
   const columns: TableColumn<Role>[] = useMemo(() => [
     {

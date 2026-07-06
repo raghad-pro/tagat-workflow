@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Building2, CheckCircle2, Clock, Plus, Eye, Edit2, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import { StatsGrid, StatItem } from "@/components/molecules/Statsgrid";
 import { SearchFilterBar, FilterConfig } from "@/components/molecules/Searchfilterbar";
 import { DataTable, TableColumn, TableAction } from "@/components/molecules/Datatable";
 import { PageHeader } from "@/components/molecules/Pageheader";
-import { Pagination } from "@/components/molecules/Pagination";
 import { StatusBadge } from "@/components/atoms/Statusbadge";
 import { useActionModals } from "@/hooks/useActionModals";
 import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
@@ -16,11 +16,20 @@ import { Text } from "@/components/atoms/Text";
 import { AddCompanyModal } from "./AddCompanyModal";
 import { ViewCompanyModal } from "./ViewCompanyModal";
 import { EditCompanyModal } from "./EditCompanyModal";
-import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany } from "../hooks/useCompanies";
+import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany, useCompanyStats } from "../hooks/useCompanies";
 
 const PAGE_SIZE = 4;
 
-function CompanyAvatar({ name }: { name: string }) {
+function CompanyAvatar({ name, logo }: { name: string; logo?: string | null }) {
+  if (logo) {
+    return (
+      <img 
+        src={logo} 
+        alt={`${name} logo`} 
+        className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-[var(--color-border-form)]"
+      />
+    );
+  }
   const initials = name.slice(0, 1).toUpperCase();
   return (
     <div className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--color-primary)] text-xs font-bold flex-shrink-0 bg-[var(--color-bg-primary-200)] border border-[var(--color-primary-400)]">
@@ -39,9 +48,26 @@ export function CompanyManagementPage() {
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { data: companiesResponse, isLoading } = useCompanies({ search, status: status !== "all" ? status : undefined, page, per_page: PAGE_SIZE });
-  const companies = companiesResponse?.data?.data || [];
-  const totalItems = companiesResponse?.data?.total || 0;
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("add") === "true") {
+      setIsAddModalOpen(true);
+      router.replace("/companies");
+    }
+  }, [searchParams, router]);
+
+  // Fetch all companies to handle pagination locally
+  const { data: companiesResponse, isLoading, isFetching } = useCompanies({ search, status: status !== "all" ? status : undefined, per_page: 50, page: 1 } as any);
+  
+  const allCompanies = companiesResponse?.data?.data || [];
+  
+  // Local pagination
+  const totalItems = allCompanies.length;
+  const companies = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return allCompanies.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [allCompanies, page]);
 
   const createCompany = useCreateCompany();
   const updateCompany = useUpdateCompany();
@@ -52,11 +78,16 @@ export function CompanyManagementPage() {
   const handleSearch = useCallback((v: string) => { setSearch(v); setPage(1); }, []);
   const handleStatus = useCallback((v: string) => { setStatus(v); setPage(1); }, []);
 
-  const stats: StatItem[] = useMemo(() => [
-    { icon: Building2,    value: 124, label: t("stats.total"), iconColor: "#0ea5e9", iconBg: "rgba(14,165,233,0.12)" },
-    { icon: CheckCircle2, value: 118, label: t("stats.active"),  iconColor: "#22c55e", iconBg: "rgba(34,197,94,0.12)"  },
-    { icon: Clock,        value: 6,   label: t("stats.pending"), iconColor: "#f59e0b", iconBg: "rgba(251,191,36,0.12)" },
-  ], [t]);
+  const { data: statsResponse } = useCompanyStats();
+  const apiStats = (statsResponse as any)?.data ?? statsResponse ?? { total: 0, active: 0, pending: 0 };
+
+  const stats: StatItem[] = useMemo(() => {
+    return [
+      { icon: Building2,    value: apiStats.total || 0,   label: t("stats.total"), iconColor: "#0ea5e9", iconBg: "rgba(14,165,233,0.12)" },
+      { icon: CheckCircle2, value: apiStats.active || 0,  label: t("stats.active"),  iconColor: "#22c55e", iconBg: "rgba(34,197,94,0.12)"  },
+      { icon: Clock,        value: apiStats.pending || 0, label: t("stats.pending"), iconColor: "#f59e0b", iconBg: "rgba(251,191,36,0.12)" },
+    ];
+  }, [t, apiStats]);
 
   const columns: TableColumn<Company>[] = useMemo(() => [
     {
@@ -65,7 +96,7 @@ export function CompanyManagementPage() {
       isPrimary: true,
       render: (row) => (
         <div className="flex items-center gap-3">
-          <CompanyAvatar name={row.name} />
+          <CompanyAvatar name={row.name} logo={row.logo} />
           <Text size="sm" weight="medium" tag="span" className="ds-text-primary">
             {row.name}
           </Text>
@@ -87,12 +118,7 @@ export function CompanyManagementPage() {
       hideOnMobile: true,
       render: (row) => <Text size="sm" className="ds-text-gray-200">{row.email}</Text>,
     },
-    {
-      key: "joinedDate",
-      header: t("columns.joinedDate"),
-      hideOnMobile: true,
-      render: (row) => <Text size="sm" className="ds-text-gray-200">{row.joinedDate}</Text>,
-    },
+    
     {
       key: "status",
       header: t("columns.status"),
@@ -151,29 +177,30 @@ export function CompanyManagementPage() {
           actions={actions}
           actionsHeader={tCommon("actions")}
           emptyMessage={tCommon("noDataFound")}
-          isLoading={isLoading}
+          isLoading={isLoading || isFetching}
+          pagination={{
+            currentPage: page,
+            pageSize: PAGE_SIZE,
+            totalItems: totalItems,
+            onPageChange: setPage
+          }}
         />
-
-        <div className="p-4 border-t flex justify-end" style={{ borderColor: "var(--color-border-form)" }}>
-          <Pagination
-            currentPage={page}
-            data={Array(totalItems).fill(0)}
-            pageSize={PAGE_SIZE}
-            onPageChange={setPage}
-          />
-        </div>
       </div>
 
       <AddCompanyModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        isLoading={createCompany.isPending}
         onSave={(data) => {
-          createCompany.mutate({
+          return createCompany.mutateAsync({
             name: data.companyName,
-            domain: data.subdomain + ".localhost",
+            domain: data.subdomain ,
             email: data.email,
-          }, {
-            onSuccess: () => setIsAddModalOpen(false)
+            fieldOfWork: data.fieldOfWork,
+            logo: data.logoFile || null,
+          }).then(() => {
+            setIsAddModalOpen(false);
+            toast.success(t("messages.createSuccess") || "Company added successfully");
           });
         }}
       />
@@ -188,16 +215,20 @@ export function CompanyManagementPage() {
         isOpen={activeModal === "edit"}
         onClose={closeModal}
         data={selectedRow}
+        isLoading={updateCompany.isPending}
         onUpdate={(id, data) => {
-          updateCompany.mutate({
+          return updateCompany.mutateAsync({
             id,
             data: {
               name: data.companyName,
               domain: data.subdomain,
               email: data.email,
+              fieldOfWork: data.fieldOfWork,
+              logo: data.logoFile || null,
             }
-          }, {
-            onSuccess: () => closeModal()
+          }).then(() => {
+            closeModal();
+            toast.success(t("messages.updateSuccess") || "Company updated successfully");
           });
         }}
       />
@@ -207,10 +238,17 @@ export function CompanyManagementPage() {
         onClose={closeModal}
         title={t("deleteTitle")}
         itemName={selectedRow?.name}
+        isLoading={deleteCompany.isPending}
         onConfirm={() => {
           if (selectedRow?.id) {
             deleteCompany.mutate(selectedRow.id, {
-              onSuccess: () => closeModal()
+              onSuccess: () => {
+                closeModal();
+                toast.success(t("messages.deleteSuccess") || "Company deleted successfully");
+              },
+              onError: (error: any) => {
+                toast.error(error?.message || t("messages.deleteError") || "Failed to delete company");
+              }
             });
           }
         }}

@@ -27,8 +27,8 @@ export function PackageDistributionCard({ data }: { data: PackageDistribution[] 
       </ChartContainer>
 
       <div className="flex flex-col gap-2.5 flex-1">
-        {data.map((d) => (
-          <div key={d.name} className="flex items-center justify-between text-xs">
+        {data.map((d, i) => (
+          <div key={i} className="flex items-center justify-between text-xs">
             <Text size="sm" weight="bold">{d.value} companies</Text>
             <span className="flex items-center gap-2">
               <Text size="sm" color="gray-200">{d.name}</Text>

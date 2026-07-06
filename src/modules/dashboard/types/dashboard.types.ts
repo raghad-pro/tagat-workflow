@@ -49,6 +49,9 @@ export interface ApiTasksResponse {
 export interface ApiTimesheet {
   id: number;
   status: "pending" | "approved" | "rejected";
+  date?: string;
+  hours?: string | number;
+  total?: string | number;
   created_at: string;
   updated_at: string;
 }
@@ -109,6 +112,11 @@ export interface CashFlowPoint {
   expenses: number;
 }
 
+export interface WorkingHoursPoint {
+  day: string;
+  hours: number;
+}
+
 export interface ChurnPoint {
   month: string;
   new: number;
@@ -136,21 +144,13 @@ export interface DashboardRequest {
   date: string;
 }
 
-// ─── Final shape returned to components ──────────────────────────────────────
-export interface DashboardResponse {
-  stats: DashboardStats;
-  cashFlow: CashFlowPoint[];
-  churn: ChurnPoint[];
-  packageDistribution: PackageDistribution[];
-  recentCompanies: RecentCompany[];
-  recentRequests: DashboardRequest[];
-}
 // ─── Employee-specific stats ──────────────────────────────────────────────────
 export interface EmployeeStats {
   totalTasks: number;
   completedTasks: number;
   pendingTimesheets: number;
   workingHours: string;
+  totalEarned?: number;
 }
 
 // ─── Employee task (derived from ApiTask for display) ────────────────────────
@@ -176,6 +176,7 @@ export interface EmployeeDashboardData {
   tasks: EmployeeTaskDisplay[];
   salary: SplitBarData;
   cashFlow: CashFlowPoint[];
+  workingHoursTrend?: WorkingHoursPoint[];
 }
 
 // ─── Client invoice display ───────────────────────────────────────────────────
@@ -184,4 +185,86 @@ export interface ClientStatCards {
   totalInvoicesTrend: string;
   paidCount: number;
   unpaidCount: number;
+}
+
+// ─── Super Admin Dashboard (من /super_admin/dashboard) ───────────────────────
+export interface SuperAdminDashboardData {
+  companiesCount: number;
+  projectsCount: number;
+  clientsCount: number;
+  employeesCount: number;
+  totalInvoices: number;
+  totalPayments: number;
+  latestCompanies: any[];
+  latestProjects: any[];
+  latestInvoices: any[];
+  monthlyPayments?: { month: string; amount: number }[];
+  monthlyInvoices?: { month: string; amount: number }[];
+}
+
+// ─── Client dashboard (من /client/dashboard) ─────────────────────────────────
+export interface ClientCompanyLink {
+  id: number;
+  name: string;
+  status: "pending" | "approved" | "rejected";
+  request_date?: string;
+}
+
+export interface ClientInvoiceItem {
+  id: number;
+  invoice_number?: string;
+  amount: number | string;
+  invoice_date?: string;
+}
+
+export interface ClientDashboardData {
+  projectsCount: number;
+  projectsCompleted: number;
+  projectsInProgress: number;
+  projectsPending: number;
+  totalInvoicesAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  linkedCompanies: ClientCompanyLink[];
+  latestInvoices: ClientInvoiceItem[];
+}
+
+// ─── Company Dashboard ────────────────────────────────────────────────────────
+export interface CompanyDashboardData {
+  projectsCount: number;
+  clientsCount: number;
+  employeesCount: number;
+  walletBalance: number;
+  latestProjects: any[];
+  latestTasks: any[];
+  monthlyInvoices: { month: string; amount: number }[];
+}
+
+// ─── Final shape returned to components ──────────────────────────────────────
+export interface DashboardResponse {
+  stats: DashboardStats;
+  cashFlow: CashFlowPoint[];
+  churn: ChurnPoint[];
+  packageDistribution: PackageDistribution[];
+  recentCompanies: RecentCompany[];
+  recentRequests: DashboardRequest[];
+
+  // ── Role-specific extras (optional) ──────────────────────────────────────
+  /** Company Admin: الـ invoices غير المدفوعة للعرض في Pending Approvals */
+  pendingInvoices?: DashboardRequest[];
+
+  /** Employee: البيانات الخاصة بالموظف */
+  employeeData?: EmployeeDashboardData;
+
+  /** Client: إحصائيات الـ invoices الخاصة بالعميل */
+  clientStats?: ClientStatCards;
+
+  /** Client: بيانات الداشبورد الخاص بالعميل من /client/dashboard */
+  clientData?: ClientDashboardData;
+
+  /** Super Admin: البيانات الخاصة بالـ super_admin من /super_admin/dashboard */
+  superAdminData?: SuperAdminDashboardData;
+
+  /** Company Admin: البيانات الخاصة بالـ company من /company/dashboard */
+  companyData?: CompanyDashboardData;
 }

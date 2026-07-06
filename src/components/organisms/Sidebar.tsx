@@ -26,7 +26,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Role = "super_admin" | "company_admin" | "employee" | "client";
+type Role = "super_admin" | "company" | "employee" | "client";
 
 interface NavItem {
   key: string;
@@ -45,62 +45,24 @@ interface NavGroup {
 const NAV_GROUPS: NavGroup[] = [
   {
     key: "home",
-    roles: ["super_admin", "company_admin", "employee", "client"],
+    roles: ["super_admin", "company", "employee", "client"],
     items: [
-      {
-        key: "dashboard",
-        href: "/dashboard",
-        icon: LayoutDashboard,
-        roles: ["super_admin", "company_admin", "employee", "client"],
-      },
-    ],
-  },
-  {
-    key: "subscriberManagement",
-    roles: ["super_admin", "company_admin", "client"],
-    items: [
-      { 
-        key: "companies",       
-        href: "/companies",        
-        icon: Building2,      
-        roles: ["super_admin", "client"] 
-      },
-      { 
-        key: "companyRequests",
-        href: "/company-requests",
-        icon: MessageSquare,  
-        roles: ["super_admin", "company_admin"] 
-      },
-      { 
-        key: "clients",        
-        href: "/clients",   
-        icon: Users,     
-        roles: ["super_admin", "company_admin"] 
-      },
-    ],
-  },
-  {
-    key: "financialManagement",
-    roles: ["super_admin", "company_admin", "client"],
-    items: [
-      { key: "invoices",            href: "/invoices",            icon: FileText,       roles: ["super_admin", "company_admin", "client"] },
-      { key: "payments",            href: "/payments",            icon: CreditCard,     roles: ["super_admin", "company_admin", "client"] },
-      { key: "wallets",             href: "/wallets",             icon: Wallet,         roles: ["super_admin", "company_admin"] },
-      { key: "walletTransactions", href: "/wallet-transactions", icon: ArrowLeftRight, roles: ["super_admin", "company_admin"] },
-      { key: "currencies",          href: "/currencies",          icon: DollarSign,     roles: ["super_admin", "company_admin"] },
-    ],
-  },
-  {
-    key: "internalOperations",
-    roles: ["super_admin", "company_admin", "employee", "client"],
-    items: [
-      { key: "roles",        href: "/roles",        icon: ShieldCheck,   roles: ["super_admin"] },
-      { key: "employees",    href: "/employees",    icon: UserCog,       roles: ["super_admin", "company_admin"] },
-      { key: "projects",     href: "/projects",     icon: FolderKanban,  roles: ["super_admin", "company_admin", "employee", "client"] },
-      { key: "tasks",        href: "/tasks",        icon: CheckSquare,   roles: ["super_admin", "company_admin", "employee"] },
-      { key: "timeLogs",    href: "/time-logs",    icon: Clock,         roles: ["super_admin", "company_admin", "employee"] },
-      { key: "developments", href: "/developments", icon: Wrench,        roles: ["super_admin", "company_admin"] },
-      { key: "contracts",    href: "/contracts",    icon: FileSignature, roles: ["super_admin", "company_admin"] },
+      { key: "dashboard",          href: "/dashboard",          icon: LayoutDashboard, roles: ["super_admin", "company", "employee", "client"] },
+      { key: "roles",              href: "/roles",              icon: ShieldCheck,   roles: ["super_admin"] },
+      { key: "companies",          href: "/companies",          icon: Building2,      roles: ["super_admin", "client"] },
+      { key: "currencies",         href: "/currencies",         icon: DollarSign,     roles: ["super_admin", "company"] },
+      { key: "clients",            href: "/clients",            icon: Users,     roles: ["super_admin", "company"] },
+      { key: "companyRequests",    href: "/company-requests",   icon: MessageSquare,  roles: ["super_admin", "company"] },
+      { key: "employees",          href: "/employees",          icon: UserCog,       roles: ["super_admin", "company"] },
+      { key: "projects",           href: "/projects",           icon: FolderKanban,  roles: ["super_admin", "company", "employee", "client"] },
+      { key: "developments",       href: "/developments",       icon: Wrench,        roles: ["super_admin", "company"] },
+      { key: "wallets",            href: "/wallets",            icon: Wallet,         roles: ["super_admin", "company"] },
+      { key: "walletTransactions", href: "/wallet-transactions", icon: ArrowLeftRight, roles: ["super_admin", "company"] },
+      { key: "invoices",           href: "/invoices",           icon: FileText,       roles: ["super_admin", "company", "client"] },
+      { key: "payments",           href: "/payments",           icon: CreditCard,     roles: ["super_admin", "company", "client"] },
+      { key: "tasks",              href: "/tasks",              icon: CheckSquare,   roles: ["super_admin", "company", "employee"] },
+      { key: "timesheets",         href: "/timesheets",         icon: Clock,         roles: ["super_admin", "company", "employee"] },
+      { key: "contracts",          href: "/contracts",          icon: FileSignature, roles: ["super_admin", "company"] },
     ],
   },
 ];
@@ -166,18 +128,22 @@ export function AppSidebar() {
           <SidebarGroup key={group.key} className="p-0 mb-1">
 
             {/* Group label — desktop فقط */}
-            <SidebarGroupLabel
-              className={cn(
-                "text-[0.68rem] font-bold uppercase tracking-widest px-3 mb-1",
-                "hidden md:flex"
-              )}
-              style={{ color: "var(--sidebar-group-label, var(--color-text-gray-200))" }}
-            >
-              {t(group.key as Parameters<typeof t>[0])}
-            </SidebarGroupLabel>
+            {visibleGroups.length > 1 && (
+              <SidebarGroupLabel
+                className={cn(
+                  "text-[0.68rem] font-bold uppercase tracking-widest px-3 mb-1",
+                  "hidden md:flex"
+                )}
+                style={{ color: "var(--sidebar-group-label, var(--color-text-gray-200))" }}
+              >
+                {t(group.key as Parameters<typeof t>[0])}
+              </SidebarGroupLabel>
+            )}
 
             {/* Divider — mobile فقط بدل الـ label */}
-            <div className="md:hidden my-1 border-t border-[var(--sidebar-border,var(--color-border-form))]" />
+            {visibleGroups.length > 1 && (
+              <div className="md:hidden my-1 border-t border-[var(--sidebar-border,var(--color-border-form))]" />
+            )}
 
             <SidebarMenu>
               {group.items.map((item) => {

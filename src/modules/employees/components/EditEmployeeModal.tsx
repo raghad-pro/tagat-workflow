@@ -41,10 +41,11 @@ interface EditEmployeeModalProps {
   data: Employee | null;
 }
 
-export default function EditEmployeeModal({ isOpen, onClose, onUpdate, data }: EditEmployeeModalProps) {
+export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: EditEmployeeModalProps) {
   const t = useTranslations("employee");
+  const tCurrencies = useTranslations("currencies");
   const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "company_admin";
+  const isSuperAdmin = user?.role === "super_admin";
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
 
@@ -81,17 +82,37 @@ export default function EditEmployeeModal({ isOpen, onClose, onUpdate, data }: E
     currencies = currenciesData;
   }
   
-  const CURRENCY_OPTIONS = currencies.map((c: any) => ({
+  let CURRENCY_OPTIONS = currencies.map((c: any) => ({
     value: c.id?.toString(),
     label: c.name || c.code || c.id?.toString(),
   }));
 
-  if (CURRENCY_OPTIONS.length === 0) {
-    CURRENCY_OPTIONS.push({ value: "1", label: "USD" });
+  const hasNoCurrencies = (isSuperAdmin && !selectedCompany) || CURRENCY_OPTIONS.length === 0;
+
+  if (hasNoCurrencies) {
+    CURRENCY_OPTIONS = [{ value: "no-data", label: tCurrencies("noCurrencies") }];
   }
 
+  // Reset currency when company changes (super_admin only)
   useEffect(() => {
-    if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency")) {
+    if (!isOpen || !selectedCompany) return;
+
+    const originalCompanyId =
+      typeof data?.company === "object"
+        ? data.company?.id?.toString() || ""
+        : data?.company?.toString() || "";
+
+    if (selectedCompany === originalCompanyId) {
+      return;
+    }
+
+    if (isSuperAdmin) {
+      form.setValue("currency", "");
+    }
+  }, [selectedCompany, isOpen, data, isSuperAdmin, form]);
+
+  useEffect(() => {
+    if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency") && CURRENCY_OPTIONS[0].value !== "no-data") {
       form.setValue("currency", CURRENCY_OPTIONS[0].value);
     }
   }, [CURRENCY_OPTIONS.length, form]);
@@ -148,10 +169,22 @@ export default function EditEmployeeModal({ isOpen, onClose, onUpdate, data }: E
                 <TextField control={form.control} name="hourlyRate" label={rateLabel} placeholder={t("placeholders.salary")} type="number" required icon={DollarSign} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="currency" label={t("labels.currency")} options={CURRENCY_OPTIONS} required placeholder={t("placeholders.currency")} />
-                {!isCompanyAdmin && (
+                {isSuperAdmin && (
                   <SelectField control={form.control} name="company" label={t("labels.company")} options={COMPANY_OPTIONS} required placeholder={t("placeholders.company")} />
                 )}
+                <SelectField
+                  control={form.control}
+                  name="currency"
+                  label={t("labels.currency")}
+                  options={CURRENCY_OPTIONS}
+                  required
+                  placeholder={
+                    hasNoCurrencies
+                      ? tCurrencies("noCurrencies")
+                      : t("placeholders.currency")
+                  }
+                  disabled={hasNoCurrencies}
+                />
               </div>
             </div>
           </form>

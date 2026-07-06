@@ -14,10 +14,10 @@ const PLAN_CLASS: Record<RecentCompany["plan"], { bg: string; text: string }> = 
 export function RecentCompaniesList({ companies }: { companies: RecentCompany[] }) {
   return (
     <div className="flex flex-col gap-3">
-      {companies.map((c) => {
+      {companies.map((c, i) => {
         const planStyle = PLAN_CLASS[c.plan];
         return (
-          <div key={c.name} className="flex items-center gap-3">
+          <div key={i} className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ds-bg-primary-200">
               <Building2 size={14} className="ds-text-brand" />
             </div>

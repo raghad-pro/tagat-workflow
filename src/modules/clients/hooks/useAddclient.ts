@@ -19,8 +19,9 @@ export const useAddClient = () => {
         style: { background: "#1d9e75", color: "#fff" },
       });
     },
-    onError: () => {
-      toast.error("Something went wrong while adding the client", {
+    onError: (error: any) => {
+      const msg = error?.response?.data?.message || error?.message || "Something went wrong while adding the client";
+      toast.error(msg, {
         style: { background: "#F92929", color: "#fff" },
       });
     },

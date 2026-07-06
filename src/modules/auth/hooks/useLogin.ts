@@ -41,10 +41,20 @@ export const useLogin = () => {
       toast.success(t("loginSuccess"));
       router.replace("/dashboard");
     },
-    onError: (error: any) => {
-      const backendMsg = error?.response?.data?.message || error?.message;
-      toast.error(backendMsg || t("loginError"));
-      console.error("Login Error details:", error?.response?.data || error);
+    
+    onError: (error: any, variables: LoginRequest) => {
+      const backendMsg = error?.response?.data?.message || error?.message || "";
+      const lowerMsg = backendMsg.toLowerCase();
+      
+      // Check if message indicates unverified account
+      if (lowerMsg.includes("verify") || lowerMsg.includes("verified") || lowerMsg.includes("activate") || lowerMsg.includes("active")) {
+        toast.error(backendMsg || t("loginError"));
+        router.replace("/verify?email=" + encodeURIComponent(variables.email));
+      } else {
+        toast.error(backendMsg || t("loginError"));
+        console.log("Login Error details:", error?.response?.data || error);
+      }
     },
+
   });
 };

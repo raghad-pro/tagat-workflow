@@ -2,6 +2,13 @@
 @import "../styles/variables.css";
 @import "tw-animate-css";
 
+@theme {
+  --color-primary: #12c2e9;
+  --color-primary-hover: #0fb1d5;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @layer base {
@@ -17,6 +24,9 @@
 
 @layer utilities {
   /* ── Backgrounds ────────────────────────────────────────────────────────── */
+  .ds-bg-background     { background-color: var(--color-background); }
+  .ds-text-foreground   { color: var(--color-foreground); }
+  .ds-text-primary-hover { color: var(--color-primary-hover); }
   .ds-bg-primary        { background-color: var(--color-bg-primary); }
   .ds-bg-primary-200    { background-color: var(--color-bg-primary-200); }
   .ds-bg-form           { background-color: var(--color-bg-form); }

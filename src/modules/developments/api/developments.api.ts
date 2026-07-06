@@ -1,39 +1,33 @@
-import type { Development, DevelopmentStats, DevelopmentsQueryParams } from "../types/developments.types";
-import { DUMMY_DEVELOPMENTS, DUMMY_STATS } from "../data/mockData";
+import apiClient from "@/services/apiClient";
+import { getRolePrefix } from "@/utils/rolePrefix";
+import type {
+  ApiDevelopmentsResponse,
+  ApiDevelopmentResponse,
+  CreateDevelopmentRequest,
+  UpdateDevelopmentRequest,
+  DevelopmentsQueryParams,
+} from "../types/developments.types";
+
+const BASE = (role = "super_admin") => `${getRolePrefix(role)}/developments`;
 
 export const developmentApi = {
-  getAll: async (params?: DevelopmentsQueryParams) => {
-    return new Promise<{ data: Development[]; meta: { total: number } }>((resolve) => {
-      setTimeout(() => {
-        let filtered = [...DUMMY_DEVELOPMENTS];
-        if (params?.search) {
-          const q = params.search.toLowerCase();
-          filtered = filtered.filter(
-            (d) =>
-              d.title.toLowerCase().includes(q) ||
-              d.client.toLowerCase().includes(q) ||
-              d.project.toLowerCase().includes(q)
-          );
-        }
-        
-        const page = params?.page || 1;
-        const perPage = params?.per_page || 5;
-        const start = (page - 1) * perPage;
-        const paginated = filtered.slice(start, start + perPage);
+  // GET /api/v1/super_admin/developments?page=1&per_page=10
+  getAll: (params?: DevelopmentsQueryParams, role = "super_admin") =>
+    apiClient.get<ApiDevelopmentsResponse>(BASE(role), params as Record<string, unknown>),
 
-        resolve({
-          data: paginated,
-          meta: { total: filtered.length },
-        });
-      }, 500);
-    });
-  },
+  // GET /api/v1/super_admin/developments/:id
+  getById: (id: number, role = "super_admin") =>
+    apiClient.get<ApiDevelopmentResponse>(`${BASE(role)}/${id}`),
 
-  getStats: async () => {
-    return new Promise<DevelopmentStats>((resolve) => {
-      setTimeout(() => {
-        resolve(DUMMY_STATS);
-      }, 300);
-    });
-  },
+  // POST /api/v1/super_admin/developments
+  create: (data: CreateDevelopmentRequest, role = "super_admin") =>
+    apiClient.post<ApiDevelopmentResponse>(BASE(role), data),
+
+  // PUT /api/v1/super_admin/developments/:id
+  update: (id: number, data: UpdateDevelopmentRequest, role = "super_admin") =>
+    apiClient.put<ApiDevelopmentResponse>(`${BASE(role)}/${id}`, data),
+
+  // DELETE /api/v1/super_admin/developments/:id
+  delete: (id: number, role = "super_admin") =>
+    apiClient.delete<{ success: boolean; message: string }>(`${BASE(role)}/${id}`),
 };

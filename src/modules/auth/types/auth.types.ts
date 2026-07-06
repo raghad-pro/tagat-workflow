@@ -1,9 +1,9 @@
-export type Role = "super_admin" | "company_admin" | "employee" | "client";
+export type Role = "super_admin" | "company" | "employee" | "client";
 
 // role_id → Role mapping (من الـ API بييجي رقم)
 export const ROLE_MAP: Record<number, Role> = {
   1: "super_admin",
-  2: "company_admin",
+  2: "company",
   3: "employee",
   4: "client",
 };
@@ -33,6 +33,8 @@ export type RegisterRequest = {
   password_confirmation: string;
   account_type: "company" | "client";
   company_name?: string; 
+  domain?: string;
+  logo?: File | null;
 };
 
 export type ForgotPasswordRequest = {
@@ -45,8 +47,7 @@ export type VerifyOtpRequest = {
 };
 
 export type ResetPasswordRequest = {
-  email: string;
-  reset_token: string;
+  otp: string;
   password: string;
   password_confirmation: string;
 };

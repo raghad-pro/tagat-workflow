@@ -33,7 +33,7 @@ export const useCompanyData = (companyId?: string | number) => {
   return useQuery({
     queryKey: ["companyData", role, companyId],
     queryFn: async () => employeeApi.getCompanyData(role, companyId),
-    enabled: role === "company_admin" || !!companyId,
+    enabled: role === "company" || !!companyId,
   });
 };
 
@@ -44,7 +44,7 @@ export const useCompanyCurrencies = (companyId?: string | number) => {
   return useQuery({
     queryKey: ["companyCurrencies", role, companyId],
     queryFn: async () => employeeApi.getCompanyCurrencies(role, companyId),
-    enabled: role === "company_admin" || !!companyId,
+    enabled: role === "company" || !!companyId,
   });
 };
 
@@ -58,6 +58,7 @@ export const useCreateEmployee = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-data"] });
     },
   });
 };
@@ -72,6 +73,7 @@ export const useUpdateEmployee = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-data"] });
     },
   });
 };
@@ -86,6 +88,7 @@ export const useDeleteEmployee = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-data"] });
     },
   });
 };

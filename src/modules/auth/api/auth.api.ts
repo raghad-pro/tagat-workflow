@@ -18,7 +18,18 @@ export const authApi = {
   },
 
   register: async (data: RegisterRequest) => {
-    const response = await apiClient.post<ApiAuthResponse>("/register", data);
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    formData.append("password_confirmation", data.password_confirmation);
+    formData.append("account_type", data.account_type);
+    
+    if (data.company_name) formData.append("company_name", data.company_name);
+    if (data.domain) formData.append("domain", data.domain);
+    if (data.logo) formData.append("logo", data.logo);
+
+    const response = await apiClient.post<ApiAuthResponse>("/register", formData);
     return response.data;
   },
 
@@ -27,16 +38,21 @@ export const authApi = {
     return response.data;
   },
 
-  // الـ /profile بدل /me
-  // profile: async () => {
-  //   const response = await apiClient.get<ApiAuthResponse>("/profile");
-  //   return response.data;
-  // },
-
   // ─── Forgot Password ─────────────────────────────────────────────────────────
   forgotPassword: async (data: ForgotPasswordRequest) => {
     const response = await apiClient.post<MessageResponse>("/forgot-password", data);
     return response.data;
+  },
+
+  
+  resendVerificationCode: async (data: { email: string }) => {
+    const response = await apiClient.post<{ status: number; message: string }>('/resend-verification-code', data);
+    return response.data;
+  },
+
+  verifyEmailOtp: async (data: VerifyOtpRequest) => {
+    const response = await apiClient.post<{ status: number | boolean; message: string; success?: boolean }>('/verify-email-otp', data);
+    return response;
   },
 
   verifyOtp: async (data: VerifyOtpRequest) => {

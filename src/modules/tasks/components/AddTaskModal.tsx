@@ -10,192 +10,361 @@ import { Form } from "@/components/ui/form";
 import { Briefcase, Clock } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
-import { useTasksData, useProjectEmployees } from "../hooks/useTasks";
+import { useProjectEmployees } from "../hooks/useTasks";
+import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { useTranslations } from "next-intl";
 
-const getTaskSchema = (t: any, isCompanyAdmin: boolean) => z.object({
-  company: isCompanyAdmin ? z.string().optional() : z.string().min(1, t("companyRequired") || "Company is required"),
-  project: z.string().min(1, t("projectRequired")).refine(val => val !== "no-data", t("projectRequired")),
-  employee: z.string().min(1, t("employeeRequired")).refine(val => val !== "no-data", t("employeeRequired")),
-  title: z.string().min(2, "Title is required"),
-  start: z.string().min(1, "Start time is required"),
-  end: z.string().min(1, "End time is required"),
-  duration: z.string().optional(),
-  notes: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (!data.start || !data.end) return;
+const getTaskSchema = (t: any, isSuperAdmin: boolean, isEmployee: boolean) =>
+  z
+    .object({
+      company: !isSuperAdmin
+        ? z.string().optional()
+        : z.string().min(1, t("companyRequired") || "Company is required"),
+      project: z
+        .string()
+        .min(1, t("projectRequired"))
+        .refine((val) => val !== "no-data", t("projectRequired")),
+      employee: isEmployee 
+        ? z.string().optional() 
+        : z
+          .string()
+          .min(1, t("employeeRequired"))
+          .refine((val) => val !== "no-data", t("employeeRequired")),
+      title: z.string().min(2, "Title is required"),
+      start: z.string().min(1, "Start time is required"),
+      end: z.string().min(1, "End time is required"),
+      duration: z.string().optional(),
+      notes: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.start || !data.end) return;
+      
+      const parseTime = (timeStr: string) => {
+        const englishStr = timeStr.replace(/[٠-٩]/g, w => '٠١٢٣٤٥٦٧٨٩'.indexOf(w).toString());
+        const match = englishStr.match(/(\d+):(\d+)/);
+        if (!match) return { h: 0, m: 0 };
+        let h = parseInt(match[1], 10);
+        let m = parseInt(match[2], 10);
+        if (englishStr.toLowerCase().includes("pm") && h < 12) h += 12;
+        if (englishStr.toLowerCase().includes("am") && h === 12) h = 0;
+        return { h, m };
+      };
 
-  const [startH, startM] = data.start.split(":").map(Number);
-  const [endH, endM] = data.end.split(":").map(Number);
-  
-  const startTotal = startH * 60 + startM;
-  const endTotal = endH * 60 + endM;
+      const startT = parseTime(data.start);
+      const endT = parseTime(data.end);
+      
+      let startTotal = startT.h * 60 + startT.m;
+      let endTotal = endT.h * 60 + endT.m;
 
-  if (startTotal >= endTotal) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Start time must be before end time",
-      path: ["start"],
+      
+      let durationHours = (endTotal - startTotal) / 60;
+      if (durationHours < 0) {
+        durationHours += 24;
+      }
+      
+      if (durationHours > 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("durationExceedsLimit") || "Task duration cannot exceed 4 hours",
+          path: ["duration"],
+        });
+      }
     });
-  }
-
-  const durationHours = (endTotal - startTotal) / 60;
-  if (durationHours > 4) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Task duration cannot exceed 4 hours",
-      path: ["end"],
-    });
-  }
-});
 
 type FormValues = z.infer<ReturnType<typeof getTaskSchema>>;
 
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: any, setError?: any) => void;
+  onSubmit: (data: any, setError: any) => void;
+  isLoading?: boolean;
 }
 
-export default function AddTaskModal({ isOpen, onClose, onSubmit }: AddTaskModalProps) {
+export default function AddTaskModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+}: AddTaskModalProps) {
   const t = useTranslations("task");
-  
   const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "company_admin";
+  const isSuperAdmin = user?.role === "super_admin";
+  const isEmployee = user?.role === "employee";
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(getTaskSchema(t, isCompanyAdmin)),
+    resolver: zodResolver(getTaskSchema(t, isSuperAdmin, isEmployee)),
     mode: "onTouched",
-    defaultValues: { company: "", project: "", employee: "", title: "", start: "", end: "", duration: "", notes: "" },
+    defaultValues: {
+      company: "",
+      project: "",
+      employee: "",
+      title: "",
+      start: "",
+      end: "",
+      duration: "",
+      notes: "",
+    },
   });
 
   const selectedCompanyId = useWatch({ control: form.control, name: "company" });
+  const selectedProjectId = useWatch({ control: form.control, name: "project" });
 
-  // Fetch Companies for Super Admin
+  // ── Companies (super_admin only) ─────────────────────────────────────────────
   const { data: companiesResponse } = useCompanies({ page: 1, per_page: 100 });
-  const companies = companiesResponse?.data?.data || [];
-  const companyOptions = companies.map((c: any) => ({ value: c.id.toString(), label: c.name }));
+  const companyOptions = (companiesResponse?.data?.data ?? []).map((c: any) => ({
+    value: c.id.toString(),
+    label: c.name,
+  }));
 
-  // Fetch Projects and Employees based on selected company (or directly if company admin)
-  const { data: tasksDataResponse, isLoading: isLoadingProjects } = useTasksData(isCompanyAdmin ? undefined : (selectedCompanyId ? Number(selectedCompanyId) : undefined));
+  const isCompanyAdmin = user?.role === "company";
+  const companyIdForQuery = isCompanyAdmin || isEmployee
+    ? ((user as any)?.company_id?.toString() ?? null)
+    : selectedCompanyId || null;
+
+  // ── Projects via useProjects ──────────────────────────────────────────────────
+  const { data: projectsResponse } = useProjects({ page: 1, per_page: 1000 });
+  const allProjects = projectsResponse?.data?.data ?? projectsResponse?.data ?? [];
   
-  const rawProjects = tasksDataResponse?.projects || tasksDataResponse?.data?.projects || [];
+  let rawProjects = companyIdForQuery
+    ? allProjects.filter((p: any) => p.company_id == companyIdForQuery || p.company?.id == companyIdForQuery)
+    : (isEmployee ? allProjects : []);
+
+  if (isEmployee) {
+    const empId = user?.id?.toString();
+    rawProjects = rawProjects.filter((p: any) => {
+      const users = p.users || p.employees || [];
+      // If the backend already filtered it, this is just a safe guard
+      if (users.length === 0) return true; // assuming if no users array, backend handled it
+      return users.some((u: any) => 
+        u?.id?.toString() === empId || 
+        u?.user_id?.toString() === empId ||
+        (u?.user && u.user?.id?.toString() === empId)
+      );
+    });
+  }
+
   let projectOptions = rawProjects.map((p: any) => ({
     value: p.id.toString(),
-    label: p.title || p.name
+    label: p.title ?? p.name,
   }));
   
-  if (projectOptions.length === 0) {
+  if (companyIdForQuery && projectOptions.length === 0) {
     projectOptions = [{ value: "no-data", label: t("noProjects") || "No projects" }];
   }
 
-  const selectedProjectId = useWatch({ control: form.control, name: "project" });
-
-  useEffect(() => {
-    // Only reset if it's a valid old project to avoid fighting with no-data
-    if (form.getValues("project") !== "no-data") form.setValue("project", "");
-    if (form.getValues("employee") !== "no-data") form.setValue("employee", "");
-  }, [selectedCompanyId, form]);
-
-  useEffect(() => {
-    if (form.getValues("employee") !== "no-data") form.setValue("employee", "");
-  }, [selectedProjectId, form]);
-
-  const { data: projectEmployeesResponse, isLoading: isLoadingEmployees } = useProjectEmployees(
-    selectedProjectId && selectedProjectId !== "no-data" ? Number(selectedProjectId) : null
-  );
+  // ── Employees via useProjectEmployees (filtered by project) ─────────────────────────
+  const projectIdForQuery = selectedProjectId && selectedProjectId !== "no-data" ? Number(selectedProjectId) : null;
+  const { data: projectEmployeesResponse, isLoading: isEmployeesLoading } = useProjectEmployees(projectIdForQuery);
   
-  const rawEmployees = projectEmployeesResponse?.employees || projectEmployeesResponse?.data?.employees || [];
-  let employeeOptions = rawEmployees.map((e: any) => ({
-    value: e.id.toString(),
-    label: e.name || e.user?.name
-  }));
+  let rawEmployees: any[] = [];
+  const payload = projectEmployeesResponse?.data;
+  if (Array.isArray(payload)) {
+    rawEmployees = payload;
+  } else if (payload?.employees && Array.isArray(payload.employees)) {
+    rawEmployees = payload.employees;
+  } else if (payload?.data && Array.isArray(payload.data)) {
+    rawEmployees = payload.data;
+  }
 
-  if (employeeOptions.length === 0) {
+  if (rawEmployees.length === 0 && selectedProjectId && selectedProjectId !== "no-data") {
+    const selectedProjectObj = allProjects.find((p: any) => p.id?.toString() === selectedProjectId);
+    if (selectedProjectObj) {
+      if (Array.isArray(selectedProjectObj.employees) && selectedProjectObj.employees.length > 0) {
+        rawEmployees = selectedProjectObj.employees;
+      } else if (Array.isArray(selectedProjectObj.users) && selectedProjectObj.users.length > 0) {
+        rawEmployees = selectedProjectObj.users;
+      } else if (typeof selectedProjectObj.employees === "object" && selectedProjectObj.employees !== null) {
+        rawEmployees = [selectedProjectObj.employees];
+      } else if (typeof selectedProjectObj.users === "object" && selectedProjectObj.users !== null) {
+        rawEmployees = [selectedProjectObj.users];
+      }
+    }
+  }
+
+  let employeeOptions = rawEmployees.map((e: any) => {
+    if (typeof e !== "object") {
+      return { value: String(e), label: String(e) };
+    }
+    const name = e.name ?? e.employee_name ?? e.user?.name ?? (e.user?.first_name ? `${e.user.first_name} ${e.user.last_name ?? ""}`.trim() : null) ?? e.employeeName ?? String(e.id ?? "");
+    return {
+      value: String(e.user_id ?? e.id ?? ""),
+      label: name,
+    };
+  }).filter((opt) => opt.value !== "");
+  
+  if (projectIdForQuery && employeeOptions.length === 0 && !isEmployeesLoading) {
     employeeOptions = [{ value: "no-data", label: t("noEmployees") || "No employees" }];
   }
 
-  const projLen = projectOptions.length;
-  const projFirstVal = projectOptions[0]?.value;
+  // ── Reset project & employee when company changes ────────────────────────────
   useEffect(() => {
-    if (projLen === 1 && projFirstVal === "no-data") {
-      if (form.getValues("project") !== "no-data") form.setValue("project", "no-data");
-    } else if (form.getValues("project") === "no-data") {
-      form.setValue("project", "");
-    }
-  }, [projLen, projFirstVal, form]);
+    form.setValue("project", "");
+    form.setValue("employee", "");
+  }, [selectedCompanyId, form]);
 
-  const empLen = employeeOptions.length;
-  const empFirstVal = employeeOptions[0]?.value;
+  // ── Reset employee when project changes ──────────────────────────────────────
   useEffect(() => {
-    if (empLen === 1 && empFirstVal === "no-data") {
-      if (form.getValues("employee") !== "no-data") form.setValue("employee", "no-data");
-    } else if (form.getValues("employee") === "no-data") {
-      form.setValue("employee", "");
-    }
-  }, [empLen, empFirstVal, form]);
+    form.setValue("employee", "");
+  }, [selectedProjectId, form]);
 
-  // Watch start and end times to calculate duration
+  // ── Auto-select if only "no-data" option ────────────────────────────────────
+  useEffect(() => {
+    if (projectOptions.length === 1 && projectOptions[0].value === "no-data") {
+      form.setValue("project", "no-data");
+    }
+  }, [projectOptions.length, projectOptions[0]?.value, form]);
+
+  useEffect(() => {
+    if (employeeOptions.length === 1 && employeeOptions[0].value === "no-data") {
+      form.setValue("employee", "no-data");
+    }
+  }, [employeeOptions.length, employeeOptions[0]?.value, form]);
+
+  // ── Duration auto-calc ───────────────────────────────────────────────────────
   const startVal = useWatch({ control: form.control, name: "start" });
   const endVal = useWatch({ control: form.control, name: "end" });
 
   useEffect(() => {
-    if (startVal && endVal) {
-      const [startH, startM] = startVal.split(":").map(Number);
-      const [endH, endM] = endVal.split(":").map(Number);
-      if (!isNaN(startH) && !isNaN(endH)) {
-        const diff = (endH * 60 + endM) - (startH * 60 + startM);
-        if (diff > 0) {
-          const hours = (diff / 60).toFixed(2);
-          form.setValue("duration", hours);
-        } else {
-          form.setValue("duration", "0");
-        }
-      }
+    if (!startVal || !endVal) return;
+    const parseTime = (timeStr: string) => {
+      const englishStr = timeStr.replace(/[٠-٩]/g, w => '٠١٢٣٤٥٦٧٨٩'.indexOf(w).toString());
+      const match = englishStr.match(/(\d+):(\d+)/);
+      if (!match) return null;
+      let h = parseInt(match[1], 10);
+      let m = parseInt(match[2], 10);
+      if (englishStr.toLowerCase().includes("pm") && h < 12) h += 12;
+      if (englishStr.toLowerCase().includes("am") && h === 12) h = 0;
+      return { h, m };
+    };
+
+    const startT = parseTime(startVal);
+    const endT = parseTime(endVal);
+    if (!startT || !endT) return;
+    
+    let diff = endT.h * 60 + endT.m - (startT.h * 60 + startT.m);
+    if (diff < 0) {
+      diff += 24 * 60;
     }
+    form.setValue("duration", diff > 0 ? (diff / 60).toFixed(2) : "0", { shouldValidate: true });
+    form.trigger(["start", "end"]);
   }, [startVal, endVal, form]);
 
   const handleFormSubmit = (data: FormValues) => {
-    if (onSubmit) {
-      onSubmit(data, form.setError);
-    } else {
-      onClose();
-      form.reset();
-    }
+    onSubmit(data, form.setError);
   };
 
   if (!isOpen) return null;
 
+  const projectDisabled =
+    (isSuperAdmin && !selectedCompanyId) ||
+    (projectOptions.length === 1 && projectOptions[0].value === "no-data");
+
+  const employeeDisabled =
+    !selectedProjectId ||
+    selectedProjectId === "no-data" ||
+    (employeeOptions.length === 1 && employeeOptions[0].value === "no-data") ||
+    isEmployeesLoading;
+
   return (
-    <ActionModal 
-      isOpen={isOpen} 
-      onClose={() => { form.reset(); onClose(); }} 
-      title={t("addTask") || "Add Task"}
+    <ActionModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t("addTask") || "Add New Task"}
       mode="add"
       formId="add-task-form"
       size="lg"
+      isLoading={isLoading}
     >
       <div className="flex flex-col w-full">
         <Form {...form}>
-          <form id="add-task-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
+          <form
+            id="add-task-form"
+            onSubmit={form.handleSubmit(handleFormSubmit)}
+            className="flex flex-col gap-5"
+          >
             <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="company" label={t("columns.company") || "Company"} options={companyOptions} required placeholder="Select company" />
-                <SelectField control={form.control} name="project" label={t("columns.project") || "Project"} options={projectOptions} required placeholder="Select project" disabled={(!isCompanyAdmin && !selectedCompanyId) || (projectOptions.length === 1 && projectOptions[0].value === "no-data")} />
+                {isSuperAdmin && (
+                  <SelectField
+                    control={form.control}
+                    name="company"
+                    label={t("columns.company") || "Company"}
+                    options={companyOptions}
+                    required
+                    placeholder={t("selectCompany") || "Select company"}
+                  />
+                )}
+                <SelectField
+                  control={form.control}
+                  name="project"
+                  label={t("columns.project") || "Project"}
+                  options={projectOptions}
+                  required
+                  disabled={projectDisabled}
+                  placeholder={t("selectProject") || "Select project"}
+                />
               </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="employee" label={t("columns.employee") || "Employee"} options={employeeOptions} required placeholder="Select employee" disabled={!selectedProjectId || selectedProjectId === "no-data" || (employeeOptions.length === 1 && employeeOptions[0].value === "no-data")} />
-                <TextField control={form.control} name="title" label={t("columns.title") || "Title"} placeholder="Enter task title" required icon={Briefcase} />
+                {!isEmployee && (
+                  <SelectField
+                    control={form.control}
+                    name="employee"
+                    label={t("columns.employee") || "Employee"}
+                    options={employeeOptions}
+                    required
+                    disabled={employeeDisabled}
+                    placeholder={t("selectEmployee") || "Select employee"}
+                  />
+                )}
+                <TextField
+                  control={form.control}
+                  name="title"
+                  label={t("columns.title") || "Title"}
+                  placeholder="Enter task title"
+                  required
+                  icon={Briefcase}
+                />
               </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField control={form.control} name="start" label={t("columns.start") || "Start Time"} type="time" placeholder="00:00" required icon={Clock} />
-                <TextField control={form.control} name="end" label={t("columns.end") || "End Time"} type="time" placeholder="00:00" required icon={Clock} />
+                <TextField
+                  control={form.control}
+                  name="start"
+                  label={t("columns.start") || "Start Time"}
+                  type="time"
+                  placeholder="00:00"
+                  required
+                  icon={Clock}
+                />
+                <TextField
+                  control={form.control}
+                  name="end"
+                  label={t("columns.end") || "End Time"}
+                  type="time"
+                  placeholder="00:00"
+                  required
+                  icon={Clock}
+                />
               </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField control={form.control} name="duration" label={t("columns.duration") || "Duration (hours)"} placeholder="0.00" disabled />
+                <TextField
+                  control={form.control}
+                  name="duration"
+                  label={t("columns.duration") || "Duration (hours)"}
+                  placeholder="0.00"
+                  disabled
+                />
               </div>
+
               <div className="grid grid-cols-1 gap-4">
-                <TextAreaField control={form.control} name="notes" label="Notes" placeholder="Enter any notes here..." />
+                <TextAreaField
+                  control={form.control}
+                  name="notes"
+                  label="Notes"
+                  placeholder="Enter any notes here..."
+                />
               </div>
             </div>
           </form>

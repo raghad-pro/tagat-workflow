@@ -13,7 +13,7 @@ export const getRolePrefix = (): string => {
     switch (role) {
       case "super_admin":
         return "/super_admin";
-      case "company_admin":
+      case "company":
         return "/company";
       case "employee":
         return "/employee";

@@ -1,7 +1,7 @@
 // ─── Real API Response Shape ──────────────────────────────────────────────────
 // GET /api/v1/super_admin/requests  OR  /api/v1/company/requests
 // {
-//   role: "super_admin" | "company_admin",
+//   role: "super_admin" | "company",
 //   data: [
 //     {
 //       id: 4,                   // client_id
@@ -24,7 +24,7 @@
 // }
 
 // ─── Role ─────────────────────────────────────────────────────────────────────
-export type JoinRequestRole = "super_admin" | "company_admin";
+export type JoinRequestRole = "super_admin" | "company";
 
 // ─── Pivot status (from backend) ──────────────────────────────────────────────
 export type JoinRequestStatus = "pending" | "approved" | "rejected";

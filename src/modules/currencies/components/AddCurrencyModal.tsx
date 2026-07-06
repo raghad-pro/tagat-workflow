@@ -1,0 +1,130 @@
+"use client";
+
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ActionModal } from "@/components/molecules/ActionModal";
+import { TextField, SelectField } from "@/components/molecules/FormFields";
+import { Form } from "@/components/ui/form";
+import { useTranslations } from "next-intl";
+import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { useAuth } from "@/providers/AuthProvider";
+
+export function AddCurrencyModal({
+  isOpen,
+  onClose,
+  onSave,
+  isLoading,
+  serverError,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: any) => Promise<void>;
+  isLoading?: boolean;
+  serverError?: Record<string, string[]>;
+}) {
+  const t = useTranslations("currencies");
+  const tCommon = useTranslations("common");
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
+
+  const addCurrencySchema = z.object({
+    name: z.string().min(1, t("requiredField")),
+    code: z.string().min(1, t("requiredField")),
+    symbol: z.string().min(1, t("requiredField")),
+    company_id: isSuperAdmin ? z.string().min(1, t("requiredField")) : z.string().optional(),
+  });
+
+  type FormValues = z.infer<typeof addCurrencySchema>;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(addCurrencySchema),
+    mode: "onTouched",
+    defaultValues: {
+      name: "",
+      code: "",
+      symbol: "",
+      company_id: "",
+    },
+  });
+
+  useEffect(() => {
+    if (serverError) {
+      Object.keys(serverError).forEach((key) => {
+        form.setError(key as keyof FormValues, {
+          type: "server",
+          message: serverError[key][0],
+        });
+      });
+    }
+  }, [serverError, form]);
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset();
+    }
+  }, [isOpen, form]);
+
+  const { data: companiesData } = useCompanies({ page: 1, per_page: 1000 });
+  const companies = companiesData?.data?.data || [];
+  const COMPANY_OPTIONS = companies.map((c: any) => ({
+    value: c.id?.toString(),
+    label: c.name || c.domain || c.id?.toString(),
+  }));
+
+  const handleSubmit = async (data: FormValues) => {
+    await onSave(data);
+  };
+
+  return (
+    <ActionModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t("addCurrency")}
+      mode="add"
+      onSubmit={form.handleSubmit(handleSubmit)}
+      isLoading={isLoading}
+      saveLabel={t("save")}
+      cancelLabel={t("cancel")}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField
+              control={form.control}
+              name="name"
+              label={t("currencyName")}
+              placeholder=""
+              required
+            />
+            <TextField
+              control={form.control}
+              name="code"
+              label={t("currencyCode")}
+              placeholder=""
+              required
+            />
+            {isSuperAdmin && (
+              <SelectField
+                control={form.control}
+                name="company_id"
+                label={t("company")}
+                options={COMPANY_OPTIONS}
+                required
+                placeholder={t("selectCompany")}
+              />
+            )}
+            <TextField
+              control={form.control}
+              name="symbol"
+              label={t("symbol")}
+              placeholder=""
+              required
+            />
+          </div>
+        </form>
+      </Form>
+    </ActionModal>
+  );
+}

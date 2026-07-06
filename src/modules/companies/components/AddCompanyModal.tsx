@@ -10,23 +10,46 @@ import { ActionModal } from "@/components/molecules/ActionModal";
 import { TextField, SelectField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
 import { useTranslations } from "next-intl";
+import { companyApi } from "@/modules/companies/api/companies.api";
 
 const companySchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
   subdomain: z.string().min(2, "Subdomain is required").regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers and hyphens"),
   fieldOfWork: z.string().min(1, "Please select field of work"),
+}).superRefine(async (data, ctx) => {
+  if (data.email && data.email.length > 3) {
+    try {
+      const searchRes = await companyApi.getAll({ search: data.email });
+      const emailExists = searchRes.data?.data?.some(
+        (c: any) => c.email.toLowerCase() === data.email.toLowerCase()
+      );
+      if (emailExists) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "This email is already registered for a company",
+          path: ["email"],
+        });
+      }
+    } catch (e) {
+      // Ignore API errors during validation
+    }
+  }
 });
+
+import toast from "react-hot-toast";
 
 export type CompanyFormValues = z.infer<typeof companySchema>;
 
-export function AddCompanyModal({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (data: CompanyFormValues) => void }) {
+export function AddCompanyModal({ isOpen, onClose, onSave, isLoading }: { isOpen: boolean; onClose: () => void; onSave: (data: CompanyFormValues & { logoFile?: File | null }) => Promise<void>; isLoading?: boolean }) {
   const t = useTranslations("company");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
+    mode: "onTouched",
     defaultValues: { email: "", companyName: "", subdomain: "", fieldOfWork: "" },
   });
 
@@ -34,6 +57,7 @@ export function AddCompanyModal({ isOpen, onClose, onSave }: { isOpen: boolean; 
     if (!isOpen) {
       form.reset();
       setLogoPreview(null);
+      setLogoFile(null);
     }
   }, [isOpen, form]);
 
@@ -46,8 +70,16 @@ export function AddCompanyModal({ isOpen, onClose, onSave }: { isOpen: boolean; 
   ];
 
   const onSubmit = async (data: CompanyFormValues) => {
-    onSave(data);
-    onClose();
+    try {
+      await onSave({ ...data, logoFile });
+    } catch (error: any) {
+      const msg = String(error?.message || "").toLowerCase();
+      if (msg.includes("users_email_unique") || msg.includes("duplicate entry")) {
+        form.setError("email", { type: "server", message: t("messages.emailExists") || "This email is already registered for a company" });
+      } else {
+        toast.error(error?.message || t("messages.createError") || "Failed to add company");
+      }
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +87,10 @@ export function AddCompanyModal({ isOpen, onClose, onSave }: { isOpen: boolean; 
     if (file) {
       if (file.size > 2 * 1024 * 1024) { alert("File size must be less than 2MB"); return; }
       const reader = new FileReader();
-      reader.onloadend = () => setLogoPreview(reader.result as string);
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+        setLogoFile(file);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -69,6 +104,7 @@ export function AddCompanyModal({ isOpen, onClose, onSave }: { isOpen: boolean; 
       formId="add-company-form"
       size="xl"
       saveLabel={t("saveCompany") || "Save Company"}
+      isLoading={isLoading}
     >
       <div className="flex flex-col w-full">
         <Form {...form}>
@@ -121,8 +157,22 @@ export function AddCompanyModal({ isOpen, onClose, onSave }: { isOpen: boolean; 
                 >
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
                   {logoPreview ? (
-                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border ds-border-form">
-                      <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border ds-border-form">
+                        <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLogoPreview(null);
+                          setLogoFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = "";
+                        }}
+                        className="text-red-500 text-sm font-medium hover:underline flex items-center justify-center py-1 px-3 bg-red-50 dark:bg-red-900/20 rounded-md"
+                      >
+                        {t("removeLogo") || "Remove Logo"}
+                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-center">

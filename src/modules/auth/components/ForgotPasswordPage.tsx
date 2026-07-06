@@ -97,62 +97,44 @@ function OtpStep({
   onSuccess,
 }: {
   email: string;
-  onSuccess: (resetToken: string) => void;
+  onSuccess: (otp: string) => void;
 }) {
   const t = useTranslations("auth");
   const [otp, setOtp] = useState("");
-
-  // ── حالتان للـ error:
-  // "invalid"  → الرمز غلط (من الـ API) → مربعات حمراء + نص تحتها
-  // ""         → لا خطأ
   const [otpError, setOtpError] = useState<"invalid" | "required" | "">("");
 
   const { mutate: verifyOtp, isPending } = useVerifyOtp();
   const { mutate: forgotPassword, isPending: isResending } = useForgotPassword();
 
-  // ── التحقق من الرمز ────────────────────────────────────────────────────────
   const handleVerify = () => {
-    // validation محلي: الحقل فاضي
-    if (otp.length < 4) {
+    if (otp.length < 6) {
       setOtpError("required");
       return;
     }
-
     setOtpError("");
 
     verifyOtp(
       { email, otp },
       {
-        // ✅ نجح → نروح للـ step التالي
-        onSuccess: (data) => onSuccess(data.data.reset_token),
-
-        // ❌ فشل من الـ API → نحمّر المربعات ونكتب الخطأ تحتها
-        //    (الـ hook ما بيطلع toast في هاد الحالة لأنا عم نتعامل معها هنا)
-        onError: () => {
-          setOtpError("invalid");
-        },
+        onSuccess: () => onSuccess(otp),
+        onError: () => setOtpError("invalid"),
       }
     );
   };
 
-  // ── إعادة إرسال الرمز ─────────────────────────────────────────────────────
   const handleResend = () => {
     setOtp("");
     setOtpError("");
-
     forgotPassword(
       { email },
       {
-        // ✅ أُعيد الإرسال بنجاح → toast.success
         onSuccess: () => {
           toast.success(t("fp_resend_success"), { id: "otp-resend" });
         },
-        // ❌ فشل → الـ hook بيطلع toast.error بنفسه (موجود بالفعل)
       }
     );
   };
 
-  // ── رسالة الخطأ النصية حسب النوع ─────────────────────────────────────────
   const errorMessage =
     otpError === "invalid"
       ? t("otp_invalid")
@@ -160,7 +142,6 @@ function OtpStep({
       ? t("otp_required")
       : "";
 
-  // ── هل المربعات حمراء؟ (فقط لما الرمز غلط من الـ API) ──────────────────
   const isInvalid = otpError === "invalid";
 
   return (
@@ -179,25 +160,21 @@ function OtpStep({
       {/* OTP Slots */}
       <div className="flex flex-col items-center gap-3 mb-6">
         <InputOTP
-          maxLength={4}
+          maxLength={6}
           value={otp}
           onChange={(val) => {
             setOtp(val);
-            // ← لما المستخدم يبدأ يكتب، يختفي الـ error فوراً
             if (otpError) setOtpError("");
           }}
         >
           <InputOTPGroup className="gap-3 rtl:flex-row-reverse  ">
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 1, 2, 3, 4, 5].map((i) => (
               <InputOTPSlot
                 key={i}
                 index={i}
                 className={[
                   "w-12 h-12 rounded-xl border-0 text-lg font-bold ds-text-primary transition-all duration-200 ds-bg ",
-                  // ← أحمر فقط لما الرمز غلط من الـ API
-                  isInvalid
-                    ? " ds-text-error"
-                    : "",
+                  isInvalid ? " ds-text-error" : "",
                 ].join(" ")}
                 style={{
                   background: isInvalid
@@ -212,7 +189,6 @@ function OtpStep({
           </InputOTPGroup>
         </InputOTP>
 
-        {/* نص الخطأ — يظهر تحت المربعات مباشرة */}
         {errorMessage && (
           <Text size="sm" color="error" className="text-center">
             {errorMessage}
@@ -226,7 +202,7 @@ function OtpStep({
         variant="solid"
         fullWidth
         loading={isPending}
-        disabled={otp.length < 4}
+        disabled={otp.length < 6}
         onClick={handleVerify}
         className="mb-4"
       >
@@ -251,13 +227,13 @@ function OtpStep({
 
 // ─── Step 3: New Password ─────────────────────────────────────────────────────
 function NewPasswordStep({
-  email,
-  resetToken,
+  otp,
   onSuccess,
+  onInvalidOtp,
 }: {
-  email: string;
-  resetToken: string;
+  otp: string;
   onSuccess: () => void;
+  onInvalidOtp: () => void;
 }) {
   const t = useTranslations("auth");
   const { mutate: resetPassword, isPending } = useResetPassword();
@@ -289,13 +265,18 @@ function NewPasswordStep({
   const onSubmit = (data: FormValues) => {
     resetPassword(
       {
-        email,
-        reset_token: resetToken,
+        otp,
         password: data.password,
         password_confirmation: data.password_confirmation,
       },
       {
         onSuccess,
+        onError: (error: any) => {
+          const errorMsg = error?.response?.data?.message || error.message;
+          if (errorMsg === "Invalid OTP" || errorMsg === "invalid_otp") {
+            onInvalidOtp();
+          }
+        }
       }
     );
   };
@@ -406,7 +387,7 @@ export default function ForgotPasswordPage() {
   const locale = useLocale();
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState("");
-  const [resetToken, setResetToken] = useState("");
+  const [otp, setOtp] = useState("");
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
@@ -432,8 +413,8 @@ export default function ForgotPasswordPage() {
         {step === 2 && (
           <OtpStep
             email={email}
-            onSuccess={(token) => {
-              setResetToken(token);
+            onSuccess={(verifiedOtp) => {
+              setOtp(verifiedOtp);
               setStep(3);
             }}
           />
@@ -442,9 +423,9 @@ export default function ForgotPasswordPage() {
         {/* ── Step 3: New Password ── */}
         {step === 3 && (
           <NewPasswordStep
-            email={email}
-            resetToken={resetToken}
+            otp={otp}
             onSuccess={() => setStep(4)}
+            onInvalidOtp={() => setStep(2)}
           />
         )}
 

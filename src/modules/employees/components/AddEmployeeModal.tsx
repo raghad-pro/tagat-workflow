@@ -43,7 +43,7 @@ interface AddEmployeeModalProps {
 
 export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmployeeModalProps) {
   const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "company_admin";
+  const isSuperAdmin = user?.role === "super_admin";
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
   
@@ -60,6 +60,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
   }));
 
   const t = useTranslations("employee");
+  const tCurrencies = useTranslations("currencies");
   const form = useForm<FormValues>({
     resolver: zodResolver(addEmployeeSchema),
     mode: "onTouched",
@@ -81,17 +82,26 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
     currencies = currenciesData;
   }
   
-  const CURRENCY_OPTIONS = currencies.map((c: any) => ({
+  let CURRENCY_OPTIONS = currencies.map((c: any) => ({
     value: c.id?.toString(),
     label: c.name || c.code || c.id?.toString(),
   }));
 
-  if (CURRENCY_OPTIONS.length === 0) {
-    CURRENCY_OPTIONS.push({ value: "1", label: "USD" });
+  const hasNoCurrencies = (isSuperAdmin && !selectedCompany) || CURRENCY_OPTIONS.length === 0;
+
+  if (hasNoCurrencies) {
+    CURRENCY_OPTIONS = [{ value: "no-data", label: tCurrencies("noCurrencies") }];
   }
 
+  // Reset currency when company changes (super_admin)
   useEffect(() => {
-    if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency")) {
+    if (isSuperAdmin) {
+      form.setValue("currency", "");
+    }
+  }, [selectedCompany, isSuperAdmin, form]);
+
+  useEffect(() => {
+    if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency") && CURRENCY_OPTIONS[0].value !== "no-data") {
       form.setValue("currency", CURRENCY_OPTIONS[0].value);
     }
   }, [CURRENCY_OPTIONS.length, form]);
@@ -126,7 +136,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
             <div className="rounded-2xl p-5 flex flex-col gap-5" style={{ border: "1px solid var(--color-border-form)" }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <TextField control={form.control} name="employeeName" label={t("labels.name")} placeholder={t("placeholders.name")} required icon={User} />
-                <TextField control={form.control} name="email" label={t("labels.email")} placeholder={t("placeholders.email")} type="email" required icon={Mail} />
+                <TextField control={form.control} name="email" label={t("labels.email")} placeholder={t("placeholders.email")} type="email" required icon={Mail} checkExistsUrl="/check-email" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SelectField control={form.control} name="paymentType" label={t("labels.paymentType")} options={PAYMENT_OPTIONS} required placeholder={t("placeholders.paymentType")} />
@@ -137,10 +147,22 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
                 <TextField control={form.control} name="hourlyRate" label={rateLabel} placeholder={t("placeholders.salary")} type="number" required icon={DollarSign} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="currency" label={t("labels.currency")} options={CURRENCY_OPTIONS} required placeholder={t("placeholders.currency")} />
-                {!isCompanyAdmin && (
+                {isSuperAdmin && (
                   <SelectField control={form.control} name="company" label={t("labels.company")} options={COMPANY_OPTIONS} required placeholder={t("placeholders.company")} />
                 )}
+                <SelectField
+                  control={form.control}
+                  name="currency"
+                  label={t("labels.currency")}
+                  options={CURRENCY_OPTIONS}
+                  required
+                  placeholder={
+                    hasNoCurrencies
+                      ? tCurrencies("noCurrencies")
+                      : t("placeholders.currency")
+                  }
+                  disabled={hasNoCurrencies}
+                />
               </div>
             </div>
           </form>

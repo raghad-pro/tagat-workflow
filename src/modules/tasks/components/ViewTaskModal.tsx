@@ -1,84 +1,140 @@
 "use client";
 
 import React from "react";
-import { ActionModal } from "@/components/molecules/ActionModal";
 import { Text } from "@/components/atoms/Text";
+import { StatusBadge } from "@/components/atoms/Statusbadge";
+import { ViewDetailsLayout, InfoRow } from "@/components/molecules/ViewDetailsLayout";
 import type { Task } from "../types/tasks.types";
+import { useTranslations } from "next-intl";
+import { useAuth } from "@/providers/AuthProvider";
 
 export function ViewTaskModal({ isOpen, onClose, data }: { isOpen: boolean; onClose: () => void; data: Task | null }) {
+  const t = useTranslations("common");
+  const { user } = useAuth();
+  const isEmployee = user?.role === "employee";
+  
   if (!data) return null;
 
-  return (
-    <ActionModal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      title=""
-      mode="view"
-      size="md"
-    >
-      <div className="flex flex-col w-full px-2">
-        <div className="ds-bg-form rounded-2xl p-6 shadow-sm border ds-border-form">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-lg bg-[var(--color-bg-primary-200)] flex items-center justify-center text-[var(--color-primary)] font-bold text-xl">
-              {data.title ? data.title.charAt(0) : '?'}
-            </div>
-            <div>
-              <Text size="xl" weight="bold" tag="h3" className="ds-text-primary">
-                {data.title || "-"}
-              </Text>
-              <Text size="sm" className="ds-text-gray-200">
-                {typeof data.project === 'object' ? (data.project?.title || data.project?.name) : data.project || "-"}
-              </Text>
-            </div>
-          </div>
+  // --- Resolution Helpers ---
+  const projectObj = typeof data.project === 'object' ? data.project : (data as any).project_details;
+  const projectName = projectObj?.title || projectObj?.name || (typeof data.project === 'string' ? data.project : "-");
 
-          <ul className="space-y-4 list-disc list-inside ds-text-sub">
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Company:</span> 
-              <span className="ds-text-main">
-                {typeof data.company === 'object' ? data.company?.name : 
-                 (data as any).project?.company?.name || data.company || "-"}
-              </span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Employee:</span> 
-              <span className="ds-text-main">
-                {typeof data.employee === 'object' ? (data.employee?.name || data.employee?.user?.name) : 
-                 data.employee ? data.employee :
-                 typeof (data as any).assignedTo === 'object' ? ((data as any).assignedTo?.name || (data as any).assignedTo?.user?.name) :
-                 (data as any).assignedTo ? (data as any).assignedTo :
-                 typeof (data as any).assigned_to === 'object' ? ((data as any).assigned_to?.name || (data as any).assigned_to?.user?.name) :
-                 (data as any).assigned_to ? (data as any).assigned_to :
-                 typeof (data as any).user === 'object' ? (data as any).user?.name :
-                 (data as any).user || "-"}
-              </span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Date:</span> 
-              <span className="ds-text-main">
-                {((data as any).task_date || (data as any).taskDate) ? `${(data as any).task_date || (data as any).taskDate} ` : ''}
-                {(data.start_time || data.start || "-")} to {(data.end_time || data.end || "-")}
-              </span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Duration:</span> 
-              <span className="ds-text-main">{data.duration || "-"}</span>
-            </li>
-            <li className="flex items-center">
-              <span className="font-bold mr-2 text-[var(--color-primary)]">Status:</span> 
-              <span className="ds-text-main">{(data as any).status || "-"}</span>
-            </li>
-            {((data as any).description || (data as any).notes) && (
-              <li className="flex flex-col items-start mt-4">
-                <span className="font-bold text-[var(--color-primary)] mb-1">Description:</span> 
-                <span className="ds-text-main p-2 rounded-lg bg-[var(--color-bg-primary-200)] w-full">
-                  {(data as any).description || (data as any).notes}
-                </span>
-              </li>
-            )}
-          </ul>
+  const companyObj = typeof data.company === 'object' ? data.company : projectObj?.company;
+  const companyName = companyObj?.name || (typeof data.company === 'string' ? data.company : "-");
+
+  const employeeObj = typeof data.employee === 'object' ? data.employee : 
+                      typeof (data as any).assignedTo === 'object' ? (data as any).assignedTo :
+                      typeof (data as any).assigned_to === 'object' ? (data as any).assigned_to : 
+                      typeof (data as any).user === 'object' ? (data as any).user : null;
+  const employeeName = employeeObj?.name || employeeObj?.user?.name || 
+                       (typeof data.employee === 'string' ? data.employee : 
+                       (typeof (data as any).assigned_to === 'string' ? (data as any).assigned_to : "-"));
+
+  // --- Financial Calculations ---
+  const paymentType = employeeObj?.payment_type || employeeObj?.paymentType;
+  const isHourly = paymentType === "hourly" || paymentType === "part_time" || paymentType === "Hourly";
+  const hourlyRate = parseFloat(employeeObj?.hourly_rate || employeeObj?.hourlyRate || "0");
+  const salary = parseFloat(employeeObj?.salary || "0");
+
+  const getHoursFromDuration = (dur: any): number => {
+    if (!dur) return 0;
+    if (typeof dur === 'number') return dur;
+    const str = String(dur).toLowerCase();
+    if (str.includes('h')) {
+      const hMatch = str.match(/(\d+)\s*h/);
+      const mMatch = str.match(/(\d+)\s*m/);
+      const h = hMatch ? parseInt(hMatch[1], 10) : 0;
+      const m = mMatch ? parseInt(mMatch[1], 10) : 0;
+      return h + (m / 60);
+    } else if (str.includes(':')) {
+      const [h, m] = str.split(':');
+      return parseInt(h, 10) + (parseInt(m, 10) / 60);
+    }
+    return parseFloat(str) || 0;
+  };
+
+  const hours = getHoursFromDuration(data.duration);
+  
+  let totalCostDisplay = "-";
+
+  if (isHourly) {
+    totalCostDisplay = `${(hours * hourlyRate).toFixed(2)} $ (Hourly Rate: ${hourlyRate.toFixed(2)} $)`;
+  } else if (paymentType === "monthly" || paymentType === "Monthly") {
+    totalCostDisplay = `${salary.toFixed(2)} $ (Monthly Salary)`;
+  } else {
+    totalCostDisplay = data.budget ? `${data.budget} $` : "-";
+  }
+
+  // Formatting date/time for display
+  const startDate = ((data as any).task_date || (data as any).taskDate || "-");
+  const startTime = data.start_time || data.start || "-";
+  const endTime = data.end_time || data.end || "-";
+
+  return (
+    <ViewDetailsLayout
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t("viewTaskTitle") || "Task Details"}
+      avatarName={data.title}
+      headerTitle={data.title || "Task"}
+      headerSubtitle={projectName}
+    >
+      <InfoRow label="Project">
+        <Text size="sm" tag="span">{projectName}</Text>
+      </InfoRow>
+
+      <InfoRow label="Company">
+        <Text size="sm" tag="span">{companyName}</Text>
+      </InfoRow>
+
+      {!isEmployee && (
+        <InfoRow label="Employee">
+          <Text size="sm" tag="span">{employeeName}</Text>
+        </InfoRow>
+      )}
+
+      <InfoRow label="Status">
+        {(data as any).status ? (
+          <StatusBadge status={(data as any).status as any} />
+        ) : (
+          <span className="ds-text-main">-</span>
+        )}
+      </InfoRow>
+
+      <InfoRow label="Date">
+        <Text size="sm" tag="span">{startDate}</Text>
+      </InfoRow>
+
+      <InfoRow label="Start">
+        <Text size="sm" tag="span">{startTime}</Text>
+      </InfoRow>
+
+      <InfoRow label="End">
+        <Text size="sm" tag="span">{endTime}</Text>
+      </InfoRow>
+
+      <InfoRow label="Duration">
+        <Text size="sm" tag="span">{data.duration || "-"}</Text>
+      </InfoRow>
+
+      <InfoRow label="Financial">
+        <Text size="sm" tag="span">{totalCostDisplay}</Text>
+      </InfoRow>
+
+      <InfoRow label="Created At">
+        <Text size="sm" tag="span">{((data as any).created_at || (data as any).createdAt || "-").replace('T', ' ').substring(0, 19)}</Text>
+      </InfoRow>
+
+      {((data as any).description || (data as any).notes) && (
+        <div className="flex flex-col gap-2 mt-4 pt-4 border-t ds-border-form">
+          <Text size="sm" color="gray-200" tag="span" className="font-bold text-[var(--color-primary)]">
+            Description
+          </Text>
+          <div className="ds-text-main p-3 rounded-lg bg-[var(--color-bg-primary-200)] w-full text-sm">
+            {(data as any).description || (data as any).notes}
+          </div>
         </div>
-      </div>
-    </ActionModal>
+      )}
+    </ViewDetailsLayout>
   );
 }

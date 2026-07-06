@@ -10,6 +10,7 @@ import { DataTable, TableColumn, TableAction } from "@/components/molecules/Data
 import { Pagination } from "@/components/molecules/Pagination";
 import { PageCard, PageCardSection, PageCardBody, PageCardFooter } from "@/components/molecules/Pagecard";
 import { useDevelopments, useDevelopmentStats } from "../hooks/useDevelopments";
+import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { Folder, Clock, CreditCard, Eye, Edit2, Trash2 } from "lucide-react";
 import AddDevelopmentModal from "./AddDevelopmentModal";
 import EditDevelopmentModal from "./EditDevelopmentModal";
@@ -40,6 +41,9 @@ export default function DevelopmentsManagementPage() {
     per_page: PAGE_SIZE,
   });
 
+  const { data: projectsRes } = useProjects({ page: 1, per_page: 100 } as any);
+  const projectsList = projectsRes?.data || [];
+
   const developments = developmentsData?.data ?? [];
   const total = developmentsData?.meta?.total ?? 0;
 
@@ -56,19 +60,29 @@ export default function DevelopmentsManagementPage() {
       render: (row) => <span className="font-medium ds-text-main">{row.title}</span>,
     },
     {
-      key: "project",
+      key: "project_id",
       header: t("columns.project"),
-      render: (row) => <span className="ds-text-main font-medium">{row.project}</span>,
+      render: (row) => {
+        const project = projectsList.find((p: any) => p.id === row.project_id);
+        return <span className="ds-text-main font-medium">{project ? (project.title || project.name) : row.project_id}</span>;
+      },
     },
     {
-      key: "client",
+      key: "client_id",
       header: t("columns.client"),
-      render: (row) => <span>{row.client}</span>,
-    },
-    {
-      key: "budget",
-      header: t("columns.budget"),
-      render: (row) => <span>{row.budget}</span>,
+      render: (row) => {
+        const project = projectsList.find((p: any) => p.id === row.project_id);
+        let clientName = row.client_id;
+        if (project) {
+          if (Array.isArray(project.clients)) {
+            const client = project.clients.find((c: any) => c.id === row.client_id);
+            if (client) clientName = client.name;
+          } else if (project.client && (project.client.id === row.client_id || project.client_id === row.client_id)) {
+            clientName = project.client.name || row.client_id;
+          }
+        }
+        return <span>{clientName}</span>;
+      },
     },
     {
       key: "cost",
@@ -80,7 +94,7 @@ export default function DevelopmentsManagementPage() {
       header: t("columns.status"),
       render: (row) => <StatusBadge status={row.status} />,
     },
-  ], [t]);
+  ], [t, projectsList]);
 
   const actions: TableAction<Development>[] = useMemo(() => [
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView },

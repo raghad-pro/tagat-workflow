@@ -11,6 +11,7 @@ import { TextField, SelectField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
 import { useTranslations } from "next-intl";
 import type { Company } from "@/modules/companies/types/companies.types";
+import { companyApi } from "@/modules/companies/api/companies.api";
 
 const companySchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -19,11 +20,14 @@ const companySchema = z.object({
   fieldOfWork: z.string().min(1, "Please select field of work"),
 });
 
+import toast from "react-hot-toast";
+
 export type CompanyFormValues = z.infer<typeof companySchema>;
 
-export function EditCompanyModal({ isOpen, onClose, onUpdate, data }: { isOpen: boolean; onClose: () => void; onUpdate: (id: number, data: CompanyFormValues) => void; data: Company | null }) {
+export function EditCompanyModal({ isOpen, onClose, onUpdate, data, isLoading }: { isOpen: boolean; onClose: () => void; onUpdate: (id: number, data: CompanyFormValues & { logoFile?: File | null }) => Promise<void>; data: Company | null; isLoading?: boolean }) {
   const t = useTranslations("company");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CompanyFormValues>({
@@ -40,6 +44,7 @@ export function EditCompanyModal({ isOpen, onClose, onUpdate, data }: { isOpen: 
         fieldOfWork: "technical" // Defaulting to technical for mock data since it doesn't exist
       });
       setLogoPreview(null); // Load existing logo here if available
+      setLogoFile(null);
     }
   }, [data, isOpen, form]);
 
@@ -54,8 +59,29 @@ export function EditCompanyModal({ isOpen, onClose, onUpdate, data }: { isOpen: 
   ];
 
   const onSubmit = async (formData: CompanyFormValues) => {
-    onUpdate(data.id, formData);
-    onClose();
+    try {
+      // تفقد قاعدة البيانات لمعرفة إذا كان البريد مسجلاً مسبقاً لشركة أخرى
+      if (formData.email.toLowerCase() !== data.email?.toLowerCase()) {
+        const searchRes = await companyApi.getAll({ search: formData.email });
+        const emailExists = searchRes.data?.data?.some(
+          (c) => c.email.toLowerCase() === formData.email.toLowerCase() && c.id !== data.id
+        );
+
+        if (emailExists) {
+          form.setError("email", { type: "server", message: t("messages.emailExists") || "Email is already registered" });
+          return;
+        }
+      }
+
+      await onUpdate(data.id, { ...formData, logoFile });
+    } catch (error: any) {
+      const msg = String(error?.message || "").toLowerCase();
+      if (msg.includes("users_email_unique") || msg.includes("duplicate entry")) {
+        form.setError("email", { type: "server", message: t("messages.emailExists") || "Email is already registered" });
+      } else {
+        toast.error(error?.message || t("messages.updateError") || "Failed to update company");
+      }
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +89,10 @@ export function EditCompanyModal({ isOpen, onClose, onUpdate, data }: { isOpen: 
     if (file) {
       if (file.size > 2 * 1024 * 1024) { alert("File size must be less than 2MB"); return; }
       const reader = new FileReader();
-      reader.onloadend = () => setLogoPreview(reader.result as string);
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+        setLogoFile(file);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -77,6 +106,7 @@ export function EditCompanyModal({ isOpen, onClose, onUpdate, data }: { isOpen: 
       formId="edit-company-form"
       size="xl"
       saveLabel={t("updateCompany") || "Update Company"}
+      isLoading={isLoading}
     >
       <div className="flex flex-col w-full">
         <div className="mb-6 flex flex-col gap-1">

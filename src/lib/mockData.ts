@@ -24,7 +24,7 @@ export const MOCK_USERS: Record<string, AuthResponse & { password: string }> = {
       id: 2,
       name: "Company Admin",
       email: "admin@test.com",
-      role: "company_admin",
+      role: "company",
       role_id: 2,
       is_active: 1,
       image: null,
