@@ -43,6 +43,7 @@ interface DataTableProps<T extends { id: number | string }> {
     pageSize: number;
     totalItems: number;
     onPageChange: (page: number) => void;
+    icon: React.ElementType;
   };
 }
 
