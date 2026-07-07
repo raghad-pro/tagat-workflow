@@ -17,7 +17,7 @@ import { Button } from "@/components/atoms/Button";
 import { Text } from "@/components/atoms/Text";
 import { TextField, PasswordField } from "@/components/molecules/FormFields";
 import { useForgotPassword } from "@/modules/auth/hooks/useForgotPassword";
-import { useVerifyOtp } from "@/modules/auth/hooks/useVerifyOtp";
+import { useResendVerificationCode } from "@/modules/auth/hooks/useResendVerificationCode";
 import { useResetPassword } from "@/modules/auth/hooks/useResetPassword";
 import toast from "react-hot-toast";
 
@@ -103,8 +103,10 @@ function OtpStep({
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState<"invalid" | "required" | "">("");
 
-  const { mutate: verifyOtp, isPending } = useVerifyOtp();
-  const { mutate: forgotPassword, isPending: isResending } = useForgotPassword();
+  // No verify-otp API call in forgot-password flow.
+  // OTP is collected here and sent together with the new password in reset-password.
+  const [isPending] = [false];
+  const { mutate: resendCode, isPending: isResending } = useResendVerificationCode();
 
   const handleVerify = () => {
     if (otp.length < 6) {
@@ -112,24 +114,21 @@ function OtpStep({
       return;
     }
     setOtpError("");
-
-    verifyOtp(
-      { email, otp },
-      {
-        onSuccess: () => onSuccess(otp),
-        onError: () => setOtpError("invalid"),
-      }
-    );
+    // Pass OTP directly to Step 3 (reset-password will validate it)
+    onSuccess(otp);
   };
 
   const handleResend = () => {
     setOtp("");
     setOtpError("");
-    forgotPassword(
+    resendCode(
       { email },
       {
         onSuccess: () => {
           toast.success(t("fp_resend_success"), { id: "otp-resend" });
+        },
+        onError: () => {
+          toast.error(t("generic_error"), { id: "otp-resend" });
         },
       }
     );
