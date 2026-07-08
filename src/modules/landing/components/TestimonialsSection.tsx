@@ -14,9 +14,9 @@ export function TestimonialsSection() {
   return (
     <section className="py-16 md:py-24 ds-bg-primary-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Text tag="h2" size="xl" className="max-w-3xl mx-auto mb-16 text-center text-3xl font-bold">
+        <h2 className="max-w-3xl mx-auto mb-16 text-center text-3xl font-bold">
           {t("testimonialsTitle")}
-        </Text>
+        </h2>
 
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((testi, idx) => (
@@ -27,12 +27,12 @@ export function TestimonialsSection() {
                 {testi.emoji}
               </div>
 
-              <Text color="gray" className="mb-8 mt-2 min-h-[80px]">
+              <p className="mb-8 mt-2 min-h-[80px]">
                 {testi.text}
-              </Text>
-              <Text size="sm" className="font-bold">
+              </p>
+              <p className="font-bold">
                 {testi.name}
-              </Text>
+              </p>
             </div>
           ))}
         </div>

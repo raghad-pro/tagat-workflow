@@ -1,4 +1,4 @@
-import { Text } from "@/components/atoms/Text";
+
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
@@ -12,13 +12,13 @@ interface SectionTitleProps {
 export function SectionTitle({ title, subtitle, className, align = "center" }: SectionTitleProps) {
   return (
     <div className={cn("mb-16", align === "center" && "text-center", align === "right" && "text-right", className)}>
-      <Text tag="h2" size="xl" className="mb-4 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
+      <h2 className="mb-4 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
         {title}
-      </Text>
+      </h2>
       {subtitle && (
-        <Text color="gray" className="max-w-2xl text-lg md:text-xl ds-text-gray-200 mt-4 mx-auto">
+        <p className="max-w-2xl text-lg md:text-xl text-muted-foreground ds-text-gray-200 mt-4 mx-auto">
           {subtitle}
-        </Text>
+        </p>
       )}
     </div>
   );
