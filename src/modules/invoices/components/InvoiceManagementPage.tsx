@@ -321,12 +321,14 @@ export default function InvoiceManagementPage() {
       </PageCard>
 
       {/* Modal */}
-      <CreateInvoiceModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSave={handleCreate}
-        isPending={isCreating}
-      />
+      {showModal && (
+        <CreateInvoiceModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSave={handleCreate}
+          isPending={isCreating}
+        />
+      )}
 
       {/* Edit Modal */}
       {editInvoice && (
@@ -340,11 +342,13 @@ export default function InvoiceManagementPage() {
       )}
 
       {/* View Modal */}
-      <ViewInvoiceModal
-        isOpen={showViewModal}
-        onClose={() => { setShowViewModal(false); setViewInvoice(null); }}
-        invoiceId={viewInvoice?.id || null}
-      />
+      {showViewModal && (
+        <ViewInvoiceModal
+          isOpen={showViewModal}
+          onClose={() => { setShowViewModal(false); setViewInvoice(null); }}
+          invoiceId={viewInvoice?.id || null}
+        />
+      )}
 
     </PageContainer>
   );

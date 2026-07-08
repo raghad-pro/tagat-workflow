@@ -5,9 +5,6 @@ import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/animation/FadeIn";
 import { SlideIn } from "@/animation/SlideIn";
-import { ScaleIn } from "@/animation/ScaleIn";
-import Image from "next/image";
-import { dashboardImage } from "@/assets/images/images";
 
 export function HeroContent() {
   const t = useTranslations("Index");
@@ -35,22 +32,7 @@ export function HeroContent() {
         </div>
       </FadeIn>
       
-      <ScaleIn delay={0.6}>
-        <div className="mt-16 relative max-w-5xl mx-auto">
-          {/* Dashboard floating mockup effect */}
-          <div className="rounded-xl overflow-hidden shadow-2xl shadow-primary/10 border border-white/10 ds-bg flex items-center justify-center relative transform transition-transform duration-700 hover:scale-[1.02]">
-            <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent pointer-events-none" />
-            <Image
-              src={dashboardImage}
-              alt="Workflow Dashboard"
-              width={1280}
-              height={800}
-              className="w-full h-auto object-contain"
-              priority
-            />
-          </div>
-        </div>
-      </ScaleIn>
+
     </div>
   );
 }

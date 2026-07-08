@@ -1,65 +1,35 @@
 import apiClient from "@/services/apiClient";
-import { getRolePrefix } from "@/utils/rolePrefix";
+import type {
+  Payment,
+  PaymentStats,
+  PaymentsQueryParams,
+  AddPaymentRequest,
+  ApiPaymentsResponse,
+  ApiPaymentResponse,
+  UpdatePaymentRequest,
+  ApiPaymentDataResponse,
+} from "../types/payments.types";
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-  errors?: Record<string, string[]>;
-}
+export const paymentsApi = {
+  // ─── GET /super_admin/payments ───────────────────────────────────────────
+  getAll: (params?: PaymentsQueryParams) =>
+    apiClient.get<ApiPaymentsResponse>("/super_admin/payments", params as Record<string, unknown>),
 
-export const paymentApi = {
-  getAll: async (role: string, params?: { search?: string; page?: number }) => {
-    const response = await apiClient.get<ApiResponse<any>>(
-      `${getRolePrefix(role)}/payments`,
-      { params }
-    );
-    return response.data;
-  },
 
-  getSingle: async (role: string, id: string | number) => {
-    const response = await apiClient.get<ApiResponse<any>>(
-      `${getRolePrefix(role)}/payments/${id}`
-    );
-    return response.data;
-  },
 
-  create: async (role: string, data: Record<string, any>) => {
-    const response = await apiClient.post<ApiResponse<any>>(
-      `${getRolePrefix(role)}/payments`,
-      data
-    );
-    return response.data;
-  },
+  // ─── GET /super_admin/payments-data/:companyId ──────────────────────────
+  getPaymentData: (companyId: number) =>
+    apiClient.get<ApiPaymentDataResponse>(`/super_admin/payments-data/${companyId}`),
 
-  update: async (role: string, id: string | number, data: Record<string, any>) => {
-    const response = await apiClient.put<ApiResponse<any>>(
-      `${getRolePrefix(role)}/payments/${id}`,
-      data
-    );
-    return response.data;
-  },
+  // ─── POST /super_admin/payments ──────────────────────────────────────────
+  create: (data: AddPaymentRequest) =>
+    apiClient.post<ApiPaymentResponse>("/super_admin/payments", data),
 
-  delete: async (role: string, id: string | number) => {
-    const response = await apiClient.delete<ApiResponse<null>>(
-      `${getRolePrefix(role)}/payments/${id}`
-    );
-    return response.data;
-  },
+  // ─── PUT /super_admin/payments/:id ───────────────────────────────────────
+  update: (id: number, data: UpdatePaymentRequest) =>
+    apiClient.put<ApiPaymentResponse>(`/super_admin/payments/${id}`, data),
 
-  getCompanyData: async (role: string, companyId?: string | number) => {
-    const url = companyId
-      ? `${getRolePrefix(role)}/payments-data/${companyId}`
-      : `${getRolePrefix(role)}/payments-data`;
-    const response = await apiClient.get<ApiResponse<{ invoices: any[]; wallets: any[]; employees: any[] }>>(url);
-    return response.data;
-  },
-
-  payInvoice: async (role: string, invoiceId: string | number, gateway: string) => {
-    const response = await apiClient.post<ApiResponse<{ payment_url: string }>>(
-      `${getRolePrefix(role)}/${invoiceId}/pay`,
-      { payment_gateway: gateway }
-    );
-    return response.data;
-  },
+  // ─── DELETE /super_admin/payments/:id ────────────────────────────────────
+  delete: (id: number) =>
+    apiClient.delete<{ success: boolean; message: string }>(`/super_admin/payments/${id}`),
 };
