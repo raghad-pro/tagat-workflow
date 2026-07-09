@@ -32,8 +32,9 @@ export default async function RootLayout({
       lang={locale}
       dir={locale === "en" ?  "ltr":"rtl"}
       className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
     >
-      <body>
+      <body suppressHydrationWarning>
       
         <AppProvider locale={locale} messages={messages}>
           {children}

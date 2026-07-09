@@ -7,6 +7,7 @@ export interface CompanyCardProps {
   id: number;
   name: string;
   domain?: string;
+  logo?: string;
   status?: "none" | "pending" | "approved" | "active" | "rejected";
   onJoin?: (id: number) => void;
   isLoading?: boolean;
@@ -25,10 +26,11 @@ const getCompanyIconConfig = (id: number) => {
   return configs[id % configs.length];
 };
 
-export function CompanyCard({ id, name, domain, status, onJoin, isLoading }: CompanyCardProps) {
+export function CompanyCard({ id, name, domain, logo, status, onJoin, isLoading }: CompanyCardProps) {
   const isPending = status === "pending";
   const isApproved = status === "approved" || status === "active";
-  const { icon: Icon, bg, color } = getCompanyIconConfig(id);
+  const { bg, color } = getCompanyIconConfig(id);
+  const Icon = Building2; // Always use Building2 for fallback as requested
 
   let buttonText = "Join Request";
   if (isPending) buttonText = "Pending";
@@ -47,10 +49,14 @@ export function CompanyCard({ id, name, domain, status, onJoin, isLoading }: Com
       {/* Top Section */}
       <div className="flex justify-between items-start mb-4">
         <div 
-          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" 
-          style={{ background: bg, color: color }}
+          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" 
+          style={!logo ? { background: bg, color: color } : { background: '#f8fafc' }}
         >
-          <Icon size={24} strokeWidth={1.5} />
+          {logo ? (
+            <img src={logo} alt={name} className="w-full h-full object-cover" />
+          ) : (
+            <Icon size={24} strokeWidth={1.5} />
+          )}
         </div>
         
         {isPending && (

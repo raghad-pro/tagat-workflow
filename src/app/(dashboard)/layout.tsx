@@ -16,6 +16,7 @@ export default function DashboardLayout({
     <AuthGuard>
       <TooltipProvider>
         <SidebarProvider
+          className="h-screen overflow-hidden w-full flex"
           style={{
             // desktop: العرض الكامل — mobile: أيقونات فقط (56px)
             "--sidebar-width": "240px",
@@ -23,9 +24,9 @@ export default function DashboardLayout({
           } as React.CSSProperties}
         >
           <AppSidebar />
-          <SidebarInset>
+          <SidebarInset className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
             <DashboardNavbar />
-            <main className="flex-1 overflow-y-auto p-6 ds-bg">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 ds-bg">
               <RouteGuard>{children}</RouteGuard>
             </main>
           </SidebarInset>

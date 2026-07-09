@@ -321,7 +321,7 @@ export default function AddTaskModal({
                   control={form.control}
                   name="title"
                   label={t("columns.title") || "Title"}
-                  placeholder="Enter task title"
+                  placeholder={t("enterTaskTitle") || "Enter task title"}
                   required
                   icon={Briefcase}
                 />
@@ -362,8 +362,8 @@ export default function AddTaskModal({
                 <TextAreaField
                   control={form.control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Enter any notes here..."
+                  label={t("notes") || "Notes"}
+                  placeholder={t("enterNotes") || "Enter any notes here..."}
                 />
               </div>
             </div>
