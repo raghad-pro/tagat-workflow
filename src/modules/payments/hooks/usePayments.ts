@@ -53,3 +53,19 @@ export const useDeletePayment = () => {
     },
   });
 };
+
+export const usePaymentData = (role: string, companyId?: string | number) => {
+  return useQuery({
+    queryKey: ["paymentData", role, companyId],
+    queryFn: () => paymentApi.getCompanyData(role, companyId),
+    enabled: role !== undefined && (role === "company" ? true : companyId !== undefined && companyId !== 0),
+  });
+};
+
+export const usePaymentStats = (role: string) => {
+  return useQuery({
+    queryKey: ["paymentStats", role],
+    queryFn: () => paymentApi.getStats(role),
+    enabled: !!role,
+  });
+};

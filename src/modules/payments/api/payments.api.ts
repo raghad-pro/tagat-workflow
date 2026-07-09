@@ -17,6 +17,13 @@ export const paymentApi = {
     return response.data;
   },
 
+  getStats: async (role: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `${getRolePrefix(role)}/payments/stats`
+    );
+    return response.data;
+  },
+
   getSingle: async (role: string, id: string | number) => {
     const response = await apiClient.get<ApiResponse<any>>(
       `${getRolePrefix(role)}/payments/${id}`
