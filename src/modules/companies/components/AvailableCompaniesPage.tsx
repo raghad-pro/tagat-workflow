@@ -67,7 +67,6 @@ export function AvailableCompaniesPage() {
                 id={company.id}
                 name={company.name}
                 domain={company.domain}
-                logo={company.logo}
                 status={joinStatus as any}
                 onJoin={handleJoin}
                 isLoading={requestJoin.isPending}

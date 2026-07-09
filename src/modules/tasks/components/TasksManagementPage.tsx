@@ -136,47 +136,7 @@ export function TasksManagementPage() {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
 
-  // ── Dynamic Stats Calculation ────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    const tasks = res?.data || [];
-    const totalTasks = res?.total || tasks.length;
-
-    let totalMins = 0;
-    let totalBudget = 0;
-
-    tasks.forEach(task => {
-      // Calculate duration
-      const startTime = task.start_time ?? task.start;
-      const endTime   = task.end_time   ?? task.end;
-      if (startTime && endTime) {
-        const [sh, sm] = startTime.split(":").map(Number);
-        const [eh, em] = endTime.split(":").map(Number);
-        if (!isNaN(sh) && !isNaN(eh)) {
-          let diffMin = (eh * 60 + em) - (sh * 60 + sm);
-          if (diffMin < 0) diffMin += 24 * 60;
-          totalMins += diffMin;
-        }
-      }
-
-      // Calculate budget
-      const budgetRaw = task.budget ?? (typeof task.project === "object" ? task.project?.budget : undefined);
-      if (budgetRaw) {
-        const b = parseFloat(String(budgetRaw).replace(/[^0-9.-]+/g, ""));
-        if (!isNaN(b)) {
-          totalBudget += b;
-        }
-      }
-    });
-
-    const hours = Math.floor(totalMins / 60);
-
-    return {
-      activeTasks: { value: totalTasks, label: "Total Active Tasks" },
-      loggedHours: { value: `${hours}`, label: "Logged Hours" },
-      budgetUtilization: { value: `${totalBudget.toFixed(2)}`, label: "Total Budget Utilization" },
-    };
-  }, [res]);
-
+  const stats          = statsData ?? DUMMY_STATS;
 
   // Use full employees list to resolve employee names properly
   const { data: employeesResponse } = useEmployees({ page: 1, per_page: 100 });

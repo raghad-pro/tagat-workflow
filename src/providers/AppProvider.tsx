@@ -19,12 +19,7 @@ export default function AppProvider({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <ReactQueryProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider>
           <AuthProvider>
             <ToastProvider />
             {children}

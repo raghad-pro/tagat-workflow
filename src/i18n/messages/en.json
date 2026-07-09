@@ -285,11 +285,6 @@
     "searchPlaceholder": "Search tasks...",
     "noProjects": "No projects",
     "noEmployees": "No employees",
-    "selectProject": "Select project",
-    "selectEmployee": "Select employee",
-    "enterTaskTitle": "Enter task title",
-    "notes": "Notes",
-    "enterNotes": "Enter any notes here...",
     "projectRequired": "Must select a project",
     "employeeRequired": "Must select an employee",
     "companyRequired": "Must select a company",
@@ -391,7 +386,6 @@
       "all": "All Invoices",
       "paid": "Paid",
       "pending": "Pending",
-      "unpaid": "Unpaid",
       "overdue": "Overdue"
     },
     "columns": {
@@ -541,26 +535,28 @@
     "systemSettings": "System Settings"
   },
   "currencies": {
-    "title": "Currencies",
-    "subtitle": "Manage and track currencies across regions",
-    "totalCurrencies": "Total Currencies",
-    "activeRegions": "Active Regions",
-    "primaryCurrency": "Primary Currency",
-    "name": "Name",
-    "company": "Company",
-    "symbol": "Symbol",
-    "code": "Code",
-    "editCurrency": "Edit Currency",
+    "title": "Currencies Management",
+    "subtitle": "Manage and configure global currencies for your organization.",
     "addCurrency": "Add Currency",
-    "searchPlaceholder": "Search currencies...",
-    "noCurrencies": "No currencies found.",
-    "deleteTitle": "Delete Currency",
-    "confirmDelete": "Are you sure you want to delete this currency?",
+    "editCurrency": "Edit Currency",
+    "primaryCurrency": "Primary Currency",
+    "totalCurrencies": "Total Currencies",
+    "activeInRegions": "Active in Regions",
+    "searchPlaceholder": "Searching....",
+    "noCurrencies": "No currencies found",
+    "currencyName": "Currency Name",
+    "currencyCode": "Currency Code (USD, EUR...)",
+    "symbol": "Symbol ($, €, ₪...)",
+    "company": "Company",
+    "selectCompany": "Select Company",
     "requiredField": "This field is required",
+    "actions": "Actions",
+    "code": "Code",
+    "name": "Name",
     "save": "Save",
     "cancel": "Cancel",
-    "currencyName": "Currency Name",
-    "selectCompany": "Select Company"
+    "confirmDelete": "Are you sure you want to delete this currency?",
+    "deleteTitle": "Delete Currency"
   },
   "Index": {
     "title": "Workflow",
@@ -664,144 +660,26 @@
     "formMessage": "Message",
     "formSubmit": "Send Message"
   },
-  "wallets": {
-    "title": "Wallets Management",
-    "subtitle": "Overview and administration of all registered company wallets.",
-    "add": "Add Wallet",
-    "stats": {
-      "totalBalance": "Total Balance",
-      "avgBalance": "Avg Balance",
-      "pendingWallets": "Pending Wallets",
-      "totalWallets": "Total Wallets",
-      "totalUSD": "Total USD",
-      "totalEUR": "Total EUR"
-    },
-    "columns": {
-      "name": "Customer Name",
-      "walletName": "Wallet Name",
-      "company": "Company",
-      "currency": "Currency",
-      "lastTransaction": "Last Transaction",
-      "balance": "Balance",
-      "initialBalance": "Initial Balance",
-      "notes": "Notes"
-    },
-    "filter": {
-      "active": "Active",
-      "pending": "Pending",
-      "inactive": "Inactive"
-    },
-    "searchPlaceholder": "Search by name, company, or currency...",
-    "deleteTitle": "Delete Wallet",
-    "confirmDelete": "Are you sure you want to delete this wallet?",
-    "messages": {
-      "createSuccess": "Wallet created successfully",
-      "updateSuccess": "Wallet updated successfully",
-      "deleteSuccess": "Wallet deleted successfully",
-      "deleteError": "Failed to delete wallet"
-    },
-    "form": {
-      "name": "Wallet Name",
-      "company": "Company",
-      "currency": "Currency",
-      "initialBalance": "Initial Balance",
-      "notes": "Notes",
-      "status": "Status"
-    }
-  },
-  "payments": {
-    "title": "Payment Records",
-    "subtitle": "Track, manage, and audit all incoming and outgoing transactions.",
-    "add": "Add Payment",
-    "stats": {
-      "totalRevenue": "total revenue",
-      "pendingPayments": "pending payments",
-      "transactionVolume": "transaction volume"
-    },
-    "columns": {
-      "invoice": "Invoice",
-      "company": "Company",
-      "date": "Date",
-      "method": "Method",
-      "wallet": "Wallet",
-      "amount": "Amount",
-      "notes": "Notes"
-    },
-    "filter": {
-      "all": "All Status",
-      "completed": "Completed",
-      "pending": "Pending",
-      "failed": "Failed"
-    },
-    "searchPlaceholder": "Searching....",
-    "deleteTitle": "Delete Payment",
-    "confirmDelete": "Are you sure you want to delete this payment?",
-    "messages": {
-      "createSuccess": "Payment added successfully",
-      "updateSuccess": "Payment updated successfully",
-      "deleteSuccess": "Payment deleted successfully",
-      "deleteError": "Failed to delete payment"
-    },
-    "form": {
-      "invoice": "Invoice Number",
-      "company": "Company",
-      "date": "Date",
-      "method": "Method",
-      "wallet": "Wallet",
-      "amount": "Amount",
-      "notes": "Notes",
-      "status": "Status"
-    },
-    "exportReport": "Export Report"
-  },
-  "walletTransactions": {
-    "title": "Transactions Management",
-    "description": "Manage and monitor all wallet transactions.",
-    "addTransaction": "Add Transactions",
-    "searchPlaceholder": "Searching...",
-    "deleteTitle": "Delete Transaction",
-    "confirmDelete": "Are you sure you want to delete this transaction?",
-    "viewTransaction": "View Transaction",
-    "notes": "Notes",
-    "notesPlaceholder": "Optional notes...",
-    "currentBalance": "Current Balance",
-    "toWalletBalance": "To Wallet Balance",
-    "walletAfterTransaction": "Wallet After Transaction",
-    "relatedWallet": "Related Wallet (Transfer To)",
-    "exchangeRate": "Exchange Rate",
-    "commission": "Commission",
-    "relatedWalletAfter": "Related Wallet After",
-    "editTransaction": "Edit Transaction",
-    "stats": {
-      "totalVolume": "Total volume",
-      "income": "Income",
-      "expenses": "Expenses"
-    },
-    "filters": {
-      "type": "All cases",
-      "all": "All cases",
-      "income": "Income",
-      "funding": "Funding",
-      "assets": "Assets",
-      "expenses": "Expenses"
-    },
-    "table": {
-      "transactionNumber": "Transaction Number",
-      "company": "Company",
-      "date": "Date",
-      "wallet": "Wallet",
-      "amount": "Amount",
-      "type": "Type"
-    },
-    "details": {
-      "transactionInfo": "Transaction Information",
-      "relatedEntities": "Related Entities",
-      "additionalInfo": "Additional Information"
-    },
-    "messages": {
-      "createSuccess": "Transaction added successfully",
-      "updateSuccess": "Transaction updated successfully",
-      "deleteSuccess": "Transaction deleted successfully"
-    }
+  "currencies": {
+    "title": "Currencies",
+    "subtitle": "Manage and track currencies across regions",
+    "totalCurrencies": "Total Currencies",
+    "activeRegions": "Active Regions",
+    "primaryCurrency": "Primary Currency",
+    "name": "Name",
+    "company": "Company",
+    "symbol": "Symbol",
+    "code": "Code",
+    "editCurrency": "Edit Currency",
+    "addCurrency": "Add Currency",
+    "searchPlaceholder": "Search currencies...",
+    "noCurrencies": "No currencies found.",
+    "deleteTitle": "Delete Currency",
+    "confirmDelete": "Are you sure you want to delete this currency?",
+    "requiredField": "This field is required",
+    "save": "Save",
+    "cancel": "Cancel",
+    "currencyName": "Currency Name",
+    "selectCompany": "Select Company"
   }
 }

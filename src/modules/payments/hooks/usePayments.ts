@@ -1,95 +1,55 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { paymentsApi } from "../api/payments.api";
-import type { PaymentsQueryParams, AddPaymentRequest, UpdatePaymentRequest } from "../types/payments.types";
+import { paymentApi } from "../api/payments.api";
+import { useAuth } from "@/providers/AuthProvider";
 
-export const usePayments = (role: string, params: PaymentsQueryParams) => {
+export const usePayments = (params?: { search?: string; page?: number }) => {
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
   return useQuery({
     queryKey: ["payments", role, params],
-    queryFn: () => paymentsApi.getAll(role, params),
+    queryFn: () => paymentApi.getAll(role, params),
     placeholderData: keepPreviousData,
-    enabled: !!role,
   });
 };
 
-export const usePaymentStats = (role: string) => {
-  return useQuery({
-    queryKey: ["paymentStats", role],
-    queryFn: async () => {
-      // Fetch a large page to compute stats locally
-      const res = await paymentsApi.getAll(role, { per_page: 50, page: 1 });
-      const list = res?.data?.data ?? [];
-      const meta = res?.data;
+export const useCreatePayment = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
 
-      let totalRevenue = 0;
-      let pendingPayments = 0; // Assuming pending if paid_at is null, or simply 0 if not tracked
-
-      list.forEach((p) => {
-        const amt = Number(p.amount);
-        totalRevenue += amt;
-        if (!p.paid_at) {
-          pendingPayments += amt;
-        }
-      });
-
-      return {
-        success: true,
-        data: {
-          totalRevenue,
-          pendingPayments,
-          transactionVolume: meta?.total ?? list.length,
-        }
-      };
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => paymentApi.create(role, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
     },
   });
 };
 
-export const usePaymentData = (role: string, companyId?: number) => {
-  return useQuery({
-    queryKey: ["paymentData", role, companyId],
-    queryFn: () => paymentsApi.getPaymentData(role, companyId),
-    enabled: !!role && (role === "company" || !!companyId),
-  });
-};
-
-export const usePayment = (role: string, id: number | null) => {
-  return useQuery({
-    queryKey: ["payment", role, id],
-    queryFn: () => paymentsApi.getSingle(role, id!),
-    enabled: !!role && !!id,
-  });
-};
-
-export const useCreatePayment = (role: string) => {
+export const useUpdatePayment = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
   return useMutation({
-    mutationFn: (data: AddPaymentRequest) => paymentsApi.create(role, data),
+    mutationFn: ({ id, data }: { id: string | number; data: Record<string, any> }) => paymentApi.update(role, id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
     },
   });
 };
 
-export const useUpdatePayment = (role: string) => {
+export const useDeletePayment = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdatePaymentRequest }) => paymentsApi.update(role, id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
-    },
-  });
-};
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
 
-export const useDeletePayment = (role: string) => {
-  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => paymentsApi.delete(role, id),
+    mutationFn: (id: string | number) => paymentApi.delete(role, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
     },
   });
 };

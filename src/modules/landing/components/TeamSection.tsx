@@ -5,6 +5,8 @@ import { SlideIn } from "@/animation/SlideIn"
 import { Mail } from "@/assets/icons/icons"
 import Image from "next/image"
 import {raghad,ahmed,alaa2,zainab} from "@/assets/images/images"
+import { HeroBackground } from "./atoms/HeroBackground"
+
 export function TeamSection() {
   const t = useTranslations("Index")
 
@@ -44,19 +46,20 @@ export function TeamSection() {
   ]
 
   return (
-    <section className="py-16 md:py-24 relative z-10" id="team">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 md:py-24 relative overflow-hidden z-0" id="team">
+      <HeroBackground />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <FadeIn>
           <div className="text-center mb-16">
             <span className="text-primary font-bold tracking-wider uppercase text-sm mb-4 block">
               {t("teamTag")}
             </span>
-            <Text tag="h2" size="xl" className="mb-4 text-center text-3xl font-bold">
+            <h2 className="mb-4 text-center text-3xl font-bold">
               {t("teamTitle")}
-            </Text>
-            <Text color="gray" className="max-w-2xl mx-auto text-center">
+            </h2>
+            <p className="max-w-2xl mx-auto text-center">
               {t("teamDesc")}
-            </Text>
+            </p>
           </div>
         </FadeIn>
 
@@ -72,12 +75,12 @@ export function TeamSection() {
                     className="object-cover"
                   />
                 </div>
-                <Text tag="h3" size="lg" className="mb-1 font-bold">
+                <h3 className="mb-1 font-bold">
                   {member.name}
-                </Text>
-                <Text size="sm" color="primary" className="font-medium mb-4 text-center">
+                </h3>
+                <p className="font-medium mb-4 text-center">
                   {member.role}
-                </Text>
+                </p>
                 
                 <div className="flex items-center justify-center gap-4 ds-text-gray">
                   {member.email && (

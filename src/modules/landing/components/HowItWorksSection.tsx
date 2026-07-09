@@ -15,12 +15,12 @@ export function HowItWorksSection() {
     <section className="py-16 md:py-24 ds-bg-primary-200" id="about">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
-          <Text tag="h2" size="xl" className="mb-4 text-center text-3xl font-bold">
+          <h2 className="mb-4 text-center text-3xl font-bold">
             {t.rich("howItWorksTitle", {
               cyan: (chunks) => <span className="text-primary">{chunks}</span>
             })}
-          </Text>
-          <Text color="gray" className="text-center">{t("howItWorksSubtitle")}</Text>
+          </h2>
+          <p className="text-center">{t("howItWorksSubtitle")}</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -37,10 +37,10 @@ export function HowItWorksSection() {
                 <step.icon className="w-8 h-8" />
               </div>
               
-              <Text tag="h3" size="lg" className="mb-4 font-bold text-xl">
+              <h3 className="mb-4 font-bold text-xl">
                 {step.title}
-              </Text>
-              <Text color="gray">{step.desc}</Text>
+              </h3>
+              <p>{step.desc}</p>
             </div>
           ))}
         </div>

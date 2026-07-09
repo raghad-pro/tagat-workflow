@@ -12,7 +12,8 @@ import { Calendar } from "lucide-react";
 import type { CreateInvoiceRequest, Invoice } from "@/modules/invoices/types/invoices.types";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
-import { useCompanyDataInfo, useClientProjects, useProjectData } from "@/modules/projects/hooks/useCompanyData";
+import { useCompanyClients, useCompanyCurrenciesByCompany } from "@/modules/projects/hooks/useCompanyData";
+import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { useQuery } from "@tanstack/react-query";
 import { invoiceApi } from "../api/invoices.api";
 
@@ -48,8 +49,9 @@ interface EditInvoiceModalProps {
 }
 
 const STATUS_OPTIONS = [
+  { value: "paid",    label: "Paid"    },
   { value: "unpaid",  label: "Unpaid" },
-  { value: "paid",    label: "Paid"   },
+  { value: "overdue", label: "Overdue" },
 ];
 
 export function EditInvoiceModal({
@@ -85,20 +87,16 @@ export function EditInvoiceModal({
   
   const selectedCompanyId = form.watch("company_id");
 
-  const selectedClientId = form.watch("client_id");
-  const selectedProjectId = form.watch("project_id");
-
   // Fetch company data (clients, projects, currencies) separately
-  const companyIdForQuery = selectedCompanyId;
+  const companyIdForQuery = isCompanyAdmin ? undefined : selectedCompanyId;
 
-  const { data: companyDataRes, isLoading: isCompanyDataInfoLoading } = useCompanyDataInfo(companyIdForQuery);
-  const { data: clientProjects, isLoading: isClientProjectsLoading } = useClientProjects(selectedClientId);
-  const { data: projectData, isLoading: isProjectDataLoading } = useProjectData(selectedProjectId);
-  
-  const clientsList = companyDataRes?.data?.clients || companyDataRes?.clients || [];
-  const projectsList = clientProjects || [];
+  const { data: clientsList = [], isLoading: isClientsLoading } = useCompanyClients(companyIdForQuery);
+  const { data: currenciesList = [], isLoading: isCurrenciesLoading } = useCompanyCurrenciesByCompany(companyIdForQuery);
+  const { data: projectsRes, isLoading: isProjectsLoading } = useProjects({ company_id: companyIdForQuery, per_page: 100 });
 
-  const isLoadingCompanyData = !!isOpen && !!companyIdForQuery && isCompanyDataInfoLoading;
+  const projectsList = projectsRes?.data || [];
+
+  const isLoadingCompanyData = !!isOpen && (!!companyIdForQuery || isCompanyAdmin) && (isClientsLoading || isCurrenciesLoading || isProjectsLoading);
 
   const companyOptions = useMemo(() => {
     const list = Array.isArray(companiesRes?.data) 
@@ -111,16 +109,8 @@ export function EditInvoiceModal({
   }, [companiesRes]);
 
   const clientOptions = useMemo(() => clientsList.map((c: any) => ({ value: String(c.id), label: c.name })), [clientsList]);
-  
-  const projectOptions = useMemo(() => projectsList.map((p: any) => ({ value: String(p.id), label: p.title || p.name })), [projectsList]);
-  
-  const currencyOptions = useMemo(() => {
-    if (projectData?.currency) {
-      const c = projectData.currency;
-      return [{ value: String(c.id), label: `${c.name || c.code || ''} ${c.symbol ? `(${c.symbol})` : ''}`.trim() }];
-    }
-    return [];
-  }, [projectData]);
+  const projectOptions = useMemo(() => projectsList.map((p: any) => ({ value: String(p.id), label: p.title })), [projectsList]);
+  const currencyOptions = useMemo(() => currenciesList.map((c: any) => ({ value: String(c.id), label: `${c.name} ${c.symbol ? `(${c.symbol})` : ''}`.trim() })), [currenciesList]);
 
   // Sync form when invoice changes
   useEffect(() => {
@@ -137,28 +127,6 @@ export function EditInvoiceModal({
       });
     }
   }, [invoice, isOpen, form]);
-
-  // When client changes, clear selected project if it doesn't belong to the client
-  useEffect(() => {
-    if (selectedClientId && selectedProjectId && !isClientProjectsLoading) {
-      const projectBelongsToClient = projectsList.some((p: any) => String(p.id) === String(selectedProjectId));
-      if (!projectBelongsToClient) {
-        form.setValue("project_id", "" as any);
-        form.clearErrors("project_id");
-      }
-    }
-  }, [selectedClientId, projectsList, selectedProjectId, form, isClientProjectsLoading]);
-
-  // When project changes, auto-select currency
-  useEffect(() => {
-    if (projectData && projectData.currency) {
-      form.setValue("currency_id", String(projectData.currency.id) as any, { shouldValidate: true });
-    } else if (!isProjectDataLoading) {
-      // Only clear if we finished loading and there's no currency data, but wait!
-      // In Edit, if projectData fails to load or hasn't loaded, we shouldn't wipe out the existing currency.
-      // So we'll only set it when projectData is fully loaded.
-    }
-  }, [projectData, form, isProjectDataLoading]);
 
   const handleFormSubmit = (data: FormValues) => {
     onSave(data as unknown as Partial<CreateInvoiceRequest>, form);
@@ -192,14 +160,6 @@ export function EditInvoiceModal({
                 <SelectField control={form.control} name="project_id" label={tCommon("project") || "Project"} options={projectOptions} required placeholder="Select project" disabled={isLoadingCompanyData} />
                 <SelectField control={form.control} name="currency_id" label={t("columns.currency") || "Currency"} options={currencyOptions} required placeholder="Select currency" disabled={isLoadingCompanyData} />
               </div>
-
-              {projectData && (
-                <div className="flex flex-col gap-1 p-4 rounded-md mt-2" style={{ backgroundColor: 'var(--color-bg-primary-200)', color: 'var(--color-primary)' }}>
-                  <div className="text-sm">Budget: <span className="font-bold">{projectData.budget}</span></div>
-                  <div className="text-sm">Paid: <span className="font-bold">{projectData.paid}</span></div>
-                  <div className="text-sm">Remaining: <span className="font-bold">{projectData.remaining}</span></div>
-                </div>
-              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField control={form.control} name="amount" label={t("columns.amount") || "Amount"} type="number" required placeholder="0.00" />
