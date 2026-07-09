@@ -1,26 +1,35 @@
 export interface WalletTransaction {
   id: number;
-  transaction_number: string;
-  company_id: number;
   wallet_id: number;
+  type: string;
   amount: string;
+  exchange_rate: string | null;
+  description: string | null;
+  related_wallet_id: number | null;
   transaction_date: string;
-  type: string; // e.g., "Income", "Funding", "Assets", "Expenses"
-  notes?: string | null;
   created_at: string;
   updated_at: string;
-  company?: {
-    id: number;
-    name: string;
-  };
   wallet?: {
     id: number;
     name: string;
+    company_id: number;
+    currency_id: number;
+    notes?: string | null;
+    balance?: string;
+    created_at?: string;
+    updated_at?: string;
+    company?: {
+      id: number;
+      name: string;
+    };
     currency?: {
-      code: string;
-      symbol: string;
+      id: number;
+      name: string;
+      code?: string;
+      symbol?: string;
     };
   };
+  related_wallet?: any | null;
 }
 
 export interface WalletTransactionStats {
@@ -37,12 +46,11 @@ export interface WalletTransactionsQueryParams {
 }
 
 export interface AddTransactionRequest {
-  company_id: number;
   wallet_id: number;
   amount: number;
   transaction_date: string;
   type: string;
-  notes?: string;
+  description?: string;
 }
 
 export interface UpdateTransactionRequest extends Partial<AddTransactionRequest> {}

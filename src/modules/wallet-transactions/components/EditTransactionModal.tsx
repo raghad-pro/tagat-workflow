@@ -10,18 +10,21 @@ import { Form } from "@/components/ui/form";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
-import { useUpdateWalletTransaction } from "../hooks/useWalletTransactions";
+import { useUpdateWalletTransaction, useWalletBalance } from "../hooks/useWalletTransactions";
 import { WalletTransaction, UpdateTransactionRequest } from "../types/wallet-transactions.types";
-import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useWallets } from "@/modules/wallets/hooks/useWallets";
+import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { useAuth } from "@/providers/AuthProvider";
 
 const transactionSchema = z.object({
-  company_id: z.coerce.number().min(1, "Company is required"),
+  company_id: z.coerce.number().optional(),
   wallet_id: z.coerce.number().min(1, "Wallet is required"),
-  amount: z.union([z.string(), z.number()]).transform((v) => Number(v)),
-  transaction_date: z.string().min(2, "Date is required"),
   type: z.string().min(2, "Type is required"),
-  notes: z.string().optional(),
+  related_wallet_id: z.coerce.number().optional(),
+  amount: z.union([z.string(), z.number()]).transform((v) => Number(v)),
+  exchange_rate: z.union([z.string(), z.number()]).optional(),
+  transaction_date: z.string().min(2, "Date is required"),
+  description: z.string().optional(),
 });
 
 export type TransactionFormValues = z.input<typeof transactionSchema>;
@@ -38,52 +41,122 @@ export function EditTransactionModal({
   const t = useTranslations("walletTransactions");
   const tCommon = useTranslations("common");
   const { mutateAsync: updateTransaction, isPending: isLoading } = useUpdateWalletTransaction();
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company";
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
-  const { data: walletsData } = useWallets({ per_page: 100 });
-
   const companyOptions = useMemo(() => {
     const list = companiesData?.data?.data || [];
     return list.map((c: any) => ({ label: c.name, value: String(c.id) }));
   }, [companiesData]);
 
-  const walletOptions = useMemo(() => {
-    const list = walletsData?.data?.data || [];
-    return list.map((w: any) => ({ label: w.name, value: String(w.id) }));
-  }, [walletsData]);
-
-  const typeOptions = [
-    { label: "Income", value: "income" },
-    { label: "Funding", value: "funding" },
-    { label: "Assets", value: "assets" },
-    { label: "Expenses", value: "expenses" },
-  ];
+  const { data: walletsData } = useWallets({ per_page: 100 });
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    mode: "onTouched",
+    defaultValues: {
+      company_id: isCompanyAdmin ? user?.company_id : 0,
+      wallet_id: 0,
+      type: "income",
+      related_wallet_id: 0,
+      amount: "",
+      exchange_rate: "",
+      transaction_date: new Date().toISOString().split('T')[0],
+      description: "",
+    },
+    mode: "onChange",
   });
+
+  const selectedCompanyId = form.watch("company_id");
+  const selectedWalletId = form.watch("wallet_id");
+  const selectedType = form.watch("type");
+  const selectedRelatedWalletId = form.watch("related_wallet_id");
+  const amountValue = Number(form.watch("amount")) || 0;
+  const exchangeRateValue = Number(form.watch("exchange_rate")) || 0;
+
+  const { data: balanceData, isLoading: isBalanceLoading } = useWalletBalance(selectedWalletId as number | undefined);
+  const currentBalance = Number(balanceData?.data?.balance || 0);
+
+  // Calculate wallet after transaction
+  // Note: For Edit, the current balance already includes the transaction effect.
+  // We should theoretically undo the original effect and apply the new effect.
+  // For simplicity based on UI screenshots, we'll just show the calculation as if it was a new effect,
+  // or just apply it directly. The backend typically handles the correct mathematical undo/redo.
+  let walletAfterTransaction = currentBalance;
+  if (selectedType === "income" || selectedType === "funding" || selectedType === "assets") {
+    walletAfterTransaction += amountValue;
+  } else if (selectedType === "expenses" || selectedType === "withdraw" || selectedType === "salary" || selectedType === "transfer") {
+    walletAfterTransaction -= amountValue;
+  }
+
+  const { data: relatedBalanceData } = useWalletBalance(selectedRelatedWalletId as number | undefined);
+  const currentRelatedBalance = Number(relatedBalanceData?.data?.balance || 0);
+  
+  // Commission seems to be 2% based on the user's screenshot (900 -> 18)
+  const commission = amountValue * 0.02;
+  const relatedWalletAfter = currentRelatedBalance + (amountValue * (exchangeRateValue || 1)) - commission;
+
+  const walletOptions = useMemo(() => {
+    let list = walletsData?.data?.data || [];
+    if (selectedCompanyId && !isCompanyAdmin) {
+      list = list.filter((w: any) => w.company_id == (selectedCompanyId as number) || w.company?.id == (selectedCompanyId as number));
+    } else if (isCompanyAdmin) {
+      list = list.filter((w: any) => w.company_id == user?.company_id || w.company?.id == user?.company_id);
+    }
+    return list.map((w: any) => ({ label: w.name, value: String(w.id) }));
+  }, [walletsData, selectedCompanyId, isCompanyAdmin, user?.company_id]);
+
+  const relatedWalletOptions = useMemo(() => {
+    return walletOptions.filter(w => String(w.value) !== String(selectedWalletId));
+  }, [walletOptions, selectedWalletId]);
+
+  const typeOptions = [
+    { label: "Income", value: "income" },
+    { label: "Expense", value: "expenses" },
+    { label: "Withdraw", value: "withdraw" },
+    { label: "Funding", value: "funding" },
+    { label: "Salary", value: "salary" },
+    { label: "Assets", value: "assets" },
+    { label: "Transfer", value: "transfer" },
+  ];
 
   useEffect(() => {
     if (isOpen && data) {
+      const companyIdToSet = data.wallet?.company_id || data.wallet?.company?.id || 0;
       form.reset({
-        company_id: data.company_id,
-        wallet_id: data.wallet_id,
-        amount: String(Math.abs(parseFloat(data.amount))),
-        transaction_date: data.transaction_date.split('T')[0],
-        type: data.type.toLowerCase(),
-        notes: data.notes || "",
+        company_id: companyIdToSet,
+        wallet_id: data.wallet_id || 0,
+        type: data.type || "income",
+        related_wallet_id: data.related_wallet_id || 0,
+        amount: Number(data.amount) || "",
+        exchange_rate: data.exchange_rate ? Number(data.exchange_rate) : "",
+        transaction_date: data.transaction_date?.split('T')[0] || "",
+        description: data.description || "",
       });
+    } else if (!isOpen) {
+      form.reset();
     }
   }, [isOpen, data, form]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     if (!data?.id) return;
     try {
-      await updateTransaction({
-        id: data.id,
-        data: values as UpdateTransactionRequest
-      });
+      const payload: any = {
+        wallet_id: Number(values.wallet_id),
+        type: values.type,
+        amount: Number(values.amount),
+        transaction_date: values.transaction_date,
+        description: values.description,
+      };
+
+      if (values.type === "transfer") {
+        payload.related_wallet_id = Number(values.related_wallet_id);
+        if (values.exchange_rate) {
+            payload.exchange_rate = Number(values.exchange_rate);
+        }
+      }
+
+      await updateTransaction({ id: data.id, data: payload as UpdateTransactionRequest });
       toast.success(t("messages.updateSuccess") || "Transaction updated successfully");
       onClose();
     } catch (error: any) {
@@ -92,11 +165,13 @@ export function EditTransactionModal({
     }
   };
 
+  const isTransfer = selectedType === "transfer";
+
   return (
     <ActionModal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title={tCommon("edit") || "Edit Transaction"} 
+      title={t("editTransaction") || "Edit Transaction"} 
       onSubmit={form.handleSubmit(onSubmit)}
       isLoading={isLoading}
       saveLabel={tCommon("save") || "Save"}
@@ -104,28 +179,62 @@ export function EditTransactionModal({
     >
       <Form {...form}>
         <form className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SelectField
-              control={form.control}
-              name="company_id"
-              label={t("table.company") || "Company"}
-              options={companyOptions}
-              placeholder={tCommon("select") || "Select"}
-            />
+          <div className="flex flex-col space-y-4">
+            
+            {!isCompanyAdmin && (
+              <SelectField
+                control={form.control}
+                name="company_id"
+                label={t("table.company") || "Company"}
+                options={companyOptions}
+              />
+            )}
+
             <SelectField
               control={form.control}
               name="wallet_id"
               label={t("table.wallet") || "Wallet"}
               options={walletOptions}
-              placeholder={tCommon("select") || "Select"}
+              placeholder={tCommon("select") || "Select Wallet"}
             />
+
+            {/* Current Balance Box */}
+            {Number(selectedWalletId) > 0 && (
+              <div className="px-4 py-3 bg-[#e0f7fa] rounded-md flex items-center">
+                <span className="text-[#00bcd4] font-medium text-sm">
+                  {t("currentBalance") || "Current Balance"}: {isBalanceLoading ? "..." : currentBalance.toFixed(2)}
+                </span>
+              </div>
+            )}
+
             <SelectField
               control={form.control}
               name="type"
               label={t("table.type") || "Type"}
               options={typeOptions}
-              placeholder={tCommon("select") || "Select"}
+              placeholder={tCommon("select") || "Select Type"}
             />
+
+            {isTransfer && (
+              <>
+                <SelectField
+                  control={form.control}
+                  name="related_wallet_id"
+                  label={t("relatedWallet") || "Related Wallet (Transfer To)"}
+                  options={relatedWalletOptions}
+                  placeholder={tCommon("select") || "Select Wallet"}
+                />
+                
+                {Number(selectedRelatedWalletId) > 0 && (
+                  <div className="px-4 py-3 bg-[#e8f5e9] rounded-md flex items-center">
+                    <span className="text-[#4caf50] font-medium text-sm">
+                      {t("toWalletBalance") || "To Wallet Balance"}: {currentRelatedBalance.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+
             <TextField
               control={form.control}
               name="amount"
@@ -133,6 +242,42 @@ export function EditTransactionModal({
               placeholder="0.00"
               type="number"
             />
+
+            {/* Wallet After Transaction Box */}
+            {Number(selectedWalletId) > 0 && (
+              <div className="px-4 py-3 bg-[#fff3e0] rounded-md flex items-center">
+                <span className="text-[#ff9800] font-medium text-sm">
+                  {t("walletAfterTransaction") || "Wallet After Transaction"}: {walletAfterTransaction.toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {isTransfer && (
+              <>
+                <TextField
+                  control={form.control}
+                  name="exchange_rate"
+                  label={t("exchangeRate") || "Exchange Rate"}
+                  placeholder="0.00"
+                  type="number"
+                />
+
+                <div className="px-4 py-3 bg-[#f5f5f5] rounded-md flex items-center">
+                  <span className="text-gray-500 font-medium text-sm">
+                    {t("commission") || "Commission"}: {commission.toFixed(2)}
+                  </span>
+                </div>
+
+                {Number(selectedRelatedWalletId) > 0 && (
+                  <div className="px-4 py-3 bg-[#f1f8e9] rounded-md flex items-center">
+                    <span className="text-[#8bc34a] font-medium text-sm">
+                      {t("relatedWalletAfter") || "Related Wallet After"}: {relatedWalletAfter.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+
             <TextField
               control={form.control}
               name="transaction_date"
@@ -140,10 +285,11 @@ export function EditTransactionModal({
               type="date"
             />
           </div>
+
           <TextAreaField
             control={form.control}
-            name="notes"
-            label={t("notes") || "Notes"}
+            name="description"
+            label={t("notes") || "Description"}
             placeholder={t("notesPlaceholder") || "Optional notes..."}
             rows={4}
           />

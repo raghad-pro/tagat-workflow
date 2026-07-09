@@ -9,6 +9,7 @@ import { SearchFilterBar, FilterConfig } from "@/components/molecules/Searchfilt
 import { Text } from "@/components/atoms/Text";
 import { Eye, Edit2, Trash2, DownloadCloud, TrendingUp, Clock, BarChart3, Plus } from "lucide-react";
 import toast from "react-hot-toast";
+import { useAuth } from "@/providers/AuthProvider";
 
 import { usePayments, usePaymentStats, useDeletePayment } from "../hooks/usePayments";
 import { Payment } from "../types/payments.types";
@@ -21,6 +22,9 @@ import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmati
 export function PaymentsManagementPage() {
   const t = useTranslations("payments");
   const tCommon = useTranslations("common");
+
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company";
 
   // State
   const [search, setSearch] = useState("");
@@ -46,15 +50,15 @@ export function PaymentsManagementPage() {
   }, []);
 
   // Queries
-  const { data: paymentsRes, isLoading, isFetching } = usePayments({
+  const { data: paymentsRes, isLoading, isFetching } = usePayments(user?.role as string, {
     search,
     status,
     page,
     per_page: perPage,
   });
 
-  const { data: statsRes, isLoading: isStatsLoading } = usePaymentStats();
-  const { mutateAsync: deletePayment, isPending: isDeleting } = useDeletePayment();
+  const { data: statsRes, isLoading: isStatsLoading } = usePaymentStats(user?.role as string);
+  const { mutateAsync: deletePayment, isPending: isDeleting } = useDeletePayment(user?.role as string);
 
   const handleDelete = useCallback(() => {
     if (!paymentToDelete) return;
@@ -107,59 +111,66 @@ export function PaymentsManagementPage() {
     },
   ], [status, handleStatus, t]);
 
-  const columns: TableColumn<Payment>[] = useMemo(() => [
-    {
-      key: "invoice",
-      header: t("columns.invoice") || "Invoice",
-      isPrimary: true,
-      render: (row) => (
-        <Text size="sm" weight="medium" className="text-[#0ea5e9]">
-          #INV-{row.invoice_id}
-        </Text>
-      ),
-    },
-    {
-      key: "company",
-      header: t("columns.company") || "Company",
-      render: (row) => (
-        <Text size="sm" weight="medium" className="ds-text-primary">
-          {row.invoice?.company?.name || "N/A"}
-        </Text>
-      ),
-    },
-    {
-      key: "date",
-      header: t("columns.date") || "Date",
-      hideOnMobile: true,
-      render: (row) => <Text size="sm" className="ds-text-gray-200">{row.payment_date}</Text>,
-    },
-    {
-      key: "method",
-      header: t("columns.method") || "Method",
-      hideOnMobile: true,
-      render: (row) => <Text size="sm" className="ds-text-gray-200">{row.payment_method}</Text>,
-    },
-    {
-      key: "wallet",
-      header: t("columns.wallet") || "Wallet",
-      hideOnMobile: true,
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <DownloadCloud size={14} className="text-gray-400" />
-          <Text size="sm" className="ds-text-gray-200">{row.wallet?.name || "N/A"}</Text>
-        </div>
-      ),
-    },
-    {
-      key: "amount",
-      header: t("columns.amount") || "Amount",
-      render: (row) => (
-        <Text size="sm" weight="bold" className="ds-text-primary">
-          ${Number(row.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </Text>
-      ),
-    },
-  ], [t]);
+  const columns: TableColumn<Payment>[] = useMemo(() => {
+    const cols: TableColumn<Payment>[] = [
+      {
+        key: "invoice",
+        header: t("columns.invoice") || "Invoice",
+        isPrimary: true,
+        render: (row) => (
+          <Text size="sm" weight="medium" className="text-[#0ea5e9]">
+            #INV-{row.invoice_id}
+          </Text>
+        ),
+      },
+      {
+        key: "date",
+        header: t("columns.date") || "Date",
+        hideOnMobile: true,
+        render: (row) => <Text size="sm" className="ds-text-gray-200">{row.payment_date}</Text>,
+      },
+      {
+        key: "method",
+        header: t("columns.method") || "Method",
+        hideOnMobile: true,
+        render: (row) => <Text size="sm" className="ds-text-gray-200">{row.payment_method}</Text>,
+      },
+      {
+        key: "wallet",
+        header: t("columns.wallet") || "Wallet",
+        hideOnMobile: true,
+        render: (row) => (
+          <div className="flex items-center gap-2">
+            <DownloadCloud size={14} className="text-gray-400" />
+            <Text size="sm" className="ds-text-gray-200">{row.wallet?.name || "N/A"}</Text>
+          </div>
+        ),
+      },
+      {
+        key: "amount",
+        header: t("columns.amount") || "Amount",
+        render: (row) => (
+          <Text size="sm" weight="bold" className="ds-text-primary">
+            ${Number(row.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </Text>
+        ),
+      },
+    ];
+
+    if (!isCompanyAdmin) {
+      cols.splice(1, 0, {
+        key: "company",
+        header: t("columns.company") || "Company",
+        render: (row) => (
+          <Text size="sm" weight="medium" className="ds-text-primary">
+            {row.invoice?.company?.name || "N/A"}
+          </Text>
+        ),
+      });
+    }
+
+    return cols;
+  }, [t, isCompanyAdmin]);
 
   const actions: TableAction<Payment>[] = useMemo(() => [
     {
@@ -178,7 +189,8 @@ export function PaymentsManagementPage() {
         setSelectedPayment(row);
         setIsEditModalOpen(true);
       },
-      colorScheme: "edit"
+      colorScheme: "edit",
+      hidden: () => user?.role === "client"
     },
     {
       icon: Trash2,
@@ -186,9 +198,10 @@ export function PaymentsManagementPage() {
       onClick: (row) => {
         setPaymentToDelete(row);
       },
-      colorScheme: "delete"
+      colorScheme: "delete",
+      hidden: () => user?.role === "client"
     },
-  ], [tCommon]);
+  ], [tCommon, user?.role]);
 
   return (
     <div className="p-4 sm:p-6">
@@ -202,12 +215,12 @@ export function PaymentsManagementPage() {
             icon: DownloadCloud,
             variant: "outline"
           },
-          {
+          ...(user?.role !== "client" ? [{
             label: t("add"),
             onClick: () => setIsAddModalOpen(true),
             icon: Plus,
-            variant: "solid"
-          },
+            variant: "solid" as const
+          }] : []),
         ]}
       />
 

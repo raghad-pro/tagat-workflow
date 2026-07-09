@@ -13,9 +13,10 @@ import toast from "react-hot-toast";
 import { useCreatePayment, usePaymentData } from "../hooks/usePayments";
 import { AddPaymentRequest } from "../types/payments.types";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { useAuth } from "@/providers/AuthProvider";
 
 const paymentSchema = z.object({
-  company_id: z.coerce.number().min(1, "Company is required"),
+  company_id: z.coerce.number().optional(),
   invoice_id: z.coerce.number().min(1, "Invoice is required"),
   wallet_id: z.coerce.number().min(1, "Wallet is required"),
   employee_id: z.coerce.number().min(1, "Employee is required"),
@@ -35,7 +36,9 @@ export function AddPaymentModal({
   onClose: () => void; 
 }) {
   const t = useTranslations("payments");
-  const { mutateAsync: createPayment, isPending: isLoading } = useCreatePayment();
+  const { user } = useAuth();
+  const { mutateAsync: createPayment, isPending: isLoading } = useCreatePayment(user?.role as string);
+  const isCompanyAdmin = user?.role === "company";
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
   const companyOptions = useMemo(() => {
@@ -47,7 +50,7 @@ export function AddPaymentModal({
     resolver: zodResolver(paymentSchema),
     mode: "onTouched",
     defaultValues: { 
-      company_id: 0, 
+      company_id: isCompanyAdmin ? user?.company_id : 0, 
       invoice_id: 0, 
       employee_id: 0,
       wallet_id: 0, 
@@ -58,13 +61,10 @@ export function AddPaymentModal({
     },
   });
 
-  const selectedCompanyId = useWatch({
-    control: form.control,
-    name: "company_id",
-  });
+  const selectedCompanyId = useWatch({ control: form.control, name: "company_id" }) || (isCompanyAdmin ? user?.company_id : undefined);
 
-  // Fetch payment data options when a company is selected
-  const { data: paymentDataRes } = usePaymentData(Number(selectedCompanyId) || 0);
+  // Use the new paymentData hook that fetches related data
+  const { data: paymentDataRes, isLoading: isDataLoading } = usePaymentData(user?.role as string, selectedCompanyId as number);
 
   const invoiceOptions = useMemo(() => {
     const list = paymentDataRes?.data?.invoices || [];
@@ -115,11 +115,17 @@ export function AddPaymentModal({
 
   const onSubmit = async (values: PaymentFormValues) => {
     try {
-      await createPayment({
+      const payload: any = {
         ...values,
         amount: Number(values.amount),
         exchange_rate: 1 // Default to 1 as it's not in the design
-      } as AddPaymentRequest);
+      };
+      
+      if (!isCompanyAdmin) {
+        payload.company_id = selectedCompanyId as number;
+      }
+
+      await createPayment(payload as AddPaymentRequest);
       toast.success(t("messages.createSuccess") || "Payment added successfully");
       onClose();
     } catch (error: any) {
@@ -127,6 +133,15 @@ export function AddPaymentModal({
       toast.error(errorMsg);
     }
   };
+
+  const isInvoiceDisabled = (!isCompanyAdmin && !selectedCompanyId) || isDataLoading || invoiceOptions.length === 0;
+  const invoicePlaceholder = isDataLoading ? "Loading..." : ((!isCompanyAdmin && !selectedCompanyId) || invoiceOptions.length === 0 ? "No invoices" : "Select invoice");
+
+  const isWalletDisabled = (!isCompanyAdmin && !selectedCompanyId) || isDataLoading || walletOptions.length === 0;
+  const walletPlaceholder = isDataLoading ? "Loading..." : ((!isCompanyAdmin && !selectedCompanyId) || walletOptions.length === 0 ? "No wallets" : "Select wallet");
+
+  const isEmployeeDisabled = (!isCompanyAdmin && !selectedCompanyId) || isDataLoading || employeeOptions.length === 0;
+  const employeePlaceholder = isDataLoading ? "Loading..." : ((!isCompanyAdmin && !selectedCompanyId) || employeeOptions.length === 0 ? "No employees" : "Select employee");
 
   return (
     <ActionModal 
@@ -141,18 +156,21 @@ export function AddPaymentModal({
       <Form {...form}>
         <form id="add-payment-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <SelectField 
-              control={form.control}
-              name="company_id"
-              label={t("form.company")}
-              options={companyOptions}
-            />
+            {!isCompanyAdmin && (
+              <SelectField 
+                control={form.control}
+                name="company_id"
+                label={t("form.company")}
+                options={companyOptions}
+              />
+            )}
             <SelectField 
               control={form.control}
               name="invoice_id"
               label={t("form.invoice")}
               options={invoiceOptions}
-              disabled={!selectedCompanyId || invoiceOptions.length === 0}
+              disabled={isInvoiceDisabled}
+              placeholder={invoicePlaceholder}
             />
           </div>
           
@@ -162,14 +180,16 @@ export function AddPaymentModal({
               name="wallet_id"
               label={t("form.wallet")}
               options={walletOptions}
-              disabled={!selectedCompanyId || walletOptions.length === 0}
+              disabled={isWalletDisabled}
+              placeholder={walletPlaceholder}
             />
             <SelectField 
               control={form.control}
               name="employee_id"
               label="Employee"
               options={employeeOptions}
-              disabled={!selectedCompanyId || employeeOptions.length === 0}
+              disabled={isEmployeeDisabled}
+              placeholder={employeePlaceholder}
             />
           </div>
 

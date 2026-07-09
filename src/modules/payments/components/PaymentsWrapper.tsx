@@ -7,7 +7,7 @@ import { useAuth } from "@/providers/AuthProvider";
 export function PaymentsWrapper() {
   const { user } = useAuth();
 
-  if (!user || user.role !== "super_admin") {
+  if (!user || !["super_admin", "company", "client"].includes(user.role)) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>

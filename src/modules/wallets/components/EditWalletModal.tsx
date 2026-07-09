@@ -11,10 +11,11 @@ import { useTranslations } from "next-intl";
 import { UpdateWalletRequest, Wallet } from "../types/wallets.types";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useCompanyCurrencies } from "../hooks/useWallets";
+import { useAuth } from "@/providers/AuthProvider";
 
 const walletSchema = z.object({
   name: z.string().min(2, "Wallet name is required"),
-  company_id: z.coerce.number().min(1, "Company is required"),
+  company_id: z.coerce.number().optional(),
   currency_id: z.coerce.number().min(1, "Currency is required"),
   balance: z.union([z.string(), z.number()]).transform((v) => Number(v)),
   notes: z.string().optional(),
@@ -37,17 +38,20 @@ export function EditWalletModal({
 }) {
   const t = useTranslations("wallets");
   const tCommon = useTranslations("common");
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company";
 
   const form = useForm<WalletFormValues>({
     resolver: zodResolver(walletSchema),
     mode: "onTouched",
+    defaultValues: { name: "", company_id: isCompanyAdmin ? (user?.company_id || user?.id) : 0, currency_id: 0, balance: 0, notes: "" },
   });
 
   const selectedCompanyId = form.watch("company_id");
   const initialCompanyRef = useRef<number | null>(null);
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
-  const { data: companyCurrenciesData } = useCompanyCurrencies(selectedCompanyId ? Number(selectedCompanyId) : null);
+  const { data: companyCurrenciesData, isLoading: isCompanyCurrenciesLoading } = useCompanyCurrencies(selectedCompanyId ? Number(selectedCompanyId) : null);
 
   const companyOptions = useMemo(() => {
     const list = companiesData?.data?.data || [];
@@ -63,14 +67,14 @@ export function EditWalletModal({
     if (isOpen && data) {
       initialCompanyRef.current = data.company_id;
       form.reset({
-        name: data.name,
-        company_id: data.company_id,
+        name: data.name || "",
+        company_id: isCompanyAdmin ? (user?.company_id || user?.id) : (data.company?.id || 0),
         currency_id: data.currency_id,
         balance: data.balance,
         notes: data.notes || "",
       });
     }
-  }, [isOpen, data, form]);
+  }, [isOpen, data, form, isCompanyAdmin, user?.company_id]);
 
   // Reset currency when company changes (but not on initial load)
   useEffect(() => {
@@ -108,18 +112,22 @@ export function EditWalletModal({
             placeholder="Main Wallet"
           />
           <div className="grid grid-cols-2 gap-4">
-            <SelectField 
-              control={form.control}
-              name="company_id"
-              label={t("form.company")}
-              options={companyOptions}
-            />
+            {!isCompanyAdmin && (
+              <SelectField 
+                control={form.control}
+                name="company_id"
+                label={t("form.company")}
+                options={companyOptions}
+                placeholder="Select company"
+              />
+            )}
             <SelectField 
               control={form.control}
               name="currency_id"
               label={t("form.currency")}
               options={currencyOptions}
-              disabled={!selectedCompanyId || currencyOptions.length === 0}
+              placeholder={isCompanyCurrenciesLoading ? "Loading..." : (!selectedCompanyId || currencyOptions.length === 0 ? "No currencies" : "Select currency")}
+              disabled={!selectedCompanyId || currencyOptions.length === 0 || isCompanyCurrenciesLoading}
             />
           </div>
           <div className="grid grid-cols-1 gap-4">

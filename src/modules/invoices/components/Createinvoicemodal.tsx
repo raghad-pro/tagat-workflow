@@ -60,12 +60,14 @@ export function CreateInvoiceModal({
 }: CreateInvoiceModalProps) {
   const t = useTranslations("invoice");
   const tCommon = useTranslations("common");
+  const { user } = useAuth();
+  const isCompanyAdmin = user?.role === "company";
   
   const form = useForm<FormValues>({
     resolver: zodResolver(createInvoiceSchema) as any,
     mode: "onTouched",
     defaultValues: {
-      company_id: undefined,
+      company_id: isCompanyAdmin ? user?.company_id ?? undefined : undefined,
       client_id:  undefined,
       project_id: undefined,
       currency_id: undefined,
@@ -76,8 +78,6 @@ export function CreateInvoiceModal({
     },
   });
 
-  const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "company";
   const role = user?.role || "super_admin";
 
   const { data: companiesRes } = useCompanies({ per_page: 100 });
@@ -87,7 +87,7 @@ export function CreateInvoiceModal({
   const selectedProjectId = form.watch("project_id");
 
   // Fetch company data (clients, projects, currencies) separately
-  const companyIdForQuery = isCompanyAdmin ? undefined : selectedCompanyId;
+  const companyIdForQuery = selectedCompanyId;
 
   const { data: companyDataRes, isLoading: isCompanyDataInfoLoading } = useCompanyDataInfo(companyIdForQuery);
   const { data: clientProjects, isLoading: isClientProjectsLoading } = useClientProjects(selectedClientId);
@@ -96,7 +96,7 @@ export function CreateInvoiceModal({
   const clientsList = companyDataRes?.data?.clients || companyDataRes?.clients || [];
   const projectsList = clientProjects || [];
 
-  const isLoadingCompanyData = !!isOpen && (!!companyIdForQuery || isCompanyAdmin) && isCompanyDataInfoLoading;
+  const isLoadingCompanyData = !!isOpen && !!companyIdForQuery && isCompanyDataInfoLoading;
 
   const companyOptions = useMemo(() => {
     const list = Array.isArray(companiesRes?.data) 
@@ -178,19 +178,19 @@ export function CreateInvoiceModal({
     >
       <div className="flex flex-col w-full">
         <Form {...form}>
-          <form id="create-invoice-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
+          <form id="create-invoice-form" onSubmit={form.handleSubmit(handleFormSubmit as any)} className="flex flex-col gap-5">
             <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {!isCompanyAdmin && (
-                  <SelectField control={form.control} name="company_id" label={t("columns.company") || "Company"} options={companyOptions} required placeholder="Select company" />
+                  <SelectField control={form.control as any} name="company_id" label={t("columns.company") || "Company"} options={companyOptions} required placeholder="Select company" />
                 )}
-                <SelectField control={form.control} name="client_id" label={t("columns.client") || "Client"} options={clientOptions} required placeholder={clientPlaceholder} disabled={isClientDisabled} />
+                <SelectField control={form.control as any} name="client_id" label={t("columns.client") || "Client"} options={clientOptions} required placeholder={clientPlaceholder} disabled={isClientDisabled} />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="project_id" label={t("columns.project").includes(".") ? "Project" : t("columns.project")} options={projectOptions} required placeholder={projectPlaceholder} disabled={isProjectDisabled} />
-                <SelectField control={form.control} name="currency_id" label={t("columns.currency").includes(".") ? "Currency" : t("columns.currency")} options={currencyOptions} required placeholder={currencyPlaceholder} disabled={isCurrencyDisabled} />
+                <SelectField control={form.control as any} name="project_id" label={t("columns.project").includes(".") ? "Project" : t("columns.project")} options={projectOptions} required placeholder={projectPlaceholder} disabled={isProjectDisabled} />
+                <SelectField control={form.control as any} name="currency_id" label={t("columns.currency").includes(".") ? "Currency" : t("columns.currency")} options={currencyOptions} required placeholder={currencyPlaceholder} disabled={isCurrencyDisabled} />
               </div>
 
               {projectData && (
@@ -211,13 +211,13 @@ export function CreateInvoiceModal({
               )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField control={form.control} name="amount" label={t("columns.amount") || "Amount"} type="number" required placeholder="0.00" />
-                <SelectField control={form.control} name="status" label={t("columns.status") || "Status"} options={STATUS_OPTIONS} required placeholder="Select status" />
+                <TextField control={form.control as any} name="amount" label={t("columns.amount") || "Amount"} type="number" required placeholder="0.00" />
+                <SelectField control={form.control as any} name="status" label={t("columns.status") || "Status"} options={STATUS_OPTIONS} required placeholder="Select status" />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField control={form.control} name="invoice_date" label={t("columns.issueDate") || "Invoice Date"} type="date" required icon={Calendar} />
-                <TextField control={form.control} name="due_date" label={t("columns.dueDate") || "Due Date"} type="date" required icon={Calendar} />
+                <TextField control={form.control as any} name="invoice_date" label={t("columns.issueDate") || "Invoice Date"} type="date" required icon={Calendar} />
+                <TextField control={form.control as any} name="due_date" label={t("columns.dueDate") || "Due Date"} type="date" required icon={Calendar} />
               </div>
               
             </div>

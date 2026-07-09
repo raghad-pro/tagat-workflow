@@ -4,20 +4,21 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tansta
 import { paymentsApi } from "../api/payments.api";
 import type { PaymentsQueryParams, AddPaymentRequest, UpdatePaymentRequest } from "../types/payments.types";
 
-export const usePayments = (params: PaymentsQueryParams) => {
+export const usePayments = (role: string, params: PaymentsQueryParams) => {
   return useQuery({
-    queryKey: ["payments", params],
-    queryFn: () => paymentsApi.getAll(params),
+    queryKey: ["payments", role, params],
+    queryFn: () => paymentsApi.getAll(role, params),
     placeholderData: keepPreviousData,
+    enabled: !!role,
   });
 };
 
-export const usePaymentStats = () => {
+export const usePaymentStats = (role: string) => {
   return useQuery({
-    queryKey: ["paymentStats"],
+    queryKey: ["paymentStats", role],
     queryFn: async () => {
       // Fetch a large page to compute stats locally
-      const res = await paymentsApi.getAll({ per_page: 50, page: 1 });
+      const res = await paymentsApi.getAll(role, { per_page: 50, page: 1 });
       const list = res?.data?.data ?? [];
       const meta = res?.data;
 
@@ -44,18 +45,26 @@ export const usePaymentStats = () => {
   });
 };
 
-export const usePaymentData = (companyId: number) => {
+export const usePaymentData = (role: string, companyId?: number) => {
   return useQuery({
-    queryKey: ["paymentData", companyId],
-    queryFn: () => paymentsApi.getPaymentData(companyId),
-    enabled: !!companyId, // Only fetch if companyId is greater than 0
+    queryKey: ["paymentData", role, companyId],
+    queryFn: () => paymentsApi.getPaymentData(role, companyId),
+    enabled: !!role && (role === "company" || !!companyId),
   });
 };
 
-export const useCreatePayment = () => {
+export const usePayment = (role: string, id: number | null) => {
+  return useQuery({
+    queryKey: ["payment", role, id],
+    queryFn: () => paymentsApi.getSingle(role, id!),
+    enabled: !!role && !!id,
+  });
+};
+
+export const useCreatePayment = (role: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: AddPaymentRequest) => paymentsApi.create(data),
+    mutationFn: (data: AddPaymentRequest) => paymentsApi.create(role, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
@@ -63,10 +72,10 @@ export const useCreatePayment = () => {
   });
 };
 
-export const useUpdatePayment = () => {
+export const useUpdatePayment = (role: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdatePaymentRequest }) => paymentsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UpdatePaymentRequest }) => paymentsApi.update(role, id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       queryClient.invalidateQueries({ queryKey: ["paymentStats"] });
@@ -74,10 +83,10 @@ export const useUpdatePayment = () => {
   });
 };
 
-export const useDeletePayment = () => {
+export const useDeletePayment = (role: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => paymentsApi.delete(id),
+    mutationFn: (id: number) => paymentsApi.delete(role, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       queryClient.invalidateQueries({ queryKey: ["paymentStats"] });

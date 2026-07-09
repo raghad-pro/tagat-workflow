@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import toast from "react-hot-toast";
 
 // ── Shared atoms ──────────────────────────────────────────────────────────────
 import { Text }        from "@/components/atoms/Text";
@@ -21,6 +22,7 @@ import {
   PageCardFooter,
 } from "@/components/molecules/Pagecard";
 import { PageContainer } from "@/components/template/PageContainer";
+import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
 
 // ── Local components ──────────────────────────────────────────────────────────
 import { CreateInvoiceModal } from "./Createinvoicemodal";
@@ -30,7 +32,6 @@ import { useAuth } from "@/providers/AuthProvider";
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 import { useInvoices }       from "@/modules/invoices/hooks/useInvoices";
-import { useInvoiceStats }   from "@/modules/invoices/hooks/useInvoiceStats";
 import { useCreateInvoice }  from "@/modules/invoices/hooks/useCreateInvoice";
 import { useUpdateInvoice }  from "@/modules/invoices/hooks/useUpdateInvoice";
 import { useDeleteInvoice }  from "@/modules/invoices/hooks/useDeleteInvoice";
@@ -74,15 +75,15 @@ export default function InvoiceManagementPage() {
   const [editInvoice, setEditInvoice]   = useState<Invoice | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewInvoice, setViewInvoice]   = useState<Invoice | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const { user } = useAuth();
   const isCompanyAdmin = user?.role === "company";
 
   const statusFilterOptions: FilterOption[] = useMemo(() => [
     { value: "all",     label: t("filter.all") },
+    { value: "unpaid",  label: t("filter.unpaid") || "Unpaid" },
     { value: "paid",    label: t("filter.paid") },
-    { value: "pending", label: t("filter.pending") },
-    { value: "overdue", label: t("filter.overdue") },
   ], [t]);
 
   // ── Data ────────────────────────────────────────────────────────────────────
@@ -97,7 +98,6 @@ export default function InvoiceManagementPage() {
     per_page: PAGE_SIZE 
   });
 
-  const { data: statsData, isLoading: isStatsLoading } = useInvoiceStats();
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const { mutate: createInvoice, isPending: isCreating } = useCreateInvoice();
@@ -109,36 +109,34 @@ export default function InvoiceManagementPage() {
   const totalPages = invoicesData?.last_page ?? 1;
 
   // ── Stats cards ─────────────────────────────────────────────────────────────
-  const stats: StatItem[] = useMemo(() => [
-    {
-      icon:      FileText,
-      value:     statsData?.total   ?? 0,
-      label:     t("stats.total"),
-      iconColor: "var(--color-icon-indigo)",
-      iconBg:    "var(--color-icon-indigo-bg)",
-    },
-    {
-      icon:      CheckCircle2,
-      value:     statsData?.paid    ?? 0,
-      label:     t("stats.paid"),
-      iconColor: "var(--color-icon-success)",
-      iconBg:    "var(--color-icon-success-bg)",
-    },
-    {
-      icon:      Clock,
-      value:     statsData?.pending ?? 0,
-      label:     t("stats.pending"),
-      iconColor: "var(--color-icon-warning)",
-      iconBg:    "var(--color-icon-warning-bg)",
-    },
-    {
-      icon:      XCircle,
-      value:     statsData?.overdue ?? 0,
-      label:     t("stats.overdue"),
-      iconColor: "var(--color-icon-danger)",
-      iconBg:    "var(--color-icon-danger-bg)",
-    },
-  ], [statsData, t]);
+  const stats: StatItem[] = useMemo(() => {
+    const paidCount = invoices.filter(inv => inv.status === "paid").length;
+    const unpaidCount = invoices.filter(inv => inv.status === "unpaid").length;
+
+    return [
+      {
+        icon:      FileText,
+        value:     total,
+        label:     t("stats.total"),
+        iconColor: "var(--color-icon-indigo)",
+        iconBg:    "var(--color-icon-indigo-bg)",
+      },
+      {
+        icon:      CheckCircle2,
+        value:     paidCount,
+        label:     t("stats.paid"),
+        iconColor: "var(--color-icon-success)",
+        iconBg:    "var(--color-icon-success-bg)",
+      },
+      {
+        icon:      Clock,
+        value:     unpaidCount,
+        label:     t("filter.unpaid") || "Unpaid",
+        iconColor: "var(--color-icon-warning)",
+        iconBg:    "var(--color-icon-warning-bg)",
+      }
+    ];
+  }, [total, invoices, t]);
 
   // ── Columns ─────────────────────────────────────────────────────────────────
   const columns: TableColumn<Invoice>[] = useMemo(() => {
@@ -205,10 +203,10 @@ export default function InvoiceManagementPage() {
   // ── Actions ─────────────────────────────────────────────────────────────────
   const actions: TableAction<Invoice>[] = useMemo(() => [
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: (row) => { setViewInvoice(row); setShowViewModal(true); } },
-    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: (row) => { setEditInvoice(row); setShowEditModal(true); } },
-    { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: (row) => deleteInvoice(row.id) },
+    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: (row) => { setEditInvoice(row); setShowEditModal(true); }, hidden: () => user?.role === "client" },
+    { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: (row) => setInvoiceToDelete(row), hidden: () => user?.role === "client" },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [deleteInvoice, tCommon]);
+  ], [tCommon, user?.role]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleSearch = useCallback((v: string) => {
@@ -245,6 +243,7 @@ export default function InvoiceManagementPage() {
         onSuccess: () => {
           setShowEditModal(false);
           setEditInvoice(null);
+          toast.success(tCommon("updatedSuccessfully") || "Updated successfully");
         },
         onError: (error: any) => {
           const errors = error.response?.data?.errors;
@@ -260,8 +259,7 @@ export default function InvoiceManagementPage() {
     [updateInvoice, t]
   );
 
-  // ── Render ───────────────────────────────────────────────────────────────────
-  const isInitialLoading = isInvoicesLoading || isStatsLoading;
+  const isInitialLoading = isInvoicesLoading;
 
   return (
     <PageContainer isLoading={isInitialLoading} skeletonVariant="dashboard">
@@ -271,11 +269,11 @@ export default function InvoiceManagementPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={[
-          {
+          ...(user?.role !== "client" ? [{
             label:   t("add"),
             onClick: () => setShowModal(true),
             icon:    Plus,
-          },
+          }] : []),
         ]}
       />
 
@@ -345,11 +343,30 @@ export default function InvoiceManagementPage() {
       {showViewModal && (
         <ViewInvoiceModal
           isOpen={showViewModal}
-          onClose={() => { setShowViewModal(false); setViewInvoice(null); }}
-          invoiceId={viewInvoice?.id || null}
+          onClose={() => {
+            setShowViewModal(false);
+            setViewInvoice(null);
+          }}
+          invoiceId={viewInvoice?.id ?? null}
         />
       )}
 
+      <DeleteConfirmationModal
+        isOpen={!!invoiceToDelete}
+        onClose={() => setInvoiceToDelete(null)}
+        onConfirm={() => {
+          if (invoiceToDelete) {
+            deleteInvoice(invoiceToDelete.id, {
+              onSuccess: () => {
+                setInvoiceToDelete(null);
+                toast.success(tCommon("deletedSuccessfully") || "Deleted successfully");
+              }
+            });
+          }
+        }}
+        title={tCommon("delete") || "Delete Invoice"}
+        message={t("deleteConfirmation") !== "invoice.deleteConfirmation" ? t("deleteConfirmation") : "Are you sure you want to delete this invoice? This action cannot be undone."}
+      />
     </PageContainer>
   );
 }

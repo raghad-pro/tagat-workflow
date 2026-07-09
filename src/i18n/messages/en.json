@@ -285,6 +285,11 @@
     "searchPlaceholder": "Search tasks...",
     "noProjects": "No projects",
     "noEmployees": "No employees",
+    "selectProject": "Select project",
+    "selectEmployee": "Select employee",
+    "enterTaskTitle": "Enter task title",
+    "notes": "Notes",
+    "enterNotes": "Enter any notes here...",
     "projectRequired": "Must select a project",
     "employeeRequired": "Must select an employee",
     "companyRequired": "Must select a company",
@@ -386,6 +391,7 @@
       "all": "All Invoices",
       "paid": "Paid",
       "pending": "Pending",
+      "unpaid": "Unpaid",
       "overdue": "Overdue"
     },
     "columns": {
@@ -665,10 +671,14 @@
     "stats": {
       "totalBalance": "Total Balance",
       "avgBalance": "Avg Balance",
-      "pendingWallets": "Pending Wallets"
+      "pendingWallets": "Pending Wallets",
+      "totalWallets": "Total Wallets",
+      "totalUSD": "Total USD",
+      "totalEUR": "Total EUR"
     },
     "columns": {
       "name": "Customer Name",
+      "walletName": "Wallet Name",
       "company": "Company",
       "currency": "Currency",
       "lastTransaction": "Last Transaction",
@@ -754,6 +764,14 @@
     "viewTransaction": "View Transaction",
     "notes": "Notes",
     "notesPlaceholder": "Optional notes...",
+    "currentBalance": "Current Balance",
+    "toWalletBalance": "To Wallet Balance",
+    "walletAfterTransaction": "Wallet After Transaction",
+    "relatedWallet": "Related Wallet (Transfer To)",
+    "exchangeRate": "Exchange Rate",
+    "commission": "Commission",
+    "relatedWalletAfter": "Related Wallet After",
+    "editTransaction": "Edit Transaction",
     "stats": {
       "totalVolume": "Total volume",
       "income": "Income",

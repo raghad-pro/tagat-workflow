@@ -283,8 +283,13 @@
     "addTask": "إضافة مهمة",
     "editTask": "تعديل المهمة",
     "searchPlaceholder": "ابحث في المهام...",
-    "noProjects": "لا توجد مشاريع",
+    "noProjects": "لا يوجد مشاريع",
     "noEmployees": "لا يوجد موظفين",
+    "selectProject": "اختر المشروع",
+    "selectEmployee": "اختر الموظف",
+    "enterTaskTitle": "أدخل عنوان المهمة",
+    "notes": "الملاحظات",
+    "enterNotes": "أدخل أي ملاحظات هنا...",
     "projectRequired": "يجب اختيار مشروع",
     "employeeRequired": "يجب اختيار موظف",
     "companyRequired": "يجب اختيار شركة",
@@ -386,6 +391,7 @@
       "all": "كل الفواتير",
       "paid": "مدفوعة",
       "pending": "قيد الانتظار",
+      "unpaid": "غير مدفوع",
       "overdue": "متأخرة"
     },
     "columns": {
@@ -665,10 +671,14 @@
     "stats": {
       "totalBalance": "إجمالي الرصيد",
       "avgBalance": "متوسط الرصيد",
-      "pendingWallets": "المحافظ المعلقة"
+      "pendingWallets": "المحافظ المعلقة",
+      "totalWallets": "إجمالي المحافظ",
+      "totalUSD": "إجمالي الدولار",
+      "totalEUR": "إجمالي اليورو"
     },
     "columns": {
       "name": "اسم العميل",
+      "walletName": "اسم المحفظة",
       "company": "الشركة",
       "currency": "العملة",
       "lastTransaction": "آخر معاملة",
@@ -754,6 +764,14 @@
     "viewTransaction": "عرض العملية",
     "notes": "ملاحظات",
     "notesPlaceholder": "ملاحظات إضافية...",
+    "currentBalance": "الرصيد الحالي",
+    "toWalletBalance": "رصيد المحفظة المحول إليها",
+    "walletAfterTransaction": "المحفظة بعد العملية",
+    "relatedWallet": "المحفظة المرتبطة (التحويل إلى)",
+    "exchangeRate": "سعر الصرف",
+    "commission": "العمولة",
+    "relatedWalletAfter": "رصيد المحفظة المرتبطة بعد العملية",
+    "editTransaction": "تعديل العملية",
     "stats": {
       "totalVolume": "إجمالي الحجم",
       "income": "الدخل",

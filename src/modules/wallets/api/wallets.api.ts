@@ -1,4 +1,5 @@
 import apiClient from "@/services/apiClient";
+import { getRolePrefix } from "@/utils/rolePrefix";
 import type {
   Wallet,
   WalletsQueryParams,
@@ -9,27 +10,25 @@ import type {
 } from "../types/wallets.types";
 
 export const walletsApi = {
-  // ─── GET /super_admin/wallets ───────────────────────────────────────────
-  getAll: (params?: WalletsQueryParams) =>
-    apiClient.get<ApiWalletsResponse>("/super_admin/wallets", params as Record<string, unknown>),
+  getAll: (params?: WalletsQueryParams, role = "super_admin") =>
+    apiClient.get<ApiWalletsResponse>(`${getRolePrefix(role)}/wallets`, params as Record<string, unknown>),
 
-  // ─── GET /super_admin/wallets/:id ───────────────────────────────────────
-  getById: (id: number) =>
-    apiClient.get<ApiWalletResponse>(`/super_admin/wallets/${id}`),
+  getById: (id: number, role = "super_admin") =>
+    apiClient.get<ApiWalletResponse>(`${getRolePrefix(role)}/wallets/${id}`),
 
-  // ─── GET /super_admin/companies/:id/currencies ──────────────────────────
-  getCompanyCurrencies: (companyId: number) =>
-    apiClient.get<ApiCompanyCurrenciesResponse>(`/super_admin/companies/${companyId}/currencies`),
+  getCompanyCurrencies: (companyId: number, role = "super_admin") =>
+    apiClient.get<ApiCompanyCurrenciesResponse>(
+      role === "super_admin" 
+        ? `${getRolePrefix(role)}/companies/${companyId}/currencies`
+        : `${getRolePrefix(role)}/companies/${companyId}/currencies`
+    ),
 
-  // ─── POST /super_admin/wallets ──────────────────────────────────────────
-  create: (data: AddWalletRequest) =>
-    apiClient.post<ApiWalletResponse>("/super_admin/wallets", data),
+  create: (data: AddWalletRequest, role = "super_admin") =>
+    apiClient.post<ApiWalletResponse>(`${getRolePrefix(role)}/wallets`, data),
 
-  // ─── PUT /super_admin/wallets/:id ───────────────────────────────────────
-  update: (id: number, data: Partial<AddWalletRequest>) =>
-    apiClient.put<ApiWalletResponse>(`/super_admin/wallets/${id}`, data),
+  update: (id: number, data: Partial<AddWalletRequest>, role = "super_admin") =>
+    apiClient.put<ApiWalletResponse>(`${getRolePrefix(role)}/wallets/${id}`, data),
 
-  // ─── DELETE /super_admin/wallets/:id ────────────────────────────────────
-  delete: (id: number) =>
-    apiClient.delete<{ success: boolean; message: string }>(`/super_admin/wallets/${id}`),
+  delete: (id: number, role = "super_admin") =>
+    apiClient.delete<{ success: boolean; message: string }>(`${getRolePrefix(role)}/wallets/${id}`),
 };
