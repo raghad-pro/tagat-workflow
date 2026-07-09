@@ -17,7 +17,7 @@ export function FadeIn({ children, className, delay = 0 }: FadeInProps) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), 50);
+          setIsVisible(true);
           if (ref.current) observer.unobserve(ref.current);
         }
       },
@@ -36,14 +36,12 @@ export function FadeIn({ children, className, delay = 0 }: FadeInProps) {
   return (
     <div
       ref={ref}
-      style={{ 
-        transitionDelay: `${delay}s`,
-        opacity: isVisible ? 1 : 0,
-        transitionProperty: 'opacity',
-        transitionDuration: '700ms',
-        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
-      }}
-      className={className}
+      style={{ transitionDelay: `${delay}s` }}
+      className={cn(
+        "transition-opacity duration-700 ease-in-out",
+        isVisible ? "opacity-100" : "opacity-0",
+        className
+      )}
     >
       {children}
     </div>

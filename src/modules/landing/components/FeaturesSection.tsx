@@ -33,14 +33,14 @@ export function FeaturesSection() {
         {/* What is Workflow? Section */}
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20 mb-24">
           <SlideIn direction="left" className="lg:w-1/2">
-            <h2 className="mb-6 text-3xl md:text-4xl font-bold">
+            <Text tag="h2" size="xl" color="primary" className="mb-6 text-3xl md:text-4xl font-bold">
               {t.rich("featuresTitle", {
                 cyan: (chunks) => <span className="text-primary">{chunks}</span>
               })}
-            </h2>
-            <p className="leading-relaxed">
+            </Text>
+            <Text size="lg" color="gray" className="leading-relaxed">
               {t("featuresDesc")}
-            </p>
+            </Text>
           </SlideIn>
           
           <SlideIn direction="right" delay={0.2} className="lg:w-1/2 w-full">
@@ -59,12 +59,12 @@ export function FeaturesSection() {
         {/* Core Features Section */}
         <FadeIn delay={0.4}>
           <div className="text-center mb-16">
-            <h3 className="mb-4 text-center text-3xl font-bold">
+            <Text tag="h3" size="xl" color="primary" className="mb-4 text-center text-3xl font-bold">
               {t.rich("coreFeaturesTitle", {
                 cyan: (chunks) => <span className="text-primary">{chunks}</span>
               })}
-            </h3>
-            <p className="text-center">{t("coreFeaturesSubtitle")}</p>
+            </Text>
+            <Text color="gray" className="text-center">{t("coreFeaturesSubtitle")}</Text>
           </div>
 
           <div className="grid md:grid-cols-3 gap-12">
@@ -73,12 +73,12 @@ export function FeaturesSection() {
                 <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-6 text-white hover:scale-110 transition-transform duration-300">
                   <feature.icon className="w-8 h-8" />
                 </div>
-                <h4 className="mb-3 font-bold">
+                <Text tag="h4" size="lg" color="primary" className="mb-3 font-bold">
                   {feature.title}
-                </h4>
-                <p className="leading-relaxed">
+                </Text>
+                <Text color="gray" className="leading-relaxed">
                   {feature.desc}
-                </p>
+                </Text>
               </FadeIn>
             ))}
           </div>

@@ -5,16 +5,16 @@ import { cn } from "@/lib/utils";
 
 interface SlideInProps {
   children: ReactNode;
-  className?: string;
-  delay?: number;
   direction?: "up" | "down" | "left" | "right";
+  delay?: number;
+  className?: string;
 }
 
 export function SlideIn({
   children,
-  className,
-  delay = 0,
   direction = "up",
+  delay = 0,
+  className,
 }: SlideInProps) {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -23,7 +23,7 @@ export function SlideIn({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), 50);
+          setIsVisible(true);
           if (ref.current) observer.unobserve(ref.current);
         }
       },
@@ -39,28 +39,24 @@ export function SlideIn({
     };
   }, []);
 
-  const getTransform = () => {
-    switch (direction) {
-      case "up": return "translateY(3rem)";
-      case "down": return "translateY(-3rem)";
-      case "left": return "translateX(-3rem)";
-      case "right": return "translateX(3rem)";
-      default: return "translateY(3rem)";
-    }
+  const directionClasses = {
+    up: "translate-y-12",
+    down: "-translate-y-12",
+    left: "-translate-x-12",
+    right: "translate-x-12",
   };
 
   return (
     <div
       ref={ref}
-      style={{
-        transitionDelay: `${delay}s`,
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translate(0px, 0px)' : getTransform(),
-        transitionProperty: 'opacity, transform',
-        transitionDuration: '700ms',
-        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
-      }}
-      className={className}
+      style={{ transitionDelay: `${delay}s` }}
+      className={cn(
+        "transition-all duration-700 ease-out",
+        isVisible
+          ? "opacity-100 translate-x-0 translate-y-0"
+          : `opacity-0 ${directionClasses[direction]}`,
+        className
+      )}
     >
       {children}
     </div>

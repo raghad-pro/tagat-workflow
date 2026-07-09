@@ -36,10 +36,10 @@ export function PricingSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <div className="text-center mb-16">
-            <h2 className="mb-4 text-center text-3xl font-bold">
+            <Text tag="h2" size="xl" className="mb-4 text-center text-3xl font-bold">
               {t("pricingTitle")}
-            </h2>
-            <p className="text-center">{t("pricingSubtitle")}</p>
+            </Text>
+            <Text color="gray" className="text-center">{t("pricingSubtitle")}</Text>
           </div>
         </FadeIn>
 
@@ -56,8 +56,8 @@ export function PricingSection() {
                 )}
                 
                 <div className="mb-8 mt-4 text-center">
-                  <h3 className="mb-2 font-bold">{plan.name}</h3>
-                  <p className="text-center">{plan.desc}</p>
+                  <Text tag="h3" size="lg" className="mb-2 font-bold">{plan.name}</Text>
+                  <Text color="gray" size="sm" className="text-center">{plan.desc}</Text>
                 </div>
                 
                 <div className="mb-8 flex items-baseline justify-center gap-2 text-center">
