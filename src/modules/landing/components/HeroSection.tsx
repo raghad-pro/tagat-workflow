@@ -13,17 +13,17 @@ export function HeroSection() {
     <section className="relative pt-32 pb-16 lg:pt-48 lg:pb-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <FadeIn>
-          <Text tag="h1" size="xl" className="max-w-4xl mx-auto mb-6 leading-tight text-4xl md:text-5xl lg:text-6xl font-bold">
+          <h1 className="max-w-4xl mx-auto mb-6 leading-tight text-4xl md:text-5xl lg:text-6xl font-bold">
             {t.rich("heroTitle", {
               cyan: (chunks) => <span className="text-primary">{chunks}</span>
             })}
-          </Text>
+          </h1>
         </FadeIn>
         
         <SlideIn delay={0.2} direction="right">
-          <Text size="lg" color="gray" className="max-w-2xl mx-auto mb-10 text-center">
+          <p className="max-w-2xl mx-auto mb-10 text-center">
             {t("heroSubtitle")}
-          </Text>
+          </p>
         </SlideIn>
         
         <FadeIn delay={0.4}>

@@ -17,7 +17,7 @@ export function ScaleIn({ children, delay = 0, className }: ScaleInProps) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          setTimeout(() => setIsVisible(true), 50);
           if (ref.current) observer.unobserve(ref.current);
         }
       },
@@ -32,12 +32,15 @@ export function ScaleIn({ children, delay = 0, className }: ScaleInProps) {
   return (
     <div
       ref={ref}
-      style={{ transitionDelay: `${delay}s` }}
-      className={cn(
-        "transition-all duration-700 ease-out",
-        isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95",
-        className
-      )}
+      style={{
+        transitionDelay: `${delay}s`,
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'scale(1)' : 'scale(0.95)',
+        transitionProperty: 'opacity, transform',
+        transitionDuration: '700ms',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
+      }}
+      className={className}
     >
       {children}
     </div>

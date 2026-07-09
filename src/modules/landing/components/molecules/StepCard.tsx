@@ -1,4 +1,3 @@
-import { Text } from "@/components/atoms/Text";
 import { LucideIcon } from "lucide-react";
 
 interface StepCardProps {
@@ -22,10 +21,10 @@ export function StepCard({ num, title, desc, icon: Icon }: StepCardProps) {
         <Icon className="w-8 h-8" />
       </div>
       
-      <Text tag="h3" size="lg" className="mb-4 font-bold text-xl text-foreground">
+      <h3 className="mb-4 font-bold text-xl text-foreground">
         {title}
-      </Text>
-      <Text color="gray" className="ds-text-gray-200">{desc}</Text>
+      </h3>
+      <p className="ds-text-gray-200">{desc}</p>
     </div>
   );
 }

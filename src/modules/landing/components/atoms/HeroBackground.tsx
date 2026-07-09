@@ -2,36 +2,44 @@
 
 import { useRef, useMemo, useState, useEffect } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { Text } from "@react-three/drei"
 import * as THREE from "three"
 import { useTheme } from "next-themes"
 
 function DataConstellation({ isDark }: { isDark: boolean }) {
   const groupRef = useRef<THREE.Group>(null)
   
+  // Exact logo color requested by user
+  const primaryColor = "#12c2e9" 
+  const secondaryColor = "#12c2e9" 
+  const lineColor = "#12c2e9" 
+  
+  // Increased opacities slightly to make it darker/stronger
+  const lineOpacity = isDark ? 0.15 : 0.25 
+  const pointOpacity = isDark ? 0.8 : 0.75
+  const ringOpacity = isDark ? 0.15 : 0.2
+  
   // Generate points, connecting lines, and binary digits
-  const { positions, lines, binaryText, colors } = useMemo(() => {
+  const { positions, lines, colors } = useMemo(() => {
     const pts = []
-    const numPoints = 120
-    const radius = 8
+    const numPoints = 250 // Increased significantly for a much denser network
+    const radius = 10 // Slightly larger radius to accommodate more points
     
-    // Create an elliptical/spherical cloud of points
     for (let i = 0; i < numPoints; i++) {
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos((Math.random() * 2) - 1)
-      const x = radius * Math.sin(phi) * Math.cos(theta) * 1.5 // stretch X for ellipse
-      const y = radius * Math.sin(phi) * Math.sin(theta)
+      const x = radius * Math.sin(phi) * Math.cos(theta) * 1.8 
+      const y = radius * Math.sin(phi) * Math.sin(theta) * 1.2
       const z = radius * Math.cos(phi)
       
-      const r = 0.7 + Math.random() * 0.5
+      const r = 0.5 + Math.random() * 0.7
       pts.push(new THREE.Vector3(x * r, y * r, z * r))
     }
 
     const linePositions = []
     for (let i = 0; i < pts.length; i++) {
       for (let j = i + 1; j < pts.length; j++) {
-        // connect if distance is small
-        if (pts[i].distanceTo(pts[j]) < 4) {
+        // Increased connection distance to draw more lines between points
+        if (pts[i].distanceTo(pts[j]) < 5.5) {
           linePositions.push(pts[i].x, pts[i].y, pts[i].z)
           linePositions.push(pts[j].x, pts[j].y, pts[j].z)
         }
@@ -64,14 +72,14 @@ function DataConstellation({ isDark }: { isDark: boolean }) {
 
   useFrame((state, delta) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.05
+      groupRef.current.rotation.y += delta * 0.05 // Smoother, slower rotation
       groupRef.current.rotation.x += delta * 0.02
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.5
+      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.5
     }
   })
 
   return (
-    <group ref={groupRef} position={[0, 0, -5]}>
+    <group ref={groupRef} position={[0, 0, -6]}>
       {/* Points */}
       <points>
         <bufferGeometry>
@@ -80,7 +88,7 @@ function DataConstellation({ isDark }: { isDark: boolean }) {
           {/* @ts-ignore */}
           <bufferAttribute attach="attributes-color" count={colors.length / 3} array={colors} itemSize={3} />
         </bufferGeometry>
-        <pointsMaterial size={0.15} vertexColors transparent opacity={0.9} sizeAttenuation={true} />
+        <pointsMaterial size={0.15} vertexColors transparent opacity={pointOpacity} sizeAttenuation={true} />
       </points>
 
       {/* Lines connecting points */}
@@ -92,24 +100,11 @@ function DataConstellation({ isDark }: { isDark: boolean }) {
         <lineBasicMaterial color={isDark ? "#ffffff" : "#64748b"} transparent opacity={isDark ? 0.1 : 0.25} />
       </lineSegments>
 
-      {/* Binary numbers floating */}
-      {binaryText.map((item, i) => (
-        <Text 
-          key={i} 
-          position={item.pos as [number, number, number]} 
-          color={item.color} 
-          fontSize={0.4} 
-          fillOpacity={0.8}
-        >
-          {item.text}
-        </Text>
-      ))}
-      
       {/* Large orbital rings */}
-      {[5, 8, 11].map((r, i) => (
-        <mesh key={i} rotation={[Math.PI / 3 + i * 0.2, Math.PI / 4, 0]}>
+      {[5.5, 8.5, 12].map((r, i) => (
+        <mesh key={i} rotation={[Math.PI / 3 + i * 0.25, Math.PI / 4, 0]}>
           <ringGeometry args={[r, r + 0.02, 64]} />
-          <meshBasicMaterial color="#0ea5e9" transparent opacity={0.2} side={THREE.DoubleSide} />
+          <meshBasicMaterial color={primaryColor} transparent opacity={ringOpacity} side={THREE.DoubleSide} />
         </mesh>
       ))}
     </group>
