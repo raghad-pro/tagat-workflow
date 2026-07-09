@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useMemo, useEffect, useState } from "react"
+import { useRef, useMemo, useState, useEffect } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 import { useTheme } from "next-themes"
@@ -46,23 +46,29 @@ function DataConstellation({ isDark }: { isDark: boolean }) {
       }
     }
 
+    // Assign binary 1 or 0 to some points
+    const binary = pts.slice(0, 40).map(p => ({
+      pos: [p.x + 0.3, p.y + 0.3, p.z],
+      text: Math.random() > 0.5 ? "1" : "0",
+      color: Math.random() > 0.5 ? "#0ea5e9" : (isDark ? "#ffffff" : "#475569")
+    }))
+
     const positionsArray = new Float32Array(pts.flatMap(p => [p.x, p.y, p.z]))
     const linesArray = new Float32Array(linePositions)
     
+    // Alternate point colors between cyan and theme-dependent color
     const colorsArray = new Float32Array(pts.length * 3)
-    const color1 = new THREE.Color(primaryColor)
-    const color2 = new THREE.Color(secondaryColor)
-    
+    const colorCyan = new THREE.Color("#0ea5e9")
+    const colorAlt = new THREE.Color(isDark ? "#ffffff" : "#64748b")
     for (let i = 0; i < pts.length; i++) {
-      // 80% secondary (softer blue), 20% primary (cyan) for subtle highlights
-      const c = Math.random() > 0.8 ? color1 : color2
+      const c = Math.random() > 0.3 ? colorCyan : colorAlt
       colorsArray[i * 3] = c.r
       colorsArray[i * 3 + 1] = c.g
       colorsArray[i * 3 + 2] = c.b
     }
 
-    return { positions: positionsArray, lines: linesArray, colors: colorsArray }
-  }, [primaryColor, secondaryColor])
+    return { positions: positionsArray, lines: linesArray, binaryText: binary, colors: colorsArray }
+  }, [isDark])
 
   useFrame((state, delta) => {
     if (groupRef.current) {
@@ -91,7 +97,7 @@ function DataConstellation({ isDark }: { isDark: boolean }) {
           {/* @ts-ignore */}
           <bufferAttribute attach="attributes-position" count={lines.length / 3} array={lines} itemSize={3} />
         </bufferGeometry>
-        <lineBasicMaterial color={lineColor} transparent opacity={lineOpacity} />
+        <lineBasicMaterial color={isDark ? "#ffffff" : "#64748b"} transparent opacity={isDark ? 0.1 : 0.25} />
       </lineSegments>
 
       {/* Large orbital rings */}
@@ -106,23 +112,25 @@ function DataConstellation({ isDark }: { isDark: boolean }) {
 }
 
 export function HeroBackground() {
-  const { theme, systemTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
-  const currentTheme = theme === 'system' ? systemTheme : theme
-  const isDark = mounted ? currentTheme === 'dark' : false
+  if (!mounted) {
+    return <div className="absolute inset-0 w-full h-full -z-10 pointer-events-none bg-background/50" />;
+  }
+
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <div className="absolute inset-0 w-full h-full z-0 pointer-events-none opacity-100 bg-transparent">
-      {/* Set z-0 so it stays above the page background, and bg-transparent so it blends natively */}
-      <Canvas camera={{ position: [0, 0, 16], fov: 45 }}>
-        {/* Very soft fog to blend things beautifully into the background */}
-        <fog attach="fog" args={[isDark ? "#020817" : "#f8fafc", 10, 25]} />
-        {mounted && <DataConstellation isDark={isDark} />}
+    <div className="absolute inset-0 w-full h-full -z-10 pointer-events-none opacity-100 bg-background/50">
+      <Canvas camera={{ position: [0, 0, 15], fov: 45 }}>
+        {/* Adds fog to blend particles into the distance smoothly */}
+        <fog attach="fog" args={[isDark ? "#020817" : "#ffffff", 10, 30]} />
+        <DataConstellation isDark={isDark} />
       </Canvas>
     </div>
   )

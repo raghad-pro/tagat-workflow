@@ -168,8 +168,17 @@ export default function TimesheetsPage() {
           const emp = row.user?.employee;
           const currency = emp?.currency?.symbol || "";
           const isMonthly = emp?.payment_type === "monthly" || emp?.paymentType === "monthly";
-          const val = isMonthly ? (emp?.salary ?? emp?.hourly_rate ?? emp?.hourlyRate) : row.rate;
-          return <Text size="sm" className="ds-text-gray-200">{val || '-'} {currency}</Text>;
+          
+          let val = row.rate;
+          if (val === null || val === undefined) {
+            val = isMonthly ? (emp?.salary ?? emp?.hourly_rate ?? emp?.hourlyRate) : '-';
+          }
+          
+          if (isMonthly && (val === null || val === undefined || val === '-')) {
+             return <Text size="sm" className="ds-text-gray-200">{t("monthly") || "Monthly"}</Text>;
+          }
+          
+          return <Text size="sm" className="ds-text-gray-200">{val} {val !== '-' ? currency : ''}</Text>;
         }
       },
       {
@@ -179,8 +188,13 @@ export default function TimesheetsPage() {
           const emp = row.user?.employee;
           const currency = emp?.currency?.symbol || "";
           const isMonthly = emp?.payment_type === "monthly" || emp?.paymentType === "monthly";
-          const val = isMonthly ? (emp?.salary ?? emp?.hourly_rate ?? emp?.hourlyRate) : row.total;
-          return <Text size="sm" weight="bold" className="ds-text-gray-200">{val || '-'} {currency}</Text>;
+          
+          let val = row.total;
+          if (val === null || val === undefined) {
+            val = isMonthly ? (emp?.salary ?? emp?.hourly_rate ?? emp?.hourlyRate) : '-';
+          }
+          
+          return <Text size="sm" weight="bold" className="ds-text-gray-200">{val} {val !== '-' ? currency : ''}</Text>;
         }
       },
       {
@@ -290,7 +304,7 @@ export default function TimesheetsPage() {
             <DataTable
               columns={columns}
               data={Timesheets}
-              actions={actions}
+              actions={user?.role === "employee" ? undefined : actions}
               actionsHeader={tCommon("actions")}
               emptyMessage={tCommon("noDataFound") || "No time logs found."}
               isLoading={isLoading}

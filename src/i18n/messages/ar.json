@@ -283,8 +283,13 @@
     "addTask": "إضافة مهمة",
     "editTask": "تعديل المهمة",
     "searchPlaceholder": "ابحث في المهام...",
-    "noProjects": "لا توجد مشاريع",
+    "noProjects": "لا يوجد مشاريع",
     "noEmployees": "لا يوجد موظفين",
+    "selectProject": "اختر المشروع",
+    "selectEmployee": "اختر الموظف",
+    "enterTaskTitle": "أدخل عنوان المهمة",
+    "notes": "الملاحظات",
+    "enterNotes": "أدخل أي ملاحظات هنا...",
     "projectRequired": "يجب اختيار مشروع",
     "employeeRequired": "يجب اختيار موظف",
     "companyRequired": "يجب اختيار شركة",
@@ -386,6 +391,7 @@
       "all": "كل الفواتير",
       "paid": "مدفوعة",
       "pending": "قيد الانتظار",
+      "unpaid": "غير مدفوع",
       "overdue": "متأخرة"
     },
     "columns": {
@@ -535,28 +541,26 @@
     "systemSettings": "إعدادات النظام"
   },
   "currencies": {
-    "title": "إدارة العملات",
-    "subtitle": "إدارة وتكوين العملات العالمية لمؤسستك.",
-    "addCurrency": "إضافة عملة",
-    "editCurrency": "تعديل العملة",
-    "primaryCurrency": "العملة الأساسية",
+    "title": "العملات",
+    "subtitle": "إدارة وتتبع العملات عبر المناطق المختلفة",
     "totalCurrencies": "إجمالي العملات",
-    "activeInRegions": "نشط في المناطق",
-    "searchPlaceholder": "جاري البحث....",
-    "noCurrencies": "لا يوجد عملات",
-    "currencyName": "اسم العملة",
-    "currencyCode": "كود العملة (USD, EUR...)",
-    "symbol": "الرمز ($, €, ₪...)",
-    "company": "الشركة",
-    "selectCompany": "اختر الشركة",
-    "requiredField": "هذا الحقل مطلوب",
-    "actions": "الإجراءات",
-    "code": "الكود",
+    "activeRegions": "المناطق النشطة",
+    "primaryCurrency": "العملة الأساسية",
     "name": "الاسم",
+    "company": "الشركة",
+    "symbol": "الرمز",
+    "code": "الكود",
+    "editCurrency": "تعديل العملة",
+    "addCurrency": "إضافة عملة",
+    "searchPlaceholder": "ابحث عن العملات...",
+    "noCurrencies": "لا توجد عملات.",
+    "deleteTitle": "حذف العملة",
+    "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه العملة؟",
+    "requiredField": "هذا الحقل مطلوب",
     "save": "حفظ",
     "cancel": "إلغاء",
-    "confirmDelete": "هل أنت متأكد أنك تريد حذف هذه العملة؟",
-    "deleteTitle": "حذف العملة"
+    "currencyName": "اسم العملة",
+    "selectCompany": "اختر الشركة"
   },
   "Index": {
     "title": "وورك فلو",
@@ -660,26 +664,144 @@
     "teamAhmed": "أحمد شنان",
     "roleAhmed": "مطور خلفي Backend"
   },
-  "currencies": {
-    "title": "العملات",
-    "subtitle": "إدارة وتتبع العملات عبر المناطق المختلفة",
-    "totalCurrencies": "إجمالي العملات",
-    "activeRegions": "المناطق النشطة",
-    "primaryCurrency": "العملة الأساسية",
-    "name": "الاسم",
-    "company": "الشركة",
-    "symbol": "الرمز",
-    "code": "الكود",
-    "editCurrency": "تعديل العملة",
-    "addCurrency": "إضافة عملة",
-    "searchPlaceholder": "ابحث عن العملات...",
-    "noCurrencies": "لا توجد عملات.",
-    "deleteTitle": "حذف العملة",
-    "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه العملة؟",
-    "requiredField": "هذا الحقل مطلوب",
-    "save": "حفظ",
-    "cancel": "إلغاء",
-    "currencyName": "اسم العملة",
-    "selectCompany": "اختر الشركة"
+  "wallets": {
+    "title": "إدارة المحافظ",
+    "subtitle": "نظرة عامة وإدارة لجميع محافظ الشركات المسجلة.",
+    "add": "إضافة محفظة",
+    "stats": {
+      "totalBalance": "إجمالي الرصيد",
+      "avgBalance": "متوسط الرصيد",
+      "pendingWallets": "المحافظ المعلقة",
+      "totalWallets": "إجمالي المحافظ",
+      "totalUSD": "إجمالي الدولار",
+      "totalEUR": "إجمالي اليورو"
+    },
+    "columns": {
+      "name": "اسم العميل",
+      "walletName": "اسم المحفظة",
+      "company": "الشركة",
+      "currency": "العملة",
+      "lastTransaction": "آخر معاملة",
+      "balance": "الرصيد",
+      "initialBalance": "الرصيد الابتدائي",
+      "notes": "ملاحظات"
+    },
+    "filter": {
+      "active": "نشط",
+      "pending": "معلق",
+      "inactive": "غير نشط"
+    },
+    "searchPlaceholder": "ابحث بالاسم، الشركة، أو العملة...",
+    "deleteTitle": "حذف المحفظة",
+    "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه المحفظة؟",
+    "messages": {
+      "createSuccess": "تم إنشاء المحفظة بنجاح",
+      "updateSuccess": "تم تحديث المحفظة بنجاح",
+      "deleteSuccess": "تم حذف المحفظة بنجاح",
+      "deleteError": "فشل في حذف المحفظة"
+    },
+    "form": {
+      "name": "اسم المحفظة",
+      "company": "الشركة",
+      "currency": "العملة",
+      "initialBalance": "الرصيد الابتدائي",
+      "notes": "ملاحظات",
+      "status": "الحالة"
+    }
+  },
+  "payments": {
+    "title": "سجلات الدفع",
+    "subtitle": "تتبع وإدارة وتدقيق جميع المعاملات الواردة والصادرة.",
+    "add": "إضافة دفعة",
+    "stats": {
+      "totalRevenue": "إجمالي الإيرادات",
+      "pendingPayments": "الدفعات المعلقة",
+      "transactionVolume": "حجم المعاملات"
+    },
+    "columns": {
+      "invoice": "الفاتورة",
+      "company": "الشركة",
+      "date": "التاريخ",
+      "method": "طريقة الدفع",
+      "wallet": "المحفظة",
+      "amount": "المبلغ",
+      "notes": "ملاحظات"
+    },
+    "filter": {
+      "all": "جميع الحالات",
+      "completed": "مكتملة",
+      "pending": "معلقة",
+      "failed": "فاشلة"
+    },
+    "searchPlaceholder": "جاري البحث...",
+    "deleteTitle": "حذف الدفعة",
+    "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه الدفعة؟",
+    "messages": {
+      "createSuccess": "تم إضافة الدفعة بنجاح",
+      "updateSuccess": "تم تحديث الدفعة بنجاح",
+      "deleteSuccess": "تم حذف الدفعة بنجاح",
+      "deleteError": "فشل في حذف الدفعة"
+    },
+    "form": {
+      "invoice": "رقم الفاتورة",
+      "company": "الشركة",
+      "date": "التاريخ",
+      "method": "طريقة الدفع",
+      "wallet": "المحفظة",
+      "amount": "المبلغ",
+      "notes": "ملاحظات",
+      "status": "الحالة"
+    },
+    "exportReport": "تصدير تقرير"
+  },
+  "walletTransactions": {
+    "title": "إدارة العمليات",
+    "description": "إدارة ومراقبة جميع العمليات المالية.",
+    "addTransaction": "إضافة عملية",
+    "searchPlaceholder": "البحث...",
+    "deleteTitle": "حذف العملية",
+    "confirmDelete": "هل أنت متأكد من حذف هذه العملية؟",
+    "viewTransaction": "عرض العملية",
+    "notes": "ملاحظات",
+    "notesPlaceholder": "ملاحظات إضافية...",
+    "currentBalance": "الرصيد الحالي",
+    "toWalletBalance": "رصيد المحفظة المحول إليها",
+    "walletAfterTransaction": "المحفظة بعد العملية",
+    "relatedWallet": "المحفظة المرتبطة (التحويل إلى)",
+    "exchangeRate": "سعر الصرف",
+    "commission": "العمولة",
+    "relatedWalletAfter": "رصيد المحفظة المرتبطة بعد العملية",
+    "editTransaction": "تعديل العملية",
+    "stats": {
+      "totalVolume": "إجمالي الحجم",
+      "income": "الدخل",
+      "expenses": "المصروفات"
+    },
+    "filters": {
+      "type": "جميع الحالات",
+      "all": "جميع الحالات",
+      "income": "الدخل",
+      "funding": "تمويل",
+      "assets": "أصول",
+      "expenses": "المصروفات"
+    },
+    "table": {
+      "transactionNumber": "رقم العملية",
+      "company": "الشركة",
+      "date": "التاريخ",
+      "wallet": "المحفظة",
+      "amount": "المبلغ",
+      "type": "النوع"
+    },
+    "details": {
+      "transactionInfo": "معلومات العملية",
+      "relatedEntities": "الكيانات المرتبطة",
+      "additionalInfo": "معلومات إضافية"
+    },
+    "messages": {
+      "createSuccess": "تم إضافة العملية بنجاح",
+      "updateSuccess": "تم تحديث العملية بنجاح",
+      "deleteSuccess": "تم حذف العملية بنجاح"
+    }
   }
 }
