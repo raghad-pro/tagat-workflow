@@ -53,3 +53,11 @@ export const useDeletePayment = () => {
     },
   });
 };
+
+export const usePaymentData = (role: string, companyId?: string | number) => {
+  return useQuery({
+    queryKey: ["paymentData", role, companyId],
+    queryFn: () => paymentApi.getCompanyData(role, companyId),
+    enabled: role === "super_admin" ? !!companyId : true,
+  });
+};
