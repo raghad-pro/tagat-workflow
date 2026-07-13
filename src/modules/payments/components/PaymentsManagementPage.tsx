@@ -50,7 +50,7 @@ export function PaymentsManagementPage() {
   }, []);
 
   // Queries
-  const { data: paymentsRes, isLoading, isFetching } = usePayments(user?.role as string, {
+  const { data: paymentsRes, isLoading, isFetching } = usePayments({
     search,
     status,
     page,
@@ -58,7 +58,7 @@ export function PaymentsManagementPage() {
   });
 
   const { data: statsRes, isLoading: isStatsLoading } = usePaymentStats(user?.role as string);
-  const { mutateAsync: deletePayment, isPending: isDeleting } = useDeletePayment(user?.role as string);
+  const { mutateAsync: deletePayment, isPending: isDeleting } = useDeletePayment();
 
   const handleDelete = useCallback(() => {
     if (!paymentToDelete) return;

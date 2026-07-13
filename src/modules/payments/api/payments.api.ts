@@ -24,6 +24,13 @@ export const paymentApi = {
     return response.data;
   },
 
+  getStats: async (role: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `${getRolePrefix(role)}/payments/stats`
+    );
+    return response.data;
+  },
+
   create: async (role: string, data: Record<string, any>) => {
     const response = await apiClient.post<ApiResponse<any>>(
       `${getRolePrefix(role)}/payments`,

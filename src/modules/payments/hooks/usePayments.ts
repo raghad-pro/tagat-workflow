@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tansta
 import { paymentApi } from "../api/payments.api";
 import { useAuth } from "@/providers/AuthProvider";
 
-export const usePayments = (params?: { search?: string; page?: number }) => {
+export const usePayments = (params?: { search?: string; page?: number; status?: string; per_page?: number }) => {
   const { user } = useAuth();
   const role = user?.role || "super_admin";
 
@@ -12,6 +12,13 @@ export const usePayments = (params?: { search?: string; page?: number }) => {
     queryKey: ["payments", role, params],
     queryFn: () => paymentApi.getAll(role, params),
     placeholderData: keepPreviousData,
+  });
+};
+
+export const usePaymentStats = (role: string) => {
+  return useQuery({
+    queryKey: ["paymentStats", role],
+    queryFn: () => paymentApi.getStats(role),
   });
 };
 
