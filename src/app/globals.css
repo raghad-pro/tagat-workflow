@@ -157,12 +157,18 @@
 
   /* ── Auth background circle ─────────────────────────────────────────────── */
   .circle::before {
-    content: ""; position: absolute;
-    top: -150px; right: -150px;
-    width: 400px; height: 400px;
-    box-shadow: 0px 0px 25px 20px var(--color-bg-primary-200);
-    background-color: var(--color-bg-primary-200);
-    border-radius: 50%; z-index: 0;
+    content: ""; 
+    position: absolute;
+    top: -300px; 
+    right: -250px;
+    width: 900px; 
+    height: 900px;
+    background-color: var(--color-primary);
+    opacity: 0.15;
+    filter: blur(120px);
+    border-radius: 50%; 
+    z-index: 0;
+    pointer-events: none;
   }
 
   /* ── Scrollbar ──────────────────────────────────────────────────────────── */

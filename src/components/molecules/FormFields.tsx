@@ -29,8 +29,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 // ─── Shared styles ─────────────────────────────────────────────────────────────
 const inputBase = cn(
   "w-full ds-border-input-color ds-text-sm ds-text-primary",
-  "focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:shadow-none",
-  "focus-visible:border-[var(--color-primary)]"
+  "transition-all duration-300 rounded-xl",
+  "hover:border-[var(--color-primary)] hover:shadow-[0_0_10px_rgba(18,194,233,0.15)]",
+  "focus-visible:ring-0 focus-visible:ring-offset-0",
+  "focus-visible:border-[var(--color-primary)] focus-visible:shadow-[0_0_15px_rgba(18,194,233,0.25)]"
 );
 
 // ─── Base Props ────────────────────────────────────────────────────────────────

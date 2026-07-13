@@ -12,6 +12,7 @@ import { TextField, PasswordField } from "@/components/molecules/FormFields";
 import { useRegister } from "@/modules/auth/hooks/useRegister";
 import toast from "react-hot-toast";
 import { useTranslations, useLocale } from "next-intl";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Mail, Building2, Briefcase, Upload, X, Lock } from "@/assets/icons/icons";
 import { CheckboxField } from "@/components/atoms/checkboxField";
@@ -40,29 +41,30 @@ function AccountTypeStep({
   onNext: () => void;
 }) {
   const t = useTranslations("auth");
-  const cardBase = "flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 transition-all cursor-pointer";
+  const cardBase = "flex flex-col items-center justify-center gap-2 p-5 rounded-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] active:scale-95";
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="flex flex-col gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <button
           type="button"
           onClick={() => onSelect("client")}
-          className={cardBase}
+          className={`${cardBase} ${selected === "client" ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)]" : "hover:border-gray-300"}`}
           style={{
-            background: selected === "client" ? "var(--color-bg-primary)" : "var(--color-bg-form)",
-            borderColor: selected === "client" ? "var(--color-primary)" : "var(--color-border-inputs)",
-            color: selected === "client" ? "var(--color-text-button)" : "var(--color-text-primary)",
+            background: selected === "client" ? "var(--color-primary)" : "#ffffff",
+            borderColor: selected === "client" ? "var(--color-primary)" : "#e5e7eb",
+            color: selected === "client" ? "#ffffff" : "#000000",
           }}
         >
-          <Briefcase size={28} />
-          <div className="text-center">
-            <Text size="sm" weight="bold" color={selected === "client" ? "primary" : "primary"}
-              className={selected === "client" ? "!text-white" : ""}>
+          <div className={`transition-transform duration-300 ${selected === "client" ? "scale-110" : "scale-100"}`}>
+            <User size={30} strokeWidth={1.5} />
+          </div>
+          <div className="text-center mt-1">
+            <Text size="base" weight="bold" className={selected === "client" ? "!text-white" : "!text-black"}>
               {t("client")}
             </Text>
-            <p className="text-[11px] mt-1 ds-leading-normal"
-              style={{ color: selected === "client" ? "rgba(255,255,255,0.8)" : "var(--color-text-gray-200)" }}>
+            <p className="text-[10px] mt-2 leading-snug"
+              style={{ color: selected === "client" ? "rgba(255,255,255,0.9)" : "#6b7280" }}>
               {t("client_desc")}
             </p>
           </div>
@@ -71,29 +73,42 @@ function AccountTypeStep({
         <button
           type="button"
           onClick={() => onSelect("company")}
-          className={cardBase}
+          className={`${cardBase} ${selected === "company" ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)]" : "hover:border-gray-300"}`}
           style={{
-            background: selected === "company" ? "var(--color-bg-primary)" : "var(--color-bg-form)",
-            borderColor: selected === "company" ? "var(--color-primary)" : "var(--color-border-inputs)",
-            color: selected === "company" ? "var(--color-text-button)" : "var(--color-text-primary)",
+            background: selected === "company" ? "var(--color-primary)" : "#ffffff",
+            borderColor: selected === "company" ? "var(--color-primary)" : "#e5e7eb",
+            color: selected === "company" ? "#ffffff" : "#000000",
           }}
         >
-          <Building2 size={28} />
-          <div className="text-center">
-            <Text size="sm" weight="bold" className={selected === "company" ? "!text-white" : ""}>
+          <div className={`transition-transform duration-300 ${selected === "company" ? "scale-110" : "scale-100"}`}>
+            <Briefcase size={30} strokeWidth={1.5} />
+          </div>
+          <div className="text-center mt-1">
+            <Text size="base" weight="bold" className={selected === "company" ? "!text-white" : "!text-black"}>
               {t("company")}
             </Text>
-            <p className="text-[11px] mt-1 ds-leading-normal"
-              style={{ color: selected === "company" ? "rgba(255,255,255,0.8)" : "var(--color-text-gray-200)" }}>
+            <p className="text-[10px] mt-2 leading-snug"
+              style={{ color: selected === "company" ? "rgba(255,255,255,0.9)" : "#6b7280" }}>
               {t("company_desc")}
             </p>
           </div>
         </button>
       </div>
 
-      <Button type="button" variant="solid" disabled={!selected} onClick={onNext} fullWidth>
-        {t("next")}
-      </Button>
+      <div className="mt-2 flex justify-center">
+        <div className="w-full sm:w-[85%]">
+          <Button 
+            type="button" 
+            variant="solid" 
+            disabled={!selected} 
+            onClick={onNext} 
+            fullWidth 
+            className="!rounded-xl !py-4 sm:!py-6 !text-[15px] !font-bold tracking-wide transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-[2px] active:scale-95 active:translate-y-0"
+          >
+            {t("next")}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -248,8 +263,8 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
           <Link href="/conditions" className="ds-text-primary hover:underline">Conditions</Link>
         </CheckboxField>
         <div className="flex flex-col gap-3 mt-2">
-          <Button type="button" variant="outline" onClick={onBack} fullWidth>{t("back")}</Button>
-          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms}>{t("create_account")}</Button>
+          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0">{t("back")}</Button>
+          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0">{t("create_account")}</Button>
         </div>
       </form>
     </Form>
@@ -324,8 +339,8 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
           <Link href="/conditions" className="ds-text-brand hover:underline">Conditions</Link>
         </CheckboxField>
         <div className="flex flex-col gap-3 mt-2">
-          <Button type="button" variant="outline" onClick={onBack} fullWidth>{t("back")}</Button>
-          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms}>{t("create_account")}</Button>
+          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0">{t("back")}</Button>
+          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0">{t("create_account")}</Button>
         </div>
       </form>
     </Form>
@@ -416,49 +431,58 @@ export default function RegisterPage() {
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <main className="ds-bg flex  justify-center overflow-y-auto  w-full max-w-lg mx-auto  rounded-2xl">
-      <div className="w-full  rounded-2xl ds-bg-form ds-border-form px-10 py-12"
-        style={{ boxShadow: "var(--shadow-sm)" }} dir={dir}>
+    <main className="flex justify-center w-full mx-auto px-4 pb-10">
+      <div className="w-full max-w-[420px] bg-white rounded-3xl px-5 sm:px-8 py-8 sm:py-10"
+        style={{ boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)" }} dir={dir}>
 
         {step === 1 ? (
-          <Text size="xl" weight="bold" tag="h1" className="text-center mb-6">
-            {t("account_type")}
-          </Text>
+          <h1 className="text-left text-[22px] font-bold text-black mb-8 px-1">
+            {t("account_type") || "Account Type"}
+          </h1>
         ) : (
           <>
             <Text size="xl" weight="bold" tag="h1" className="text-center mb-1">
               {t("register")}{" "}
-              <span className="ds-text-brand">{t("account")}</span>
+              <span style={{ color: "var(--color-primary)" }}>{t("account")}</span>
             </Text>
-            {/* <Text size="base" color="gray-200" className="text-center mb-6"></Text> */}
           </>
         )}
 
-        {step === 1 && (
-          <AccountTypeStep
-            selected={accountType}
-            onSelect={(type) => router.push(`?step=1&type=${type}`)}
-            onNext={() => router.push(`?step=2&type=${accountType}`)}
-          />
-        )}
-        {step === 2 && accountType === "company" && (
-          <CompanyForm onBack={() => router.push("?step=1&type=company")} isPending={isPending} onRegister={register} onSuccessRegister={(em) => { setRegisteredEmail(em); router.replace("/verify?email=" + encodeURIComponent(em)); }} />
-        )}
-        {step === 2 && accountType === "client" && (
-          <ClientForm onBack={() => router.push("?step=1&type=client")} isPending={isPending} onRegister={register} onSuccessRegister={(em) => { setRegisteredEmail(em); router.replace("/verify?email=" + encodeURIComponent(em)); }} />
-        )}
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.div key="step1" initial={{ opacity: 0, x: dir === 'rtl' ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir === 'rtl' ? 20 : -20 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+              <AccountTypeStep
+                selected={accountType}
+                onSelect={(type) => router.push(`?step=1&type=${type}`)}
+                onNext={() => router.push(`?step=2&type=${accountType}`)}
+              />
+            </motion.div>
+          )}
+          {step === 2 && accountType === "company" && (
+            <motion.div key="step2-company" initial={{ opacity: 0, x: dir === 'rtl' ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir === 'rtl' ? 20 : -20 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+              <CompanyForm onBack={() => router.push("?step=1&type=company")} isPending={isPending} onRegister={register} onSuccessRegister={(em) => { setRegisteredEmail(em); router.replace("/verify?email=" + encodeURIComponent(em)); }} />
+            </motion.div>
+          )}
+          {step === 2 && accountType === "client" && (
+            <motion.div key="step2-client" initial={{ opacity: 0, x: dir === 'rtl' ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir === 'rtl' ? 20 : -20 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+              <ClientForm onBack={() => router.push("?step=1&type=client")} isPending={isPending} onRegister={register} onSuccessRegister={(em) => { setRegisteredEmail(em); router.replace("/verify?email=" + encodeURIComponent(em)); }} />
+            </motion.div>
+          )}
 
-        {step === 3 && (
-          <OtpStep email={registeredEmail} onSuccess={() => router.replace("/login")} />
-        )}
+          {step === 3 && (
+            <motion.div key="step3" initial={{ opacity: 0, x: dir === 'rtl' ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir === 'rtl' ? 20 : -20 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+              <OtpStep email={registeredEmail} onSuccess={() => router.replace("/login")} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
 
         {step !== 3 && (
-          <Text size="sm" color="gray-200" className="text-center mt-6">
-            {t("login_text")}{" "}
+          <Text size="sm" className="text-center mt-6 text-[11px]" style={{ color: "#6b7280" }}>
+            {t("login_text") || "Already not have an account?"}{" "}
             <Link href="/login">
-              <Text size="sm" color="brand" weight="bold" tag="span" className="hover:underline">
-                {t("login")}
+              <Text size="sm" weight="bold" tag="span" className="hover:underline" style={{ color: "var(--color-primary)" }}>
+                {t("login") || "login"}
               </Text>
             </Link>
           </Text>
