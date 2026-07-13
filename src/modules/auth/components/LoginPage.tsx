@@ -44,18 +44,16 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="ds-bg flex  justify-center overflow-y-auto  w-full max-w-lg mx-auto  rounded-2xl">
-      <div className="w-full  rounded-2xl ds-bg-form ds-border-form px-10 py-12"
-        style={{ boxShadow: "var(--shadow-sm)" }}>
+    <main className="flex justify-center w-full mx-auto px-4 pb-10">
+      <div className="w-full max-w-[420px] bg-white rounded-3xl px-5 sm:px-8 py-8 sm:py-10"
+        style={{ boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)" }}>
       
-
         {/* ── Heading ── */}
-        <Text size="xl" weight="bold" tag="h1" className="text-start mb-1">
-          {t("welcome")} <span className="ds-text-brand">{t("welcome_back")}</span>
-        </Text>
-        <Text size="base" color="primary" weight="bold" className="text-center mb-8">
-          {t("login")}
-        </Text>
+        <div className="mb-8">
+          <Text size="xl" weight="bold" tag="h1" className="text-start mb-1 text-[22px]">
+            {t("welcome")} <span style={{ color: "var(--color-primary)" }}>{t("welcome_back")}</span>
+          </Text>
+        </div>
 
         {/* ── Form ── */}
         <Form {...form}>
@@ -63,7 +61,6 @@ export default function LoginPage() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
           >
-
             {/* Email */}
             <TextField
               control={form.control}
@@ -87,41 +84,41 @@ export default function LoginPage() {
               />
 
               {/* ── Remember me + Forgot password ── */}
-              <div className="flex items-center justify-between mt-1 w-full">
-
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 w-full gap-3 sm:gap-0">
                 {/* Checkbox تذكرني */}
-            <CheckboxField
-              checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(!!checked)}
-              label={t("remember_me")} 
-            />
+                <CheckboxField
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(!!checked)}
+                  label={t("remember_me")} 
+                />
 
                 {/* Forgot password */}
                 <Link href="/forgot-password">
-                  <Text size="sm" color="brand" tag="span" className="hover:underline" >
+                  <Text size="sm" tag="span" className="hover:underline text-[13px]" style={{ color: "var(--color-primary)" }}>
                     {t("forgot_password")}
                   </Text>
                 </Link>
-
               </div>
             </div>
 
             {/* Submit */}
-            <Button
-              type="submit"
-              variant="solid"
-              size="lg"
-              fullWidth
-              loading={isPending}
-            >
-              {t("login")}
-            </Button>
+            <div className="mt-4">
+              <Button
+                type="submit"
+                variant="solid"
+                fullWidth
+                loading={isPending}
+                className="!rounded-xl !py-4 sm:!py-6 !text-[15px] !font-bold tracking-wide transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-[2px] active:scale-95 active:translate-y-0"
+              >
+                {t("login")}
+              </Button>
+            </div>
 
             {/* Footer */}
-            <Text size="sm" color="gray-200" className="text-center">
+            <Text size="sm" className="text-center mt-2 text-[11px]" style={{ color: "#6b7280" }}>
               {t("register_text")}{" "}
               <Link href="/register">
-                <Text size="sm" color="brand" weight="bold" tag="span" className="hover:underline">
+                <Text size="sm" weight="bold" tag="span" className="hover:underline" style={{ color: "var(--color-primary)" }}>
                   {t("register")}
                 </Text>
               </Link>
