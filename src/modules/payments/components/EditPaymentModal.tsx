@@ -40,7 +40,7 @@ export function EditPaymentModal({
   const t = useTranslations("payments");
   const tCommon = useTranslations("common");
   const { user } = useAuth();
-  const { mutateAsync: updatePayment, isPending: isLoading } = useUpdatePayment(user?.role as string);
+  const { mutateAsync: updatePayment, isPending: isLoading } = useUpdatePayment();
   const isCompanyAdmin = user?.role === "company";
 
   const { data: companiesData } = useCompanies({ per_page: 100 });
@@ -63,7 +63,7 @@ export function EditPaymentModal({
   const { data: paymentDataRes, isLoading: isDataLoading } = usePaymentData(user?.role as string, Number(selectedCompanyId) || 0);
 
   const invoiceOptions = useMemo(() => {
-    const list = paymentDataRes?.data?.invoices || [];
+    const list = paymentDataRes?.invoices || [];
     return list.map(inv => ({ 
       label: `${inv.code} - ${inv.client_name} (${inv.amount} ${inv.currency})`, 
       value: String(inv.id) 
@@ -71,12 +71,12 @@ export function EditPaymentModal({
   }, [paymentDataRes]);
 
   const walletOptions = useMemo(() => {
-    const list = paymentDataRes?.data?.wallets || [];
+    const list = paymentDataRes?.wallets || [];
     return list.map(w => ({ label: w.name, value: String(w.id) }));
   }, [paymentDataRes]);
 
   const employeeOptions = useMemo(() => {
-    const list = paymentDataRes?.data?.employees || [];
+    const list = paymentDataRes?.employees || [];
     return list.map(emp => ({ label: emp.user?.name || `Emp #${emp.id}`, value: String(emp.id) }));
   }, [paymentDataRes]);
 

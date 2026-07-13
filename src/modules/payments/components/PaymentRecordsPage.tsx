@@ -15,12 +15,12 @@ import { ArrowUp } from "lucide-react";
 
 const PAGE_SIZE = 4;
 
-const MOCK_DATA: Payment[] = [
+const MOCK_DATA = [
   { id: "1", invoice: "#PAY-78945", company: "Advanced Tech Company", date: "2026-06-06 10:30", method: "Stripe", wallet: "Stripe", amount: 1500 },
   { id: "2", invoice: "#INV-2026-0234", company: "Advanced Tech Company", date: "2026-06-06 10:30", method: "PayPal", wallet: "PayPal", amount: 1500 },
   { id: "3", invoice: "#INV-2026-0235", company: "Green Energy Solutions", date: "2026-06-07 14:15", method: "Credit Card", wallet: "Credit Card", amount: 3200 },
   { id: "4", invoice: "#INV-2026-0236", company: "Urban Design Studios", date: "2026-06-08 09:45", method: "Bank Transfer", wallet: "Bank Transfer", amount: 950 },
-];
+] as Payment[];
 
 export default function PaymentRecordsPage() {
   const [search, setSearch] = useState("");
