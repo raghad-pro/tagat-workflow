@@ -81,7 +81,7 @@ function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
           <button
             type="button"
             onClick={() => router.push("/login")}
-            className="text-center ds-text-sm ds-text-gray-200 hover:ds-text-brand transition-colors"
+            className="cursor-pointer text-center ds-text-sm ds-text-gray-200 hover:text-[var(--color-primary)] transition-colors"
           >
             {t("back_to_login")}
           </button>
