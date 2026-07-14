@@ -25,7 +25,7 @@ interface AddRoleModalProps {
 export default function AddRoleModal({ isOpen, onClose, onSubmit }: AddRoleModalProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(addRoleSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { name: "", description: "" },
   });
 

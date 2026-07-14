@@ -43,7 +43,7 @@ export function EditCurrencyModal({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(editCurrencySchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       name: "",
       code: "",

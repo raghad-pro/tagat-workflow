@@ -51,7 +51,7 @@ export function EditPaymentModal({
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
   });
 
   const selectedCompanyId = useWatch({ control: form.control, name: "company_id" }) || (isCompanyAdmin ? user?.company_id : data?.company_id);

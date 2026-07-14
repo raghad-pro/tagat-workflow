@@ -93,7 +93,7 @@ export default function AddTaskModal({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(getTaskSchema(t, isSuperAdmin, isEmployee)),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       company: "",
       project: "",

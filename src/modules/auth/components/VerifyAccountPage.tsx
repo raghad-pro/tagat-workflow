@@ -64,7 +64,7 @@ export default function VerifyAccountPage() {
 
   return (
     <main className="ds-bg flex justify-center overflow-y-auto w-full max-w-lg mx-auto rounded-2xl" dir={dir}>
-      <div className="w-full rounded-2xl ds-bg-form ds-border-form px-10 py-12" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <div className="w-full rounded-2xl bg-white dark:bg-[#1a1c23]/40 dark:backdrop-blur-xl border border-gray-100 dark:border-white/10 px-10 py-12" style={{ boxShadow: "var(--shadow-sm)" }}>
         <div className="text-center mb-6">
           <Text size="xl" weight="bold" tag="h1" className="mb-2">{t("fp_title_step2") || "Verify Account"}</Text>
           <Text size="sm" color="gray-200" className="leading-relaxed">

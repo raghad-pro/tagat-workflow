@@ -54,7 +54,7 @@
 
 //   const form = useForm<FormValues>({
 //     resolver: zodResolver(getProjectSchema(isCompanyAdmin)),
-//     mode: "onTouched",
+//     mode: "onSubmit",
 //     defaultValues: { title: "", budget: "", company: "", status: "", currency: "", employees: [], notes: "" },
 //   });
 
@@ -226,7 +226,7 @@ export default function AddProjectModal({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(getProjectSchema(isCompanyAdmin, tCommon)),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       title:     "",
       budget:    "",

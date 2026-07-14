@@ -12,8 +12,9 @@ export default function Logo() {
     <Image
       src={theme === "dark" ? logoDark : logoLight}
       alt="Workflow"
-      width={250}
-      height={0}
+      width={220}
+      height={60}
+      className="w-full h-auto max-w-[150px] sm:max-w-[190px] mx-auto transform scale-[1.15] origin-center"
       priority
     />
   );

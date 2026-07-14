@@ -40,7 +40,7 @@ export function AddCurrencyModal({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(addCurrencySchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       name: "",
       code: "",

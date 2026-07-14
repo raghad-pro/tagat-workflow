@@ -38,7 +38,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(editDevelopmentSchema) as any,
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       project_id: 1,
       client_id: 1,

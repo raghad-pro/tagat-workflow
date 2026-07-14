@@ -16,11 +16,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
-  LayoutDashboard,
-  Building2, MessageSquare, Users,
-  FileText, CreditCard, Wallet, ArrowLeftRight, DollarSign,
-  ShieldCheck, UserCog, FolderKanban, CheckSquare, Clock,
-  Wrench, FileSignature,
+  LayoutGrid,
+  Building2, MessageSquare, MessageCircleMore, Users, UsersRound, UserRoundPlus,
+  FileText, CustomCardIcon, Wallet, ArrowLeftRight, DollarSign,
+  ShieldCheck, UserCog, FolderKanban, CheckSquare, SquareCheck, Clock,
+  Wrench, FileSignature, ScrollText, ArrowUpDown, BadgePercent
 } from "@/assets/icons/icons";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,12 +31,13 @@ type Role = "super_admin" | "company" | "employee" | "client";
 interface NavItem {
   key: string;
   href: string;
-  icon: LucideIcon;
+  icon: LucideIcon | React.FC<any>;
   roles: Role[];
 }
 
 interface NavGroup {
   key: string;
+  label?: string;
   roles: Role[];
   items: NavItem[];
 }
@@ -45,24 +46,44 @@ interface NavGroup {
 const NAV_GROUPS: NavGroup[] = [
   {
     key: "home",
+    label: "Home",
     roles: ["super_admin", "company", "employee", "client"],
     items: [
-      { key: "dashboard",          href: "/dashboard",          icon: LayoutDashboard, roles: ["super_admin", "company", "employee", "client"] },
-      { key: "roles",              href: "/roles",              icon: ShieldCheck,   roles: ["super_admin"] },
-      { key: "companies",          href: "/companies",          icon: Building2,      roles: ["super_admin", "client"] },
-      { key: "currencies",         href: "/currencies",         icon: DollarSign,     roles: ["super_admin", "company"] },
-      { key: "clients",            href: "/clients",            icon: Users,     roles: ["super_admin", "company"] },
-      { key: "companyRequests",    href: "/company-requests",   icon: MessageSquare,  roles: ["super_admin", "company"] },
-      { key: "employees",          href: "/employees",          icon: UserCog,       roles: ["super_admin", "company"] },
-      { key: "projects",           href: "/projects",           icon: FolderKanban,  roles: ["super_admin", "company", "employee", "client"] },
-      { key: "developments",       href: "/developments",       icon: Wrench,        roles: ["super_admin", "company"] },
-      { key: "wallets",            href: "/wallets",            icon: Wallet,         roles: ["super_admin", "company"] },
-      { key: "walletTransactions", href: "/wallet-transactions", icon: ArrowLeftRight, roles: ["super_admin", "company"] },
-      { key: "invoices",           href: "/invoices",           icon: FileText,       roles: ["super_admin", "company", "client"] },
-      { key: "payments",           href: "/payments",           icon: CreditCard,     roles: ["super_admin", "company", "client"] },
-      { key: "tasks",              href: "/tasks",              icon: CheckSquare,   roles: ["super_admin", "company", "employee"] },
-      { key: "timesheets",         href: "/timesheets",         icon: Clock,         roles: ["super_admin", "company", "employee"] },
-      { key: "contracts",          href: "/contracts",          icon: FileSignature, roles: ["super_admin", "company"] },
+      { key: "dashboard", href: "/dashboard", icon: LayoutGrid, roles: ["super_admin", "company", "employee", "client"] },
+    ],
+  },
+  {
+    key: "subscriberManagement",
+    label: "Subscriber Management",
+    roles: ["super_admin", "company"],
+    items: [
+      { key: "companyRequests", href: "/company-requests", icon: MessageCircleMore, roles: ["super_admin", "company"] },
+      { key: "clients", href: "/clients", icon: UsersRound, roles: ["super_admin", "company"] },
+    ],
+  },
+  {
+    key: "financialManagement",
+    label: "Financial Management",
+    roles: ["super_admin", "company", "client"],
+    items: [
+      { key: "currencies", href: "/currencies", icon: BadgePercent, roles: ["super_admin", "company"] },
+      { key: "wallets", href: "/wallets", icon: Wallet, roles: ["super_admin", "company"] },
+      { key: "walletTransactions", href: "/wallet-transactions", icon: ArrowUpDown, roles: ["super_admin", "company"] },
+      { key: "invoices", href: "/invoices", icon: FileText, roles: ["super_admin", "company", "client"] },
+      { key: "payments", href: "/payments", icon: CustomCardIcon, roles: ["super_admin", "company", "client"] },
+    ],
+  },
+  {
+    key: "internalOperations",
+    label: "Internal Operations",
+    roles: ["super_admin", "company", "employee", "client"],
+    items: [
+      { key: "employees", href: "/employees", icon: UserRoundPlus, roles: ["super_admin", "company"] },
+      { key: "projects", href: "/projects", icon: FileText, roles: ["super_admin", "company", "employee", "client"] },
+      { key: "tasks", href: "/tasks", icon: SquareCheck, roles: ["super_admin", "company", "employee"] },
+      { key: "timesheets", href: "/timesheets", icon: Clock, roles: ["super_admin", "company", "employee"] },
+      { key: "developments", href: "/developments", icon: Wrench, roles: ["super_admin", "company"] },
+      { key: "contracts", href: "/contracts", icon: ScrollText, roles: ["super_admin", "company"] },
     ],
   },
 ];
@@ -83,19 +104,19 @@ export function AppSidebar() {
     .filter((g) => g.items.length > 0);
 
   return (
-<Sidebar
+    <Sidebar
       collapsible="none"
       className={cn(
         "border-e border-[var(--sidebar-border,var(--color-border-form))]",
-        "bg-[var(--sidebar-bg,var(--color-bg-form))]",
-        "w-14 md:w-[var(--sidebar-width,240px)]",
+        "bg-white",
+        "w-14 md:w-[var(--sidebar-width,260px)]",
         "h-screen" // تأكيد أن السايدبار يأخذ كامل ارتفاع الشاشة ليشتغل السكرول داخله بشكل صحيح
       )}
     >
       {/* ── Logo ── */}
       <SidebarHeader
-        className="border-b border-[var(--sidebar-border,var(--color-border-form))] px-3 md:px-4"
-        style={{ height: "var(--navbar-height, 64px)", justifyContent: "center" }}
+        className="px-6 pt-2 pb-0"
+        style={{ justifyContent: "center" }}
       >
         <div
           className="flex md:hidden w-8 h-8 rounded-lg items-center justify-center mx-auto shrink-0"
@@ -105,44 +126,38 @@ export function AppSidebar() {
             W
           </span>
         </div>
-        <div className="hidden md:block">
+        <div className="hidden md:block w-full mb-0">
           <Logo />
         </div>
       </SidebarHeader>
 
-      {/* ── Nav (تعديل السكرول هنا) ── */}
+      {/* ── Nav ── */}
       <SidebarContent 
         className={cn(
-          "px-2 py-3",
-          "overflow-y-auto overflow-x-hidden", 
-          "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
-          "[&::-webkit-scrollbar]:w-1",
-          "[&::-webkit-scrollbar-thumb]:bg-gray-400/20",
-          "dark:[&::-webkit-scrollbar-thumb]:bg-white/10",
-          "[&::-webkit-scrollbar-thumb]:rounded-full",
-          "hover:[&::-webkit-scrollbar-thumb]:bg-gray-400/50",
-          "dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
+          "px-4 pt-0 pb-2",
+          "overflow-y-auto overflow-x-hidden",
+          "scrollbar-hide", /* Hide scrollbar utility if exists */
+          "[&::-webkit-scrollbar]:hidden" /* Fallback to hide scrollbar */
         )}
       >
         {visibleGroups.map((group) => (
           <SidebarGroup key={group.key} className="p-0 mb-1">
 
             {/* Group label — desktop فقط */}
-            {visibleGroups.length > 1 && (
+            {group.label && (
               <SidebarGroupLabel
                 className={cn(
-                  "text-[0.68rem] font-bold uppercase tracking-widest px-3 mb-1",
+                  "text-[12px] font-bold text-gray-500 px-3 mb-0 capitalize",
                   "hidden md:flex"
                 )}
-                style={{ color: "var(--sidebar-group-label, var(--color-text-gray-200))" }}
               >
-                {t(group.key as Parameters<typeof t>[0])}
+                {group.label}
               </SidebarGroupLabel>
             )}
 
             {/* Divider — mobile فقط بدل الـ label */}
-            {visibleGroups.length > 1 && (
-              <div className="md:hidden my-1 border-t border-[var(--sidebar-border,var(--color-border-form))]" />
+            {visibleGroups.length > 1 && group.key !== "home" && (
+              <div className="md:hidden my-2 border-t border-[var(--sidebar-border,var(--color-border-form))]" />
             )}
 
             <SidebarMenu>
@@ -159,24 +174,24 @@ export function AppSidebar() {
                       isActive={isActive}
                       tooltip={undefined}
                       className={cn(
-                        "rounded-[10px] gap-1",
-                        "flex-col h-auto py-2 md:flex-row md:h-10 md:py-0",
+                        "rounded-[10px] gap-3 transition-all duration-200",
+                        "flex-col h-auto py-1 md:flex-row md:h-8 md:py-0",
                         "justify-center md:justify-start",
                         "px-0 md:px-3",
                         "group/nav-item",
-                        "text-[var(--sidebar-item-text,var(--color-text-gray))] font-medium text-sm",
-                        "hover:bg-[var(--sidebar-item-hover,var(--color-bg-primary-200))]",
-                        "hover:text-[var(--sidebar-item-active-text,var(--color-text-brand))]",
+                        "font-bold text-[13px]",
+                        "hover:bg-gray-50",
+                        "text-gray-600 hover:text-gray-900",
                         isActive && [
-                          "bg-[var(--sidebar-item-active-bg,var(--color-bg-primary-200))]",
-                          "text-[var(--sidebar-item-active-text,var(--color-text-brand))]",
-                          "font-bold",
+                          "bg-[#1ec3cc] hover:bg-[#1ab0b8]",
+                          "text-white hover:text-white",
+                          "shadow-sm shadow-cyan-500/20"
                         ]
                       )}
                     >
                       <Link href={item.href}>
-                        <Icon size={18} className="shrink-0" />
-                        <span className="hidden md:block truncate">{t(item.key as Parameters<typeof t>[0])}</span>
+                        <Icon size={18} className={cn("shrink-0", isActive ? "text-white" : "text-gray-600 group-hover:text-gray-900")} />
+                        <span className="hidden md:block truncate mt-[2px]">{t(item.key as Parameters<typeof t>[0])}</span>
                         <span className="md:hidden text-[10px] leading-tight text-center w-full max-h-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/nav-item:max-h-4 group-hover/nav-item:opacity-100 truncate">
                           {t(item.key as Parameters<typeof t>[0])}
                         </span>

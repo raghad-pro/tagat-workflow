@@ -49,7 +49,7 @@ export function AddCompanyModal({ isOpen, onClose, onSave, isLoading }: { isOpen
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { email: "", companyName: "", subdomain: "", fieldOfWork: "" },
   });
 

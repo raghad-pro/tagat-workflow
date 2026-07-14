@@ -14,11 +14,12 @@ import toast from "react-hot-toast";
 import { useTranslations, useLocale } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User, Mail, Building2, Briefcase, Upload, X, Lock } from "@/assets/icons/icons";
+import { User, Briefcase, Building2, Mail, Lock, Upload, X, Globe } from "lucide-react";
 import { CheckboxField } from "@/components/atoms/checkboxField";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useVerifyEmailOtp } from "@/modules/auth/hooks/useVerifyEmailOtp";
 import { useResendVerificationCode } from "@/modules/auth/hooks/useResendVerificationCode";
+import { cn } from "@/lib/utils";
 
 
 type AccountType = "company" | "client" | null;
@@ -44,23 +45,23 @@ function AccountTypeStep({
   const cardBase = "flex flex-col items-center justify-center gap-2 p-5 rounded-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] active:scale-95";
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <button
           type="button"
           onClick={() => onSelect("client")}
-          className={`${cardBase} ${selected === "client" ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)]" : "hover:border-gray-300"}`}
-          style={{
-            background: selected === "client" ? "var(--color-primary)" : "#ffffff",
-            borderColor: selected === "client" ? "var(--color-primary)" : "#e5e7eb",
-            color: selected === "client" ? "#ffffff" : "#000000",
-          }}
+          className={cn(
+            cardBase,
+            selected === "client"
+              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+              : "hover:border-gray-300 bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700 text-black dark:text-white"
+          )}
         >
           <div className={`transition-transform duration-300 ${selected === "client" ? "scale-110" : "scale-100"}`}>
             <User size={30} strokeWidth={1.5} />
           </div>
           <div className="text-center mt-1">
-            <Text size="base" weight="bold" className={selected === "client" ? "!text-white" : "!text-black"}>
+            <Text size="base" weight="bold" className={selected === "client" ? "!text-white" : "!text-black dark:!text-white"}>
               {t("client")}
             </Text>
             <p className="text-[10px] mt-2 leading-snug"
@@ -73,18 +74,18 @@ function AccountTypeStep({
         <button
           type="button"
           onClick={() => onSelect("company")}
-          className={`${cardBase} ${selected === "company" ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)]" : "hover:border-gray-300"}`}
-          style={{
-            background: selected === "company" ? "var(--color-primary)" : "#ffffff",
-            borderColor: selected === "company" ? "var(--color-primary)" : "#e5e7eb",
-            color: selected === "company" ? "#ffffff" : "#000000",
-          }}
+          className={cn(
+            cardBase,
+            selected === "company"
+              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+              : "hover:border-gray-300 bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700 text-black dark:text-white"
+          )}
         >
           <div className={`transition-transform duration-300 ${selected === "company" ? "scale-110" : "scale-100"}`}>
             <Briefcase size={30} strokeWidth={1.5} />
           </div>
           <div className="text-center mt-1">
-            <Text size="base" weight="bold" className={selected === "company" ? "!text-white" : "!text-black"}>
+            <Text size="base" weight="bold" className={selected === "company" ? "!text-white" : "!text-black dark:!text-white"}>
               {t("company")}
             </Text>
             <p className="text-[10px] mt-2 leading-snug"
@@ -95,7 +96,7 @@ function AccountTypeStep({
         </button>
       </div>
 
-      <div className="mt-2 flex justify-center">
+      <div className="mt-1 flex justify-center">
         <div className="w-full sm:w-[85%]">
           <Button 
             type="button" 
@@ -103,7 +104,7 @@ function AccountTypeStep({
             disabled={!selected} 
             onClick={onNext} 
             fullWidth 
-            className="!rounded-xl !py-4 sm:!py-6 !text-[15px] !font-bold tracking-wide transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-[2px] active:scale-95 active:translate-y-0"
+            className="!rounded-xl !py-2.5 sm:!py-4 !text-[14px] sm:!text-[15px] !font-bold tracking-wide transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-[2px] active:scale-95 active:translate-y-0"
           >
             {t("next")}
           </Button>
@@ -122,33 +123,36 @@ function LogoUpload({ preview, error, onChange, onRemove }: {
 }) {
   const t = useTranslations("auth");
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <Text size="sm" weight="bold" tag="p">
-        {t("company_logo")}
-        <Text tag="span" size="sm" color="gray-200" className="text-[11px] ms-1">
-          ({t("optional")})
-        </Text>
+        {t("company_logo")} <span className="ds-text-sub font-normal text-[12px]">({t("optional")})</span>
       </Text>
       <label
         htmlFor="logo"
-        className="relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all"
+        className="relative flex flex-row items-center justify-center gap-3 p-3 rounded-xl border-2 border-dashed cursor-pointer transition-all"
         style={{
           borderColor: preview ? "var(--color-primary)" : "var(--color-border-inputs)",
           background: "var(--color-bg)",
         }}
       >
         {preview ? (
-          <>
-            <img src={preview} alt="logo preview" className="w-16 h-16 rounded-full object-cover"
-              style={{ outline: "2px solid var(--color-primary)" }} />
-            <Text size="sm" color="gray-200">{t("change_logo")}</Text>
-          </>
+          <div className="relative w-full h-16 rounded-lg overflow-hidden group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={preview} alt="Logo preview" className="w-full h-full object-contain" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+              <Text size="sm" weight="bold" className="text-white">{t("change_logo")}</Text>
+            </div>
+          </div>
         ) : (
-          <>
-            <Upload size={22} style={{ color: "var(--color-text-gray-200)" }} />
-            <Text size="sm" color="gray-200">{t("upload_logo")}</Text>
-            <Text size="sm" color="gray-200" className="text-[11px]">PNG, JPG, WebP — max 2MB</Text>
-          </>
+          <div className="flex flex-row items-center gap-3">
+            <div className="p-2 bg-[var(--color-bg-primary-100)] rounded-full text-[var(--color-primary)]">
+              <Upload size={18} />
+            </div>
+            <div className="text-start">
+              <Text size="sm" weight="bold" className="mb-0.5 text-gray-900 dark:text-gray-100">{t("upload_logo")}</Text>
+              <Text size="sm" className="text-xs text-gray-500">PNG, JPG, WebP — max 2MB</Text>
+            </div>
+          </div>
         )}
         <input id="logo" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onChange} />
       </label>
@@ -195,7 +199,7 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: getInitialValues(),
   });
 
@@ -244,12 +248,12 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2">
         <TextField control={form.control} name="companyName" label={t("company_name")} placeholder={t("company_name_placeholder")} required icon={Building2} />
-        <TextField control={form.control} name="domain" label="Domain / Subdomain" placeholder="example-company" required />
+        <TextField control={form.control} name="domain" label="Domain / Subdomain" placeholder="example-company" required icon={Globe} />
         <TextField control={form.control} name="email" label={t("email")} placeholder={t("email_placeholder")} type="email" required icon={Mail} />
         <PasswordField control={form.control} name="password" label={t("password_new")} placeholder={t("password_new_placeholder")} required icon={Lock} />
-        <PasswordField control={form.control} name="password_confirmation" label={t("password_confirm")} placeholder={t("password_confirm_placeholder")} required />
+        <PasswordField control={form.control} name="password_confirmation" label={t("password_confirm")} placeholder={t("password_confirm_placeholder")} required icon={Lock} />
         <LogoUpload
           preview={logoPreview}
           error={logoError}
@@ -262,9 +266,9 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
           and{" "}
           <Link href="/conditions" className="ds-text-primary hover:underline">Conditions</Link>
         </CheckboxField>
-        <div className="flex flex-col gap-3 mt-2">
-          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0">{t("back")}</Button>
-          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0">{t("create_account")}</Button>
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("back")}</Button>
+          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("create_account")}</Button>
         </div>
       </form>
     </Form>
@@ -294,7 +298,7 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { fullName: "", email: "", password: "", password_confirmation: "" },
   });
 
@@ -327,7 +331,7 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-3">
         <TextField control={form.control} name="fullName" label={t("full_name")} placeholder={t("full_name_placeholder")} required icon={User} />
         <TextField control={form.control} name="email" label={t("email")} placeholder={t("email_placeholder")} type="email" required icon={Mail} />
         <PasswordField control={form.control} name="password" label={t("password_new")} placeholder={t("password_new_placeholder")} required icon={Lock} />
@@ -338,9 +342,9 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
           and{" "}
           <Link href="/conditions" className="ds-text-brand hover:underline">Conditions</Link>
         </CheckboxField>
-        <div className="flex flex-col gap-3 mt-2">
-          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0">{t("back")}</Button>
-          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0">{t("create_account")}</Button>
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("back")}</Button>
+          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("create_account")}</Button>
         </div>
       </form>
     </Form>
@@ -379,7 +383,7 @@ function OtpStep({ email, onSuccess }: { email: string; onSuccess: () => void })
   return (
     <>
       <div className="text-center mb-6">
-        <Text size="xl" weight="bold" tag="h1" className="mb-2">{t("fp_title_step2") || "Verify Account"}</Text>
+        <Text size="xl" weight="bold" tag="h1" className="mb-2 dark:text-white">{t("fp_title_step2") || "Verify Account"}</Text>
         <Text size="sm" color="gray-200" className="leading-relaxed">
           {t("fp_otp_desc") || "Please enter the OTP sent to"} <span className="ds-text-brand font-semibold">{email}</span>
         </Text>
@@ -390,11 +394,10 @@ function OtpStep({ email, onSuccess }: { email: string; onSuccess: () => void })
           <InputOTPGroup className="gap-3 rtl:flex-row-reverse">
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <InputOTPSlot key={i} index={i} className={[
-                  "w-12 h-12 rounded-xl border-0 text-lg font-bold ds-text-primary transition-all duration-200 ds-bg",
-                  isInvalid ? "ds-text-error" : "",
+                  "w-12 h-12 rounded-xl border-0 text-lg font-bold ds-text-primary transition-all duration-200 bg-gray-50 dark:bg-[#1a1c23] dark:border dark:border-gray-800",
+                  isInvalid ? "ds-text-error border-red-500" : "",
                 ].join(" ")}
                 style={{
-                  background: isInvalid ? "rgba(239,68,68,0.06)" : "var(--ds-bg-form)",
                   boxShadow: isInvalid ? "0 2px 8px rgba(239,68,68,0.18)" : "0 2px 8px rgba(0,0,0,0.08)",
                 }}
               />
@@ -431,12 +434,12 @@ export default function RegisterPage() {
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <main className="flex justify-center w-full mx-auto px-4 pb-10">
-      <div className="w-full max-w-[420px] bg-white rounded-3xl px-5 sm:px-8 py-8 sm:py-10"
+    <main className="flex justify-center w-full mx-auto px-4">
+      <div className="w-full max-w-[420px] bg-white dark:bg-[#1a1c23]/40 dark:backdrop-blur-xl dark:border dark:border-white/10 rounded-3xl px-4 sm:px-6 py-4 sm:py-6"
         style={{ boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)" }} dir={dir}>
 
         {step === 1 ? (
-          <h1 className="text-left text-[22px] font-bold text-black mb-8 px-1">
+          <h1 className="text-left text-[18px] sm:text-[20px] font-bold text-black dark:text-white mb-4 sm:mb-6 px-1">
             {t("account_type") || "Account Type"}
           </h1>
         ) : (
