@@ -138,11 +138,14 @@ function AvatarSection({
           }}
         >
           {preview ? (
-            <img
-              src={preview}
-              alt={name}
-              className="w-full h-full object-cover"
-            />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={preview}
+                alt={name}
+                className="w-full h-full object-cover"
+              />
+            </>
           ) : (
             initials
           )}

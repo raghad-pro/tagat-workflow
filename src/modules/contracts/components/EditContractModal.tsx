@@ -23,7 +23,7 @@ type FormValues = z.infer<typeof editContractSchema>;
 export default function EditContractModal({ isOpen, onClose, onUpdate, data }: { isOpen: boolean, onClose: () => void, onUpdate: (id: number, data: any) => void, data: Contract | null }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(editContractSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { customerName: "", initial: "", title: "", project: "", company: "" },
   });
 

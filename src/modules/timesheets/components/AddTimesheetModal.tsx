@@ -32,7 +32,7 @@ export default function AddTimesheetModal({ isOpen, onClose, onSubmit = () => {}
   
   const form = useForm<FormValues>({
     resolver: zodResolver(addTimesheetSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { employee: "", company: "", date: "", hours: "", rateHr: "" },
   });
 

@@ -62,7 +62,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
   const tCurrencies = useTranslations("currencies");
   const form = useForm<AddEmployeeFormValues>({
     resolver: zodResolver(addEmployeeSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       employeeName: "", email: "", paymentType: "", jobTitle: "",
       password: "", hourlyRate: "", currency: "", company: "",

@@ -112,7 +112,7 @@ export function TextField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormItem className="flex flex-col gap-1.5 w-full">
+        <FormItem className="flex flex-col gap-1 w-full">
        
           <FormLabel>
             <Text size="sm" weight="bold" tag="label" htmlFor={name}>
@@ -182,7 +182,7 @@ export function PasswordField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormItem className="flex flex-col gap-1.5 w-full">
+        <FormItem className="flex flex-col gap-1 w-full">
 
           <FormLabel>
             <Text size="sm" weight="bold" tag="label" htmlFor={name}>
@@ -255,7 +255,7 @@ export function SelectField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormItem className="flex flex-col gap-1.5 w-full">
+        <FormItem className="flex flex-col gap-1 w-full">
           <FormLabel>
             <Text size="sm" weight="bold" tag="label">
               {label}
@@ -340,7 +340,7 @@ export function TextAreaField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormItem className="flex flex-col gap-1.5 w-full">
+        <FormItem className="flex flex-col gap-1 w-full">
           <FormLabel>
             <Text size="sm" weight="bold" tag="label" htmlFor={name}>
               {label}
@@ -390,7 +390,7 @@ export function MultiSelectField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <FormItem className="flex flex-col gap-1.5 w-full">
+        <FormItem className="flex flex-col gap-1 w-full">
           <FormLabel>
             <Text size="sm" weight="bold" tag="label">
               {label}

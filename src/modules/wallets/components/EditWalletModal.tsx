@@ -43,7 +43,7 @@ export function EditWalletModal({
 
   const form = useForm<WalletFormValues>({
     resolver: zodResolver(walletSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { name: "", company_id: isCompanyAdmin ? (user?.company_id || user?.id) : 0, currency_id: 0, balance: 0, notes: "" },
   });
 

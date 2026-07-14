@@ -207,7 +207,7 @@ export default function InvoiceManagementPage() {
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: (row) => { setViewInvoice(row); setShowViewModal(true); } },
     { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: (row) => { setEditInvoice(row); setShowEditModal(true); } },
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: (row) => deleteInvoice(row.id) },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   ], [deleteInvoice, tCommon]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────

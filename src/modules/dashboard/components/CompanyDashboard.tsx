@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Briefcase, Users, Wallet, ArrowUpRight, ListTodo } from "lucide-react";
+import { DollarSign, Briefcase, Users, AlertTriangle, CheckCircle2, ListTodo } from "lucide-react";
 import { dashboardApi } from "../api/dashboard.api";
 import type { DashboardRole } from "../api/dashboard.api";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,7 @@ import { Text } from "@/components/atoms/Text";
 import { cn } from "@/lib/utils";
 import type { CompanyDashboardData } from "../types/dashboard.types";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface Props {
@@ -21,60 +21,50 @@ interface Props {
   token: string;
 }
 
-const invoicesChartConfig = {
-  amount: { label: "Invoices", color: "var(--color-chart-expenses)" },
-};
-
-function InvoicesChart({ data }: { data: { month: string; amount: number }[] }) {
-  return (
-    <ChartContainer config={invoicesChartConfig} className="h-[200px] w-full">
-      <BarChart data={data} barGap={3} barCategoryGap="35%">
-        <CartesianGrid vertical={false} stroke="var(--color-border-form)" />
-        <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--color-text-primary)" }} />
-        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--color-text-primary)" }} />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="amount" fill="var(--color-chart-expenses)" radius={[5, 5, 0, 0]} />
-      </BarChart>
-    </ChartContainer>
-  );
-}
-
 function CompanyStatsRow({ data }: { data: CompanyDashboardData }) {
   const stats = [
     {
-      icon: Users,
-      label: "Clients",
-      value: String(data.clientsCount),
+      icon: DollarSign,
+      title: "wallet balance",
+      value: `$${Number(data.walletBalance).toLocaleString()}`,
+      iconBg: "bg-cyan-50",
+      iconColor: "text-cyan-400",
     },
     {
       icon: Users,
-      label: "Employees",
+      title: "clients",
+      value: String(data.clientsCount),
+      iconBg: "bg-cyan-50",
+      iconColor: "text-cyan-400",
+    },
+    {
+      icon: Users,
+      title: "employees",
       value: String(data.employeesCount),
+      iconBg: "bg-cyan-50",
+      iconColor: "text-cyan-400",
     },
     {
       icon: Briefcase,
-      label: "Projects",
+      title: "projects",
       value: String(data.projectsCount),
-    },
-    {
-      icon: Wallet,
-      label: "Wallet Balance",
-      value: `$${Number(data.walletBalance).toLocaleString()}`,
+      iconBg: "bg-cyan-50",
+      iconColor: "text-cyan-400",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       {stats.map((stat, i) => {
         const Icon = stat.icon;
         return (
-          <div key={i} className="rounded-2xl p-4 flex gap-3 ds-bg-form ds-border-form ds-shadow-sm items-center">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ds-bg-primary-200">
-              <Icon size={18} className="ds-text-brand" />
+          <div key={i} className="rounded-xl p-5 sm:p-6 flex gap-4 bg-white shadow-sm border border-gray-100">
+            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", stat.iconBg)}>
+              <Icon size={22} className={stat.iconColor} />
             </div>
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <Text size="sm" color="gray-200" className="text-[11px] leading-tight font-medium">{stat.label}</Text>
-              <Text size="lg" weight="bold" className="leading-tight mt-0.5">{stat.value}</Text>
+            <div className="flex flex-col gap-1 min-w-0">
+              <Text size="sm" weight="bold" className="text-gray-500 text-xs uppercase tracking-wider">{stat.title}</Text>
+              <Text size="xl" weight="bold" className="text-2xl mt-1">{stat.value}</Text>
             </div>
           </div>
         );
@@ -110,118 +100,154 @@ export function CompanyDashboard({ role, token }: Props) {
   const hasInvoices = !!(companyData?.monthlyInvoices && companyData.monthlyInvoices.length > 0);
   const invoicesData = hasInvoices && companyData?.monthlyInvoices ? companyData.monthlyInvoices : getDummyMonths();
 
+  const chartConfig = {
+    amount: { label: "Amount", color: "#38bdf8" },
+  };
+
   return (
     <PageContainer isLoading={isLoading} skeletonVariant="dashboard">
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 lg:gap-8 pb-8">
 
         {/* Header */}
-        <PageHeader
-          title={t("title")}
-          subtitle={t("subtitle")}
-          actions={[
-            {
-              label: t("newProject"),
-              icon: Plus,
-              variant: "solid",
-              onClick: () => router.push("/projects?add=true"),
-            },
-          ]}
-        />
+        <div className="flex flex-col gap-1">
+          <Text size="xl" weight="bold" className="text-3xl text-gray-900">Dashboard</Text>
+          <Text size="sm" className="text-gray-500" weight="medium">Platform performance overview</Text>
+        </div>
 
         {/* Stats Row */}
         {companyData && <CompanyStatsRow data={companyData} />}
 
-        {/* Main grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-          {/* Left column */}
-          <div className="xl:col-span-2 flex flex-col gap-6">
-
-            {/* Invoices Chart */}
-            <DashboardCard title="Monthly Invoices">
-              <div className="relative">
-                <InvoicesChart data={invoicesData} />
-                {!hasInvoices && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {t("noInvoices")}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </DashboardCard>
-
-            {/* Recent Projects */}
-            <DashboardCard
-              title="Recent Projects"
-              action={<ShowAll href="/projects" />}
-            >
-              {companyData && companyData.latestProjects.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                  {companyData.latestProjects.map((p: any) => (
-                    <div key={p.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ds-bg-primary-200">
-                        <Briefcase size={14} className="ds-text-brand" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Text size="sm" weight="bold" tag="p" className="truncate">
-                          {p.title || p.name}
-                        </Text>
-                        <Text size="sm" color="gray-200" tag="p" className="text-[10px] uppercase">
-                          {p.status}
-                        </Text>
-                      </div>
-                      <Text size="sm" weight="bold" className="ds-text-success shrink-0">
-                        {p.budget ? `$${Number(p.budget).toLocaleString()}` : "-"}
-                      </Text>
-                    </div>
-                  ))}
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+          
+          {/* Chart */}
+          <div className="xl:col-span-2">
+            <DashboardCard title="Monthly Invoices" className="h-full p-6 relative">
+              <ChartContainer config={chartConfig} className="h-[300px] w-full mt-4">
+                <BarChart data={invoicesData} barGap={0} barCategoryGap="25%">
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="month" 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tick={{ fontSize: 12, fill: "#6b7280" }} 
+                    dy={10}
+                  />
+                  <YAxis 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tick={{ fontSize: 12, fill: "#6b7280" }} 
+                    tickFormatter={(val) => val === 0 ? "0" : val.toString()}
+                    width={50}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend 
+                    verticalAlign="top" 
+                    align="right" 
+                    iconType="circle"
+                    wrapperStyle={{ paddingBottom: '20px', fontSize: '13px', fontWeight: 600, color: '#374151' }}
+                  />
+                  <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} name="Amount" />
+                </BarChart>
+              </ChartContainer>
+              {!hasInvoices && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none mt-10">
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {t("noInvoices")}
+                  </span>
                 </div>
-              ) : (
-                <Text size="sm" color="gray-200" className="text-center py-6">
-                  No projects found
-                </Text>
               )}
             </DashboardCard>
           </div>
 
-          {/* Right column */}
+          {/* Recent Tasks styled as Pending Approvals */}
           <div>
-            <DashboardCard
-              title="Recent Tasks"
-              action={<ShowAll href="/tasks" />}
+            <DashboardCard 
+              title="Recent Tasks" 
               className="h-full"
+              action={<ShowAll href="/tasks" />}
             >
               {companyData && companyData.latestTasks.length > 0 ? (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col divide-y divide-gray-50 mt-2">
                   {companyData.latestTasks.map((t: any) => (
-                    <div
-                      key={t.id}
-                      className="rounded-xl p-3 flex items-start justify-between gap-3 ds-bg ds-border-form"
-                    >
-                      <div className="min-w-0">
-                        <Text size="sm" weight="bold" tag="p" className="truncate ds-text-brand">
-                          {t.title}
-                        </Text>
-                        <Text size="sm" color="gray-200" tag="p" className="text-[10px] mt-0.5 truncate uppercase">
-                          {t.status}
-                        </Text>
+                    <div key={t.id} className="flex items-center justify-between py-3.5 group cursor-pointer hover:bg-gray-50/50 rounded-lg px-2 -mx-2 transition-colors">
+                      <div className="flex flex-col min-w-0 pr-4">
+                        <Text size="sm" weight="bold" className="text-[13px] text-gray-800 truncate">{t.title}</Text>
+                        <Text size="sm" className="text-gray-400 text-[11px] mt-1 truncate uppercase">{t.status}</Text>
                       </div>
-                      <div className="w-6 h-6 rounded-md shrink-0 flex items-center justify-center ds-bg-primary-200 ds-text-brand">
-                        <ListTodo size={14} />
-                      </div>
+                      <ListTodo size={18} className="text-cyan-400 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
                     </div>
                   ))}
                 </div>
               ) : (
-                <Text size="sm" color="gray-200" className="text-center py-6">
+                <Text size="sm" className="text-center py-6 text-gray-200">
                   No tasks found
                 </Text>
               )}
             </DashboardCard>
           </div>
-
+          
         </div>
+
+        {/* Recent Projects styled as Top Performing Projects table */}
+        <DashboardCard title="Recent Projects" className="p-0 overflow-hidden" action={<ShowAll href="/projects" />}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#f8fafc] border-b border-gray-100">
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Project Name</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Budget</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[150px]">Completion</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {companyData && companyData.latestProjects.length > 0 ? (
+                  companyData.latestProjects.map((project: any) => (
+                    <tr key={project.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 px-6">
+                        <Text size="sm" weight="medium" className="text-gray-800">{project.title || project.name}</Text>
+                      </td>
+                      <td className="py-4 px-6">
+                        <Text size="sm" className="text-gray-600">{project.budget ? `$${Number(project.budget).toLocaleString()}` : "-"}</Text>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={cn(
+                          "text-[10px] font-bold px-2 py-1 rounded bg-opacity-20 uppercase tracking-wide",
+                          project.status === "completed" ? "bg-green-100 text-green-700" : 
+                          project.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                          "bg-cyan-100 text-cyan-700"
+                        )}>
+                          {project.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <Text size="sm" weight="bold" className="text-gray-700 w-9">
+                            {project.completion_percentage || 0}%
+                          </Text>
+                          <div className="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full bg-[#0ea5e9]" 
+                              style={{ width: `${project.completion_percentage || 0}%` }} 
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center">
+                      <Text size="sm" className="text-gray-200">No projects found</Text>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </DashboardCard>
+
       </div>
     </PageContainer>
   );

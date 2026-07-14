@@ -19,6 +19,9 @@
     background-color: var(--color-bg);
     scroll-behavior: smooth;
   }
+  html[dir="rtl"] {
+    font-family: var(--font-cairo), sans-serif !important;
+  }
   *, *::before, *::after { box-sizing: border-box; }
   img, svg, video { display: block; max-width: 100%; }
 }

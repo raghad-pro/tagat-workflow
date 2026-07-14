@@ -36,7 +36,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
 
   const form = useForm<FormValues>({
     resolver: zodResolver(addDevelopmentSchema) as any,
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       project_id: "" as any,
       client_id: "" as any,

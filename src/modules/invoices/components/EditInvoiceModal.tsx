@@ -66,7 +66,7 @@ export function EditInvoiceModal({
   
   const form = useForm<FormValues>({
     resolver: zodResolver(editInvoiceSchema) as any,
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       company_id: Number(invoice.company_id) || undefined,
       client_id: Number(invoice.client_id) || undefined,

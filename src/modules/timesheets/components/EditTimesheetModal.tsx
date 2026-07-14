@@ -32,7 +32,7 @@ export default function EditTimesheetModal({ isOpen, onClose, onUpdate = () => {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(editTimesheetSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { employee: "", company: "", date: "", hours: "", rateHr: "", status: "pending" },
   });
 

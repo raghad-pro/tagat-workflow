@@ -19,7 +19,9 @@ export {
 // ─── Navigation / Sidebar ────────────────────────────────────────────────────
 export {
   LayoutDashboard,   // Dashboard
+  LayoutGrid,        // Dashboard new Grid icon
   Users,             // Clients / Employees
+  UsersRound,        // Clients new icon
   Building,          // Companies
   FileText,          // Invoices / Contracts
   CreditCard,        // Payments
@@ -28,11 +30,14 @@ export {
   Globe,             // Currencies
   Briefcase as BriefcaseIcon, // Roles
   UserCog,           // Employees
+  UserRoundPlus,     // Employees new icon
   FolderKanban,      // Projects
   CheckSquare,       // Tasks
   Clock,             // Time Logs
   Code2,             // Developments
   BookOpen,          // Contracts
+  ScrollText,        // Contracts new icon
+  SquareCheck,       // Tasks new icon
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -45,6 +50,8 @@ export {
   Wrench
 } from "lucide-react";
 
+export { CustomCardIcon } from "./CustomCardIcon";
+
 // ─── Actions ─────────────────────────────────────────────────────────────────
 export {
   Plus,
@@ -54,6 +61,7 @@ export {
   RefreshCw,         // Update Rates
   Send,              // Send message
   MessageSquare,
+  MessageCircleMore, // Company Requests new icon
   MoreHorizontal,
   Search,
   Filter,
@@ -74,6 +82,7 @@ export {
   TrendingDown,
   DollarSign,
   BadgeCheck,
+  BadgePercent,      // Currencies new icon
   Calendar,
   XCircle,
   Check

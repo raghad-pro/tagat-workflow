@@ -48,7 +48,7 @@ export function AddPaymentModal({
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { 
       company_id: isCompanyAdmin ? user?.company_id : 0, 
       invoice_id: 0, 

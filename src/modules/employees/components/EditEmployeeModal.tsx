@@ -63,7 +63,7 @@ export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: E
 
   const form = useForm<EditEmployeeFormValues>({
     resolver: zodResolver(editEmployeeSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       employeeName: "", email: "", paymentType: "", jobTitle: "",
       password: "", hourlyRate: "", currency: "", company: "",

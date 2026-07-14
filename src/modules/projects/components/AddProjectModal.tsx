@@ -54,7 +54,7 @@
 
 //   const form = useForm<FormValues>({
 //     resolver: zodResolver(getProjectSchema(isCompanyAdmin)),
-//     mode: "onTouched",
+//     mode: "onSubmit",
 //     defaultValues: { title: "", budget: "", company: "", status: "", currency: "", employees: [], notes: "" },
 //   });
 
@@ -226,7 +226,7 @@ export default function AddProjectModal({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(getProjectSchema(isCompanyAdmin, tCommon)),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       title:     "",
       budget:    "",
@@ -324,14 +324,14 @@ export default function AddProjectModal({
       form.setValue("currency",  "");
       form.setValue("employees", []);
     }
-  }, [selectedCompany]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedCompany]);  
 
   // ── Auto-select currency when only one is available ──────────────────────
   useEffect(() => {
     if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency") && CURRENCY_OPTIONS[0].value !== "no-data") {
       form.setValue("currency", CURRENCY_OPTIONS[0].value);
     }
-  }, [CURRENCY_OPTIONS.length, form]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [CURRENCY_OPTIONS.length, form]);  
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleFormSubmit = (data: FormValues) => {

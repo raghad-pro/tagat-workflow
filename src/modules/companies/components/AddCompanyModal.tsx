@@ -49,7 +49,7 @@ export function AddCompanyModal({ isOpen, onClose, onSave, isLoading }: { isOpen
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { email: "", companyName: "", subdomain: "", fieldOfWork: "" },
   });
 
@@ -159,6 +159,7 @@ export function AddCompanyModal({ isOpen, onClose, onSave, isLoading }: { isOpen
                   {logoPreview ? (
                     <div className="flex flex-col items-center gap-3">
                       <div className="relative w-32 h-32 rounded-lg overflow-hidden border ds-border-form">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
                       </div>
                       <button

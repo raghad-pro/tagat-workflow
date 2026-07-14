@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { email: "", password: "" },
   });
 
@@ -44,13 +44,13 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex justify-center w-full mx-auto px-4 pb-10">
-      <div className="w-full max-w-[420px] bg-white rounded-3xl px-5 sm:px-8 py-8 sm:py-10"
+    <main className="flex justify-center w-full mx-auto px-4">
+      <div className="w-full max-w-[420px] bg-white dark:bg-[#1a1c23]/40 dark:backdrop-blur-xl dark:border dark:border-white/10 rounded-3xl px-4 sm:px-6 py-4 sm:py-6"
         style={{ boxShadow: "0 10px 40px -10px rgba(0,0,0,0.08)" }}>
       
         {/* ── Heading ── */}
-        <div className="mb-8">
-          <Text size="xl" weight="bold" tag="h1" className="text-start mb-1 text-[22px]">
+        <div className="text-center mb-3 sm:mb-4">
+          <Text size="lg" weight="bold" tag="h1" className="mb-0.5 sm:mb-1 dark:text-white text-[18px] sm:text-[20px]">
             {t("welcome")} <span style={{ color: "var(--color-primary)" }}>{t("welcome_back")}</span>
           </Text>
         </div>
@@ -84,7 +84,7 @@ export default function LoginPage() {
               />
 
               {/* ── Remember me + Forgot password ── */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 w-full gap-3 sm:gap-0">
+              <div className="flex flex-row justify-between items-center mt-2 mb-4 gap-2">
                 {/* Checkbox تذكرني */}
                 <CheckboxField
                   checked={rememberMe}
@@ -102,7 +102,7 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <div className="mt-4">
+            <div className="mt-1">
               <Button
                 type="submit"
                 variant="solid"

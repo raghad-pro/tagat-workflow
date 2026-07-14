@@ -23,11 +23,14 @@ const PAGE_SIZE = 4;
 function CompanyAvatar({ name, logo }: { name: string; logo?: string | null }) {
   if (logo) {
     return (
-      <img 
-        src={logo} 
-        alt={`${name} logo`} 
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img 
+          src={logo} 
+          alt={`${name} logo`} 
         className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-[var(--color-border-form)]"
-      />
+        />
+      </>
     );
   }
   const initials = name.slice(0, 1).toUpperCase();

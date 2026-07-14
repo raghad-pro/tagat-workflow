@@ -37,7 +37,7 @@ function EmailStep({ onSuccess }: { onSuccess: (email: string) => void }) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { email: "" },
   });
 
@@ -257,7 +257,7 @@ function NewPasswordStep({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { password: "", password_confirmation: "" },
   });
 
@@ -395,8 +395,7 @@ export default function ForgotPasswordPage() {
    <main className="ds-bg flex  justify-center overflow-y-auto  w-full max-w-lg mx-auto  rounded-2xl"
       dir={dir}
     >
-        
-      <div className="w-full  rounded-2xl ds-bg-form ds-border-form px-10 py-12 ds-shadow-sm">
+      <div className="w-full rounded-2xl bg-white dark:bg-[#1a1c23]/40 dark:backdrop-blur-xl border border-gray-100 dark:border-white/10 px-10 py-12 ds-shadow-sm">
 
         {/* ── Step 1: Email ── */}
         {step === 1 && (

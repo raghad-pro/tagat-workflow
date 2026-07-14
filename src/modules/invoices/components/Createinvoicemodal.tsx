@@ -63,7 +63,7 @@ export function CreateInvoiceModal({
   
   const form = useForm<FormValues>({
     resolver: zodResolver(createInvoiceSchema) as any,
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: {
       company_id: undefined,
       client_id:  undefined,

@@ -20,7 +20,7 @@ type FormValues = z.infer<typeof editRoleSchema>;
 export default function EditRoleModal({ isOpen, onClose, onUpdate, data }: { isOpen: boolean, onClose: () => void, onUpdate: (id: number, data: any) => void, data: Role | null }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(editRoleSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
     defaultValues: { name: "", description: "" },
   });
 
