@@ -341,7 +341,7 @@ export default function EditProjectModal({
       employees: currentEmployees,
       notes:     (data as any).description ?? (data as any).notes ?? "",
     });
-  }, [data, isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, isOpen]);  
 
   // ── Reset company-scoped fields when company changes (super_admin only) ──
   useEffect(() => {
@@ -370,7 +370,7 @@ export default function EditProjectModal({
     if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency")) {
       form.setValue("currency", CURRENCY_OPTIONS[0].value);
     }
-  }, [currenciesList.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currenciesList.length]);  
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleFormSubmit = (formData: FormValues) => {

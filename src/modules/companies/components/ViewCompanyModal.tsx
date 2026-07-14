@@ -35,7 +35,10 @@ export function ViewCompanyModal({ isOpen, onClose, data }: { isOpen: boolean; o
       <InfoRow label={t("labels.companyLogo") || "Logo"}>
         <div className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden border ds-border-form text-xl font-bold bg-[var(--color-bg-primary-200)] text-[var(--color-primary)]">
           {data.logo ? (
-            <img src={data.logo} alt={`${data.name} logo`} className="w-full h-full object-cover" />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={data.logo} alt={`${data.name} logo`} className="w-full h-full object-cover" />
+            </>
           ) : (
             data.name.slice(0, 1).toUpperCase()
           )}

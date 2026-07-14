@@ -58,11 +58,14 @@ export const ProfileDetailsForm = () => {
       <div className="flex flex-col items-center gap-4 w-1/4 min-w-[200px]">
         <div className="w-32 h-32 rounded-lg bg-gray-200 overflow-hidden flex items-center justify-center relative">
           {profile?.avatar || profile?.image || user?.image ? (
-            <img 
-              src={profile?.avatar || profile?.image || user?.image || ""} 
-              alt="Profile" 
-              className="w-full h-full object-cover"
-            />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={profile?.avatar || profile?.image || user?.image || ""} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            </>
           ) : (
             <div className="text-4xl text-gray-400">👤</div>
           )}

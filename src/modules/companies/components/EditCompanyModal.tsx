@@ -164,6 +164,7 @@ export function EditCompanyModal({ isOpen, onClose, onUpdate, data, isLoading }:
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
                   {logoPreview ? (
                     <div className="relative w-32 h-32 rounded-lg overflow-hidden border ds-border-form">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
                     </div>
                   ) : (
