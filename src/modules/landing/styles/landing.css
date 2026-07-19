@@ -441,13 +441,14 @@
   margin-inline: auto;
   width: min(1180px, 96%);
   pointer-events: none;
-  opacity: 0.12;
+  opacity: 0.35;
+  filter: blur(1px);
   -webkit-mask-image: radial-gradient(ellipse 85% 80% at 50% 42%, #000 45%, transparent 98%);
   mask-image: radial-gradient(ellipse 85% 80% at 50% 42%, #000 45%, transparent 98%);
 }
 
 [data-theme='light'] .hero__map {
-  opacity: 0.18;
+  opacity: 0.45;
 }
 
 .worldmap {
