@@ -164,18 +164,78 @@
     position: absolute;
     top: -300px; 
     right: -250px;
-    width: 900px; 
-    height: 900px;
+    width: 700px; 
+    height: 700px;
     background-color: var(--color-primary);
     opacity: 0.15;
-    filter: blur(120px);
+    filter: blur(100px);
     border-radius: 50%; 
     z-index: 0;
     pointer-events: none;
   }
 
   /* ── Scrollbar ──────────────────────────────────────────────────────────── */
-  @supports (scrollbar-color: auto) {
-    html { scrollbar-width: thin; scrollbar-color: var(--color-primary) transparent; }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) transparent;
   }
+  
+  *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border-radius: 10px;
+  }
+}
+
+/* ── Custom Animations for Sheet/Sidebar ── */
+@keyframes sheetSlideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheetSlideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes sheetSlideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheetSlideOutLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@keyframes sheetFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheetFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.sheet-overlay-anim[data-state="open"] {
+  animation: sheetFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.sheet-overlay-anim[data-state="closed"] {
+  animation: sheetFadeOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.sheet-content-right[data-state="open"] {
+  animation: sheetSlideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.sheet-content-right[data-state="closed"] {
+  animation: sheetSlideOutRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.sheet-content-left[data-state="open"] {
+  animation: sheetSlideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.sheet-content-left[data-state="closed"] {
+  animation: sheetSlideOutLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

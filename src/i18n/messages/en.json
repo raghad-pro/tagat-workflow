@@ -455,8 +455,8 @@
     }
   },
   "companyRequest": {
-    "title": "Company Requests",
-    "subtitle": "Manage and track incoming company requests",
+    "title": "Join Requests",
+    "subtitle": "Manage and review new company requests to join the system.",
     "add": "Add Request",
     "searchPlaceholder": "Search requests...",
     "stats": {

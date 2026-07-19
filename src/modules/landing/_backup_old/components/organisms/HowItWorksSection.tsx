@@ -20,14 +20,14 @@ export function HowItWorksSection() {
         <SectionTitle
           title={
             t.rich("howItWorksTitle", {
-              cyan: (chunks) => <span className="text-primary">{chunks}</span>
+              cyan: (chunks: any) => <span className="text-primary">{chunks}</span>
             })
           }
           subtitle={t("howItWorksSubtitle")}
         />
 
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12 mt-16">
-          {steps.map((step) => (
+          {steps.map((step: any) => (
             <StepCard
               key={step.num}
               num={step.num}

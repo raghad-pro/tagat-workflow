@@ -105,12 +105,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      collapsible="none"
+      collapsible="icon"
       className={cn(
-        "border-e border-[var(--sidebar-border,var(--color-border-form))]",
-        "bg-white",
-        "w-14 md:w-[var(--sidebar-width,260px)]",
-        "h-screen" // تأكيد أن السايدبار يأخذ كامل ارتفاع الشاشة ليشتغل السكرول داخله بشكل صحيح
+        "border-none",
+        "ds-sidebar"
       )}
     >
       {/* ── Logo ── */}
@@ -118,16 +116,16 @@ export function AppSidebar() {
         className="px-6 pt-2 pb-0"
         style={{ justifyContent: "center" }}
       >
+        <div className="w-full mb-0 flex justify-center group-data-[collapsible=icon]:hidden">
+          <Logo />
+        </div>
         <div
-          className="flex md:hidden w-8 h-8 rounded-lg items-center justify-center mx-auto shrink-0"
+          className="hidden group-data-[collapsible=icon]:flex w-8 h-8 rounded-lg items-center justify-center mx-auto shrink-0"
           style={{ background: "var(--color-bg-primary)" }}
         >
           <span style={{ color: "var(--color-text-button)", fontWeight: 700, fontSize: 14 }}>
             W
           </span>
-        </div>
-        <div className="hidden md:block w-full mb-0">
-          <Logo />
         </div>
       </SidebarHeader>
 
@@ -148,17 +146,14 @@ export function AppSidebar() {
               <SidebarGroupLabel
                 className={cn(
                   "text-[12px] font-bold text-gray-500 px-3 mb-0 capitalize",
-                  "hidden md:flex"
+                  "flex"
                 )}
               >
                 {group.label}
               </SidebarGroupLabel>
             )}
 
-            {/* Divider — mobile فقط بدل الـ label */}
-            {visibleGroups.length > 1 && group.key !== "home" && (
-              <div className="md:hidden my-2 border-t border-[var(--sidebar-border,var(--color-border-form))]" />
-            )}
+            {/* Divider removed as per user request */}
 
             <SidebarMenu>
               {group.items.map((item) => {
@@ -175,26 +170,23 @@ export function AppSidebar() {
                       tooltip={undefined}
                       className={cn(
                         "rounded-[10px] gap-3 transition-all duration-200",
-                        "flex-col h-auto py-1 md:flex-row md:h-8 md:py-0",
-                        "justify-center md:justify-start",
-                        "px-0 md:px-3",
+                        "flex-row h-10 md:h-9 py-0",
+                        "justify-start",
+                        "px-3",
                         "group/nav-item",
                         "font-bold text-[13px]",
                         "hover:bg-gray-50",
                         "text-gray-600 hover:text-gray-900",
                         isActive && [
-                          "bg-[#1ec3cc] hover:bg-[#1ab0b8]",
-                          "text-white hover:text-white",
-                          "shadow-sm shadow-cyan-500/20"
+                          "!bg-[#12c2e9] hover:!bg-[#0fb1d5]",
+                          "!text-white hover:!text-white",
+                          "shadow-sm shadow-[#12c2e9]/20"
                         ]
                       )}
                     >
                       <Link href={item.href}>
                         <Icon size={18} className={cn("shrink-0", isActive ? "text-white" : "text-gray-600 group-hover:text-gray-900")} />
-                        <span className="hidden md:block truncate mt-[2px]">{t(item.key as Parameters<typeof t>[0])}</span>
-                        <span className="md:hidden text-[10px] leading-tight text-center w-full max-h-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/nav-item:max-h-4 group-hover/nav-item:opacity-100 truncate">
-                          {t(item.key as Parameters<typeof t>[0])}
-                        </span>
+                        <span className="truncate mt-[2px] group-data-[collapsible=icon]:hidden">{t(item.key as Parameters<typeof t>[0])}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

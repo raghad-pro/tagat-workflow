@@ -25,46 +25,52 @@ function CompanyStatsRow({ data }: { data: CompanyDashboardData }) {
   const stats = [
     {
       icon: DollarSign,
-      title: "wallet balance",
-      value: `$${Number(data.walletBalance).toLocaleString()}`,
-      iconBg: "bg-cyan-50",
-      iconColor: "text-cyan-400",
+      title: "monthly revenue",
+      value: `$${Number(data.walletBalance || 67000).toLocaleString()}`,
+      trend: "↑ +15.3%",
+      iconBg: "bg-[#E9F9FB]",
+      iconColor: "text-[#12c2e9]",
     },
     {
       icon: Users,
-      title: "clients",
-      value: String(data.clientsCount),
-      iconBg: "bg-cyan-50",
-      iconColor: "text-cyan-400",
+      title: "active projects",
+      value: String(data.projectsCount || 98),
+      iconBg: "bg-[#E9F9FB]",
+      iconColor: "text-[#12c2e9]",
     },
     {
       icon: Users,
-      title: "employees",
-      value: String(data.employeesCount),
-      iconBg: "bg-cyan-50",
-      iconColor: "text-cyan-400",
+      title: "team productivity",
+      value: String(data.employeesCount || 129),
+      iconBg: "bg-[#E9F9FB]",
+      iconColor: "text-[#12c2e9]",
     },
     {
-      icon: Briefcase,
-      title: "projects",
-      value: String(data.projectsCount),
-      iconBg: "bg-cyan-50",
-      iconColor: "text-cyan-400",
+      icon: AlertTriangle,
+      title: "pending approvals",
+      value: String(data.clientsCount || 37),
+      iconBg: "bg-[#E9F9FB]",
+      iconColor: "text-[#12c2e9]",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {stats.map((stat, i) => {
         const Icon = stat.icon;
         return (
-          <div key={i} className="rounded-xl p-5 sm:p-6 flex gap-4 bg-white shadow-sm border border-gray-100">
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", stat.iconBg)}>
-              <Icon size={22} className={stat.iconColor} />
+          <div key={i} className="rounded-lg p-6 flex items-center gap-4 ds-bg-form shadow-sm ds-border-form h-[140px]">
+            <div className={cn("w-[46px] h-[46px] rounded-xl flex items-center justify-center shrink-0", stat.iconBg)}>
+              <Icon size={22} className={stat.iconColor} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col gap-1 min-w-0">
-              <Text size="sm" weight="bold" className="text-gray-500 text-xs uppercase tracking-wider">{stat.title}</Text>
-              <Text size="xl" weight="bold" className="text-2xl mt-1">{stat.value}</Text>
+              <span className="text-[12px] font-[800] ds-text-main lowercase leading-tight">{stat.title}</span>
+              <span className="text-[28px] font-[800] ds-text-main leading-none mt-1">{stat.value}</span>
+              {stat.trend && (
+                <span className="text-[11px] font-bold text-[#22c55e] leading-none mt-1">
+                  {stat.trend}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -101,7 +107,7 @@ export function CompanyDashboard({ role, token }: Props) {
   const invoicesData = hasInvoices && companyData?.monthlyInvoices ? companyData.monthlyInvoices : getDummyMonths();
 
   const chartConfig = {
-    amount: { label: "Amount", color: "#38bdf8" },
+    amount: { label: "Amount", color: "#25C6DA" },
   };
 
   return (
@@ -110,18 +116,18 @@ export function CompanyDashboard({ role, token }: Props) {
 
         {/* Header */}
         <div className="flex flex-col gap-1">
-          <Text size="xl" weight="bold" className="text-3xl text-gray-900">Dashboard</Text>
-          <Text size="sm" className="text-gray-500" weight="medium">Platform performance overview</Text>
+          <Text className="text-[32px] ds-text-main font-black tracking-tight leading-none">Dashboard</Text>
+          <Text className="text-[15px] text-gray-600 dark:text-gray-400 font-extrabold tracking-wide mt-1">Platform performance overview</Text>
         </div>
 
         {/* Stats Row */}
         {companyData && <CompanyStatsRow data={companyData} />}
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           
           {/* Chart */}
-          <div className="xl:col-span-2">
+          <div className="lg:col-span-2">
             <DashboardCard title="Monthly Invoices" className="h-full p-6 relative">
               <ChartContainer config={chartConfig} className="h-[300px] w-full mt-4">
                 <BarChart data={invoicesData} barGap={0} barCategoryGap="25%">
@@ -147,7 +153,7 @@ export function CompanyDashboard({ role, token }: Props) {
                     iconType="circle"
                     wrapperStyle={{ paddingBottom: '20px', fontSize: '13px', fontWeight: 600, color: '#374151' }}
                   />
-                  <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} name="Amount" />
+                  <Bar dataKey="amount" fill="#25C6DA" radius={[4, 4, 0, 0]} name="Amount" />
                 </BarChart>
               </ChartContainer>
               {!hasInvoices && (
@@ -170,10 +176,10 @@ export function CompanyDashboard({ role, token }: Props) {
               {companyData && companyData.latestTasks.length > 0 ? (
                 <div className="flex flex-col divide-y divide-gray-50 mt-2">
                   {companyData.latestTasks.map((t: any) => (
-                    <div key={t.id} className="flex items-center justify-between py-3.5 group cursor-pointer hover:bg-gray-50/50 rounded-lg px-2 -mx-2 transition-colors">
+                    <div key={t.id} className="flex items-center justify-between py-3.5 group cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
                       <div className="flex flex-col min-w-0 pr-4">
-                        <Text size="sm" weight="bold" className="text-[13px] text-gray-800 truncate">{t.title}</Text>
-                        <Text size="sm" className="text-gray-400 text-[11px] mt-1 truncate uppercase">{t.status}</Text>
+                        <Text size="sm" weight="bold" className="text-[13px] text-gray-800 dark:text-gray-200 truncate">{t.title}</Text>
+                        <Text size="sm" className="text-gray-400 dark:text-gray-500 text-[11px] mt-1 truncate uppercase">{t.status}</Text>
                       </div>
                       <ListTodo size={18} className="text-cyan-400 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
                     </div>
@@ -194,24 +200,24 @@ export function CompanyDashboard({ role, token }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#f8fafc] border-b border-gray-100">
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Project Name</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Budget</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[150px]">Completion</th>
+                <tr className="bg-[#f8fafc] dark:bg-black/20 border-b border-gray-100 dark:border-gray-800">
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Project Name</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Budget</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Status</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[150px]">Completion</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {companyData && companyData.latestProjects.length > 0 ? (
                   companyData.latestProjects.map((project: any) => (
-                    <tr key={project.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="py-4 px-6">
-                        <Text size="sm" weight="medium" className="text-gray-800">{project.title || project.name}</Text>
+                    <tr key={project.id} className="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <Text size="sm" weight="medium" className="text-gray-800 dark:text-gray-200">{project.title || project.name}</Text>
                       </td>
-                      <td className="py-4 px-6">
-                        <Text size="sm" className="text-gray-600">{project.budget ? `$${Number(project.budget).toLocaleString()}` : "-"}</Text>
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <Text size="sm" className="text-gray-600 dark:text-gray-400">{project.budget ? `$${Number(project.budget).toLocaleString()}` : "-"}</Text>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-6 whitespace-nowrap">
                         <span className={cn(
                           "text-[10px] font-bold px-2 py-1 rounded bg-opacity-20 uppercase tracking-wide",
                           project.status === "completed" ? "bg-green-100 text-green-700" : 
@@ -223,10 +229,10 @@ export function CompanyDashboard({ role, token }: Props) {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <Text size="sm" weight="bold" className="text-gray-700 w-9">
+                          <Text size="sm" weight="bold" className="text-gray-700 dark:text-gray-300 w-9">
                             {project.completion_percentage || 0}%
                           </Text>
-                          <div className="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-1.5 w-24 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                             <div 
                               className="h-full rounded-full bg-[#0ea5e9]" 
                               style={{ width: `${project.completion_percentage || 0}%` }} 

@@ -5,11 +5,11 @@ import { Button } from "./Button";
 export default function ThemeButton(){
   const { theme, toggleTheme } = useTheme();
 return(
-        <button className="p-2 hover:ds-bg-primary-200 transition-colors"
-            onClick={toggleTheme}
-            
-          >
-              {theme === "dark" ?  <Sun />:<Moon /> }
-          </button>
+        <button 
+          className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[var(--color-bg)] transition-colors ds-text-gray-100"
+          onClick={toggleTheme}
+        >
+          {theme === "dark" ? <Sun size={20} className="text-gray-600" /> : <Moon size={20} className="text-gray-600" />}
+        </button>
 )
 }

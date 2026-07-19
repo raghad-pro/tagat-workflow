@@ -1,0 +1,1115 @@
+{
+  "KB": [
+    {
+      "id": "what-is-workflow",
+      "keywords": [
+        "what is workflow",
+        "about workflow",
+        "workflow platform",
+        "what does workflow do",
+        "explain workflow",
+        "overview",
+        "definition",
+        "saas",
+        "software as a service",
+        "ما هو WorkFlow",
+        "ما هي المنصه",
+        "عن WorkFlow",
+        "ايش WorkFlow",
+        "شو هو WorkFlow",
+        "تعريف",
+        "منصه سحابيه",
+        "نظره عامه"
+      ],
+      "q": {
+        "en": "What is Workflow?",
+        "ar": "ما هو WorkFlow؟"
+      },
+      "a": {
+        "en": "Workflow is a multi-tenant SaaS platform for company, project and financial management. It lets a platform owner host many independent companies on one system, and gives every company its own private, isolated workspace on a dedicated subdomain (like company-name.domain.com). In one place it combines project management, task tracking, employee payroll, multi-currency wallets, invoicing, contracts and real-time team messaging.",
+        "ar": "WorkFlow منصة سحابية (SaaS) متعددة المستأجرين لإدارة الشركات والمشاريع والمال. تتيح لمالك المنصة استضافة عدة شركات مستقلة على نظام واحد، مع مساحة عمل خاصة ومعزولة لكل شركة على نطاق فرعي خاص بها (مثل company-name.domain.com). وتجمع في مكان واحد: إدارة المشاريع، ومتابعة المهام، ورواتب الموظفين، والمحافظ متعددة العملات، والفواتير، والعقود، والمحادثات الفورية للفريق."
+      },
+      "related": [
+        "problems-solved",
+        "roles",
+        "features"
+      ]
+    },
+    {
+      "id": "problems-solved",
+      "keywords": [
+        "problem",
+        "problems",
+        "why workflow",
+        "why use",
+        "purpose",
+        "solve",
+        "benefits",
+        "advantages",
+        "fragmented",
+        "goal",
+        "objective",
+        "المشكله",
+        "المشاكل",
+        "لماذا WorkFlow",
+        "ليش WorkFlow",
+        "الهدف",
+        "الفائده",
+        "المميزات",
+        "يحل"
+      ],
+      "q": {
+        "en": "What problems does Workflow solve?",
+        "ar": "ما المشاكل التي يحلها WorkFlow؟"
+      },
+      "a": {
+        "en": "Workflow tackles the pain of running a business across disconnected apps: 1) fragmented tools for projects, invoicing, HR and chat; 2) no central oversight for owners managing several companies; 3) error-prone payroll and multi-currency financial tracking; 4) poor client transparency (no portal for progress, invoices or requests); 5) weak access control and data-security risks; and 6) tools that don't scale. Workflow replaces all of that with one secure, unified platform.",
+        "ar": "يعالج WorkFlow معاناة إدارة الأعمال عبر تطبيقات متفرقة: ١) أدوات مشتتة للمشاريع والفواتير والموارد البشرية والمراسلة؛ ٢) غياب الإشراف المركزي لمن يدير أكثر من شركة؛ ٣) أخطاء في الرواتب وتتبع المعاملات متعددة العملات؛ ٤) ضعف شفافية العملاء (لا بوابة لمتابعة التقدم أو الفواتير أو الطلبات)؛ ٥) ضعف التحكم بالصلاحيات ومخاطر أمن البيانات؛ ٦) أدوات لا تنمو مع نمو العمل. WorkFlow يستبدل كل ذلك بمنصة واحدة موحدة وآمنة."
+      },
+      "related": [
+        "what-is-workflow",
+        "features",
+        "security"
+      ]
+    },
+    {
+      "id": "features",
+      "keywords": [
+        "features",
+        "core features",
+        "capabilities",
+        "modules",
+        "what can",
+        "functions",
+        "services",
+        "what does it offer",
+        "offer",
+        "المزايا",
+        "الميزات",
+        "الخصائص",
+        "الوظائف",
+        "الخدمات",
+        "ماذا يقدم",
+        "شو بيقدم",
+        "امكانيات"
+      ],
+      "q": {
+        "en": "What are Workflow's main features?",
+        "ar": "ما أبرز مزايا WorkFlow؟"
+      },
+      "a": {
+        "en": "Workflow's core modules are: companies management with isolated subdomains; roles & permissions (Super Admin, Company Admin, Employee, Client); client management with self-registration and approval; employee management with a step-by-step wizard; projects and tasks with statuses and costs; timesheets with an approval workflow; multi-currency support with exchange rates; wallets with automatic balances; invoices and payments; expense recording; change requests (developments); digital contracts; notes on any record; and built-in team messaging.",
+        "ar": "أبرز وحدات WorkFlow: إدارة الشركات بنطاقات فرعية معزولة؛ الأدوار والصلاحيات (مدير المنصة، مدير الشركة، الموظف، العميل)؛ إدارة العملاء مع تسجيل ذاتي وموافقة؛ إدارة الموظفين بمعالج خطوة بخطوة؛ المشاريع والمهام بحالات وتكاليف؛ سجلات الدوام مع سير موافقات؛ دعم تعدد العملات مع أسعار الصرف؛ محافظ برصيد يتحدث تلقائياً؛ الفواتير والمدفوعات؛ تسجيل المصروفات؛ طلبات التغيير؛ العقود الرقمية؛ الملاحظات على أي سجل؛ ومراسلة فريق مدمجة."
+      },
+      "related": [
+        "projects-tasks",
+        "wallets",
+        "invoices"
+      ]
+    },
+    {
+      "id": "roles",
+      "keywords": [
+        "roles",
+        "user roles",
+        "permissions",
+        "super admin",
+        "company admin",
+        "who can",
+        "access control",
+        "actors",
+        "user types",
+        "accounts types",
+        "الادوار",
+        "الصلاحيات",
+        "انواع المستخدمين",
+        "مدير المنصه",
+        "مدير الشركه",
+        "من يستطيع",
+        "سوبر ادمن"
+      ],
+      "q": {
+        "en": "What user roles does Workflow support?",
+        "ar": "ما أدوار المستخدمين في WorkFlow؟"
+      },
+      "a": {
+        "en": "Workflow has four roles with precisely scoped permissions: • Super Admin — the platform owner; creates and manages companies, roles and platform currencies from a master control panel. • Company Admin — full control inside their own company only: employees, clients, projects, tasks, invoices, wallets, contracts and timesheet approvals. • Employee — sees only their assigned tasks and projects, logs timesheets, views their own salary payments, and joins team conversations. • Client — views their projects, invoices and contracts, and submits change requests through a dedicated portal. Every API endpoint enforces these permissions.",
+        "ar": "في WorkFlow أربعة أدوار بصلاحيات محددة بدقة: • مدير المنصة (Super Admin) — مالك المنصة؛ ينشئ الشركات ويدير الأدوار والعملات من لوحة تحكم رئيسية. • مدير الشركة — تحكم كامل داخل شركته فقط: الموظفون والعملاء والمشاريع والمهام والفواتير والمحافظ والعقود واعتماد سجلات الدوام. • الموظف — يرى مهامه ومشاريعه فقط، يسجل ساعات عمله، ويطّلع على رواتبه، ويشارك في محادثات الفريق. • العميل — يتابع مشاريعه وفواتيره وعقوده ويقدم طلبات التغيير عبر بوابة خاصة. وتُفرض هذه الصلاحيات على كل نقطة وصول في النظام."
+      },
+      "related": [
+        "clients",
+        "employees",
+        "security"
+      ]
+    },
+    {
+      "id": "multi-tenant",
+      "keywords": [
+        "multi tenant",
+        "multi-tenant",
+        "tenant",
+        "subdomain",
+        "isolation",
+        "isolated",
+        "separate data",
+        "data isolation",
+        "company id",
+        "workspace",
+        "متعدد المستاجرين",
+        "نطاق فرعي",
+        "عزل البيانات",
+        "مساحه عمل",
+        "فصل البيانات",
+        "الخصوصيه بين الشركات",
+        "عزل",
+        "عزل بيانات",
+        "بيانات الشركات"
+      ],
+      "q": {
+        "en": "How does multi-tenancy and data isolation work?",
+        "ar": "كيف يتم عزل بيانات كل شركة؟"
+      },
+      "a": {
+        "en": "Every company gets its own subdomain (e.g. acme.platform.com) and every database record carries a company_id, following a Single-Database Multi-Tenancy design. Users are routed to their company's subdomain at login, anyone trying to access another company is rejected, and all queries are scoped to the tenant — so each company's data stays completely private while sharing one efficient infrastructure.",
+        "ar": "كل شركة تحصل على نطاق فرعي خاص (مثل acme.platform.com)، وكل سجل في قاعدة البيانات يحمل معرّف الشركة (company_id) وفق نمط قاعدة البيانات الواحدة متعددة المستأجرين. يوجَّه المستخدمون إلى نطاق شركتهم عند تسجيل الدخول، ويُرفض أي وصول لشركة أخرى، وتُقيَّد جميع الاستعلامات بنطاق الشركة — فتبقى بيانات كل شركة خاصة تماماً على بنية تحتية واحدة فعالة."
+      },
+      "related": [
+        "security",
+        "roles",
+        "tech-stack"
+      ]
+    },
+    {
+      "id": "projects-tasks",
+      "keywords": [
+        "project",
+        "projects",
+        "task",
+        "tasks",
+        "project management",
+        "assign",
+        "team members",
+        "statuses",
+        "manage projects",
+        "create project",
+        "مشروع",
+        "المشاريع",
+        "مهمه",
+        "المهام",
+        "اداره المشاريع",
+        "انشاء مشروع",
+        "توزيع المهام",
+        "تعيين"
+      ],
+      "q": {
+        "en": "How do projects and tasks work?",
+        "ar": "كيف تعمل المشاريع والمهام؟"
+      },
+      "a": {
+        "en": "A Company Admin creates a project linked to a client and a currency, optionally with a budget, then assigns team members. Tasks are created inside the project and assigned to specific employees, each with an execution date, optional start/end times, a maximum duration, and an auto-calculated cost based on the employee's hourly rate. Both projects and tasks move through three statuses: pending → in progress → completed.",
+        "ar": "ينشئ مدير الشركة مشروعاً مرتبطاً بعميل وعملة، مع ميزانية اختيارية، ثم يعيّن أعضاء الفريق. تُنشأ المهام داخل المشروع وتُسند لموظف محدد، ولكل مهمة تاريخ تنفيذ ووقتا بداية ونهاية اختياريان ومدة قصوى وتكلفة تُحسب تلقائياً من أجر الموظف بالساعة. وتمر المشاريع والمهام بثلاث حالات: قيد الانتظار ← قيد التنفيذ ← مكتمل."
+      },
+      "related": [
+        "timesheets",
+        "developments",
+        "employees"
+      ]
+    },
+    {
+      "id": "timesheets",
+      "keywords": [
+        "timesheet",
+        "timesheets",
+        "working hours",
+        "log hours",
+        "time tracking",
+        "approve hours",
+        "hours worked",
+        "سجل الدوام",
+        "سجلات الدوام",
+        "ساعات العمل",
+        "تسجيل الساعات",
+        "تتبع الوقت",
+        "اعتماد الساعات"
+      ],
+      "q": {
+        "en": "How do timesheets and approvals work?",
+        "ar": "كيف تعمل سجلات الدوام والاعتماد؟"
+      },
+      "a": {
+        "en": "Employees log their working hours against specific tasks for a given date. The system automatically computes the amount owed (hours × the employee's rate). Every entry starts as pending, and the Company Admin reviews and approves or rejects it — so payroll only reflects verified hours.",
+        "ar": "يسجل الموظفون ساعات عملهم على مهام محددة في تاريخ معين، ويحسب النظام المستحق تلقائياً (الساعات × أجر الموظف). يبدأ كل سجل بحالة قيد الانتظار، ثم يراجعه مدير الشركة ويعتمده أو يرفضه — فلا تدخل في الرواتب إلا الساعات الموثقة."
+      },
+      "related": [
+        "payroll",
+        "projects-tasks",
+        "employees"
+      ]
+    },
+    {
+      "id": "employees",
+      "keywords": [
+        "employee",
+        "employees",
+        "staff",
+        "add employee",
+        "hr",
+        "human resources",
+        "wizard",
+        "onboarding",
+        "الموظف",
+        "الموظفين",
+        "اضافه موظف",
+        "الموارد البشريه",
+        "توظيف",
+        "كادر"
+      ],
+      "q": {
+        "en": "How are employees managed?",
+        "ar": "كيف تتم إدارة الموظفين؟"
+      },
+      "a": {
+        "en": "Employees are added through a 3-step wizard: account data → personal information → payment information. The system automatically creates a linked user account bound to the company. Each employee has a payment type — monthly salary, hourly rate, or part-time — and a currency for salary calculation. Employees only see the tasks, projects and payments that belong to them.",
+        "ar": "يُضاف الموظفون عبر معالج من ثلاث خطوات: بيانات الحساب ← المعلومات الشخصية ← معلومات الدفع. ينشئ النظام تلقائياً حساب مستخدم مرتبطاً بالشركة. ولكل موظف نوع أجر — راتب شهري ثابت، أو بالساعة، أو دوام جزئي — وعملة تُحسب بها رواتبه. ولا يرى الموظف إلا مهامه ومشاريعه ومدفوعاته."
+      },
+      "related": [
+        "payroll",
+        "timesheets",
+        "roles"
+      ]
+    },
+    {
+      "id": "payroll",
+      "keywords": [
+        "payroll",
+        "salary",
+        "salaries",
+        "wages",
+        "pay employees",
+        "compensation",
+        "payment type",
+        "hourly",
+        "monthly",
+        "part time",
+        "الرواتب",
+        "راتب",
+        "اجور",
+        "دفع الرواتب",
+        "المرتبات",
+        "بالساعه",
+        "شهري",
+        "دوام جزئي"
+      ],
+      "q": {
+        "en": "How does payroll work?",
+        "ar": "كيف تعمل الرواتب؟"
+      },
+      "a": {
+        "en": "Workflow supports three payment types: monthly (fixed salary), hourly (per-hour rate) and part-time. For hourly staff, approved timesheets are turned into amounts automatically (hours × rate). Salary disbursements are recorded as payments linked to a company wallet, the wallet balance updates automatically, and each employee can privately review their own payment history.",
+        "ar": "يدعم WorkFlow ثلاثة أنواع للأجر: شهري ثابت، وبالساعة، ودوام جزئي. لموظفي الساعات تُحوَّل سجلات الدوام المعتمدة إلى مستحقات تلقائياً (الساعات × الأجر). وتُسجل الرواتب المدفوعة كمدفوعات مرتبطة بمحفظة الشركة فيتحدث رصيدها تلقائياً، ويمكن لكل موظف الاطلاع على سجل رواتبه الخاص."
+      },
+      "related": [
+        "timesheets",
+        "wallets",
+        "payments"
+      ]
+    },
+    {
+      "id": "wallets",
+      "keywords": [
+        "wallet",
+        "wallets",
+        "balance",
+        "cash flow",
+        "financial account",
+        "transfer",
+        "funds",
+        "المحفظه",
+        "المحافظ",
+        "الرصيد",
+        "التدفق النقدي",
+        "تحويل",
+        "حساب مالي"
+      ],
+      "q": {
+        "en": "What are wallets and how do they work?",
+        "ar": "ما هي المحافظ وكيف تعمل؟"
+      },
+      "a": {
+        "en": "A wallet is a virtual financial account in a specific currency. A company can have several wallets, and every financial operation updates the balance automatically. Wallets support eight transaction types — income, expense, transfer in/out, withdraw, funding, salary and assets — and inter-wallet transfers apply the exchange rate automatically when currencies differ. Together they give an accurate, real-time view of cash flow.",
+        "ar": "المحفظة حساب مالي افتراضي بعملة محددة، ويمكن للشركة إنشاء عدة محافظ. يتحدث رصيد المحفظة تلقائياً مع كل عملية مالية، وتدعم ثمانية أنواع من الحركات — دخل، مصروف، تحويل وارد/صادر، سحب، تمويل، رواتب، وأصول — وتُطبَّق أسعار الصرف تلقائياً عند التحويل بين محافظ بعملات مختلفة، مما يمنحك رؤية لحظية دقيقة للتدفق النقدي."
+      },
+      "related": [
+        "currencies",
+        "payments",
+        "expenses"
+      ]
+    },
+    {
+      "id": "currencies",
+      "keywords": [
+        "currency",
+        "currencies",
+        "exchange rate",
+        "multi currency",
+        "usd",
+        "eur",
+        "convert",
+        "العمله",
+        "العملات",
+        "سعر الصرف",
+        "تعدد العملات",
+        "دولار",
+        "يورو",
+        "تحويل العملات"
+      ],
+      "q": {
+        "en": "Does Workflow support multiple currencies?",
+        "ar": "هل يدعم WorkFlow تعدد العملات؟"
+      },
+      "a": {
+        "en": "Yes. Each company can add its own currencies (e.g. USD, EUR, JOD), each with a configurable exchange rate used for cross-currency calculations. Projects, employees, invoices and wallets are each tied to a currency, and the system applies the right exchange rate whenever a payment or transfer crosses currencies.",
+        "ar": "نعم. يمكن لكل شركة إضافة عملاتها الخاصة (مثل الدولار واليورو والدينار)، ولكل عملة سعر صرف قابل للتعديل تُبنى عليه الحسابات بين العملات. وترتبط المشاريع والموظفون والفواتير والمحافظ كلٌّ بعملة محددة، ويطبق النظام سعر الصرف الصحيح تلقائياً عند أي دفعة أو تحويل بين عملتين."
+      },
+      "related": [
+        "wallets",
+        "invoices",
+        "payroll"
+      ]
+    },
+    {
+      "id": "invoices",
+      "keywords": [
+        "invoice",
+        "invoices",
+        "billing",
+        "bill",
+        "due date",
+        "overdue",
+        "unpaid",
+        "فاتوره",
+        "الفواتير",
+        "فوترة",
+        "تاريخ الاستحقاق",
+        "متاخره",
+        "غير مدفوعه"
+      ],
+      "q": {
+        "en": "How does invoicing work?",
+        "ar": "كيف تعمل الفواتير؟"
+      },
+      "a": {
+        "en": "The Company Admin generates invoices linked to a client, a project and a currency. Invoices start as unpaid and switch to paid automatically when a linked payment is recorded. An optional due date lets the system surface overdue invoices to the admin, and clients see all their invoices — paid and unpaid — in their own portal.",
+        "ar": "ينشئ مدير الشركة فواتير مرتبطة بعميل ومشروع وعملة. تبدأ الفاتورة بحالة غير مدفوعة وتتحول إلى مدفوعة تلقائياً عند تسجيل دفعة مرتبطة بها. ويمكن تحديد تاريخ استحقاق ليُظهر النظام الفواتير المتأخرة للمدير، بينما يرى العميل جميع فواتيره — المدفوعة وغير المدفوعة — في بوابته الخاصة."
+      },
+      "related": [
+        "payments",
+        "clients",
+        "currencies"
+      ]
+    },
+    {
+      "id": "payments",
+      "keywords": [
+        "payment",
+        "payments",
+        "payment methods",
+        "stripe",
+        "bank transfer",
+        "cash",
+        "card",
+        "pay",
+        "الدفع",
+        "المدفوعات",
+        "طرق الدفع",
+        "تحويل بنكي",
+        "نقدا",
+        "بطاقه",
+        "سترايب"
+      ],
+      "q": {
+        "en": "What payment methods are supported?",
+        "ar": "ما طرق الدفع المدعومة؟"
+      },
+      "a": {
+        "en": "Payments cover two directions: client payments that settle invoices, and salary payments to employees. Five methods are supported — cash, bank transfer, card, online, and Stripe. Every payment is linked to a wallet whose balance adjusts automatically, with the exchange rate applied when the payment currency differs from the wallet's.",
+        "ar": "تغطي المدفوعات اتجاهين: دفعات العملاء لتسوية الفواتير، ورواتب الموظفين. وتُدعم خمس طرق — نقداً، تحويل بنكي، بطاقة، دفع إلكتروني، وسترايب (Stripe). وترتبط كل دفعة بمحفظة يتحدث رصيدها تلقائياً، مع تطبيق سعر الصرف إذا اختلفت عملة الدفعة عن عملة المحفظة."
+      },
+      "related": [
+        "invoices",
+        "wallets",
+        "payroll"
+      ]
+    },
+    {
+      "id": "expenses",
+      "keywords": [
+        "expense",
+        "expenses",
+        "spending",
+        "costs",
+        "record expense",
+        "مصروف",
+        "المصروفات",
+        "النفقات",
+        "تسجيل مصروف",
+        "التكاليف"
+      ],
+      "q": {
+        "en": "Can I track company expenses?",
+        "ar": "هل يمكن تتبع مصروفات الشركة؟"
+      },
+      "a": {
+        "en": "Yes. The Company Admin records expenses with a title, category, amount and date. Each expense automatically creates a matching wallet transaction, keeping the financial ledger consistent and the wallet balances accurate.",
+        "ar": "نعم. يسجل مدير الشركة المصروفات بعنوان وفئة ومبلغ وتاريخ، وينشئ النظام تلقائياً حركة مطابقة في المحفظة، فيبقى السجل المالي متسقاً وأرصدة المحافظ دقيقة."
+      },
+      "related": [
+        "wallets",
+        "payments",
+        "invoices"
+      ]
+    },
+    {
+      "id": "clients",
+      "keywords": [
+        "client",
+        "clients",
+        "customer",
+        "client portal",
+        "self register",
+        "registration",
+        "approval",
+        "credit limit",
+        "عميل",
+        "العملاء",
+        "بوابه العميل",
+        "تسجيل ذاتي",
+        "موافقه",
+        "حد الائتمان",
+        "زبون"
+      ],
+      "q": {
+        "en": "How do clients use Workflow?",
+        "ar": "كيف يستخدم العملاء WorkFlow؟"
+      },
+      "a": {
+        "en": "Clients get their own portal. They can be added by the Company Admin (with an optional credit limit) or self-register — self-registered accounts stay pending, seeing a waiting page until the admin approves them. Once approved, clients can track their projects and statuses, review paid and unpaid invoices, read their contracts, submit change requests, and chat with the team.",
+        "ar": "للعملاء بوابة خاصة بهم. يمكن لمدير الشركة إضافتهم (مع حد ائتمان اختياري) أو يسجلون بأنفسهم — وتبقى الحسابات المسجلة ذاتياً معلقة مع صفحة انتظار حتى موافقة المدير. بعد الموافقة يتابع العميل مشاريعه وحالاتها، ويراجع فواتيره المدفوعة وغير المدفوعة، ويطّلع على عقوده، ويقدم طلبات تغيير، ويتواصل مع الفريق."
+      },
+      "related": [
+        "invoices",
+        "developments",
+        "contracts"
+      ]
+    },
+    {
+      "id": "developments",
+      "keywords": [
+        "development",
+        "developments",
+        "change request",
+        "change requests",
+        "modification",
+        "scope change",
+        "طلب تغيير",
+        "طلبات التغيير",
+        "تعديل",
+        "تطوير",
+        "تغيير النطاق"
+      ],
+      "q": {
+        "en": "What are change requests (developments)?",
+        "ar": "ما هي طلبات التغيير؟"
+      },
+      "a": {
+        "en": "A development is a formal change request on an active project, submitted by the client or the Company Admin. Each request has a title, description, optional cost and currency, and moves through four statuses: pending → approved → in progress → completed. It gives scope changes a clear, trackable path instead of scattered emails.",
+        "ar": "طلب التغيير هو طلب رسمي لتعديل مشروع نشط، يقدمه العميل أو مدير الشركة. لكل طلب عنوان ووصف وتكلفة وعملة اختياريتان، ويمر بأربع حالات: قيد الانتظار ← معتمد ← قيد التنفيذ ← مكتمل. بذلك تسير تعديلات النطاق في مسار واضح قابل للتتبع بدلاً من رسائل متناثرة."
+      },
+      "related": [
+        "projects-tasks",
+        "clients",
+        "contracts"
+      ]
+    },
+    {
+      "id": "contracts",
+      "keywords": [
+        "contract",
+        "contracts",
+        "agreement",
+        "digital contract",
+        "عقد",
+        "العقود",
+        "اتفاقيه",
+        "عقد رقمي"
+      ],
+      "q": {
+        "en": "How do digital contracts work?",
+        "ar": "كيف تعمل العقود الرقمية؟"
+      },
+      "a": {
+        "en": "The Company Admin creates a digital contract linked to a client and a project, storing the full agreement text inside the system. The linked client can read their contract any time through their portal, so the formal agreement lives where the work happens.",
+        "ar": "ينشئ مدير الشركة عقداً رقمياً مرتبطاً بعميل ومشروع، ويُحفظ نص الاتفاق كاملاً داخل النظام. ويستطيع العميل قراءة عقده في أي وقت عبر بوابته — فيبقى الاتفاق الرسمي في المكان نفسه الذي يُنجز فيه العمل."
+      },
+      "related": [
+        "clients",
+        "projects-tasks",
+        "developments"
+      ]
+    },
+    {
+      "id": "messaging",
+      "keywords": [
+        "message",
+        "messages",
+        "messaging",
+        "chat",
+        "conversation",
+        "communication",
+        "team chat",
+        "الرسائل",
+        "المراسله",
+        "محادثه",
+        "المحادثات",
+        "دردشه",
+        "التواصل",
+        "شات"
+      ],
+      "q": {
+        "en": "Does Workflow have built-in messaging?",
+        "ar": "هل يوجد نظام مراسلة داخل WorkFlow؟"
+      },
+      "a": {
+        "en": "Yes — Workflow includes structured messaging with three conversation types: client chat, team chat, and manager chat. Users only see conversations they're members of, read status is tracked per message, and conversations are strictly isolated per company.",
+        "ar": "نعم — يتضمن WorkFlow نظام مراسلة منظماً بثلاثة أنواع من المحادثات: محادثة العميل، ومحادثة الفريق، ومحادثة المدير. لا يرى المستخدم إلا المحادثات التي هو عضو فيها، وتُتتبع حالة قراءة كل رسالة، والمحادثات معزولة تماماً لكل شركة."
+      },
+      "related": [
+        "roles",
+        "clients",
+        "features"
+      ]
+    },
+    {
+      "id": "security",
+      "keywords": [
+        "security",
+        "secure",
+        "safety",
+        "jwt",
+        "encryption",
+        "password",
+        "audit",
+        "protect",
+        "privacy",
+        "hacking",
+        "safe",
+        "الامان",
+        "الامن",
+        "الحمايه",
+        "التشفير",
+        "كلمه المرور",
+        "سجل التدقيق",
+        "الخصوصيه",
+        "امن البيانات"
+      ],
+      "q": {
+        "en": "How secure is Workflow?",
+        "ar": "ما مدى أمان WorkFlow؟"
+      },
+      "a": {
+        "en": "Security is built in at every layer: passwords hashed with bcrypt, stateless JWT / Laravel Sanctum tokens for API authentication, HTTPS enforced in production, and protection against SQL injection, XSS and CSRF. Every sensitive action is written to an audit log with the actor and timestamp, login sessions are tracked, and multi-tenant isolation keeps every company's data strictly separated.",
+        "ar": "الأمان مدمج في كل طبقة: كلمات المرور مشفرة بخوارزمية bcrypt، والمصادقة عبر رموز JWT / Laravel Sanctum، وفرض HTTPS في بيئة الإنتاج، وحماية من هجمات حقن SQL وXSS وCSRF. ويُسجل كل إجراء حساس في سجل تدقيق مع هوية المنفذ والوقت، وتُتتبع جلسات الدخول، ويضمن العزل متعدد المستأجرين فصل بيانات كل شركة فصلاً تاماً."
+      },
+      "related": [
+        "multi-tenant",
+        "reliability",
+        "roles"
+      ]
+    },
+    {
+      "id": "reliability",
+      "keywords": [
+        "performance",
+        "speed",
+        "fast",
+        "uptime",
+        "reliability",
+        "backup",
+        "scalable",
+        "scalability",
+        "concurrent",
+        "availability",
+        "الاداء",
+        "السرعه",
+        "التوفر",
+        "النسخ الاحتياطي",
+        "موثوقيه",
+        "قابليه التوسع",
+        "استقرار"
+      ],
+      "q": {
+        "en": "How fast and reliable is the platform?",
+        "ar": "ما مدى سرعة المنصة وموثوقيتها؟"
+      },
+      "a": {
+        "en": "The platform targets API responses within 500ms, supports at least 100 concurrent users per company, and uses Redis caching plus indexed database queries for speed. It's designed for 99.5%+ monthly uptime with automated daily backups, and new companies can be onboarded without affecting existing tenants.",
+        "ar": "تستهدف المنصة استجابة أقل من ٥٠٠ مللي ثانية لأي طلب، وتدعم ١٠٠ مستخدم متزامن لكل شركة على الأقل، وتعتمد التخزين المؤقت عبر Redis وفهرسة قاعدة البيانات للسرعة. وهي مصممة لتوافر شهري لا يقل عن ٩٩٫٥٪ مع نسخ احتياطي يومي تلقائي، ويمكن ضم شركات جديدة دون التأثير على الشركات القائمة."
+      },
+      "related": [
+        "security",
+        "tech-stack",
+        "multi-tenant"
+      ]
+    },
+    {
+      "id": "tech-stack",
+      "keywords": [
+        "technology",
+        "tech stack",
+        "stack",
+        "laravel",
+        "react",
+        "mysql",
+        "built with",
+        "backend",
+        "frontend",
+        "database",
+        "api",
+        "التقنيات",
+        "التكنولوجيا",
+        "لارافيل",
+        "رياكت",
+        "قاعده البيانات",
+        "مبني",
+        "الباك اند",
+        "الفرونت اند"
+      ],
+      "q": {
+        "en": "What technology is Workflow built with?",
+        "ar": "ما التقنيات المستخدمة في WorkFlow؟"
+      },
+      "a": {
+        "en": "Workflow uses a contract-first, API-driven architecture: a Laravel RESTful API backend, a React.js frontend, and a MySQL database with company_id-based multi-tenancy, plus Redis caching. APIs are documented with Swagger/OpenAPI, and the design leaves room for mobile apps, subscription billing, AI reporting and real-time notifications in the future.",
+        "ar": "يعتمد WorkFlow معمارية قائمة على واجهات برمجية أولاً: خلفية Laravel RESTful API، وواجهة React.js، وقاعدة بيانات MySQL بعزل متعدد المستأجرين عبر company_id، مع تخزين مؤقت بـ Redis. والواجهات موثقة عبر Swagger/OpenAPI، والتصميم قابل للتوسع مستقبلاً نحو تطبيقات الجوال والفوترة بالاشتراكات وتقارير الذكاء الاصطناعي والإشعارات الفورية."
+      },
+      "related": [
+        "multi-tenant",
+        "reliability",
+        "arabic-rtl"
+      ]
+    },
+    {
+      "id": "arabic-rtl",
+      "keywords": [
+        "arabic",
+        "rtl",
+        "language",
+        "languages",
+        "right to left",
+        "localization",
+        "translate",
+        "العربيه",
+        "اللغه",
+        "اللغات",
+        "من اليمين",
+        "الترجمه",
+        "يدعم العربي"
+      ],
+      "q": {
+        "en": "Does Workflow support Arabic?",
+        "ar": "هل يدعم WorkFlow اللغة العربية؟"
+      },
+      "a": {
+        "en": "Yes — the interface fully supports Arabic with a proper right-to-left (RTL) layout, and it's fully responsive on desktop and mobile. Usability is a stated requirement: clear, human-readable messages and guided multi-step wizards for complex flows.",
+        "ar": "نعم — تدعم الواجهة اللغة العربية دعماً كاملاً مع تخطيط من اليمين إلى اليسار (RTL)، وهي متجاوبة تماماً على الحاسوب والجوال. وسهولة الاستخدام متطلب أساسي: رسائل واضحة مفهومة ومعالجات خطوة بخطوة للعمليات المركبة."
+      },
+      "related": [
+        "tech-stack",
+        "features",
+        "what-is-workflow"
+      ]
+    },
+    {
+      "id": "pricing",
+      "keywords": [
+        "price",
+        "pricing",
+        "plans",
+        "cost",
+        "subscription",
+        "free",
+        "pro",
+        "enterprise",
+        "how much",
+        "الاسعار",
+        "السعر",
+        "الخطط",
+        "التكلفه",
+        "اشتراك",
+        "مجاني",
+        "كم سعر",
+        "بكم",
+        "اسعار",
+        "سعر",
+        "خطط",
+        "خطه",
+        "التسعير"
+      ],
+      "q": {
+        "en": "What are the pricing plans?",
+        "ar": "ما خطط الأسعار؟"
+      },
+      "a": {
+        "en": "Workflow offers three plans: • Free — for individuals and small teams starting out (5 clients, employees & projects, 3 currencies, 5 invoices & 30 tasks, 20 financial transactions). • Pro — $20/month for growing teams: unlimited members and projects, priority email support, advanced analytics and custom integrations. • Enterprise — $200/year for large organizations: everything in Pro plus 24/7 dedicated support, advanced security, a dedicated account manager and a comprehensive admin panel.",
+        "ar": "يقدم WorkFlow ثلاث خطط: • المجانية — للأفراد والفرق الصغيرة (٥ عملاء وموظفين ومشاريع، ٣ عملات، ٥ فواتير و٣٠ مهمة، ٢٠ معاملة مالية). • الاحترافية — ٢٠$ شهرياً للفرق النامية: أعضاء ومشاريع بلا حدود، دعم بريدي ذو أولوية، تحليلات متقدمة وتكاملات مخصصة. • المؤسسات — ٢٠٠$ سنوياً للمنظمات الكبيرة: كل مزايا الاحترافية مع دعم مخصص على مدار الساعة وأمان متقدم ومدير حساب مخصص ولوحة تحكم شاملة."
+      },
+      "related": [
+        "get-started",
+        "features",
+        "contact"
+      ]
+    },
+    {
+      "id": "get-started",
+      "keywords": [
+        "get started",
+        "start",
+        "begin",
+        "how to use",
+        "sign up",
+        "signup",
+        "register",
+        "steps",
+        "setup",
+        "onboard",
+        "ابدا",
+        "البدايه",
+        "كيف ابدا",
+        "التسجيل",
+        "انشاء حساب",
+        "خطوات",
+        "الاستخدام"
+      ],
+      "q": {
+        "en": "How do I get started?",
+        "ar": "كيف أبدأ باستخدام WorkFlow؟"
+      },
+      "a": {
+        "en": "Getting started takes three simple steps: 1) Create your workspace — pick a ready-made template that fits your project type (development, design, marketing). 2) Invite your team and assign tasks — add members by email and set each person's responsibilities in a few clicks. 3) Track progress and celebrate — watch work advance in real time on live dashboards.",
+        "ar": "البدء بثلاث خطوات بسيطة: ١) أنشئ مساحة عملك — اختر قالباً جاهزاً يناسب مشروعك (برمجة، تصميم، تسويق). ٢) ادعُ فريقك ووزّع المهام — أضف الأعضاء عبر بريدهم وحدد مسؤولياتهم بنقرات قليلة. ٣) تابع التقدم واحتفل بالإنجاز — راقب سير العمل لحظياً عبر لوحات المتابعة."
+      },
+      "related": [
+        "pricing",
+        "features",
+        "contact"
+      ]
+    },
+    {
+      "id": "team",
+      "keywords": [
+        "team",
+        "who built",
+        "developers",
+        "who made",
+        "behind workflow",
+        "creators",
+        "authors",
+        "الفريق",
+        "من صنع",
+        "المطورين",
+        "من طور",
+        "من وراء"
+      ],
+      "q": {
+        "en": "Who built Workflow?",
+        "ar": "من الفريق الذي طوّر WorkFlow؟"
+      },
+      "a": {
+        "en": "Workflow is built by a dedicated team: Alaa Eldin Aldahdar and Ahmad Shanan (Backend), Zainab Al-Mudallal (UI/UX), Raghad Ayyad and Hala Jendeya (Frontend), Majd Salim (AI) and Mahmoud Salem (Frontend) — supervised by Motasem Alsaqqa and Saja Alghoul.",
+        "ar": "طوّر WorkFlow فريق متكامل: علاء الدين الدهدار وأحمد شنن (الخلفية)، زينب المدلل (تصميم الواجهات وتجربة المستخدم)، رغد عياد وحلا جندية (الواجهات الأمامية)، مجد سليم (الذكاء الاصطناعي)، ومحمود سالم (الواجهات الأمامية) — بإشراف معتصم السقا وسجى الغول."
+      },
+      "related": [
+        "what-is-workflow",
+        "contact",
+        "tech-stack"
+      ]
+    },
+    {
+      "id": "member-zainab",
+      "keywords": [
+        "zainab",
+        "mudallal",
+        "al-mudallal",
+        "زينب",
+        "المدلل"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Zainab Al-Mudallal is the UI/UX Designer of the Workflow team — she crafted the platform's look and user experience, from the landing page to the dashboard.",
+        "ar": "زينب المدلل هي مصممة واجهات وتجربة المستخدم (UI/UX) في فريق ووركفلو — صممت هوية المنصة وتجربتها من صفحة الهبوط حتى لوحة التحكم."
+      },
+      "related": [
+        "team",
+        "what-is-workflow",
+        "contact"
+      ]
+    },
+    {
+      "id": "member-raghad",
+      "keywords": [
+        "raghad",
+        "ayyad",
+        "رغد",
+        "عياد"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Raghad Ayyad is a Frontend Developer on the Workflow team — she builds the React interfaces that users interact with every day.",
+        "ar": "رغد عياد مطورة واجهات أمامية في فريق ووركفلو — تبني واجهات React التي يتعامل معها المستخدمون يومياً."
+      },
+      "related": [
+        "team",
+        "tech-stack",
+        "contact"
+      ]
+    },
+    {
+      "id": "member-alaa",
+      "keywords": [
+        "alaa",
+        "aldahdar",
+        "dahdar",
+        "علاء",
+        "الدهدار"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Alaa ElDin AlDahdar is a Backend Developer on the Workflow team — he works on the Laravel API, the multi-tenant architecture and the financial engine.",
+        "ar": "علاء الدين الدهدار مطور خلفيات في فريق ووركفلو — يعمل على واجهة Laravel البرمجية وبنية تعدد المستأجرين والمحرك المالي."
+      },
+      "related": [
+        "team",
+        "tech-stack",
+        "contact"
+      ]
+    },
+    {
+      "id": "member-ahmad",
+      "keywords": [
+        "shanan",
+        "ahmad shanan",
+        "ahmed shanan",
+        "شنن",
+        "احمد شنن"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Ahmad Shanan is a Backend Developer on the Workflow team — he builds the Laravel API, roles & permissions and the platform's core services.",
+        "ar": "أحمد شنن مطور خلفيات في فريق ووركفلو — يبني واجهة Laravel البرمجية ونظام الأدوار والصلاحيات والخدمات الأساسية للمنصة."
+      },
+      "related": [
+        "team",
+        "tech-stack",
+        "contact"
+      ]
+    },
+    {
+      "id": "member-hala",
+      "keywords": [
+        "hala",
+        "jendeya",
+        "حلا",
+        "جنديه"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Hala Jendeya is a Frontend Developer on the Workflow team — she develops the platform's React interfaces and user-facing features.",
+        "ar": "حلا جندية مطورة واجهات أمامية في فريق ووركفلو — تطوّر واجهات React والميزات التي يستخدمها الزوار مباشرة."
+      },
+      "related": [
+        "team",
+        "tech-stack",
+        "contact"
+      ]
+    },
+    {
+      "id": "member-majd",
+      "keywords": [
+        "majd",
+        "salim",
+        "majd salim",
+        "مجد",
+        "سليم",
+        "مجد سليم"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Majd Salim is the AI Specialist on the Workflow team — he works on the platform's AI features, including this assistant you're talking to right now. 🤖",
+        "ar": "مجد سليم هو متخصص الذكاء الاصطناعي في فريق ووركفلو — يعمل على ميزات الذكاء الاصطناعي في المنصة، ومنها هذا المساعد الذي تتحدث معه الآن. 🤖"
+      },
+      "related": [
+        "team",
+        "tech-stack",
+        "contact"
+      ]
+    },
+    {
+      "id": "member-mahmoud",
+      "keywords": [
+        "mahmoud",
+        "salem",
+        "mahmoud salem",
+        "محمود",
+        "سالم",
+        "محمود سالم"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Mahmoud Salem is a Front-End Developer on the Workflow team — he builds the platform's user interfaces.",
+        "ar": "محمود سالم مطور واجهات أمامية في فريق ووركفلو — يبني واجهات المستخدم في المنصة."
+      },
+      "related": [
+        "team",
+        "tech-stack",
+        "contact"
+      ]
+    },
+    {
+      "id": "supervisors",
+      "keywords": [
+        "supervisor",
+        "supervisors",
+        "supervised",
+        "who supervised",
+        "supervised the project",
+        "motasem",
+        "alsaqqa",
+        "saja",
+        "alghoul",
+        "مشرف",
+        "المشرفين",
+        "اشراف",
+        "من اشرف",
+        "معتصم",
+        "السقا",
+        "سجى",
+        "الغول"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "The Workflow project is supervised by Motasem Alsaqqa and Saja Alghoul, who guide the team's engineering and product decisions.",
+        "ar": "يشرف على مشروع ووركفلو معتصم السقا وسجى الغول، ويوجّهان قرارات الفريق الهندسية والمنتجية."
+      },
+      "related": [
+        "team",
+        "what-is-workflow",
+        "contact"
+      ]
+    },
+    {
+      "id": "contact",
+      "keywords": [
+        "contact",
+        "support",
+        "email",
+        "reach",
+        "help desk",
+        "website",
+        "location",
+        "where",
+        "تواصل",
+        "الدعم",
+        "البريد",
+        "ايميل",
+        "الموقع",
+        "اين",
+        "المساعده الفنيه"
+      ],
+      "q": {
+        "en": "How can I contact support?",
+        "ar": "كيف أتواصل مع الدعم؟"
+      },
+      "a": {
+        "en": "You can reach the Workflow team at support@workflownets.com, visit www.workflownets.com, or use the contact form at the bottom of this page — the team is based in Gaza, Palestine and will get back to you quickly.",
+        "ar": "يمكنك التواصل مع فريق WorkFlow عبر support@workflownets.com، أو زيارة www.workflownets.com، أو استخدام نموذج التواصل أسفل هذه الصفحة — الفريق مقره غزة، فلسطين وسيرد عليك بسرعة."
+      },
+      "related": [
+        "get-started",
+        "pricing",
+        "team"
+      ]
+    },
+    {
+      "id": "greeting",
+      "keywords": [
+        "hi",
+        "hello",
+        "hey",
+        "good morning",
+        "good evening",
+        "salam",
+        "thanks",
+        "thank you",
+        "مرحبا",
+        "اهلا",
+        "هلا",
+        "السلام عليكم",
+        "صباح الخير",
+        "مساء الخير",
+        "شكرا",
+        "يعطيك العافيه"
+      ],
+      "q": {
+        "en": "",
+        "ar": ""
+      },
+      "a": {
+        "en": "Hello! 👋 I'm the Workflow assistant. Ask me anything about the Workflow platform — what it does, its features, roles, pricing, or how to get started.",
+        "ar": "أهلاً بك! 👋 أنا مساعد WorkFlow. اسألني ما تشاء عن منصة WorkFlow — ماذا تقدم، مزاياها، الأدوار، الأسعار، أو كيف تبدأ."
+      },
+      "related": [
+        "what-is-workflow",
+        "features",
+        "pricing"
+      ]
+    }
+  ],
+  "FALLBACK": {
+    "en": "I'm the Workflow assistant, so I can only answer questions about the Workflow platform — its features, roles, projects, finances, pricing and how it works. Try one of the suggested questions below, or rephrase your question about Workflow.",
+    "ar": "أنا مساعد WorkFlow، لذا أجيب فقط عن أسئلة تخص منصة WorkFlow — مزاياها وأدوارها ومشاريعها وماليتها وأسعارها وطريقة عملها. جرّب أحد الأسئلة المقترحة أدناه، أو أعد صياغة سؤالك عن WorkFlow."
+  },
+  "DEFAULT_SUGGESTIONS": [
+    "what-is-workflow",
+    "features",
+    "pricing",
+    "get-started"
+  ],
+  "GREETING": {
+    "en": "Hi! 👋 I'm the Workflow assistant. How can I help you learn about Workflow today?",
+    "ar": "أهلاً! 👋 أنا مساعد WorkFlow. كيف أساعدك في التعرف على WorkFlow اليوم؟"
+  }
+}

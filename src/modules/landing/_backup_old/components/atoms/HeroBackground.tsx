@@ -46,7 +46,7 @@ function DataConstellation({ isDark }: { isDark: boolean }) {
       }
     }
 
-    const positionsArray = new Float32Array(pts.flatMap(p => [p.x, p.y, p.z]))
+    const positionsArray = new Float32Array(pts.flatMap((p: any) => [p.x, p.y, p.z]))
     const linesArray = new Float32Array(linePositions)
     
     const colorsArray = new Float32Array(pts.length * 3)

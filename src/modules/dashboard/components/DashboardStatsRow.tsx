@@ -16,7 +16,7 @@ interface MiniStatCardProps {
 function MiniStatCard({ icon: Icon, label, value, sub, trend, trendColor }: MiniStatCardProps) {
   const IconEl = Icon as any;
   return (
-    <div className="rounded-2xl p-4 flex gap-3 ds-bg-form ds-border-form ds-shadow-sm">
+    <div className="rounded-2xl p-4 flex gap-3 ds-bg-form ds-border-form ds-shadow-sm border border-[#E2E8F0]">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ds-bg-primary-200">
         <IconEl size={16} className="ds-text-brand" />
       </div>
