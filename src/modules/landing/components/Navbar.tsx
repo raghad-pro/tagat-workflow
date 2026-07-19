@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import { MoonIcon, SunIcon, LangIcon } from './Icons'
 
@@ -9,6 +10,7 @@ export default function Navbar() {
   const { t, theme, lang, toggleTheme, toggleLang } = useApp()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -37,10 +39,24 @@ export default function Navbar() {
           />
         </a>
 
-        <nav className={`nav__links ${open ? 'nav__links--open' : ''}`} aria-label="Main">
+        <nav className={`nav__links ${open ? 'nav__links--open' : ''}`} aria-label="Main" onMouseLeave={() => setHoveredLink(null)}>
           {links.map((l, i) => (
-            <a key={l.href} href={l.href} className={i === 0 ? 'active' : ''} onClick={() => setOpen(false)}>
-              {l.label}
+            <a 
+              key={l.href} 
+              href={l.href} 
+              className={i === 0 && hoveredLink === null ? 'active' : ''} 
+              onClick={() => setOpen(false)}
+              onMouseEnter={() => setHoveredLink(l.href)}
+              style={{ position: 'relative' }}
+            >
+              {hoveredLink === l.href && (
+                <motion.div
+                  layoutId="nav-pill"
+                  className="nav__pill-bg"
+                  transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                />
+              )}
+              <span className="nav__link-text">{l.label}</span>
             </a>
           ))}
         </nav>
