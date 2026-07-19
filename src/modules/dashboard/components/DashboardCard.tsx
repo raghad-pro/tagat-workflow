@@ -13,7 +13,7 @@ interface DashboardCardProps {
 
 export function DashboardCard({ title, action, children, className = "" }: DashboardCardProps) {
   return (
-    <div className={`rounded-2xl p-5 flex flex-col ds-bg-form ds-border-form ds-shadow-sm ${className}`}>
+    <div className={`rounded-lg p-5 flex flex-col ds-bg-form shadow-sm ds-border-form border border-[#E2E8F0] ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <Text size="sm" weight="bold" tag="p">{title}</Text>
         {action}

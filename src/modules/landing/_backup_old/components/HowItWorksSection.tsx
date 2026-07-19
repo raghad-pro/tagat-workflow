@@ -17,14 +17,14 @@ export function HowItWorksSection() {
         <div className="text-center mb-20">
           <h2 className="mb-4 text-center text-3xl font-bold">
             {t.rich("howItWorksTitle", {
-              cyan: (chunks) => <span className="text-primary">{chunks}</span>
+              cyan: (chunks: any) => <span className="text-primary">{chunks}</span>
             })}
           </h2>
           <p className="text-center">{t("howItWorksSubtitle")}</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {steps.map((step) => (
+          {steps.map((step: any) => (
             <div key={step.num} className="relative ds-bg px-8 pt-12 pb-8 rounded-2xl shadow-sm border border-border flex flex-col items-center text-center mt-6 md:mt-0">
               
               {/* Number Badge overlapping the top border */}

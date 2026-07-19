@@ -35,7 +35,7 @@ export function FeaturesSection() {
           <SlideIn direction="left" className="lg:w-1/2">
             <h2 className="mb-6 text-3xl md:text-4xl font-bold">
               {t.rich("featuresTitle", {
-                cyan: (chunks) => <span className="text-primary">{chunks}</span>
+                cyan: (chunks: any) => <span className="text-primary">{chunks}</span>
               })}
             </h2>
             <p className="leading-relaxed">
@@ -61,7 +61,7 @@ export function FeaturesSection() {
           <div className="text-center mb-16">
             <h3 className="mb-4 text-center text-3xl font-bold">
               {t.rich("coreFeaturesTitle", {
-                cyan: (chunks) => <span className="text-primary">{chunks}</span>
+                cyan: (chunks: any) => <span className="text-primary">{chunks}</span>
               })}
             </h3>
             <p className="text-center">{t("coreFeaturesSubtitle")}</p>

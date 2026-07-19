@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { Text } from "@/components/atoms/Text";
@@ -42,6 +43,11 @@ export function ActionModal({
   size = "md",
 }: ActionModalProps) {
   const t = useTranslations("common");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -56,7 +62,7 @@ export function ActionModal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const isView = mode === "view";
   const primaryActionLabel = saveLabel || (mode === "delete" ? t("delete") : mode === "edit" ? t("update") : t("save"));
@@ -64,8 +70,8 @@ export function ActionModal({
   const primaryActionIcon = mode === "delete" ? <Trash2 size={15} /> : <Send size={15} />;
   const primaryActionVariant = mode === "delete" ? "danger" : "solid"; // assuming "danger" variant exists, otherwise I should use "solid" and override styles or check Button variants.
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} aria-hidden="true" />
       <div
         role="dialog"
@@ -121,6 +127,7 @@ export function ActionModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

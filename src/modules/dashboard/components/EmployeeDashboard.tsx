@@ -117,7 +117,7 @@ export function EmployeeDashboard({ role, token }: Props) {
         {/* 4 stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map(({ icon: Icon, label, value, trend, trendColor }) => (
-            <div key={label} className="rounded-2xl p-6 flex gap-4 ds-bg-form ds-shadow-sm">
+            <div key={label} className="rounded-2xl p-6 flex gap-4 ds-bg-form ds-shadow-sm border border-[#E2E8F0]">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-[#e6f7fa] text-[#00b5d8]">
                 <Icon size={24} />
               </div>

@@ -10,6 +10,7 @@ import { useLogout } from "@/modules/auth/hooks/useLogout";
 import { Settings, Bell, User, LogOut } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 // ─── User Dropdown ─────────────────────────────────────────────────────────────
 function UserDropdown() {
@@ -42,25 +43,21 @@ function UserDropdown() {
           open && "bg-[var(--color-bg)]"
         )}
       >
-        {/* Avatar */}
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
-          style={{
-            background: "var(--color-bg-primary)",
-            color: "var(--color-text-button)",
-          }}
-        >
-          {initial}
+        {/* Name + Email */}
+        <div className="hidden sm:flex flex-col leading-tight text-end">
+          <Text size="sm" weight="bold" tag="span" className="text-gray-900">
+            {user?.name ?? "المدير العام"}
+          </Text>
+          <Text size="sm" color="gray-200" tag="span" className="text-[11px] text-gray-400">
+            {user?.email ?? "admin@workflow.com"}
+          </Text>
         </div>
 
-        {/* Name + Email */}
-        <div className="hidden sm:flex flex-col leading-tight text-start">
-          <Text size="sm" weight="bold" tag="span">
-            {user?.name ?? "User"}
-          </Text>
-          <Text size="sm" color="gray-200" tag="span" className="text-[11px]">
-            {user?.email ?? ""}
-          </Text>
+        {/* Avatar */}
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-[#06B6D4] text-white"
+        >
+          {initial}
         </div>
 
         {/* Chevron */}
@@ -133,59 +130,47 @@ export default function DashboardNavbar() {
         borderBottom: "1px solid var(--navbar-border)",
       }}
     >
-      {/* Search */}
+      {/* Sidebar Toggle for Mobile */}
+      <SidebarTrigger className="me-1 md:hidden" />
+
+      {/* Search (Visually on the Left) */}
       <div
-        className="flex items-center gap-2 flex-1 max-w-xs rounded-xl px-3"
-        style={{
-          height: "38px",
-          background: "var(--color-bg)",
-          border: "1px solid var(--color-border-inputs)",
-        }}
+        className="flex items-center gap-2 rounded-lg px-2 sm:px-4 w-[140px] sm:w-[200px] md:w-[300px] shrink-0 ds-bg-form ds-border-form"
+        style={{ height: "38px" }}
       >
-        <svg
-          width="15" height="15" viewBox="0 0 24 24" fill="none"
-          stroke="var(--color-text-gray-200)" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-        </svg>
         <input
           type="text"
-          placeholder="Searching..."
-          className="bg-transparent outline-none w-full ds-text-sm ds-text-primary placeholder:ds-text-gray-200"
+          placeholder="Searching...."
+          className="bg-transparent outline-none w-full ds-text-sm ds-text-primary placeholder:text-gray-600 font-medium"
         />
       </div>
 
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-1.5">
+      {/* Right Actions (Visually on the Right) */}
+      <div className="flex items-center gap-3">
+        {/* Settings */}
+        <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[var(--color-bg)] transition-colors ds-text-gray-100">
+          <Settings size={20} className="text-gray-600" />
+        </button>
 
         {/* Notifications */}
         <Link
           href="/dashboard/notifications"
           className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[var(--color-bg)] transition-colors relative ds-text-gray-100"
         >
-          <Bell size={18} />
-          <span className="absolute top-1.5 end-1.5 w-2 h-2 rounded-full bg-red-500" />
+          <Bell size={20} className="text-gray-600" />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border border-white" />
         </Link>
-
-        {/* Language Switcher */}
-        <LanguageSwitcher />
 
         {/* Theme */}
         <ThemeButton />
 
-        {/* Divider */}
-        <div
-          className="w-px h-6 mx-1 shrink-0"
-          style={{ background: "var(--navbar-border, var(--color-border-form))" }}
-        />
-
         {/* User Dropdown */}
-        <UserDropdown />
+        <div className="ms-2">
+          <UserDropdown />
+        </div>
       </div>
     </header>
   );

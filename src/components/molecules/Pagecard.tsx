@@ -21,7 +21,7 @@ export function PageCard({ children, className, noPadding }: PageCardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl ds-bg-form ds-border-form overflow-hidden",
+        "rounded-2xl ds-bg-form ds-border-form overflow-hidden border border-[#E2E8F0]",
         className
       )}
       style={{ boxShadow: "var(--shadow-sm)" }}

@@ -60,6 +60,11 @@ export const authApi = {
     return response.data;
   },
 
+  verifyOtpForgotPassword: async (data: VerifyOtpRequest) => {
+    const response = await apiClient.post<{ status: number | boolean; message: string; success?: boolean }>("/verify-otp-forgot-password", data);
+    return response;
+  },
+
   resetPassword: async (data: ResetPasswordRequest) => {
     const response = await apiClient.post<MessageResponse>("/reset-password", data);
     return (response as any).data || response;

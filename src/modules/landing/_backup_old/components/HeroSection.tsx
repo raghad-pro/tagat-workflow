@@ -15,7 +15,7 @@ export function HeroSection() {
         <FadeIn>
           <h1 className="max-w-4xl mx-auto mb-6 leading-tight text-4xl md:text-5xl lg:text-6xl font-bold">
             {t.rich("heroTitle", {
-              cyan: (chunks) => <span className="text-primary">{chunks}</span>
+              cyan: (chunks: any) => <span className="text-primary">{chunks}</span>
             })}
           </h1>
         </FadeIn>

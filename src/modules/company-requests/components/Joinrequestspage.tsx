@@ -220,11 +220,13 @@ export default function JoinRequestsPage() {
       <div className="mt-6">
         <PageCard>
           <PageCardSection>
-            <SearchFilterBar
-              search={search}
-              onSearchChange={handleSearch}
-              searchPlaceholder={t("searchPlaceholder")}
-            />
+            <div className="max-w-md">
+              <SearchFilterBar
+                search={search}
+                onSearchChange={handleSearch}
+                searchPlaceholder={t("searchPlaceholder")}
+              />
+            </div>
           </PageCardSection>
 
           <PageCardBody className="!p-0">

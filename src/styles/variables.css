@@ -95,8 +95,8 @@
     --sidebar-width-collapsed: 64px;
     --sidebar-border: #f0f0f0;
     --sidebar-item-hover: #f5feff;
-    --sidebar-item-active-bg: #e9f9fb;
-    --sidebar-item-active-text: #25c6da;
+    --sidebar-item-active-bg: #25c6da;
+    --sidebar-item-active-text: #ffffff;
     --sidebar-item-text: #424242;
     --sidebar-group-label: #909090;
     --sidebar-icon-size: 18px;
@@ -124,7 +124,7 @@
     --shadow-sidebar: 1px 0 0 0 var(--sidebar-border);
 
     /* ─── Typography ──────────────────────────────────────────────────── */
-    --font-sans: var(--font-geist-sans), "Inter", sans-serif;
+    --font-sans: var(--font-inter), "Inter", sans-serif;
     --text-sm: 0.875rem;
     --text-base: 1rem;
     --text-lg: 1.125rem;
