@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
+import { Globe } from "lucide-react";
 
 export default function LanguageSwitcher() {
   const router = useRouter();
@@ -27,11 +28,15 @@ export default function LanguageSwitcher() {
 
   return (
     <button
-      className="p-2 ds-text-sm font-bold text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors uppercase"
+      type="button"
+      className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-transparent transition-colors cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[var(--color-btn-brand)] dark:hover:text-[var(--color-btn-brand)] relative"
       onClick={toggleLanguage}
-      title="Change Language"
+      title={locale === "en" ? "تغيير إلى العربية" : "Change to English"}
     >
-      {locale === "en" ? "AR" : "EN"}
+      <Globe size={18} className="sm:w-[20px] sm:h-[20px]" />
+      <span className="absolute -bottom-1 -right-1 text-[9px] font-bold bg-[var(--color-bg-form)] rounded px-0.5 text-[#22c8e0]">
+        {locale === "en" ? "AR" : "EN"}
+      </span>
     </button>
   );
 }

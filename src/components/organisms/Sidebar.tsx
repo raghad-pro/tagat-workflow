@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import Logo from "@/components/atoms/Logo";
 import {
@@ -38,6 +38,7 @@ interface NavItem {
 interface NavGroup {
   key: string;
   label?: string;
+  arLabel?: string;
   roles: Role[];
   items: NavItem[];
 }
@@ -47,6 +48,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: "home",
     label: "Home",
+    arLabel: "الرئيسية",
     roles: ["super_admin", "company", "employee", "client"],
     items: [
       { key: "dashboard", href: "/dashboard", icon: LayoutGrid, roles: ["super_admin", "company", "employee", "client"] },
@@ -55,6 +57,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: "subscriberManagement",
     label: "Subscriber Management",
+    arLabel: "إدارة المشتركين",
     roles: ["super_admin", "company"],
     items: [
       { key: "companyRequests", href: "/company-requests", icon: MessageCircleMore, roles: ["super_admin", "company"] },
@@ -64,6 +67,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: "financialManagement",
     label: "Financial Management",
+    arLabel: "الإدارة المالية",
     roles: ["super_admin", "company", "client"],
     items: [
       { key: "currencies", href: "/currencies", icon: BadgePercent, roles: ["super_admin", "company"] },
@@ -76,6 +80,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: "internalOperations",
     label: "Internal Operations",
+    arLabel: "العمليات الداخلية",
     roles: ["super_admin", "company", "employee", "client"],
     items: [
       { key: "employees", href: "/employees", icon: UserRoundPlus, roles: ["super_admin", "company"] },
@@ -92,6 +97,8 @@ const NAV_GROUPS: NavGroup[] = [
 export function AppSidebar() {
   const pathname = usePathname();
   const t = useTranslations("sidebar");
+  const locale = useLocale();
+  const isAr = locale === "ar";
   const { user } = useAuth();
   const role = user?.role as Role | undefined;
 
@@ -106,6 +113,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
+      side={isAr ? "right" : "left"}
       className={cn(
         "border-none",
         "ds-sidebar"
@@ -142,7 +150,7 @@ export function AppSidebar() {
                   "flex"
                 )}
               >
-                {group.label}
+                {isAr && group.arLabel ? group.arLabel : group.label}
               </SidebarGroupLabel>
             )}
 
@@ -162,19 +170,20 @@ export function AppSidebar() {
                       isActive={isActive}
                       tooltip={undefined}
                       className={cn(
-                        "rounded-[10px] gap-3 transition-all duration-200",
+                        "rounded-xl gap-3 transition-all duration-200",
                         "flex-row h-10 md:h-9 py-0",
                         "justify-start",
                         "px-3",
                         "group/nav-item",
                         "font-medium text-[13px]",
-                        "text-slate-600 dark:text-slate-300",
-                        "hover:bg-slate-100 dark:hover:bg-[#15202b]",
-                        "hover:text-slate-900 dark:hover:text-white",
+                        !isActive && [
+                          "text-slate-600 dark:text-slate-300",
+                          "hover:bg-transparent dark:hover:bg-transparent",
+                          "hover:text-[var(--color-btn-brand)] dark:hover:text-[var(--color-btn-brand)]",
+                        ],
                         isActive && [
-                          "!bg-gradient-to-r !from-[#22c8e0] !to-[#0ea5e9]",
-                          "!text-white hover:!text-white",
-                          "shadow-md shadow-[#22c8e0]/25",
+                          "bg-[var(--color-btn-brand)] hover:bg-[var(--color-btn-brand-hover)] active:bg-[var(--color-btn-brand-pressed)]",
+                          "text-white hover:text-white",
                           "font-bold"
                         ]
                       )}
@@ -185,8 +194,8 @@ export function AppSidebar() {
                           className={cn(
                             "shrink-0 transition-colors duration-200",
                             isActive
-                              ? "!text-white"
-                              : "text-slate-500 dark:text-slate-400 group-hover/nav-item:text-[#22c8e0] dark:group-hover/nav-item:text-[#22c8e0]"
+                              ? "text-white"
+                              : "text-slate-500 dark:text-slate-400 group-hover/nav-item:text-[var(--color-btn-brand)] dark:group-hover/nav-item:text-[var(--color-btn-brand)]"
                           )}
                         />
                         <span className="truncate mt-[2px] group-data-[collapsible=icon]:hidden">{t(item.key as Parameters<typeof t>[0])}</span>

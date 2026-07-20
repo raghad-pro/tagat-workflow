@@ -67,7 +67,7 @@
   .ds-sidebar           { background-color: var(--sidebar-bg); box-shadow: var(--shadow-sidebar); }
   .ds-sidebar-item      {
     display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px; border-radius: 10px;
+    padding: 9px 12px; border-radius: 0.75rem;
     color: var(--sidebar-item-text);
     font-size: var(--text-sm); font-weight: var(--font-medium);
     transition: background 0.15s, color 0.15s;
@@ -78,9 +78,15 @@
     color: var(--sidebar-item-active-text);
   }
   .ds-sidebar-item.active {
-    background-color: var(--sidebar-item-active-bg);
-    color: var(--sidebar-item-active-text);
+    background-color: var(--color-btn-brand);
+    color: #ffffff;
     font-weight: var(--font-bold);
+  }
+  .ds-sidebar-item.active:hover {
+    background-color: var(--color-btn-brand-hover);
+  }
+  .ds-sidebar-item.active:active {
+    background-color: var(--color-btn-brand-pressed);
   }
   .ds-sidebar-group-label {
     font-size: 0.7rem; font-weight: var(--font-bold);
@@ -152,6 +158,35 @@
   .ds-action-delete { color: var(--color-action-delete); background-color: var(--color-action-delete-bg); }
   .ds-action-edit   { color: var(--color-action-edit);   background-color: var(--color-action-edit-bg); }
 
+  /* ── Custom Button Brand ─────────────────────────────────────────────────── */
+  .ds-btn-solid {
+    background-color: var(--color-btn-brand);
+    color: #ffffff;
+    border: 1.5px solid transparent;
+  }
+  .ds-btn-solid:hover:not(:disabled) {
+    background-color: var(--color-btn-brand-hover);
+  }
+  .ds-btn-solid:active:not(:disabled) {
+    background-color: var(--color-btn-brand-pressed);
+  }
+
+  .ds-btn-outline {
+    background-color: transparent;
+    border: 1.5px solid var(--color-btn-brand);
+    color: var(--color-btn-brand);
+  }
+  .ds-btn-outline:hover:not(:disabled) {
+    border-color: var(--color-btn-brand-hover);
+    color: var(--color-btn-brand-hover);
+    background-color: rgba(37, 198, 218, 0.05); /* very light hover bg */
+  }
+  .ds-btn-outline:active:not(:disabled) {
+    border-color: var(--color-btn-brand-pressed);
+    color: var(--color-btn-brand-pressed);
+    background-color: rgba(34, 180, 198, 0.1);
+  }
+
   /* ── Icon stat colors ────────────────────────────────────────────────────── */
   .ds-icon-indigo   { color: var(--color-icon-indigo);   background-color: var(--color-icon-indigo-bg); }
   .ds-icon-success  { color: var(--color-icon-success);  background-color: var(--color-icon-success-bg); }
@@ -177,7 +212,7 @@
   /* ── Scrollbar ──────────────────────────────────────────────────────────── */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-primary) transparent;
+    scrollbar-color: var(--color-btn-brand) transparent;
   }
   
   *::-webkit-scrollbar {
@@ -190,7 +225,7 @@
   }
   
   *::-webkit-scrollbar-thumb {
-    background-color: var(--color-primary);
+    background-color: var(--color-btn-brand);
     border-radius: 10px;
   }
 }

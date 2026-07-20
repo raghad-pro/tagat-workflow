@@ -7,14 +7,14 @@ export default function ThemeButton() {
   return (
     <button 
       type="button"
-      className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-[#16202c] transition-colors cursor-pointer text-slate-600 dark:text-slate-200"
+      className="w-9 h-9 flex items-center justify-center rounded-xl bg-transparent transition-colors cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[var(--color-btn-brand)] dark:hover:text-[var(--color-btn-brand)]"
       onClick={toggleTheme}
       title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
     >
       {theme === "dark" ? (
-        <Sun size={20} className="text-amber-400 dark:text-amber-300" />
+        <Sun size={20} className="text-inherit" />
       ) : (
-        <Moon size={20} className="text-slate-600 dark:text-slate-300" />
+        <Moon size={20} className="text-inherit" />
       )}
     </button>
   );
