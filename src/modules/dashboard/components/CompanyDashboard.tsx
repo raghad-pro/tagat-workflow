@@ -26,29 +26,28 @@ function CompanyStatsRow({ data }: { data: CompanyDashboardData }) {
     {
       icon: DollarSign,
       title: "monthly revenue",
-      value: `$${Number(data.walletBalance || 67000).toLocaleString()}`,
-      trend: "↑ +15.3%",
+      value: `$${Number(data.walletBalance ?? 0).toLocaleString()}`,
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
     },
     {
       icon: Users,
       title: "active projects",
-      value: String(data.projectsCount || 98),
+      value: String(data.projectsCount ?? 0),
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
     },
     {
       icon: Users,
       title: "team productivity",
-      value: String(data.employeesCount || 129),
+      value: String(data.employeesCount ?? 0),
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
     },
     {
       icon: AlertTriangle,
       title: "pending approvals",
-      value: String(data.clientsCount || 37),
+      value: String(data.clientsCount ?? 0),
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
     },
@@ -66,11 +65,6 @@ function CompanyStatsRow({ data }: { data: CompanyDashboardData }) {
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-[12px] font-[800] ds-text-main lowercase leading-tight">{stat.title}</span>
               <span className="text-[28px] font-[800] ds-text-main leading-none mt-1">{stat.value}</span>
-              {stat.trend && (
-                <span className="text-[11px] font-bold text-[#22c55e] leading-none mt-1">
-                  {stat.trend}
-                </span>
-              )}
             </div>
           </div>
         );
@@ -116,8 +110,12 @@ export function CompanyDashboard({ role, token }: Props) {
 
         {/* Header */}
         <div className="flex flex-col gap-1">
-          <Text className="text-[32px] ds-text-main font-black tracking-tight leading-none">Dashboard</Text>
-          <Text className="text-[15px] text-gray-600 dark:text-gray-400 font-extrabold tracking-wide mt-1">Platform performance overview</Text>
+          <h1 className="text-[30px] md:text-[34px] font-[800] tracking-tight leading-none ds-text-main">
+            Dashboard
+          </h1>
+          <p className="text-[14px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-1">
+            Platform performance overview
+          </p>
         </div>
 
         {/* Stats Row */}

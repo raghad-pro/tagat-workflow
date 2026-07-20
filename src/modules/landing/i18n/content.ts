@@ -101,11 +101,11 @@ export const content = {
       members: [
         { name: 'Zainab Al-Mudallal', role: 'UI/UX Designer', photo: '/team/zainab.jpg', email: 'Zeinabalmudalal0@gmail.com', phone: 'https://wa.me/qr/WI7JVDQFOHS6N1', linkedin: 'https://www.linkedin.com/in/zeinab-al-mudalal-680199308' },
         { name: 'Raghad Ayyad', role: 'Frontend Developer', photo: '/team/raghad.jpg', email: 'raghadabdulla609@gmail.com', phone: 'https://wa.me/qr/IMTAYBC7JK3LK1', linkedin: 'https://www.linkedin.com/in/raghadayyad' },
+        { name: 'Mahmoud Salem', role: 'Frontend Developer', photo: '/team/mahmoud.jpg', email: 'ssalemmahmoud332@gmail.com', phone: 'https://wa.me/972595073176', linkedin: 'https://www.linkedin.com/in/mahmoud-salem-052495419' },
         { name: 'Alaa ElDin AlDahdar', role: 'Backend Developer', photo: '/team/alaa.jpg', email: 'alaamhammad2003@gmail.com', phone: 'https://wa.me/972597696155', linkedin: 'https://www.linkedin.com/in/alaa2003' },
         { name: 'Ahmad Shanan', role: 'Backend Developer', photo: '/team/ahmad.jpg', email: 'ahmedjshanan@gmail.com', phone: 'https://wa.me/qr/ZDH7N3AGI2FVJ1', linkedin: 'https://www.linkedin.com/in/ahmed-shanan-695154228' },
-        { name: 'Hala Jendeya', role: 'Frontend Developer', photo: '/team/hala.jpg', email: 'halahaithamjendeya@gmail.com', phone: 'https://wa.me/970598173092', linkedin: 'https://www.linkedin.com/in/hala-jendeya-025a97412' },
+        { name: 'Hala Jendeya', role: 'Flutter Developer', photo: '/team/hala.jpg', email: 'halahaithamjendeya@gmail.com', phone: 'https://wa.me/970598173092', linkedin: 'https://www.linkedin.com/in/hala-jendeya-025a97412' },
         { name: 'Majd Salim', role: 'AI Specialist', photo: '/team/majd.jpg', email: 'majdosama614@gmail.com', phone: 'https://wa.me/970597717455', linkedin: 'https://www.linkedin.com/in/mjad-sal-727998374/' },
-        { name: 'Mahmoud Salem', role: 'Front-End', photo: '/team/mahmoud.jpg', email: 'ssalemmahmoud332@gmail.com', phone: 'https://wa.me/972595073176', linkedin: 'https://www.linkedin.com/in/mahmoud-salem-052495419' },
       ],
     },
     plans: {
@@ -338,11 +338,11 @@ export const content = {
       members: [
         { name: 'زينب المدلل', role: 'مصممة UI/UX', photo: '/team/zainab.jpg', email: 'Zeinabalmudalal0@gmail.com', phone: 'https://wa.me/qr/WI7JVDQFOHS6N1', linkedin: 'https://www.linkedin.com/in/zeinab-al-mudalal-680199308' },
         { name: 'رغد عياد', role: 'مطورة واجهات أمامية', photo: '/team/raghad.jpg', email: 'raghadabdulla609@gmail.com', phone: 'https://wa.me/qr/IMTAYBC7JK3LK1', linkedin: 'https://www.linkedin.com/in/raghadayyad' },
+        { name: 'محمود سالم', role: 'مطور واجهات أمامية', photo: '/team/mahmoud.jpg', email: 'ssalemmahmoud332@gmail.com', phone: 'https://wa.me/972595073176', linkedin: 'https://www.linkedin.com/in/mahmoud-salem-052495419' },
         { name: 'علاء الدين الدهدار', role: 'مطور خلفيات', photo: '/team/alaa.jpg', email: 'alaamhammad2003@gmail.com', phone: 'https://wa.me/972597696155', linkedin: 'https://www.linkedin.com/in/alaa2003' },
         { name: 'أحمد شنن', role: 'مطور خلفيات', photo: '/team/ahmad.jpg', email: 'ahmedjshanan@gmail.com', phone: 'https://wa.me/qr/ZDH7N3AGI2FVJ1', linkedin: 'https://www.linkedin.com/in/ahmed-shanan-695154228' },
-        { name: 'حلا جندية', role: 'مطورة واجهات أمامية', photo: '/team/hala.jpg', email: 'halahaithamjendeya@gmail.com', phone: 'https://wa.me/970598173092', linkedin: 'https://www.linkedin.com/in/hala-jendeya-025a97412' },
+        { name: 'حلا جندية', role: 'مطورة فلاتر', photo: '/team/hala.jpg', email: 'halahaithamjendeya@gmail.com', phone: 'https://wa.me/970598173092', linkedin: 'https://www.linkedin.com/in/hala-jendeya-025a97412' },
         { name: 'مجد سليم', role: 'متخصص ذكاء صناعي', photo: '/team/majd.jpg', email: 'majdosama614@gmail.com', phone: 'https://wa.me/970597717455', linkedin: 'https://www.linkedin.com/in/mjad-sal-727998374/' },
-        { name: 'محمود سالم', role: 'مطور واجهة امامية', photo: '/team/mahmoud.jpg', email: 'ssalemmahmoud332@gmail.com', phone: 'https://wa.me/972595073176', linkedin: 'https://www.linkedin.com/in/mahmoud-salem-052495419' },
       ],
     },
     plans: {

@@ -7,7 +7,7 @@ import WorldMapBg from './WorldMapBg'
 import Reveal from './Reveal'
 
 export default function Hero() {
-  const { t, isRTL } = useApp()
+  const { t, theme, isRTL } = useApp()
 
   return (
     <section id="home" className="hero">
@@ -43,7 +43,11 @@ export default function Hero() {
 
         <Reveal className="hero__mock" delay={320}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/dashboard.png" alt="Dashboard" className="hero__dashboard-img" />
+          <img
+            src={theme === 'dark' ? '/dashboardDark.png' : '/dashboard.png'}
+            alt="Dashboard"
+            className="hero__dashboard-img"
+          />
         </Reveal>
       </div>
     </section>

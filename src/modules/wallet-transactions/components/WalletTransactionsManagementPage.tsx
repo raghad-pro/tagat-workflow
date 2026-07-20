@@ -230,11 +230,11 @@ export function WalletTransactionsManagementPage() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        title={t("title") === "walletTransactions.title" ? "Transactions Management" : t("title")}
-        subtitle={t("description") === "walletTransactions.description" ? "Manage and monitor all wallet transactions." : t("description")}
+        title={t("title")}
+        subtitle={t("description")}
         actions={[
           {
-            label: t("addTransaction") === "walletTransactions.addTransaction" ? "Add Transactions" : t("addTransaction"),
+            label: t("addTransaction"),
             onClick: () => setIsAddModalOpen(true),
           }
         ]}

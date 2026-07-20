@@ -113,19 +113,11 @@ export function AppSidebar() {
     >
       {/* ── Logo ── */}
       <SidebarHeader
-        className="px-6 pt-2 pb-0"
+        className="px-6 pt-2 pb-0 group-data-[collapsible=icon]:hidden"
         style={{ justifyContent: "center" }}
       >
-        <div className="w-full mb-0 flex justify-center group-data-[collapsible=icon]:hidden">
+        <div className="w-full mb-0 flex justify-center">
           <Logo />
-        </div>
-        <div
-          className="hidden group-data-[collapsible=icon]:flex w-8 h-8 rounded-lg items-center justify-center mx-auto shrink-0"
-          style={{ background: "var(--color-bg-primary)" }}
-        >
-          <span style={{ color: "var(--color-text-button)", fontWeight: 700, fontSize: 14 }}>
-            W
-          </span>
         </div>
       </SidebarHeader>
 
@@ -133,6 +125,7 @@ export function AppSidebar() {
       <SidebarContent 
         className={cn(
           "px-4 pt-0 pb-2",
+          "group-data-[collapsible=icon]:pt-3 group-data-[collapsible=icon]:px-0",
           "overflow-y-auto overflow-x-hidden",
           "scrollbar-hide", /* Hide scrollbar utility if exists */
           "[&::-webkit-scrollbar]:hidden" /* Fallback to hide scrollbar */
@@ -174,18 +167,28 @@ export function AppSidebar() {
                         "justify-start",
                         "px-3",
                         "group/nav-item",
-                        "font-bold text-[13px]",
-                        "hover:bg-gray-50",
-                        "text-gray-600 hover:text-gray-900",
+                        "font-medium text-[13px]",
+                        "text-slate-600 dark:text-slate-300",
+                        "hover:bg-slate-100 dark:hover:bg-[#15202b]",
+                        "hover:text-slate-900 dark:hover:text-white",
                         isActive && [
-                          "!bg-[#12c2e9] hover:!bg-[#0fb1d5]",
+                          "!bg-gradient-to-r !from-[#22c8e0] !to-[#0ea5e9]",
                           "!text-white hover:!text-white",
-                          "shadow-sm shadow-[#12c2e9]/20"
+                          "shadow-md shadow-[#22c8e0]/25",
+                          "font-bold"
                         ]
                       )}
                     >
                       <Link href={item.href}>
-                        <Icon size={18} className={cn("shrink-0", isActive ? "text-white" : "text-gray-600 group-hover:text-gray-900")} />
+                        <Icon
+                          size={18}
+                          className={cn(
+                            "shrink-0 transition-colors duration-200",
+                            isActive
+                              ? "!text-white"
+                              : "text-slate-500 dark:text-slate-400 group-hover/nav-item:text-[#22c8e0] dark:group-hover/nav-item:text-[#22c8e0]"
+                          )}
+                        />
                         <span className="truncate mt-[2px] group-data-[collapsible=icon]:hidden">{t(item.key as Parameters<typeof t>[0])}</span>
                       </Link>
                     </SidebarMenuButton>

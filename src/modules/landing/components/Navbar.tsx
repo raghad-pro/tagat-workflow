@@ -30,6 +30,17 @@ export default function Navbar() {
   return (
     <header className={`nav ${scrolled ? 'nav--scrolled' : ''}`}>
       <div className="container nav__inner">
+        <button
+          className={`nav__burger ${open ? 'is-open' : ''}`}
+          onClick={() => setOpen((v: any) => !v)}
+          aria-label="Menu"
+          aria-expanded={open}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
         <a href="#home" className="nav__logo" aria-label="Workflow">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -85,16 +96,6 @@ export default function Navbar() {
           <Link href="/register" className="btn btn--primary nav__cta">
             {t.nav.getStarted}
           </Link>
-          <button
-            className={`nav__burger ${open ? 'is-open' : ''}`}
-            onClick={() => setOpen((v: any) => !v)}
-            aria-label="Menu"
-            aria-expanded={open}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
         </div>
       </div>
     </header>

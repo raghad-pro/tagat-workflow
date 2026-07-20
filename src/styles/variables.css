@@ -184,81 +184,84 @@
     --color-task-budget-bg: #dcfce7;
   }
 
-  :root.dark {
+  :root.dark,
+  html.dark,
+  [data-theme="dark"],
+  html[data-theme="dark"] {
     /* ─── Core Colors ────────────────────────────────────────────────── */
-    --color-bg-primary: #12c2e9;
-    --color-bg-primary-200: rgba(18, 194, 233, 0.15);
-    --color-bg-form: #171717;
-    --color-bg: #0a0a0a;
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-bg-primary: #22c8e0;
+    --color-bg-primary-200: rgba(34, 200, 224, 0.15);
+    --color-bg-form: #0d141d;
+    --color-bg: #090d14;
+    --background: #090d14;
+    --foreground: #f8fafc;
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --color-text-primary: #f5f5f5;
-    --color-text-gray: #a3a3a3;
-    --color-text-gray-100: #d4d4d4;
-    --color-text-gray-200: #a3a3a3;
-    --color-text-button: #000000;
-    --color-border-form: #262626;
-    --color-border-inputs: #404040;
-    --color-border-inputs-focus: #3bcbde;
+    --color-text-primary: #f8fafc;
+    --color-text-gray: #94a3b8;
+    --color-text-gray-100: #cbd5e1;
+    --color-text-gray-200: #94a3b8;
+    --color-text-button: #ffffff;
+    --color-border-form: rgba(34, 200, 224, 0.14);
+    --color-border-inputs: rgba(34, 200, 224, 0.2);
+    --color-border-inputs-focus: #22c8e0;
 
     /* ─── Sidebar & Navbar ────────────────────────────────────────────── */
-    --sidebar-bg: #171717;
-    --sidebar-border: #262626;
-    --sidebar-item-hover: rgba(59, 203, 222, 0.1);
-    --sidebar-item-active-bg: rgba(59, 203, 222, 0.15);
-    --sidebar-item-text: #a3a3a3;
-    --sidebar-item-active-text: #3bcbde;
-    --sidebar-group-label: #737373;
-    --navbar-bg: #171717;
-    --navbar-border: #262626;
+    --sidebar-bg: #0b1118;
+    --sidebar-border: rgba(34, 200, 224, 0.12);
+    --sidebar-item-hover: rgba(34, 200, 224, 0.1);
+    --sidebar-item-active-bg: linear-gradient(92deg, #22c8e0, #0ea5e9);
+    --sidebar-item-text: #94a3b8;
+    --sidebar-item-active-text: #ffffff;
+    --sidebar-group-label: #64748b;
+    --navbar-bg: #0b1118;
+    --navbar-border: rgba(34, 200, 224, 0.12);
 
     /* ─── Shadows ─────────────────────────────────────────────────────── */
-    --shadow-sm: 0 4px 12px 0 rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 4px 14px 0 rgba(0, 0, 0, 0.4);
 
     /* ─── Icon/Stat Backgrounds (Darkened Opacity) ────────────────────── */
-    --color-icon-indigo-bg: rgba(99, 102, 241, 0.15);
-    --color-icon-success-bg: rgba(34, 197, 94, 0.15);
-    --color-icon-warning-bg: rgba(245, 158, 11, 0.15);
-    --color-icon-danger-bg: rgba(239, 68, 68, 0.15);
+    --color-icon-indigo-bg: rgba(99, 102, 241, 0.18);
+    --color-icon-success-bg: rgba(34, 197, 94, 0.18);
+    --color-icon-warning-bg: rgba(245, 158, 11, 0.18);
+    --color-icon-danger-bg: rgba(239, 68, 68, 0.18);
     
-    --color-invoice-paid-bg: rgba(34, 197, 94, 0.15);
-    --color-invoice-pending-bg: rgba(245, 158, 11, 0.15);
-    --color-invoice-overdue-bg: rgba(239, 68, 68, 0.15);
+    --color-invoice-paid-bg: rgba(34, 197, 94, 0.18);
+    --color-invoice-pending-bg: rgba(245, 158, 11, 0.18);
+    --color-invoice-overdue-bg: rgba(239, 68, 68, 0.18);
 
-    --color-status-rejected-bg: rgba(239, 68, 68, 0.15);
-    --color-status-closed-bg: rgba(34, 197, 94, 0.15);
-    --color-status-progress-bg: rgba(245, 158, 11, 0.15);
+    --color-status-rejected-bg: rgba(239, 68, 68, 0.18);
+    --color-status-closed-bg: rgba(34, 197, 94, 0.18);
+    --color-status-progress-bg: rgba(245, 158, 11, 0.18);
     
-    --color-processing-bg: rgba(245, 158, 11, 0.15);
+    --color-processing-bg: rgba(245, 158, 11, 0.18);
     --color-processing-text: #fbbf24;
 
-    --color-plan-enterprise-bg: rgba(245, 158, 11, 0.15);
+    --color-plan-enterprise-bg: rgba(245, 158, 11, 0.18);
     --color-plan-business-bg: rgba(14, 116, 144, 0.25);
     --color-plan-pro-bg: rgba(167, 139, 250, 0.25);
-    --color-plan-basic-bg: #262626;
+    --color-plan-basic-bg: #161e27;
     
-    --color-contract-active-bg: rgba(14, 165, 233, 0.15);
-    --color-contract-pending-bg: rgba(234, 179, 8, 0.15);
-    --color-contract-expiring-bg: rgba(239, 68, 68, 0.15);
+    --color-contract-active-bg: rgba(14, 165, 233, 0.18);
+    --color-contract-pending-bg: rgba(234, 179, 8, 0.18);
+    --color-contract-expiring-bg: rgba(239, 68, 68, 0.18);
     
-    --color-project-total-bg: rgba(14, 165, 233, 0.15);
-    --color-project-progress-bg: rgba(234, 179, 8, 0.15);
-    --color-project-completed-bg: rgba(34, 197, 94, 0.15);
+    --color-project-total-bg: rgba(14, 165, 233, 0.18);
+    --color-project-progress-bg: rgba(234, 179, 8, 0.18);
+    --color-project-completed-bg: rgba(34, 197, 94, 0.18);
     
-    --color-task-active-bg: rgba(14, 165, 233, 0.15);
-    --color-task-logged-bg: rgba(234, 179, 8, 0.15);
-    --color-task-budget-bg: rgba(34, 197, 94, 0.15);
+    --color-task-active-bg: rgba(14, 165, 233, 0.18);
+    --color-task-logged-bg: rgba(234, 179, 8, 0.18);
+    --color-task-budget-bg: rgba(34, 197, 94, 0.18);
 
     /* ─── Status Badge Colors ─────────────────────────────────────────── */
-    --color-status-active-bg: rgba(76, 175, 80, 0.15);
-    --color-status-pending-bg: rgba(232, 214, 54, 0.15);
+    --color-status-active-bg: rgba(76, 175, 80, 0.18);
+    --color-status-pending-bg: rgba(232, 214, 54, 0.18);
 
     /* ─── Action Buttons ──────────────────────────────────────────────── */
     --color-action-send-bg: var(--color-status-pending-bg);
     --color-action-edit-bg: var(--color-status-active-bg);
-    --color-action-delete-bg: rgba(244, 67, 54, 0.15);
+    --color-action-delete-bg: rgba(244, 67, 54, 0.18);
     
     /* Global classes that use var(--color-bg-form) but lack text color */
     .ds-bg-form {

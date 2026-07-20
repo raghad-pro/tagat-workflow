@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext'
 import Reveal from './Reveal'
 
 export default function About() {
-  const { t } = useApp()
+  const { t, theme } = useApp()
 
   return (
     <section id="about" className="section about">
@@ -25,11 +25,19 @@ export default function About() {
         <Reveal className="about__visual" delay={200}>
           <div className="about__mock about__mock--back">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/dashboard.png" alt="Dashboard" className="about__dashboard-img" />
+            <img
+              src={theme === 'dark' ? '/dashboardDark.png' : '/dashboard.png'}
+              alt="Dashboard"
+              className="about__dashboard-img"
+            />
           </div>
           <div className="about__mock about__mock--front">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/dashboard.png" alt="Dashboard" className="about__dashboard-img" />
+            <img
+              src={theme === 'dark' ? '/dashboardDark.png' : '/dashboard.png'}
+              alt="Dashboard"
+              className="about__dashboard-img"
+            />
           </div>
         </Reveal>
       </div>

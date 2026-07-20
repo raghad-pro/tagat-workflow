@@ -19,9 +19,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 // ─── Maps ──────────────────────────────────────────────────────────────────────
 const variantMap: Record<ButtonVariant, string> = {
-  solid:   "ds-bg-primary ds-text-button",
-  outline: "bg-transparent ds-border-input-color ds-text-brand",
-  ghost:   "bg-[#F5F5F5] ds-text-primary",
+  solid:   "bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] text-white hover:opacity-95 font-bold shadow-sm shadow-[#22c8e0]/20 active:scale-[0.98]",
+  outline: "bg-transparent border border-[#22c8e0]/40 text-[#22c8e0] hover:bg-[#22c8e0]/10 font-bold",
+  ghost:   "bg-slate-100 dark:bg-[#162232] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2a3e] border border-slate-200/80 dark:border-slate-700/60 font-bold transition-all",
 };
 
 const sizeMap: Record<ButtonSize, string> = {
