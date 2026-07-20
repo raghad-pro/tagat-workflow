@@ -53,7 +53,7 @@ function AccountTypeStep({
           className={cn(
             cardBase,
             selected === "client"
-              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] border-[#22c8e0] text-white"
+              ? "shadow-[0_8px_30px_rgba(37,198,218,0.3)] bg-[var(--color-btn-brand)] border-[var(--color-btn-brand)] text-white"
               : "hover:border-gray-300 bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700 text-black dark:text-white"
           )}
         >
@@ -77,7 +77,7 @@ function AccountTypeStep({
           className={cn(
             cardBase,
             selected === "company"
-              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] border-[#22c8e0] text-white"
+              ? "shadow-[0_8px_30px_rgba(37,198,218,0.3)] bg-[var(--color-btn-brand)] border-[var(--color-btn-brand)] text-white"
               : "hover:border-gray-300 bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700 text-black dark:text-white"
           )}
         >
@@ -104,7 +104,7 @@ function AccountTypeStep({
             disabled={!selected} 
             onClick={onNext} 
             fullWidth 
-            className="!rounded-xl !py-3 sm:!py-3.5 !text-[15px] !font-bold tracking-wide bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] text-white shadow-md shadow-[#22c8e0]/25 hover:shadow-[0_8px_25px_rgba(34,200,224,0.4)] transition-all duration-300 active:scale-95"
+            className="!rounded-xl !py-3 sm:!py-3.5 !text-[15px]"
           >
             {t("next")}
           </Button>
@@ -267,28 +267,24 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
           <Link href="/conditions" className="ds-text-primary hover:underline">Conditions</Link>
         </CheckboxField>
         <div className="grid grid-cols-2 gap-3 mt-4">
-          <button 
+          <Button 
             type="button" 
+            variant="ghost"
+            fullWidth
             onClick={onBack} 
-            className="h-11 w-full rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            className="!rounded-xl h-11 font-bold text-sm cursor-pointer border-none whitespace-nowrap"
           >
-            <ArrowLeft size={16} className="rtl:rotate-180" />
-            <span>{t("back")}</span>
-          </button>
-          <button 
+            {t("back")}
+          </Button>
+          <Button 
             type="submit" 
+            variant="solid"
+            fullWidth
             disabled={!agreeToTerms || isPending} 
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-[#22c8e0]/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="!rounded-xl h-11 text-sm font-bold cursor-pointer whitespace-nowrap"
           >
-            {isPending ? (
-              <span className="text-white text-xs font-semibold">{t("loading") || "Loading..."}</span>
-            ) : (
-              <>
-                <Plus size={18} strokeWidth={2.5} />
-                <span>{t("create_account")}</span>
-              </>
-            )}
-          </button>
+            {isPending ? t("loading") : t("create_account")}
+          </Button>
         </div>
       </form>
     </Form>
@@ -363,28 +359,24 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
           <Link href="/conditions" className="ds-text-brand hover:underline">Conditions</Link>
         </CheckboxField>
         <div className="grid grid-cols-2 gap-3 mt-4">
-          <button 
+          <Button 
             type="button" 
+            variant="ghost"
+            fullWidth
             onClick={onBack} 
-            className="h-11 w-full rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            className="!rounded-xl h-11 font-bold text-sm cursor-pointer border-none whitespace-nowrap"
           >
-            <ArrowLeft size={16} className="rtl:rotate-180" />
-            <span>{t("back")}</span>
-          </button>
-          <button 
+            {t("back")}
+          </Button>
+          <Button 
             type="submit" 
+            variant="solid"
+            fullWidth
             disabled={!agreeToTerms || isPending} 
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-[#22c8e0]/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="!rounded-xl h-11 text-sm font-bold cursor-pointer whitespace-nowrap"
           >
-            {isPending ? (
-              <span className="text-white text-xs font-semibold">{t("loading") || "Loading..."}</span>
-            ) : (
-              <>
-                <Plus size={18} strokeWidth={2.5} />
-                <span>{t("create_account")}</span>
-              </>
-            )}
-          </button>
+            {isPending ? t("loading") : t("create_account")}
+          </Button>
         </div>
       </form>
     </Form>
