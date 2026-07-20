@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import apiClient from "@/services/apiClient";
 import { getRolePrefix } from "@/utils/rolePrefix";
+import LanguageSwitcher from "@/components/atoms/languageSwitcher";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTimeAgo(dateStr?: string, isAr?: boolean) {
@@ -184,7 +185,7 @@ function NotificationsDropdown() {
           if (!open) fetchLiveNotifications();
           setOpen((prev) => !prev);
         }}
-        className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-[#16202c] transition-colors relative cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[#22c8e0] dark:hover:text-[#22c8e0]"
+        className="w-9 h-9 flex items-center justify-center rounded-xl bg-transparent transition-colors relative cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[var(--color-btn-brand)] dark:hover:text-[var(--color-btn-brand)]"
         title={isAr ? "الإشعارات" : "Notifications"}
       >
         <Bell size={20} />
@@ -309,8 +310,8 @@ function UserDropdown() {
         onClick={() => setOpen((p) => !p)}
         className={cn(
           "flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors cursor-pointer",
-          "hover:bg-slate-100 dark:hover:bg-[#16202c]",
-          open && "bg-slate-100 dark:bg-[#16202c]"
+          "hover:bg-transparent dark:hover:bg-transparent",
+          open && "bg-transparent dark:bg-transparent"
         )}
       >
         {/* Name + Email */}
@@ -325,9 +326,17 @@ function UserDropdown() {
 
         {/* Avatar */}
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] text-white shadow-sm"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-[var(--color-btn-brand)] text-white shadow-sm overflow-hidden"
         >
-          {initial}
+          {user?.avatar || user?.image || user?.profile_image ? (
+            <img 
+              src={user.avatar || user.image || user.profile_image} 
+              alt={user?.name ?? "User"} 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            initial
+          )}
         </div>
 
         {/* Chevron */}
@@ -405,7 +414,7 @@ export default function DashboardNavbar() {
       {/* Left side: Sidebar Toggle & Search */}
       <div className="flex items-center gap-1.5 sm:gap-2">
         {/* Sidebar Toggle for Mobile */}
-        <SidebarTrigger className="cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[#22c8e0]" />
+        <SidebarTrigger className="md:hidden cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[var(--color-btn-brand)] bg-transparent hover:bg-transparent" />
 
         {/* Search Input (Responsive width, hides placeholder on tiny screens if needed) */}
         <div
@@ -420,16 +429,11 @@ export default function DashboardNavbar() {
         </div>
       </div>
 
-      {/* Right Actions (Settings, Notifications, Theme, User Profile) */}
+      {/* Right Actions (Notifications, Theme, User Profile) */}
       <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
-        {/* Settings */}
-        <Link
-          href="/settings"
-          className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-[#16202c] transition-colors cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[#22c8e0] dark:hover:text-[#22c8e0]"
-          title={isAr ? "الإعدادات" : "Settings"}
-        >
-          <Settings size={18} className="sm:w-5 sm:h-5" />
-        </Link>
+
+        {/* Language Switcher */}
+        <LanguageSwitcher />
 
         {/* Notifications */}
         <NotificationsDropdown />

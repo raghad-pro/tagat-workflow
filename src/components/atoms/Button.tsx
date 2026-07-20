@@ -13,21 +13,22 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?:   boolean;
   licon?:     ReactNode;
   ricon?:     ReactNode;
-  fullWidth?: boolean;        // ← اختياري بدل w-full دايماً
+  fullWidth?: boolean;
+  halfWidth?: boolean;        // Added for half-width support
   className?: string;
 }
 
 // ─── Maps ──────────────────────────────────────────────────────────────────────
 const variantMap: Record<ButtonVariant, string> = {
-  solid:   "bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] text-white hover:opacity-95 font-bold shadow-sm shadow-[#22c8e0]/20 active:scale-[0.98]",
-  outline: "bg-transparent border border-[#22c8e0]/40 text-[#22c8e0] hover:bg-[#22c8e0]/10 font-bold",
-  ghost:   "bg-slate-100 dark:bg-[#162232] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2a3e] border border-slate-200/80 dark:border-slate-700/60 font-bold transition-all",
+  solid:   "ds-btn-solid shadow-sm disabled:bg-[#d1d5db] disabled:text-[#9ca3af] dark:disabled:bg-gray-800 dark:disabled:text-gray-500 disabled:border-transparent",
+  outline: "ds-btn-outline disabled:bg-[#d1d5db] disabled:text-[#9ca3af] disabled:border-[#d1d5db] dark:disabled:bg-gray-800 dark:disabled:text-gray-500 dark:disabled:border-gray-800",
+  ghost:   "bg-slate-100 dark:bg-[#162232] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2a3e] border border-slate-200/80 dark:border-slate-700/60 transition-all disabled:opacity-50",
 };
 
 const sizeMap: Record<ButtonSize, string> = {
-  sm: "h-8  px-3 ds-text-sm  gap-1.5",
-  md: "h-10 px-4 ds-text-sm  gap-2",
-  lg: "h-12 px-6 ds-text-base gap-2",
+  sm: "h-8 ds-text-sm gap-1.5",
+  md: "h-10 ds-text-sm gap-2",
+  lg: "h-12 ds-text-base gap-2",
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ export function Button({
   size      = "md",
   loading   = false,
   fullWidth = false,
+  halfWidth = false,
   licon,
   ricon,
   className,
@@ -44,20 +46,27 @@ export function Button({
   ...props
 }: ButtonProps) {
 
+  // Dynamic padding based on whether there are children (text) or just icons
+  const hasText = children !== undefined && children !== null && children !== "";
+  
+  const paddingClass = hasText
+    ? (size === "sm" ? "px-3" : size === "md" ? "px-4" : "px-6")
+    : (size === "sm" ? "w-8 px-0" : size === "md" ? "w-10 px-0" : "w-12 px-0"); // Icon-only square sizing
+
   const base = [
     "inline-flex items-center justify-center",
-    "rounded-xl",                          // ← زي الصورة
-    "ds-font-bold ds-leading-normal",
+    "rounded-xl",
+    "font-bold ds-leading-normal",
     "transition-all duration-200 cursor-pointer",
     "focus:outline-none",
-    "disabled:opacity-50 disabled:cursor-not-allowed",
-    "active:scale-[0.98]",
-    fullWidth ? "w-full" : "w-auto",       // ← مش دايماً full
+    "disabled:cursor-not-allowed",
+    "active:scale-[0.98] disabled:active:scale-100", // Disable scale on disabled
+    halfWidth ? "w-1/2" : (fullWidth ? "w-full" : "w-auto"),
   ].join(" ");
 
   return (
     <button
-      className={cn(base, variantMap[variant], sizeMap[size], className)}
+      className={cn(base, paddingClass, variantMap[variant], sizeMap[size], className)}
       disabled={disabled || loading}
       {...props}
     >
@@ -67,13 +76,13 @@ export function Button({
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
             <path  className="opacity-75"  fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
           </svg>
-          Loading…
+          {hasText && <span>Loading…</span>}
         </>
       ) : (
         <>
-          {licon && <span className="shrink-0">{licon}</span>}
-          {children}
-          {ricon && <span className="shrink-0">{ricon}</span>}
+          {licon && <span className="shrink-0 flex items-center justify-center">{licon}</span>}
+          {hasText && <span>{children}</span>}
+          {ricon && <span className="shrink-0 flex items-center justify-center">{ricon}</span>}
         </>
       )}
     </button>

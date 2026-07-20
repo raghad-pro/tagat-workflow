@@ -35,6 +35,12 @@
     --color-action-edit: var(--color-status-active);
     --color-action-edit-bg: var(--color-status-active-bg);
 
+    /* ─── Button Brand Colors ─────────────────────────────────────────── */
+    --color-btn-brand: #25C6DA;
+    --color-btn-brand-hover: #51D1E1;
+    --color-btn-brand-pressed: #22B4C6;
+
+
     /* ─── Icon Colors (stat cards) ────────────────────────────────────── */
     --color-icon-indigo: #6366f1;
     --color-icon-indigo-bg: #ede9fe;
