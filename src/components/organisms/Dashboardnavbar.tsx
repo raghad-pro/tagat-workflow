@@ -328,9 +328,9 @@ function UserDropdown() {
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-[var(--color-btn-brand)] text-white shadow-sm overflow-hidden"
         >
-          {user?.avatar || user?.image || user?.profile_image ? (
+          {user?.image ? (
             <img 
-              src={user.avatar || user.image || user.profile_image} 
+              src={user.image} 
               alt={user?.name ?? "User"} 
               className="w-full h-full object-cover" 
             />
