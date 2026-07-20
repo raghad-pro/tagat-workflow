@@ -75,27 +75,40 @@ export default function Navbar() {
           })}
         </nav>
 
-        <div className="nav__actions">
+        <div className="nav__right-group">
+          <div className="nav__actions">
+            <button
+              className="icon-btn"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            >
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+            <button
+              className="icon-btn icon-btn--lang"
+              onClick={toggleLang}
+              aria-label={lang === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
+              title={lang === 'en' ? 'العربية' : 'English'}
+            >
+              <LangIcon />
+              <span>{lang === 'en' ? 'ع' : 'EN'}</span>
+            </button>
+            <Link href="/register" className="btn btn--primary nav__cta">
+              {t.nav.getStarted}
+            </Link>
+          </div>
+
           <button
-            className="icon-btn"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            className={`nav__burger ${open ? 'is-open' : ''}`}
+            onClick={() => setOpen((v: any) => !v)}
+            aria-label="Menu"
+            aria-expanded={open}
           >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            <span />
+            <span />
+            <span />
           </button>
-          <button
-            className="icon-btn icon-btn--lang"
-            onClick={toggleLang}
-            aria-label={lang === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
-            title={lang === 'en' ? 'العربية' : 'English'}
-          >
-            <LangIcon />
-            <span>{lang === 'en' ? 'ع' : 'EN'}</span>
-          </button>
-          <Link href="/register" className="btn btn--primary nav__cta">
-            {t.nav.getStarted}
-          </Link>
         </div>
       </div>
     </header>
