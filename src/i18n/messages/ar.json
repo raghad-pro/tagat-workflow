@@ -683,5 +683,97 @@
     "cancel": "إلغاء",
     "currencyName": "اسم العملة",
     "selectCompany": "اختر الشركة"
+  },
+  "wallets": {
+    "title": "إدارة المحافظ",
+    "subtitle": "إدارة وتتبع المحافظ والعملات والمبالغ المالية للشركة",
+    "add": "إضافة محفظة",
+    "searchPlaceholder": "ابحث في المحافظ...",
+    "deleteTitle": "حذف المحفظة",
+    "stats": {
+      "totalUSD": "إجمالي الدولار (USD)",
+      "totalEUR": "إجمالي اليورو (EUR)",
+      "totalWallets": "إجمالي المحافظ"
+    },
+    "columns": {
+      "walletName": "اسم المحفظة",
+      "currency": "العملة",
+      "balance": "الرصيد",
+      "lastTransaction": "آخر تحديث",
+      "company": "الشركة"
+    },
+    "filter": {
+      "active": "نشط",
+      "pending": "قيد الانتظار",
+      "inactive": "غير نشط"
+    },
+    "messages": {
+      "createSuccess": "تمت إضافة المحفظة بنجاح",
+      "updateSuccess": "تم تحديث المحفظة بنجاح",
+      "deleteSuccess": "تم حذف المحفظة بنجاح",
+      "deleteError": "فشل في حذف المحفظة"
+    }
+  },
+  "walletTransactions": {
+    "title": "إدارة حركات المحافظ",
+    "description": "تتبع وإدارة جميع الحركات والتحويلات المالية للمحافظ",
+    "addTransaction": "إضافة حركة جديدة",
+    "searchPlaceholder": "ابحث في الحركات...",
+    "deleteTitle": "حذف الحركة",
+    "confirmDelete": "هل أنت متأكد من حذف هذه الحركة؟",
+    "stats": {
+      "totalVolume": "إجمالي الحركات",
+      "income": "المقبوضات (الدخل)",
+      "expenses": "المصروفات"
+    },
+    "filters": {
+      "all": "جميع الحالات",
+      "income": "دخل",
+      "funding": "تمويل",
+      "assets": "أصول",
+      "expenses": "مصروفات"
+    },
+    "table": {
+      "date": "التاريخ",
+      "wallet": "المحفظة",
+      "amount": "المبلغ",
+      "type": "النوع",
+      "company": "الشركة"
+    },
+    "messages": {
+      "deleteSuccess": "تم حذف الحركة بنجاح"
+    }
+  },
+  "payments": {
+    "title": "إدارة المدفوعات",
+    "subtitle": "تتبع وإدارة جميع عمليات الدفع والدفعات المالية",
+    "add": "إضافة دفعة",
+    "exportReport": "تصدير تقرير",
+    "searchPlaceholder": "ابحث في المدفوعات...",
+    "deletePaymentTitle": "حذف الدفعة",
+    "confirmDelete": "هل أنت متأكد من حذف هذه الدفعة؟",
+    "stats": {
+      "totalRevenue": "إجمالي الإيرادات",
+      "pendingPayments": "مدفوعات معلقة",
+      "transactionVolume": "عدد المعاملات"
+    },
+    "filter": {
+      "all": "جميع الحالات",
+      "completed": "مكتملة",
+      "pending": "معلقة",
+      "failed": "فاشلة"
+    },
+    "columns": {
+      "invoice": "الفاتورة",
+      "date": "التاريخ",
+      "method": "طريقة الدفع",
+      "wallet": "المحفظة",
+      "amount": "المبلغ",
+      "company": "الشركة"
+    },
+    "messages": {
+      "deleteSuccess": "تم حذف الدفعة بنجاح",
+      "deleteError": "فشل في حذف الدفعة"
+    }
   }
 }

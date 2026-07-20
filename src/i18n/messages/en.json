@@ -683,5 +683,97 @@
     "cancel": "Cancel",
     "currencyName": "Currency Name",
     "selectCompany": "Select Company"
+  },
+  "wallets": {
+    "title": "Wallets Management",
+    "subtitle": "Manage and monitor company wallets and balances.",
+    "add": "Add Wallet",
+    "searchPlaceholder": "Search wallets...",
+    "deleteTitle": "Delete Wallet",
+    "stats": {
+      "totalUSD": "Total USD",
+      "totalEUR": "Total EUR",
+      "totalWallets": "Total Wallets"
+    },
+    "columns": {
+      "walletName": "Wallet Name",
+      "currency": "Currency",
+      "balance": "Balance",
+      "lastTransaction": "Last Updated",
+      "company": "Company"
+    },
+    "filter": {
+      "active": "Active",
+      "pending": "Pending",
+      "inactive": "Inactive"
+    },
+    "messages": {
+      "createSuccess": "Wallet created successfully",
+      "updateSuccess": "Wallet updated successfully",
+      "deleteSuccess": "Wallet deleted successfully",
+      "deleteError": "Failed to delete wallet"
+    }
+  },
+  "walletTransactions": {
+    "title": "Wallet Transactions Management",
+    "description": "Manage and monitor all wallet transactions.",
+    "addTransaction": "Add Transaction",
+    "searchPlaceholder": "Search transactions...",
+    "deleteTitle": "Delete Transaction",
+    "confirmDelete": "Are you sure you want to delete this transaction?",
+    "stats": {
+      "totalVolume": "Total Volume",
+      "income": "Income",
+      "expenses": "Expenses"
+    },
+    "filters": {
+      "all": "All Types",
+      "income": "Income",
+      "funding": "Funding",
+      "assets": "Assets",
+      "expenses": "Expenses"
+    },
+    "table": {
+      "date": "Date",
+      "wallet": "Wallet",
+      "amount": "Amount",
+      "type": "Type",
+      "company": "Company"
+    },
+    "messages": {
+      "deleteSuccess": "Transaction deleted successfully"
+    }
+  },
+  "payments": {
+    "title": "Payments Management",
+    "subtitle": "Track and manage all payment operations.",
+    "add": "Add Payment",
+    "exportReport": "Export Report",
+    "searchPlaceholder": "Search payments...",
+    "deletePaymentTitle": "Delete Payment",
+    "confirmDelete": "Are you sure you want to delete this payment?",
+    "stats": {
+      "totalRevenue": "Total Revenue",
+      "pendingPayments": "Pending Payments",
+      "transactionVolume": "Transaction Volume"
+    },
+    "filter": {
+      "all": "All Statuses",
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "columns": {
+      "invoice": "Invoice",
+      "date": "Date",
+      "method": "Method",
+      "wallet": "Wallet",
+      "amount": "Amount",
+      "company": "Company"
+    },
+    "messages": {
+      "deleteSuccess": "Payment deleted successfully",
+      "deleteError": "Failed to delete payment"
+    }
   }
 }

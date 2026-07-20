@@ -24,7 +24,7 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
       <div>
-        <Text size="xl" weight="bold" tag="h1">
+        <Text size="xl" weight="bold" tag="h1" className="text-[32px] md:text-[38px] font-[900] tracking-tight ds-text-main">
           {title}
         </Text>
         {subtitle && (

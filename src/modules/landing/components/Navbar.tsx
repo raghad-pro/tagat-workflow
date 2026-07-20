@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import { MoonIcon, SunIcon, LangIcon } from './Icons'
 
@@ -9,6 +10,7 @@ export default function Navbar() {
   const { t, theme, lang, toggleTheme, toggleLang } = useApp()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [hoveredLink, setHoveredLink] = useState<string>('#home')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -28,6 +30,17 @@ export default function Navbar() {
   return (
     <header className={`nav ${scrolled ? 'nav--scrolled' : ''}`}>
       <div className="container nav__inner">
+        <button
+          className={`nav__burger ${open ? 'is-open' : ''}`}
+          onClick={() => setOpen((v: any) => !v)}
+          aria-label="Menu"
+          aria-expanded={open}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
         <a href="#home" className="nav__logo" aria-label="Workflow">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -37,12 +50,29 @@ export default function Navbar() {
           />
         </a>
 
-        <nav className={`nav__links ${open ? 'nav__links--open' : ''}`} aria-label="Main">
-          {links.map((l, i) => (
-            <a key={l.href} href={l.href} className={i === 0 ? 'active' : ''} onClick={() => setOpen(false)}>
-              {l.label}
-            </a>
-          ))}
+        <nav className={`nav__links ${open ? 'nav__links--open' : ''}`} aria-label="Main" onMouseLeave={() => setHoveredLink('#home')}>
+          {links.map((l, i) => {
+            const isHovered = hoveredLink === l.href
+            return (
+              <a 
+                key={l.href} 
+                href={l.href} 
+                className={isHovered ? 'active' : ''} 
+                onClick={() => setOpen(false)}
+                onMouseEnter={() => setHoveredLink(l.href)}
+                style={{ position: 'relative' }}
+              >
+                {isHovered && (
+                  <motion.div
+                    layoutId="nav-pill"
+                    className="nav__pill-bg"
+                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                  />
+                )}
+                <span className="nav__link-text">{l.label}</span>
+              </a>
+            )
+          })}
         </nav>
 
         <div className="nav__actions">
@@ -66,16 +96,6 @@ export default function Navbar() {
           <Link href="/register" className="btn btn--primary nav__cta">
             {t.nav.getStarted}
           </Link>
-          <button
-            className={`nav__burger ${open ? 'is-open' : ''}`}
-            onClick={() => setOpen((v: any) => !v)}
-            aria-label="Menu"
-            aria-expanded={open}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
         </div>
       </div>
     </header>
