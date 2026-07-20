@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { useTranslations, useLocale } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User, Briefcase, Building2, Mail, Lock, Upload, X, Globe } from "lucide-react";
+import { User, Briefcase, Building2, Mail, Lock, Upload, X, Globe, ArrowLeft, Plus } from "lucide-react";
 import { CheckboxField } from "@/components/atoms/checkboxField";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useVerifyEmailOtp } from "@/modules/auth/hooks/useVerifyEmailOtp";
@@ -53,7 +53,7 @@ function AccountTypeStep({
           className={cn(
             cardBase,
             selected === "client"
-              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] border-[#22c8e0] text-white"
               : "hover:border-gray-300 bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700 text-black dark:text-white"
           )}
         >
@@ -77,7 +77,7 @@ function AccountTypeStep({
           className={cn(
             cardBase,
             selected === "company"
-              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+              ? "shadow-[0_8px_30px_rgba(18,194,233,0.3)] bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] border-[#22c8e0] text-white"
               : "hover:border-gray-300 bg-white dark:bg-[#1a1c23] border-gray-200 dark:border-gray-700 text-black dark:text-white"
           )}
         >
@@ -97,14 +97,14 @@ function AccountTypeStep({
       </div>
 
       <div className="mt-1 flex justify-center">
-        <div className="w-full sm:w-[85%]">
+        <div className="w-full">
           <Button 
             type="button" 
             variant="solid" 
             disabled={!selected} 
             onClick={onNext} 
             fullWidth 
-            className="!rounded-xl !py-2.5 sm:!py-4 !text-[14px] sm:!text-[15px] !font-bold tracking-wide transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-[2px] active:scale-95 active:translate-y-0"
+            className="!rounded-xl !py-3 sm:!py-3.5 !text-[15px] !font-bold tracking-wide bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] text-white shadow-md shadow-[#22c8e0]/25 hover:shadow-[0_8px_25px_rgba(34,200,224,0.4)] transition-all duration-300 active:scale-95"
           >
             {t("next")}
           </Button>
@@ -266,9 +266,29 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
           and{" "}
           <Link href="/conditions" className="ds-text-primary hover:underline">Conditions</Link>
         </CheckboxField>
-        <div className="grid grid-cols-2 gap-2 mt-1">
-          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("back")}</Button>
-          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("create_account")}</Button>
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <button 
+            type="button" 
+            onClick={onBack} 
+            className="h-11 w-full rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <ArrowLeft size={16} className="rtl:rotate-180" />
+            <span>{t("back")}</span>
+          </button>
+          <button 
+            type="submit" 
+            disabled={!agreeToTerms || isPending} 
+            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-[#22c8e0]/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            {isPending ? (
+              <span className="text-white text-xs font-semibold">{t("loading") || "Loading..."}</span>
+            ) : (
+              <>
+                <Plus size={18} strokeWidth={2.5} />
+                <span>{t("create_account")}</span>
+              </>
+            )}
+          </button>
         </div>
       </form>
     </Form>
@@ -342,9 +362,29 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
           and{" "}
           <Link href="/conditions" className="ds-text-brand hover:underline">Conditions</Link>
         </CheckboxField>
-        <div className="grid grid-cols-2 gap-2 mt-1">
-          <Button type="button" variant="outline" onClick={onBack} fullWidth className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:bg-gray-50 hover:-translate-y-1 hover:shadow-sm active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("back")}</Button>
-          <Button type="submit" variant="solid" loading={isPending} fullWidth disabled={!agreeToTerms} className="!rounded-xl !py-2.5 sm:!py-3 transition-all duration-300 hover:shadow-[0_8px_20px_rgba(18,194,233,0.4)] hover:-translate-y-1 active:scale-95 active:translate-y-0 text-[13px] sm:text-[14px]">{t("create_account")}</Button>
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <button 
+            type="button" 
+            onClick={onBack} 
+            className="h-11 w-full rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <ArrowLeft size={16} className="rtl:rotate-180" />
+            <span>{t("back")}</span>
+          </button>
+          <button 
+            type="submit" 
+            disabled={!agreeToTerms || isPending} 
+            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#22c8e0] to-[#0ea5e9] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-[#22c8e0]/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            {isPending ? (
+              <span className="text-white text-xs font-semibold">{t("loading") || "Loading..."}</span>
+            ) : (
+              <>
+                <Plus size={18} strokeWidth={2.5} />
+                <span>{t("create_account")}</span>
+              </>
+            )}
+          </button>
         </div>
       </form>
     </Form>

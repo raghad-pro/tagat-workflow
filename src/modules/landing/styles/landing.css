@@ -1969,25 +1969,43 @@ a.contact__item:hover {
   }
 
   .nav__inner {
-    height: 68px;
+    height: 74px;
     gap: 8px;
     justify-content: space-between;
   }
 
   .nav__logo-img {
-    height: 44px;
-    max-height: 44px;
+    height: 70px !important;
+    max-height: 75px !important;
+    width: auto;
+  }
+
+  .nav__right-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .nav__actions {
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-inline-start: 0;
   }
 
+  .nav__cta {
+    display: none;
+  }
+
   .icon-btn {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
+  }
+
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
   }
 
   .icon-btn--lang {
