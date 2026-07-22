@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "@/providers/ThemeProvider";
 
-export default function Logo() {
+interface LogoProps {
+  className?: string;
+}
+
+export default function Logo({ className }: LogoProps = {}) {
   const { theme: providerTheme } = useTheme();
   const [theme, setTheme] = useState<string>(providerTheme || "light");
 
@@ -31,7 +35,7 @@ export default function Logo() {
     <img
       src={logoSrc}
       alt="Workflow"
-      className="w-full h-auto max-w-[150px] sm:max-w-[190px] mx-auto transform scale-[1.15] origin-center object-contain"
+      className={`w-full h-auto max-w-[140px] sm:max-w-[165px] mx-auto object-contain ${className || ""}`}
     />
   );
 }

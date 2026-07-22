@@ -267,7 +267,7 @@ function MobileCards<T extends { id: number | string }>({
           {/* Actions row */}
           {hasActions && (
             <div
-              className="flex items-center gap-2 pt-3 mt-3"
+              className="flex items-center justify-end gap-2 pt-3 mt-3"
               style={{ borderTop: "1px solid var(--color-border-form)" }}
             >
               {actions!.map((action, i) => (

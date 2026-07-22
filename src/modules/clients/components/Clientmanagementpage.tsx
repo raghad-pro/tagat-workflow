@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import { PageContainer } from "@/components/template/PageContainer";
@@ -46,7 +46,7 @@ import type {
 } from "@/modules/clients/types/clients.types";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-type PivotStatus = "pending" | "approved" | "rejected";
+type PivotStatus = "pending" | "approved" | "rejected" | "active";
 
 interface NormalizedClient {
   id:            number;
@@ -68,9 +68,10 @@ const STATUS_OPTIONS: FilterOption[] = [
 ];
 
 const STATUS_CONFIG: Record<PivotStatus, { bg: string; color: string; dot: string }> = {
-  approved: { bg: "rgba(52,211,153,0.12)", color: "#059669",            dot: "#34d399" },
-  pending:  { bg: "rgba(251,191,36,0.12)", color: "#d97706",            dot: "#f59e0b" },
-  rejected: { bg: "rgba(239,68,68,0.10)",  color: "var(--color-error)", dot: "#ef4444" },
+  approved: { bg: "rgba(16,185,129,0.12)", color: "#059669", dot: "#10b981" },
+  active:   { bg: "rgba(16,185,129,0.12)", color: "#059669", dot: "#10b981" },
+  pending:  { bg: "rgba(245,158,11,0.12)", color: "#d97706", dot: "#f59e0b" },
+  rejected: { bg: "rgba(239,68,68,0.10)",  color: "#dc2626", dot: "#ef4444" },
 };
 
 // ─── Status Pill ───────────────────────────────────────────────────────────────
@@ -79,10 +80,10 @@ function PivotStatusPill({ status }: { status: PivotStatus }) {
   const label = status.charAt(0).toUpperCase() + status.slice(1);
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold whitespace-nowrap"
+      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap"
       style={{ background: cfg.bg, color: cfg.color }}
     >
-      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cfg.dot }} />
+      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: cfg.dot }} />
       {label}
     </span>
   );
@@ -93,15 +94,21 @@ function normalizeClient(raw: any): NormalizedClient {
   const companies = (raw.companies ?? []).map((c: any) => ({
     id:    c.id,
     name:  c.name,
-    pivot: { status: (c.pivot?.status ?? "pending") as PivotStatus },
+    pivot: { status: (c.pivot?.status ?? raw.status ?? "pending") as PivotStatus },
   }));
+
+  const statusVal = (
+    raw.status ??
+    (companies.length > 0 ? companies[0].pivot.status : null) ??
+    "pending"
+  ).toLowerCase() as PivotStatus;
 
   return {
     id:            raw.id,
-    name:          raw.name,
+    name:          raw.name ?? raw.user?.name ?? "Unknown Client",
     email:         raw.user?.email ?? raw.email ?? "",
     companies,
-    primaryStatus: companies.length > 0 ? companies[0].pivot.status : "pending",
+    primaryStatus: statusVal,
     createdAt:     raw.created_at ?? "",
   };
 }
@@ -123,12 +130,10 @@ export default function ClientManagementPage() {
   const [editClient,   setEditClient]   = useState<NormalizedClient | null>(null);
   const [deleteClient, setDeleteClient] = useState<NormalizedClient | null>(null);
 
-  // ── Data — server-side search ─────────────────────────────────────────────────
+  // ── Data — fetch all clients for local search & status filtering ──────────────
   const { data: rawData, isLoading, isFetching } = useClients({
-    search:   search   || undefined,
-    status:   statusFilter !== "all" ? statusFilter : undefined,
     page:     1,
-    per_page: 50, // Fetch all for local pagination
+    per_page: 1000,
   } as any);
 
   const { data: companiesResponse } = useCompanies({ per_page: 50, page: 1 } as any);
@@ -142,10 +147,48 @@ export default function ClientManagementPage() {
 
   // ── Normalize ─────────────────────────────────────────────────────────────────
   const allClients: NormalizedClient[] = (rawData?.data?.data ?? []).map(normalizeClient);
-  const total = allClients.length;
   
-  // ── Local Pagination ──────────────────────────────────────────────────────────
-  const clients = allClients.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  // ── Local Filtering & Pagination ──────────────────────────────────────────────
+  const filteredClients = useMemo(() => {
+    let list = [...allClients];
+    list.sort((a, b) => b.id - a.id); // Sort newest first
+
+    return list.filter((client) => {
+      // Status filter
+      if (statusFilter !== "all") {
+        const target = statusFilter.toLowerCase().trim();
+        const primaryStatus = (client.primaryStatus ?? "").toLowerCase();
+
+        const primaryMatch = primaryStatus === target;
+        const companyMatch = client.companies.some(
+          (c) => (c.pivot?.status ?? "").toLowerCase() === target
+        );
+        const activeApprovedMatch =
+          (target === "approved" || target === "active") &&
+          (primaryStatus === "active" || primaryStatus === "approved");
+
+        if (!primaryMatch && !companyMatch && !activeApprovedMatch) {
+          return false;
+        }
+      }
+
+      // Search filter
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        const matchesName = client.name.toLowerCase().includes(q);
+        const matchesEmail = client.email.toLowerCase().includes(q);
+        const matchesCompany = client.companies.some((c) => c.name.toLowerCase().includes(q));
+        if (!matchesName && !matchesEmail && !matchesCompany) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allClients, statusFilter, search]);
+
+  const total = filteredClients.length;
+  const clients = filteredClients.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleSearch = (v: string) => { setSearch(v);       setCurrentPage(1); };

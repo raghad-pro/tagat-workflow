@@ -70,28 +70,28 @@ export function EmployeeDashboard({ role, token }: Props) {
   const statCards = [
     {
       icon: DollarSign,
-      label: "monthly revenue",
+      label: t("monthlyRevenue") || "monthly revenue",
       value: typeof emp?.employeeStats.totalEarned === "number" ? `$${emp.employeeStats.totalEarned.toLocaleString()}` : "—",
       trend: undefined,
       trendColor: undefined,
     },
     {
       icon: FileText,
-      label: "my tasks",
+      label: t("myTasks") || "my tasks",
       value: String(emp?.employeeStats.totalTasks ?? "—"),
       trend: undefined,
       trendColor: undefined,
     },
     {
       icon: CheckSquare,
-      label: "completed",
+      label: t("completed") || "completed",
       value: String(emp?.employeeStats.completedTasks ?? "—"),
       trend: undefined,
       trendColor: undefined,
     },
     {
       icon: Clock,
-      label: "working hours",
+      label: t("workingHours") || "working hours",
       value: emp?.employeeStats.workingHours ?? "—",
       trend: undefined,
       trendColor: undefined,
@@ -110,8 +110,8 @@ export function EmployeeDashboard({ role, token }: Props) {
 
         {/* Header */}
         <PageHeader
-          title="Dashboard"
-          subtitle="Overview of your current tasks and earnings."
+          title={t("title") || "Dashboard"}
+          subtitle={t("subtitle") || "Overview of your current tasks and earnings."}
         />
 
         {/* 4 stat cards */}
@@ -141,37 +141,37 @@ export function EmployeeDashboard({ role, token }: Props) {
           <div className="xl:col-span-2 flex flex-col gap-6">
 
             {/* Working Hours Trend */}
-            <DashboardCard title="Working Hours Trend" className="min-h-[300px]">
+            <DashboardCard title={t("workingHoursTrend") || "Working Hours Trend"} className="min-h-[300px]">
               <div className="h-[250px] w-full mt-4">
                 <WorkingHoursChart data={emp?.workingHoursTrend || []} />
               </div>
             </DashboardCard>
 
             {/* salary breakdown */}
-            <DashboardCard title="salary breakdown">
+            <DashboardCard title={t("salaryBreakdown") || "salary breakdown"}>
               <SplitBar
                 paid={paidSalary}
                 unpaid={unpaidSalary}
-                paidTitle="Paid Salary"
-                unpaidTitle="Unpaid Salary"
-                paidLabel="Paid Salary"
-                unpaidLabel="Unpaid Salary"
-                paidTag="From Approved Timesheets"
-                unpaidTag="Pending Timesheets"
+                paidTitle={t("paidSalary") || "Paid Salary"}
+                unpaidTitle={t("unpaidSalary") || "Unpaid Salary"}
+                paidLabel={t("paidSalary") || "Paid Salary"}
+                unpaidLabel={t("unpaidSalary") || "Unpaid Salary"}
+                paidTag={t("fromApprovedTimesheets") || "From Approved Timesheets"}
+                unpaidTag={t("pendingTimesheets") || "Pending Timesheets"}
               />
             </DashboardCard>
 
             {/* bonus details */}
-            <DashboardCard title="bonus details">
+            <DashboardCard title={t("bonusDetails") || "bonus details"}>
               <SplitBar
                 paid={paidBonus}
                 unpaid={unpaidBonus}
-                paidTitle="Year-End Bonus"
-                unpaidTitle="Performance Bonus"
-                paidLabel="Year-End Bonus"
-                unpaidLabel="Performance Bonus"
-                paidTag="Approved Bonuses"
-                unpaidTag="Pending Approvals"
+                paidTitle={t("yearEndBonus") || "Year-End Bonus"}
+                unpaidTitle={t("performanceBonus") || "Performance Bonus"}
+                paidLabel={t("yearEndBonus") || "Year-End Bonus"}
+                unpaidLabel={t("performanceBonus") || "Performance Bonus"}
+                paidTag={t("approvedBonuses") || "Approved Bonuses"}
+                unpaidTag={t("pendingApprovals") || "Pending Approvals"}
               />
             </DashboardCard>
 
@@ -180,7 +180,7 @@ export function EmployeeDashboard({ role, token }: Props) {
           {/* Right column — latest tasks */}
           <div>
             <DashboardCard
-              title="latest tasks"
+              title={t("latestTasks") || "latest tasks"}
               action={<ShowAll href="/tasks" />}
             >
               {emp?.tasks && emp.tasks.length > 0 ? (
@@ -194,7 +194,7 @@ export function EmployeeDashboard({ role, token }: Props) {
                         <Text size="sm" weight="bold" tag="p" className="text-[13px]">{task.name}</Text>
                         <Text size="sm" color="gray-200" tag="p" className="text-[11px] flex items-center gap-1">
                           <Clock size={11} />
-                          Task Duration: {task.duration}
+                          {t("taskDuration") || "Task Duration"}: {task.duration}
                         </Text>
                       </div>
                       <span
@@ -218,7 +218,7 @@ export function EmployeeDashboard({ role, token }: Props) {
                 </div>
               ) : (
                 <Text size="sm" color="gray-200" className="text-center py-6">
-                  No tasks this month
+                  {t("noTasksThisMonth") || "No tasks this month"}
                 </Text>
               )}
             </DashboardCard>

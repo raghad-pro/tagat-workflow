@@ -138,25 +138,26 @@ function InvoicesChart({ data }: { data: { month: string; amount: number }[] }) 
 }
 
 function SuperAdminStatsRow({ data }: { data: SuperAdminDashboardData }) {
+  const t = useTranslations("dashboard");
   const stats = [
     {
       icon: Users,
-      label: "Clients",
+      label: t("clients") || "Clients",
       value: String(data.clientsCount),
     },
     {
       icon: Building2,
-      label: "Companies",
+      label: t("companies") || "Companies",
       value: String(data.companiesCount),
     },
     {
       icon: Users,
-      label: "Employees",
+      label: t("employees") || "Employees",
       value: String(data.employeesCount),
     },
     {
       icon: Briefcase,
-      label: "Projects",
+      label: t("projects") || "Projects",
       value: String(data.projectsCount),
     },
   ];
@@ -225,7 +226,7 @@ export function SuperAdminDashboard({ role, token }: Props) {
 
           {/* Left column */}
           <div className="xl:col-span-2 flex flex-col gap-6">
-            <DashboardCard title="Monthly Invoices">
+            <DashboardCard title={t("monthlyInvoices") || "Monthly Invoices"}>
               <div className="relative">
                 <InvoicesChart data={invoicesData} />
                 {!hasInvoices && (
@@ -238,7 +239,7 @@ export function SuperAdminDashboard({ role, token }: Props) {
               </div>
             </DashboardCard>
 
-            <DashboardCard title="Monthly Payments">
+            <DashboardCard title={t("monthlyPayments") || "Monthly Payments"}>
               <div className="relative">
                 <PaymentsChart data={paymentsData} />
                 {!hasPayments && (
@@ -280,12 +281,12 @@ export function SuperAdminDashboard({ role, token }: Props) {
                   ))}
                 </div>
               ) : (
-                <Text size="sm" color="gray-200" className="text-center py-6">No companies found</Text>
+                <Text size="sm" color="gray-200" className="text-center py-6">{t("noCompaniesFound") || "No companies found"}</Text>
               )}
             </DashboardCard>
 
             <DashboardCard
-              title="Recent Projects"
+              title={t("recentProjects") || "Recent Projects"}
               action={<ShowAll href="/projects" />}
             >
               {superAdminData && superAdminData.latestProjects.length > 0 ? (
@@ -310,7 +311,7 @@ export function SuperAdminDashboard({ role, token }: Props) {
                   ))}
                 </div>
               ) : (
-                <Text size="sm" color="gray-200" className="text-center py-6">No projects found</Text>
+                <Text size="sm" color="gray-200" className="text-center py-6">{t("noProjectsFound") || "No projects found"}</Text>
               )}
             </DashboardCard>
           </div>

@@ -128,7 +128,7 @@ import { ViewDetailsLayout, InfoRow, StatusPill } from "@/components/molecules/V
 import { useAuth } from "@/providers/AuthProvider";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-type PivotStatus = "pending" | "approved" | "rejected";
+type PivotStatus = "pending" | "approved" | "rejected" | "active";
 
 interface ClientCompany {
   id:    number;

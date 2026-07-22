@@ -23,14 +23,14 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-      <div>
-        <Text size="xl" weight="bold" tag="h1" className="text-[32px] md:text-[38px] font-[900] tracking-tight ds-text-main">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-[24px] sm:text-[30px] md:text-[34px] font-[800] tracking-tight leading-none ds-text-main">
           {title}
-        </Text>
+        </h1>
         {subtitle && (
-          <Text size="sm" color="gray-200" tag="p" className="mt-1">
+          <p className="text-[14px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-1">
             {subtitle}
-          </Text>
+          </p>
         )}
       </div>
 

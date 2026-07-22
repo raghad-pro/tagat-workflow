@@ -272,7 +272,7 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
             variant="ghost"
             fullWidth
             onClick={onBack} 
-            className="!rounded-xl h-11 font-bold text-sm cursor-pointer border-none whitespace-nowrap"
+            className="!rounded-xl h-11 font-bold text-[13px] sm:text-sm cursor-pointer border-none px-1 sm:px-3 text-center"
           >
             {t("back")}
           </Button>
@@ -281,7 +281,7 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
             variant="solid"
             fullWidth
             disabled={!agreeToTerms || isPending} 
-            className="!rounded-xl h-11 text-sm font-bold cursor-pointer whitespace-nowrap"
+            className="!rounded-xl h-11 text-[12px] sm:text-sm font-bold cursor-pointer px-1 sm:px-3 text-center"
           >
             {isPending ? t("loading") : t("create_account")}
           </Button>
@@ -364,7 +364,7 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
             variant="ghost"
             fullWidth
             onClick={onBack} 
-            className="!rounded-xl h-11 font-bold text-sm cursor-pointer border-none whitespace-nowrap"
+            className="!rounded-xl h-11 font-bold text-[13px] sm:text-sm cursor-pointer border-none px-1 sm:px-3 text-center"
           >
             {t("back")}
           </Button>
@@ -373,7 +373,7 @@ function ClientForm({ onBack, isPending, onRegister, onSuccessRegister }: FormPr
             variant="solid"
             fullWidth
             disabled={!agreeToTerms || isPending} 
-            className="!rounded-xl h-11 text-sm font-bold cursor-pointer whitespace-nowrap"
+            className="!rounded-xl h-11 text-[12px] sm:text-sm font-bold cursor-pointer px-1 sm:px-3 text-center"
           >
             {isPending ? t("loading") : t("create_account")}
           </Button>
