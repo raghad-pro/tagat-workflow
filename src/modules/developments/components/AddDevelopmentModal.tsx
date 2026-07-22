@@ -150,7 +150,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
       <div className="flex flex-col w-full">
         <Form {...form}>
           <form id="add-development-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
-            <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form bg-white">
+            <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form bg-white dark:bg-transparent">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SelectField
                   control={form.control}

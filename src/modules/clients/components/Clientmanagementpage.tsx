@@ -209,6 +209,7 @@ export default function ClientManagementPage() {
       key:       "name",
       header:    "Client Name",
       isPrimary: true,
+      width:     isSuperAdmin ? "40%" : "60%",
       render: (row) => (
         <div className="flex items-center gap-3">
           <ClientAvatar name={row.name} />
@@ -228,6 +229,7 @@ export default function ClientManagementPage() {
       ? [{
           key:    "companies",
           header: "Companies",
+          width:  "30%",
           render: (row: NormalizedClient) =>
             row.companies.length === 0 ? (
               <Text size="sm" color="gray-200" tag="p">—</Text>
@@ -243,6 +245,7 @@ export default function ClientManagementPage() {
     {
       key:    "status",
       header: "Status",
+      width:  isSuperAdmin ? "20%" : "25%",
       render: (row) => {
         const toShow = !isSuperAdmin
           ? row.companies.filter((c) => c.id === user?.company_id)

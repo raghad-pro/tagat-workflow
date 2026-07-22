@@ -44,7 +44,7 @@ export default function Hero() {
         <Reveal className="hero__mock" delay={320}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={theme === 'dark' ? '/dashboardDark.png' : '/dashboard.png'}
+            src="/dashboard.png"
             alt="Dashboard"
             className="hero__dashboard-img"
           />

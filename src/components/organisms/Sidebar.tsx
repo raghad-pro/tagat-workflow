@@ -183,7 +183,7 @@ export function AppSidebar() {
                         ],
                         isActive && [
                           "bg-[var(--color-btn-brand)] hover:bg-[var(--color-btn-brand-hover)] active:bg-[var(--color-btn-brand-pressed)]",
-                          "text-white hover:text-white",
+                          "text-white hover:text-white dark:text-black dark:hover:text-black",
                           "font-bold"
                         ]
                       )}
@@ -194,7 +194,7 @@ export function AppSidebar() {
                           className={cn(
                             "shrink-0 transition-colors duration-200",
                             isActive
-                              ? "text-white"
+                              ? "text-white dark:text-black"
                               : "text-slate-500 dark:text-slate-400 group-hover/nav-item:text-[var(--color-btn-brand)] dark:group-hover/nav-item:text-[var(--color-btn-brand)]"
                           )}
                         />
