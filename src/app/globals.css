@@ -170,6 +170,12 @@
   .ds-btn-solid:active:not(:disabled) {
     background-color: var(--color-btn-brand-pressed);
   }
+  .ds-btn-solid:disabled {
+    background-color: #BBEDF4 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    cursor: not-allowed !important;
+  }
 
   .ds-btn-outline {
     background-color: transparent;
@@ -185,6 +191,12 @@
     border-color: var(--color-btn-brand-pressed);
     color: var(--color-btn-brand-pressed);
     background-color: rgba(34, 180, 198, 0.1);
+  }
+  .ds-btn-outline:disabled {
+    background-color: #BBEDF4 !important;
+    color: #ffffff !important;
+    border-color: #BBEDF4 !important;
+    cursor: not-allowed !important;
   }
 
   /* ── Icon stat colors ────────────────────────────────────────────────────── */
