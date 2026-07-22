@@ -113,7 +113,7 @@ export function EditInvoiceModal({
   const projectOptions = useMemo(() => projectsList.map((p: any) => ({ value: String(p.id), label: p.title })), [projectsList]);
   const currencyOptions = useMemo(() => currenciesList.map((c: any) => ({ value: String(c.id), label: `${c.name} ${c.symbol ? `(${c.symbol})` : ''}`.trim() })), [currenciesList]);
 
-  const prevClientIdRef = React.useRef(form.watch("client_id"));
+  const prevClientIdRef = React.useRef<number | string | undefined>(form.watch("client_id"));
 
   // Sync form when invoice changes
   useEffect(() => {

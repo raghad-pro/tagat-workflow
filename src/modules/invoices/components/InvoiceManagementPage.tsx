@@ -217,7 +217,7 @@ export default function InvoiceManagementPage() {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
   const actions: TableAction<Invoice>[] = useMemo(() => {
-    const baseActions = [
+    const baseActions: TableAction<Invoice>[] = [
       { icon: Eye,    label: tCommon("view"),   colorScheme: "send" as const, onClick: (row: Invoice) => { setViewInvoice(row); setShowViewModal(true); } }
     ];
     
