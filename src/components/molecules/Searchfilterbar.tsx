@@ -69,7 +69,7 @@ function FilterDropdown({ filter }: { filter: FilterConfig }) {
       {/* ── Dropdown Panel ── */}
       {open && (
         <div
-          className="absolute end-0 top-full mt-1.5 z-30 rounded-2xl overflow-hidden"
+          className="absolute end-0 top-full mt-1.5 z-30 rounded-xl overflow-hidden p-1.5 flex flex-col gap-0.5"
           style={{
             background: "var(--color-bg-form)",
             border: "1px solid var(--color-border-inputs)",
@@ -79,7 +79,6 @@ function FilterDropdown({ filter }: { filter: FilterConfig }) {
         >
           {filter.options.map((opt, i) => {
             const isSelected = opt.value === filter.value;
-            const isLast = i === filter.options.length - 1;
             return (
               <button
                 key={opt.value}
@@ -89,17 +88,11 @@ function FilterDropdown({ filter }: { filter: FilterConfig }) {
                   setOpen(false);
                 }}
                 className={cn(
-                  "w-full text-start px-5 py-3 ds-text-sm transition-colors",
-                  "hover:bg-[var(--color-bg)]",
+                  "w-full text-start px-3 py-2 rounded-lg text-[13px] font-medium transition-colors",
                   isSelected
-                    ? "ds-text-primary ds-font-bold"
-                    : "ds-text-gray-100 ds-font-regular"
+                    ? "bg-[#BBEDF4]/30 text-[#0f5b66] dark:bg-[#0f5b66]/20 dark:text-[#a5e8f3]"
+                    : "ds-text-gray-100 hover:bg-[var(--color-bg)]"
                 )}
-                style={{
-                  borderBottom: !isLast
-                    ? "1px solid var(--color-border-form)"
-                    : "none",
-                }}
               >
                 {opt.label}
               </button>

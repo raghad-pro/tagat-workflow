@@ -65,12 +65,37 @@ export function CompanyManagementPage() {
   
   const allCompanies = companiesResponse?.data?.data || [];
   
-  // Local pagination
-  const totalItems = allCompanies.length;
+  // Local filtering & pagination
+  const filteredCompanies = useMemo(() => {
+    return allCompanies.filter((comp: any) => {
+      // Status filter
+      if (status !== "all") {
+        const compStatus = (comp.status ?? "").toLowerCase();
+        const target = status.toLowerCase();
+        const isApprovedActive = (target === "approved" || target === "active") && (compStatus === "approved" || compStatus === "active");
+        if (compStatus !== target && !isApprovedActive) {
+          return false;
+        }
+      }
+      // Search filter
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        const matchesName = comp.name?.toLowerCase().includes(q);
+        const matchesEmail = comp.email?.toLowerCase().includes(q);
+        const matchesDomain = comp.domain?.toLowerCase().includes(q);
+        if (!matchesName && !matchesEmail && !matchesDomain) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [allCompanies, status, search]);
+
+  const totalItems = filteredCompanies.length;
   const companies = useMemo(() => {
     const startIndex = (page - 1) * PAGE_SIZE;
-    return allCompanies.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [allCompanies, page]);
+    return filteredCompanies.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredCompanies, page]);
 
   const createCompany = useCreateCompany();
   const updateCompany = useUpdateCompany();

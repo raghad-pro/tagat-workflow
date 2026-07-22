@@ -7,7 +7,7 @@ import { ClientAvatar } from "@/components/atoms/Clientavatar";
 import type { UpdateClientStatusRequest } from "@/modules/clients/types/clients.types";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-type PivotStatus = "pending" | "approved" | "rejected";
+type PivotStatus = "pending" | "approved" | "rejected" | "active";
 
 interface ClientCompany {
   id:    number;
@@ -78,7 +78,8 @@ export function EditClientModal({
 
   const handleSubmit = () => {
     if (!selectedCompanyId) return;
-    onUpdate(data.id, { company_id: selectedCompanyId, status: selectedStatus });
+    const targetStatus = selectedStatus === "active" ? "approved" : (selectedStatus as "approved" | "pending" | "rejected");
+    onUpdate(data.id, { company_id: selectedCompanyId, status: targetStatus });
   };
 
   return (

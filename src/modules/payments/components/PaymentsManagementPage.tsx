@@ -70,6 +70,31 @@ export function PaymentsManagementPage() {
     });
   }, [paymentToDelete, deletePayment, t]);
 
+  const handleExport = useCallback(() => {
+    const dataToExport = paymentsRes?.data?.data;
+    if (!dataToExport || dataToExport.length === 0) {
+      toast.error(t("messages.noData") || "No data available to export");
+      return;
+    }
+    
+    const headers = ["Invoice ID", "Date", "Method", "Amount"];
+    const csvContent = [
+      headers.join(","),
+      ...dataToExport.map((row: Payment) => 
+        [row.invoice_id, row.payment_date, row.payment_method, row.amount].join(",")
+      )
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `payments_report_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [paymentsRes, t]);
+
   // Stats mapped
   const stats: StatItem[] = useMemo(() => {
     const s = statsRes?.data;
@@ -211,7 +236,7 @@ export function PaymentsManagementPage() {
         actions={[
           {
             label: t("exportReport") || "Export Report",
-            onClick: () => {},
+            onClick: handleExport,
             icon: DownloadCloud,
             variant: "outline"
           },

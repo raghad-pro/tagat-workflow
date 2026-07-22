@@ -22,31 +22,32 @@ interface Props {
 }
 
 function CompanyStatsRow({ data }: { data: CompanyDashboardData }) {
+  const t = useTranslations("dashboard");
   const stats = [
     {
       icon: DollarSign,
-      title: "monthly revenue",
+      title: t("monthlyRevenue") || "monthly revenue",
       value: `$${Number(data.walletBalance ?? 0).toLocaleString()}`,
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
     },
     {
       icon: Users,
-      title: "active projects",
+      title: t("activeProjects") || "active projects",
       value: String(data.projectsCount ?? 0),
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
     },
     {
       icon: Users,
-      title: "team productivity",
+      title: t("teamProductivity") || "team productivity",
       value: String(data.employeesCount ?? 0),
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
     },
     {
       icon: AlertTriangle,
-      title: "pending approvals",
+      title: t("pendingApprovals") || "pending approvals",
       value: String(data.clientsCount ?? 0),
       iconBg: "bg-[#E9F9FB]",
       iconColor: "text-[#12c2e9]",
@@ -109,14 +110,10 @@ export function CompanyDashboard({ role, token }: Props) {
       <div className="flex flex-col gap-6 lg:gap-8 pb-8">
 
         {/* Header */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-[30px] md:text-[34px] font-[800] tracking-tight leading-none ds-text-main">
-            Dashboard
-          </h1>
-          <p className="text-[14px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-1">
-            Platform performance overview
-          </p>
-        </div>
+        <PageHeader 
+          title={t("title")} 
+          subtitle={t("subtitle")} 
+        />
 
         {/* Stats Row */}
         {companyData && <CompanyStatsRow data={companyData} />}
@@ -126,7 +123,7 @@ export function CompanyDashboard({ role, token }: Props) {
           
           {/* Chart */}
           <div className="lg:col-span-2">
-            <DashboardCard title="Monthly Invoices" className="h-full p-6 relative">
+            <DashboardCard title={t("monthlyInvoices") || "Monthly Invoices"} className="h-full p-6 relative">
               <ChartContainer config={chartConfig} className="h-[300px] w-full mt-4">
                 <BarChart data={invoicesData} barGap={0} barCategoryGap="25%">
                   <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -151,7 +148,7 @@ export function CompanyDashboard({ role, token }: Props) {
                     iconType="circle"
                     wrapperStyle={{ paddingBottom: '20px', fontSize: '13px', fontWeight: 600, color: '#374151' }}
                   />
-                  <Bar dataKey="amount" fill="#25C6DA" radius={[4, 4, 0, 0]} name="Amount" />
+                  <Bar dataKey="amount" fill="#25C6DA" radius={[4, 4, 0, 0]} name={t("amount") || "Amount"} />
                 </BarChart>
               </ChartContainer>
               {!hasInvoices && (
@@ -167,17 +164,17 @@ export function CompanyDashboard({ role, token }: Props) {
           {/* Recent Tasks styled as Pending Approvals */}
           <div>
             <DashboardCard 
-              title="Recent Tasks" 
+              title={t("recentTasks") || "Recent Tasks"} 
               className="h-full"
               action={<ShowAll href="/tasks" />}
             >
               {companyData && companyData.latestTasks.length > 0 ? (
                 <div className="flex flex-col divide-y divide-gray-50 mt-2">
-                  {companyData.latestTasks.map((t: any) => (
-                    <div key={t.id} className="flex items-center justify-between py-3.5 group cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
+                  {companyData.latestTasks.map((tItem: any) => (
+                    <div key={tItem.id} className="flex items-center justify-between py-3.5 group cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
                       <div className="flex flex-col min-w-0 pr-4">
-                        <Text size="sm" weight="bold" className="text-[13px] text-gray-800 dark:text-gray-200 truncate">{t.title}</Text>
-                        <Text size="sm" className="text-gray-400 dark:text-gray-500 text-[11px] mt-1 truncate uppercase">{t.status}</Text>
+                        <Text size="sm" weight="bold" className="text-[13px] text-gray-800 dark:text-gray-200 truncate">{tItem.title}</Text>
+                        <Text size="sm" className="text-gray-400 dark:text-gray-500 text-[11px] mt-1 truncate uppercase">{tItem.status}</Text>
                       </div>
                       <ListTodo size={18} className="text-cyan-400 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
                     </div>
@@ -185,7 +182,7 @@ export function CompanyDashboard({ role, token }: Props) {
                 </div>
               ) : (
                 <Text size="sm" className="text-center py-6 text-gray-200">
-                  No tasks found
+                  {t("noTasksFound") || "No tasks found"}
                 </Text>
               )}
             </DashboardCard>
@@ -194,15 +191,15 @@ export function CompanyDashboard({ role, token }: Props) {
         </div>
 
         {/* Recent Projects styled as Top Performing Projects table */}
-        <DashboardCard title="Recent Projects" className="p-0 overflow-hidden" action={<ShowAll href="/projects" />}>
+        <DashboardCard title={t("recentProjects") || "Recent Projects"} className="p-0 overflow-hidden" action={<ShowAll href="/projects" />}>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#f8fafc] dark:bg-black/20 border-b border-gray-100 dark:border-gray-800">
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Project Name</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Budget</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Status</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[150px]">Completion</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{t("projectName") || "Project Name"}</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{t("budget") || "Budget"}</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{t("status") || "Status"}</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap min-w-[150px]">{t("completion") || "Completion"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -243,7 +240,7 @@ export function CompanyDashboard({ role, token }: Props) {
                 ) : (
                   <tr>
                     <td colSpan={4} className="py-6 text-center">
-                      <Text size="sm" className="text-gray-200">No projects found</Text>
+                      <Text size="sm" className="text-gray-200">{t("noProjectsFound") || "No projects found"}</Text>
                     </td>
                   </tr>
                 )}

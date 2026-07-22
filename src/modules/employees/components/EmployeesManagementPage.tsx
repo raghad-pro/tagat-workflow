@@ -34,6 +34,7 @@ import type { Employee, EmployeeStatus } from "../types/employees.types";
 import type { AddEmployeeFormValues } from "./AddEmployeeModal";
 import type { EditEmployeeFormValues } from "./EditEmployeeModal";
 import { UseFormSetError } from "react-hook-form";
+import { StatusBadge } from "@/components/atoms/Statusbadge";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 4;
@@ -154,11 +155,12 @@ export default function EmployeesManagementPage() {
   const isSuperAdmin = user?.role === "super_admin";
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage]     = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: statsData }                        = useEmployeeStats();
-  const { data: empData, isLoading, isFetching }   = useEmployees({ search, page, per_page: PAGE_SIZE });
+  const { data: empData, isLoading, isFetching }   = useEmployees({ per_page: 1000 } as any);
   const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } =
     useActionModals<Employee>();
 
@@ -166,8 +168,37 @@ export default function EmployeesManagementPage() {
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
 
-  const employees = empData?.data ?? [];
-  const total     = empData?.meta?.total ?? 0;
+  const STATUS_OPTIONS = useMemo(() => [
+    { value: "all",        label: tCommon("all") || "All Statuses" },
+    { value: "active",     label: tCommon("active") || "Active" },
+    { value: "onboarding", label: tCommon("onboarding") || "Onboarding" },
+    { value: "inactive",   label: tCommon("inactive") || "Inactive" },
+  ], [tCommon]);
+
+  const allEmployees = useMemo(() => {
+    let list = empData?.data ?? [];
+    if (!Array.isArray(list)) list = [];
+    
+    // Sort by id desc so new employees show first
+    list = [...list].sort((a, b) => (b.id || 0) - (a.id || 0));
+
+    return list.filter((emp: Employee) => {
+      if (statusFilter !== "all") {
+        const empStatus = (emp.status || "active").toLowerCase();
+        if (empStatus !== statusFilter.toLowerCase()) return false;
+      }
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        const name = getEmployeeName(emp).toLowerCase();
+        const email = (emp.email || "").toLowerCase();
+        if (!name.includes(q) && !email.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [empData?.data, search, statusFilter]);
+
+  const total     = allEmployees.length;
+  const employees = allEmployees.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // ── Stats ────────────────────────────────────────────────────────────────────
   const statsItems = useMemo(() => [
@@ -240,6 +271,13 @@ export default function EmployeesManagementPage() {
         key:    "paymentType",
         header: t("columns.paymentType"),
         render: (row) => <PaymentBadge type={getPaymentType(row)} />,
+      },
+      {
+        key:    "status",
+        header: tCommon("status") || "Status",
+        render: (row) => (
+          <StatusBadge status={row.status || "active"} />
+        ),
       },
     ];
 
@@ -374,6 +412,13 @@ export default function EmployeesManagementPage() {
               search={search}
               onSearchChange={(v) => { setSearch(v); setPage(1); }}
               searchPlaceholder={t("searchPlaceholder")}
+              filters={[
+                {
+                  value: statusFilter,
+                  onChange: (v) => { setStatusFilter(v); setPage(1); },
+                  options: STATUS_OPTIONS,
+                },
+              ]}
             />
           </PageCardSection>
 

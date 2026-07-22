@@ -20,8 +20,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 // ─── Maps ──────────────────────────────────────────────────────────────────────
 const variantMap: Record<ButtonVariant, string> = {
-  solid:   "ds-btn-solid shadow-sm disabled:bg-[#BBEDF4] disabled:text-white dark:disabled:bg-[#BBEDF4]/40 dark:disabled:text-white/80 disabled:border-transparent",
-  outline: "ds-btn-outline disabled:bg-[#BBEDF4] disabled:text-white disabled:border-[#BBEDF4] dark:disabled:bg-[#BBEDF4]/40 dark:disabled:text-white/80 dark:disabled:border-transparent",
+  solid:   "ds-btn-solid shadow-sm disabled:bg-[#BBEDF4] disabled:text-white dark:disabled:bg-[#BBEDF4]/40 dark:disabled:text-white/90 disabled:border-transparent",
+  outline: "ds-btn-outline disabled:bg-[#BBEDF4] disabled:text-white disabled:border-[#BBEDF4] dark:disabled:bg-[#BBEDF4]/40 dark:disabled:text-white/90 dark:disabled:border-transparent",
   ghost:   "bg-slate-100 dark:bg-[#162232] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#1c2a3e] border border-slate-200/80 dark:border-slate-700/60 transition-all disabled:bg-[#BBEDF4] disabled:text-white disabled:opacity-90",
 };
 
