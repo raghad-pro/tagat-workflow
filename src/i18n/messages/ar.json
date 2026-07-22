@@ -144,6 +144,7 @@
     "noTasksThisMonth": "لا توجد مهام هذا الشهر"
   },
   "common": {
+    "project": "المشروع",
     "approve": "قبول",
     "reject": "رفض",
     "save": "حفظ",
@@ -153,6 +154,17 @@
     "add": "إضافة",
     "search": "بحث",
     "loading": "جاري...",
+    "selectClient": "اختر العميل",
+    "noClients": "لا يوجد عملاء",
+    "selectProject": "اختر المشروع",
+    "noProjects": "لا توجد مشاريع",
+    "selectCurrency": "اختر العملة",
+    "noCurrency": "لا توجد عملات",
+    "selectCompany": "اختر الشركة",
+    "selectStatus": "اختر الحالة",
+    "budget": "الميزانية",
+    "paid": "المدفوع",
+    "remaining": "المتبقي",
     "error": "حدث خطأ",
     "createSuccess": "تم الإنشاء بنجاح",
     "createError": "فشل في الإنشاء",
@@ -408,18 +420,21 @@
     "title": "إدارة الفواتير",
     "subtitle": "إدارة وتتبع جميع الفواتير والحسابات",
     "add": "إنشاء فاتورة",
+    "edit": "تعديل الفاتورة",
     "searchPlaceholder": "ابحث برقم الفاتورة أو العميل...",
     "stats": {
       "total": "إجمالي الفواتير",
       "paid": "مدفوعة",
       "pending": "قيد الانتظار",
-      "overdue": "متأخرة"
+      "overdue": "متأخرة",
+      "unpaid": "غير مدفوعة"
     },
     "filter": {
       "all": "كل الفواتير",
       "paid": "مدفوعة",
       "pending": "قيد الانتظار",
-      "overdue": "متأخرة"
+      "overdue": "متأخرة",
+      "unpaid": "غير مدفوعة"
     },
     "columns": {
       "number": "رقم الفاتورة",

@@ -12,7 +12,7 @@ import { Calendar } from "lucide-react";
 import type { CreateInvoiceRequest } from "@/modules/invoices/types/invoices.types";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
-import { useCompanyDataInfo, useClientProjects, useProjectData } from "@/modules/projects/hooks/useCompanyData";
+import { useCompanyDataInfo, useProjectData, useClientProjects } from "@/modules/projects/hooks/useCompanyData";
 import { useQuery } from "@tanstack/react-query";
 import { invoiceApi } from "../api/invoices.api";
 
@@ -87,14 +87,15 @@ export function CreateInvoiceModal({
   const selectedProjectId = form.watch("project_id");
 
   // Fetch company data (clients, projects, currencies) separately
-  const companyIdForQuery = isCompanyAdmin ? undefined : selectedCompanyId;
+  const companyIdForQuery = isCompanyAdmin ? (user?.company_id || user?.id) : selectedCompanyId;
 
   const { data: companyDataRes, isLoading: isCompanyDataInfoLoading } = useCompanyDataInfo(companyIdForQuery);
-  const { data: clientProjects, isLoading: isClientProjectsLoading } = useClientProjects(selectedClientId);
   const { data: projectData, isLoading: isProjectDataLoading } = useProjectData(selectedProjectId);
+  const { data: clientProjectsRes, isLoading: isClientProjectsLoading } = useClientProjects(selectedClientId);
   
   const clientsList = companyDataRes?.data?.clients || companyDataRes?.clients || [];
-  const projectsList = clientProjects || [];
+  const projectsList = Array.isArray(clientProjectsRes) ? clientProjectsRes : [];
+  const currenciesList = companyDataRes?.data?.currencies || companyDataRes?.currencies || [];
 
   const isLoadingCompanyData = !!isOpen && (!!companyIdForQuery || isCompanyAdmin) && isCompanyDataInfoLoading;
 
@@ -113,12 +114,11 @@ export function CreateInvoiceModal({
   const projectOptions = useMemo(() => projectsList.map((p: any) => ({ value: String(p.id), label: p.title || p.name })), [projectsList]);
   
   const currencyOptions = useMemo(() => {
-    if (projectData?.currency) {
-      const c = projectData.currency;
-      return [{ value: String(c.id), label: `${c.name || c.code || ''} ${c.symbol ? `(${c.symbol})` : ''}`.trim() }];
-    }
-    return [];
-  }, [projectData]);
+    return currenciesList.map((c: any) => ({
+      value: String(c.id),
+      label: `${c.name || c.code || ''} ${c.symbol ? `(${c.symbol})` : ''}`.trim()
+    }));
+  }, [currenciesList]);
 
   // When form opens, clear values if company changes
   useEffect(() => {
@@ -127,16 +127,15 @@ export function CreateInvoiceModal({
     }
   }, [isOpen, form]);
 
-  // When client changes, clear selected project if it doesn't belong to the client
+  const prevClientIdRef = React.useRef(selectedClientId);
+  // When client changes, clear selected project
   useEffect(() => {
-    if (selectedClientId && selectedProjectId) {
-      const projectBelongsToClient = projectsList.some((p: any) => String(p.id) === String(selectedProjectId));
-      if (!projectBelongsToClient && !isClientProjectsLoading) {
-        form.setValue("project_id", "" as any);
-        form.clearErrors("project_id");
-      }
+    if (prevClientIdRef.current !== selectedClientId) {
+      form.resetField("project_id");
+      form.resetField("currency_id");
+      prevClientIdRef.current = selectedClientId;
     }
-  }, [selectedClientId, projectsList, selectedProjectId, form, isClientProjectsLoading]);
+  }, [selectedClientId, form]);
 
   // When project changes, auto-select currency
   useEffect(() => {
@@ -158,13 +157,13 @@ export function CreateInvoiceModal({
   if (!isOpen) return null;
 
   const isClientDisabled = (!isCompanyAdmin && !selectedCompanyId) || isLoadingCompanyData || clientOptions.length === 0;
-  const clientPlaceholder = isLoadingCompanyData ? "Loading..." : ((!isCompanyAdmin && !selectedCompanyId) || clientOptions.length === 0 ? "No clients" : "Select client");
+  const clientPlaceholder = isLoadingCompanyData ? tCommon("loading") : ((!isCompanyAdmin && !selectedCompanyId) || clientOptions.length === 0 ? tCommon("noClients") : tCommon("selectClient"));
 
   const isProjectDisabled = !selectedClientId || isClientProjectsLoading || projectOptions.length === 0;
-  const projectPlaceholder = isClientProjectsLoading ? "Loading..." : (!selectedClientId || projectOptions.length === 0 ? "No projects" : "Select project");
+  const projectPlaceholder = isClientProjectsLoading ? tCommon("loading") : (!selectedClientId || projectOptions.length === 0 ? tCommon("noProjects") : tCommon("selectProject"));
 
   const isCurrencyDisabled = !selectedProjectId || isProjectDataLoading || currencyOptions.length === 0;
-  const currencyPlaceholder = isProjectDataLoading ? "Loading..." : (!selectedProjectId || currencyOptions.length === 0 ? "No currency" : "Select currency");
+  const currencyPlaceholder = isProjectDataLoading ? tCommon("loading") : (!selectedProjectId || currencyOptions.length === 0 ? tCommon("noCurrency") : tCommon("selectCurrency"));
 
   return (
     <ActionModal 
@@ -183,28 +182,28 @@ export function CreateInvoiceModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {!isCompanyAdmin && (
-                  <SelectField control={form.control} name="company_id" label={t("columns.company") || "Company"} options={companyOptions} required placeholder="Select company" />
+                  <SelectField control={form.control} name="company_id" label={t("columns.company") || "Company"} options={companyOptions} required placeholder={tCommon("selectCompany") || "Select company"} />
                 )}
                 <SelectField control={form.control} name="client_id" label={t("columns.client") || "Client"} options={clientOptions} required placeholder={clientPlaceholder} disabled={isClientDisabled} />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="project_id" label={t("columns.project").includes(".") ? "Project" : t("columns.project")} options={projectOptions} required placeholder={projectPlaceholder} disabled={isProjectDisabled} />
-                <SelectField control={form.control} name="currency_id" label={t("columns.currency").includes(".") ? "Currency" : t("columns.currency")} options={currencyOptions} required placeholder={currencyPlaceholder} disabled={isCurrencyDisabled} />
+                <SelectField control={form.control} name="project_id" label={tCommon("project") || "Project"} options={projectOptions} required placeholder={projectPlaceholder} disabled={isProjectDisabled} />
+                <SelectField control={form.control} name="currency_id" label={t("columns.currency") || "Currency"} options={currencyOptions} required placeholder={currencyPlaceholder} disabled={isCurrencyDisabled} />
               </div>
 
               {projectData && (
                 <div className="grid grid-cols-3 gap-4 p-4 ds-bg-form rounded-xl border ds-border-form mt-2">
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium ds-text-sub">Budget</span>
+                    <span className="text-sm font-medium ds-text-sub">{tCommon("budget") || "Budget"}</span>
                     <span className="text-sm font-bold ds-text-main">{projectData.budget}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium ds-text-sub">Paid</span>
+                    <span className="text-sm font-medium ds-text-sub">{tCommon("paid") || "Paid"}</span>
                     <span className="text-sm font-bold ds-text-main">{projectData.paid}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium ds-text-sub">Remaining</span>
+                    <span className="text-sm font-medium ds-text-sub">{tCommon("remaining") || "Remaining"}</span>
                     <span className="text-sm font-bold ds-text-main">{projectData.remaining}</span>
                   </div>
                 </div>
@@ -212,7 +211,7 @@ export function CreateInvoiceModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField control={form.control} name="amount" label={t("columns.amount") || "Amount"} type="number" required placeholder="0.00" />
-                <SelectField control={form.control} name="status" label={t("columns.status") || "Status"} options={STATUS_OPTIONS} required placeholder="Select status" />
+                <SelectField control={form.control} name="status" label={t("columns.status") || "Status"} options={STATUS_OPTIONS} required placeholder={tCommon("selectStatus") || "Select status"} />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

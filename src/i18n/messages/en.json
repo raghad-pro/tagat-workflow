@@ -144,6 +144,7 @@
     "noTasksThisMonth": "No tasks this month"
   },
   "common": {
+    "project": "Project",
     "approve": "Approve",
     "reject": "Reject",
     "save": "Save",
@@ -153,6 +154,17 @@
     "add": "Add",
     "search": "Search",
     "loading": "Loading...",
+    "selectClient": "Select client",
+    "noClients": "No clients",
+    "selectProject": "Select project",
+    "noProjects": "No projects",
+    "selectCurrency": "Select currency",
+    "noCurrency": "No currency",
+    "selectCompany": "Select company",
+    "selectStatus": "Select status",
+    "budget": "Budget",
+    "paid": "Paid",
+    "remaining": "Remaining",
     "error": "An error occurred",
     "createSuccess": "Created successfully",
     "createError": "Failed to create",
@@ -408,18 +420,21 @@
     "title": "Invoices Management",
     "subtitle": "Manage and track all billing and invoices",
     "add": "Create Invoice",
+    "edit": "Edit Invoice",
     "searchPlaceholder": "Search invoices by number or client...",
     "stats": {
       "total": "Total Invoices",
       "paid": "Paid",
       "pending": "Pending",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "unpaid": "Unpaid"
     },
     "filter": {
       "all": "All Invoices",
       "paid": "Paid",
       "pending": "Pending",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "unpaid": "Unpaid"
     },
     "columns": {
       "number": "Invoice Number",

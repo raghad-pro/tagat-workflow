@@ -7,25 +7,18 @@ export interface CompanyCardProps {
   id: number;
   name: string;
   domain?: string;
+  logo?: string | null;
   status?: "none" | "pending" | "approved" | "active" | "rejected";
   onJoin?: (id: number) => void;
   isLoading?: boolean;
 }
 
-// Helper to assign a random icon and color based on company ID or name
+// Helper to assign the brand color and Building2 icon for companies without logos
 const getCompanyIconConfig = (id: number) => {
-  const configs = [
-    { icon: Building2, bg: "rgba(14,165,233,0.1)", color: "#0ea5e9" }, // light blue
-    { icon: Rocket, bg: "rgba(99,102,241,0.1)", color: "#6366f1" }, // indigo
-    { icon: Briefcase, bg: "rgba(245,158,11,0.1)", color: "#f59e0b" }, // amber/orange
-    { icon: User, bg: "rgba(168,85,247,0.1)", color: "#a855f7" }, // purple
-    { icon: TestTube, bg: "rgba(100,116,139,0.1)", color: "#64748b" }, // slate
-    { icon: Globe2, bg: "rgba(15,118,110,0.1)", color: "#0f766e" }, // teal
-  ];
-  return configs[id % configs.length];
+  return { icon: Building2, bg: "rgba(81,209,225,0.1)", color: "#51D1E1" }; // brand color
 };
 
-export function CompanyCard({ id, name, domain, status, onJoin, isLoading }: CompanyCardProps) {
+export function CompanyCard({ id, name, domain, logo, status, onJoin, isLoading }: CompanyCardProps) {
   const isPending = status === "pending";
   const isApproved = status === "approved" || status === "active";
   const { icon: Icon, bg, color } = getCompanyIconConfig(id);
@@ -37,9 +30,9 @@ export function CompanyCard({ id, name, domain, status, onJoin, isLoading }: Com
   // Classes for the button
   let buttonClasses = "w-full font-medium";
   if (isPending) {
-    buttonClasses += " ds-bg-primary-200 ds-text-brand border-none"; // Cyan background and text like sidebar
+    buttonClasses += " !bg-[#51D1E1] !text-white border-none"; // Cyan background and text like sidebar
   } else if (isApproved) {
-    buttonClasses += " ds-icon-success border-none"; // Light green background, green text
+    buttonClasses += " !bg-[rgba(34,197,94,0.10)] !text-[#15803d] border-none"; // Light green background, green text
   }
 
   return (
@@ -47,14 +40,18 @@ export function CompanyCard({ id, name, domain, status, onJoin, isLoading }: Com
       {/* Top Section */}
       <div className="flex justify-between items-start mb-4">
         <div 
-          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" 
-          style={{ background: bg, color: color }}
+          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-white shadow-sm border border-slate-100 overflow-hidden" 
+          style={!logo ? { background: bg, color: color, borderColor: 'transparent' } : {}}
         >
-          <Icon size={24} strokeWidth={1.5} />
+          {logo ? (
+            <img src={logo} alt={`${name} logo`} className="w-full h-full object-cover" />
+          ) : (
+            <Icon size={24} strokeWidth={1.5} />
+          )}
         </div>
         
         {isPending && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ds-bg-primary-200 ds-text-brand border-none">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#51D1E1] text-white border-none">
             <Hourglass size={12} />
             <span>Pending</span>
           </div>
@@ -76,7 +73,8 @@ export function CompanyCard({ id, name, domain, status, onJoin, isLoading }: Com
         variant={isPending ? "outline" : "solid"}
         size="md"
         className={buttonClasses + (isPending ? " !border-transparent" : "")}
-        disabled={isPending || isApproved || isLoading}
+        disabled={isPending || isApproved}
+        loading={isLoading}
         onClick={() => !isApproved && onJoin && onJoin(id)}
       >
         {buttonText}

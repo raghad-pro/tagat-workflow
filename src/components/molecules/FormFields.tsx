@@ -263,7 +263,7 @@ export function SelectField<T extends FieldValues>({
             </Text>
           </FormLabel>
 
-          <Select onValueChange={field.onChange} defaultValue={(!field.value || field.value === "" || field.value === 0) ? undefined : field.value?.toString()} value={(!field.value || field.value === "" || field.value === 0) ? undefined : field.value?.toString()} disabled={disabled}>
+          <Select key={(!field.value || field.value === "" || field.value === 0) ? "empty" : "filled"} onValueChange={field.onChange} defaultValue={(!field.value || field.value === "" || field.value === 0) ? undefined : field.value?.toString()} value={(!field.value || field.value === "" || field.value === 0) ? undefined : field.value?.toString()} disabled={disabled}>
             <FormControl>
               <SelectTrigger
                 className={cn(

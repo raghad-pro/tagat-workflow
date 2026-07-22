@@ -36,7 +36,7 @@ export const useCompanyDataInfo = (companyId: string | number | undefined | null
       const response = await apiClient.get(url) as any;
       return response.data;
     },
-    enabled: !!companyId,
+    enabled: role === "company" || !!companyId,
   });
 };
 
@@ -115,7 +115,7 @@ export const useClientProjects = (clientId: string | number | undefined | null) 
     queryFn: async () => {
       const url = `${getRolePrefix(role)}/clients/${clientId}/projects`;
       const response = await apiClient.get(url) as any;
-      return response.data?.projects || response.data?.data?.projects || [];
+      return response?.projects || response?.data?.projects || response?.data?.data?.projects || [];
     },
     enabled: !!clientId,
   });

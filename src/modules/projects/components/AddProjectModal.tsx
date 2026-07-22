@@ -1,146 +1,5 @@
-// "use client";
 
-// import React, { useEffect } from "react";
-// import { useForm } from "react-hook-form";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { z } from "zod";
-// import { Briefcase, DollarSign, Building, Activity, FileText } from "lucide-react";
-// import { ActionModal } from "@/components/molecules/ActionModal";
-// import { TextField, SelectField, TextAreaField, MultiSelectField } from "@/components/molecules/FormFields";
-// import { Form } from "@/components/ui/form";
-// import { useAuth } from "@/providers/AuthProvider";
-// import { useCompanies } from "@/modules/companies/hooks/useCompanies";
-// import { useCompanyCurrencies, useEmployees } from "@/modules/employees/hooks/useEmployees";
-
-// const getProjectSchema = (isCompanyAdmin: boolean) => z.object({
-//   title: z.string().min(2, "Title must be at least 2 characters"),
-//   budget: z.string().min(1, "Budget is required"),
-//   company: isCompanyAdmin ? z.string().optional() : z.string().min(1, "Company is required"),
-//   status: z.string().min(1, "Select status"),
-//   currency: z.string().min(1, "Currency is required"),
-//   employees: z.array(z.string()).min(1, "At least one employee is required"),
-//   notes: z.string().optional(),
-// });
-
-// type FormValues = z.infer<ReturnType<typeof getProjectSchema>>;
-
-// const STATUS_OPTIONS = [
-//   { value: "pending", label: "Pending" },
-//   { value: "in_progress", label: "In Progress" },
-//   { value: "completed", label: "Completed" },
-//   { value: "on_hold", label: "On Hold" },
-// ];
-
-// export interface AddProjectFormValues {
-//   title: string;
-//   budget: string;
-//   company?: string;
-//   status: string;
-//   currency: string;
-//   employees: string[];
-//   notes?: string;
-// }
-
-// interface AddProjectModalProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   onSubmit?: (values: AddProjectFormValues, setError: any) => void;
-//   isLoading?: boolean;
-// }
-
-// export default function AddProjectModal({ isOpen, onClose, onSubmit, isLoading }: AddProjectModalProps) {
-//   const { user } = useAuth();
-//   const isCompanyAdmin = user?.role === "company";
-
-//   const form = useForm<FormValues>({
-//     resolver: zodResolver(getProjectSchema(isCompanyAdmin)),
-//     mode: "onSubmit",
-//     defaultValues: { title: "", budget: "", company: "", status: "", currency: "", employees: [], notes: "" },
-//   });
-
-//   const { data: companiesResponse } = useCompanies({ page: 1, per_page: 100 });
-//   const companies = companiesResponse?.data?.data || [];
-//   const companyOptions = companies.map((c: any) => ({
-//     value: c.id.toString(),
-//     label: c.name || c.company_name
-//   }));
-
-//   const { data: employeesResponse } = useEmployees({ page: 1, per_page: 100 });
-//   const employeesList = employeesResponse?.data?.data || employeesResponse?.data || [];
-//   const employeeOptions = employeesList.map((e: any) => ({
-//     value: (e.user_id || e.user?.id || e.id).toString(),
-//     label: e.employee_name || e.employeeName || e.name || e.user?.name || 
-//            (e.user?.first_name ? `${e.user.first_name} ${e.user.last_name || ""}`.trim() : null) || 
-//            e.id.toString()
-//   }));
-
-//   const selectedCompany = form.watch("company");
-//   const { data: currenciesData } = useCompanyCurrencies(selectedCompany);
-  
-//   let currencies = [];
-//   if (Array.isArray(currenciesData?.data?.data)) {
-//     currencies = currenciesData.data.data;
-//   } else if (Array.isArray(currenciesData?.data)) {
-//     currencies = currenciesData.data;
-//   } else if (Array.isArray(currenciesData)) {
-//     currencies = currenciesData;
-//   }
-  
-//   const CURRENCY_OPTIONS = currencies.map((c: any) => ({
-//     value: c.id?.toString(),
-//     label: c.name || c.code || c.id?.toString(),
-//   }));
-
-//   if (CURRENCY_OPTIONS.length === 0) {
-//     CURRENCY_OPTIONS.push({ value: "1", label: "USD" });
-//   }
-
-//   useEffect(() => {
-//     if (CURRENCY_OPTIONS.length === 1 && !form.getValues("currency")) {
-//       form.setValue("currency", CURRENCY_OPTIONS[0].value);
-//     }
-//   }, [CURRENCY_OPTIONS.length, form]);
-
-//   const handleFormSubmit = (data: FormValues) => {
-//     onSubmit?.(data, form.setError);
-//   };
-
-//   if (!isOpen) return null;
-
-//   return (
-//     <ActionModal 
-//       isOpen={isOpen} 
-//       onClose={onClose} 
-//       title="Add Project"
-//       mode="add"
-//       formId="add-project-form"
-//       size="lg"
-//       isLoading={isLoading}
-//     >
-//       <div className="flex flex-col w-full">
-//         <Form {...form}>
-//           <form id="add-project-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
-//             <div className="rounded-2xl p-5 flex flex-col gap-5" style={{ border: "1px solid var(--color-border-form)" }}>
-//               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                 <TextField control={form.control} name="title" label="Project Title" placeholder="Enter project title" required icon={Briefcase} />
-//                 <TextField control={form.control} name="budget" label="Budget" placeholder="e.g. 5000" required icon={DollarSign} />
-//               </div>
-//               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                 {!isCompanyAdmin && (
-//                   <SelectField control={form.control} name="company" label="Company" options={companyOptions} required placeholder="Select company" />
-//                 )}
-//                 <SelectField control={form.control} name="currency" label="Currency" options={CURRENCY_OPTIONS} required placeholder="Select currency" />
-//                 <SelectField control={form.control} name="status" label="Status" options={STATUS_OPTIONS} required placeholder="Select status" />
-//                 <MultiSelectField control={form.control} name="employees" label="Employees" options={employeeOptions} required placeholder="Select employees" />
-//               </div>
-//               <TextAreaField control={form.control} name="notes" label="Notes" placeholder="Additional details..." rows={4} />
-//             </div>
-//           </form>
-//         </Form>
-//       </div>
-//     </ActionModal>
-//   );
-// }"use client";
+"use client";
 
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -266,9 +125,9 @@ export default function AddProjectModal({
   // ── Watch selected company ────────────────────────────────────────────────
   const selectedCompany = form.watch("company");
 
-  // For company, their company_id comes from their auth token/user object.
+  // For company, their company_id comes from their auth token/user object, or their own user ID if they are the company.
   const companyIdForQuery = isCompanyAdmin
-    ? ((user as any)?.company_id?.toString() ?? null)
+    ? (((user as any)?.company_id || user?.id)?.toString() ?? null)
     : selectedCompany || null;
 
   // ── Company-scoped data — all three reset when company changes ────────────
@@ -284,21 +143,16 @@ export default function AddProjectModal({
   }
 
   // Fetch all employees and filter by company locally
-  const { data: allEmployeesResponse } = useEmployees({ page: 1, per_page: 1000 });
-  const allEmployeesList = allEmployeesResponse?.data ?? [];
-  let employeeOptions = companyIdForQuery
+  const { data: allEmployeesResponse } = useEmployees({ page: 1, per_page: 100 });
+  const rawData = allEmployeesResponse?.data;
+  const allEmployeesList = Array.isArray(rawData) ? rawData : (Array.isArray(rawData?.data) ? rawData.data : []);
+  
+  let employeeOptions = (companyIdForQuery || isCompanyAdmin)
     ? allEmployeesList
-        .filter((e: any) => e.company_id == companyIdForQuery || e.company?.id == companyIdForQuery)
+        .filter((e: any) => isCompanyAdmin || e.company_id == companyIdForQuery || e.company?.id == companyIdForQuery)
         .map((e: any) => ({
-          value: (e.user_id ?? e.user?.id ?? e.id).toString(),
-          label:
-            e.user?.name ??
-            e.name ??
-            e.employee_name ??
-            (e.user?.first_name
-              ? `${e.user.first_name} ${e.user.last_name ?? ""}`.trim()
-              : null) ??
-            e.id.toString(),
+          value: e.id.toString(),
+          label: e.user?.name ?? e.name ?? e.employee_name ?? (e.user?.first_name ? `${e.user.first_name} ${e.user.last_name ?? ""}`.trim() : null) ?? e.id.toString(),
         }))
     : [];
 

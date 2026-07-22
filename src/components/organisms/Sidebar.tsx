@@ -58,8 +58,9 @@ const NAV_GROUPS: NavGroup[] = [
     key: "subscriberManagement",
     label: "Subscriber Management",
     arLabel: "إدارة المشتركين",
-    roles: ["super_admin", "company"],
+    roles: ["super_admin", "company", "client"],
     items: [
+      { key: "companies", href: "/companies", icon: Building2, roles: ["super_admin", "client"] },
       { key: "companyRequests", href: "/company-requests", icon: MessageCircleMore, roles: ["super_admin", "company"] },
       { key: "clients", href: "/clients", icon: UsersRound, roles: ["super_admin", "company"] },
     ],
