@@ -26,7 +26,7 @@ export default function About() {
           <div className="about__mock about__mock--back">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={theme === 'dark' ? '/dashboardDark.png' : '/dashboard.png'}
+              src="/dashboard.png"
               alt="Dashboard"
               className="about__dashboard-img"
             />
@@ -34,7 +34,7 @@ export default function About() {
           <div className="about__mock about__mock--front">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={theme === 'dark' ? '/dashboardDark.png' : '/dashboard.png'}
+              src="/dashboard.png"
               alt="Dashboard"
               className="about__dashboard-img"
             />

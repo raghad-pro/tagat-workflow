@@ -4,10 +4,11 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslations } from "next-intl";
 import { ActionModal } from "@/components/molecules/ActionModal";
-import { TextField, SelectField } from "@/components/molecules/FormFields";
+import { TextField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
-import { User, FileText, Briefcase } from "lucide-react";
+import { User, FileText, Briefcase, Building } from "lucide-react";
 import type { Contract } from "../types/contracts.types";
 
 const editContractSchema = z.object({
@@ -20,7 +21,20 @@ const editContractSchema = z.object({
 
 type FormValues = z.infer<typeof editContractSchema>;
 
-export default function EditContractModal({ isOpen, onClose, onUpdate, data }: { isOpen: boolean, onClose: () => void, onUpdate: (id: number, data: any) => void, data: Contract | null }) {
+export default function EditContractModal({ 
+  isOpen, 
+  onClose, 
+  onUpdate, 
+  data,
+  isPending = false
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onUpdate: (id: number, data: any) => void; 
+  data: Contract | null;
+  isPending?: boolean;
+}) {
+  const t = useTranslations("contract");
   const form = useForm<FormValues>({
     resolver: zodResolver(editContractSchema),
     mode: "onSubmit",
@@ -33,8 +47,8 @@ export default function EditContractModal({ isOpen, onClose, onUpdate, data }: {
         customerName: data.customerName || "",
         initial: data.initial || "",
         title: data.title || "",
-        project: "proj-1",
-        company: "company-1",
+        project: data.project || "",
+        company: data.company || "",
       });
     }
   }, [data, isOpen, form]);
@@ -50,24 +64,25 @@ export default function EditContractModal({ isOpen, onClose, onUpdate, data }: {
     <ActionModal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title="Edit Contract"
+      title={t("editContractTitle") || "Edit Contract"}
       mode="edit"
       formId="edit-contract-form"
       size="lg"
+      isLoading={isPending}
     >
       <div className="flex flex-col w-full">
         <Form {...form}>
           <form id="edit-contract-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
             <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField control={form.control} name="customerName" label="Customer Name" placeholder="Enter customer name" required icon={User} />
-                <TextField control={form.control} name="initial" label="Initial Value" placeholder="e.g. ,000" required icon={FileText} />
+                <TextField control={form.control} name="customerName" label={t("columns.customerName") || "Customer Name"} placeholder="Enter customer name" required icon={User} />
+                <TextField control={form.control} name="initial" label="Initial Value" placeholder="e.g. $10,000" required icon={FileText} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField control={form.control} name="title" label="Contract Title" placeholder="Enter title" required icon={Briefcase} />
-                <SelectField control={form.control} name="project" label="Project" options={[{value:"proj-1", label:"Project 1"}]} required placeholder="Select project" />
+                <TextField control={form.control} name="title" label={t("columns.title") || "Contract Title"} placeholder="Enter title" required icon={Briefcase} />
+                <TextField control={form.control} name="project" label={t("columns.project") || "Project"} placeholder="Enter project" required icon={Briefcase} />
               </div>
-              <SelectField control={form.control} name="company" label="Company" options={[{value:"company-1", label:"Company 1"}]} required placeholder="Select company" />
+              <TextField control={form.control} name="company" label={t("columns.company") || "Company"} placeholder="Enter company" required icon={Building} />
             </div>
           </form>
         </Form>

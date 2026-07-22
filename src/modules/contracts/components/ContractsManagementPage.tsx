@@ -11,8 +11,7 @@ import { Pagination } from "@/components/molecules/Pagination";
 import { Text } from "@/components/atoms/Text";
 import { PageCard, PageCardSection, PageCardBody, PageCardFooter } from "@/components/molecules/Pagecard";
 import { PageContainer } from "@/components/template/PageContainer";
-import { useContracts, useContractStats } from "../hooks/useContracts";
-import { useQueryClient } from "@tanstack/react-query";
+import { useContracts, useContractStats, useCreateContract, useUpdateContract, useDeleteContract } from "../hooks/useContracts";
 import { DUMMY_STATS } from "../data/mockData";
 import { Contract } from "../types/contracts.types";
 import AddContractModal from "./AddContractModal";
@@ -35,13 +34,13 @@ export function ContractsManagementPage() {
   const columns: TableColumn<Contract>[] = useMemo(() => [
     {
       key: "customerName",
-      header: t("customerName"),
+      header: t("columns.customerName") || "Customer Name",
       isPrimary: true,
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"
             style={{ background: "var(--color-bg-primary-200)", color: "var(--color-primary)" }}>
-            {row.customerName.charAt(0).toUpperCase()}
+            {(row.customerName || "C").charAt(0).toUpperCase()}
           </div>
           <Text size="sm" weight="medium">{row.customerName}</Text>
         </div>
@@ -49,21 +48,21 @@ export function ContractsManagementPage() {
     },
     {
       key: "title",
-      header: t("title"),
+      header: t("columns.title") || "Title",
       render: (row) => <Text size="sm" color="gray-200">{row.title}</Text>,
     },
     {
       key: "project",
-      header: t("project"),
+      header: t("columns.project") || "Project",
       hideOnMobile: true,
       render: (row) => <Text size="sm" color="gray-200">{row.project}</Text>,
     },
     {
       key: "company",
-      header: t("company"),
+      header: t("columns.company") || "Company",
       render: (row) => <Text size="sm" weight="bold">{row.company}</Text>,
     },
-  ], [t, tCommon]);
+  ], [t]);
 
   const actions: TableAction<Contract>[] = useMemo(() => [
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView },
@@ -71,10 +70,13 @@ export function ContractsManagementPage() {
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
   ], [tCommon, openView, openEdit, openDelete]);
 
-  const queryClient = useQueryClient();
   const { data: res, isLoading }  = useContracts({ search, page: currentPage, per_page: PAGE_SIZE });
   const { data: statsData }       = useContractStats();
-  const stats                     = statsData || DUMMY_STATS;
+  const createContract            = useCreateContract();
+  const updateContract            = useUpdateContract();
+  const deleteContract            = useDeleteContract();
+
+  const stats = statsData || DUMMY_STATS;
 
   const statItems = [
     { icon: LinkIcon,    value: stats.activeContracts.value,  label: t("stats.active"),  iconColor: "var(--color-contract-active)",   iconBg: "var(--color-contract-active-bg)"   },
@@ -88,7 +90,7 @@ export function ContractsManagementPage() {
         <PageHeader
           title={t("title")}
           subtitle={t("subtitle")}
-          actions={[{ label: t("addButton"), icon: Plus, onClick: () => setIsModalOpen(true), variant: "solid" }]}
+          actions={[{ label: t("add") || "Add Contract", icon: Plus, onClick: () => setIsModalOpen(true), variant: "solid" }]}
         />
 
         <StatsGrid stats={statItems} cols={3} />
@@ -126,23 +128,17 @@ export function ContractsManagementPage() {
       <AddContractModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        isPending={createContract.isPending}
         onSubmit={(v) => { 
-          queryClient.setQueryData(["contracts", { search, page: currentPage, per_page: PAGE_SIZE }], (old: any) => {
-            if (!old) return old;
-            const newContract = {
-              id: Date.now(),
-              customerName: v.customerName,
-              initial: v.initial,
-              title: v.title,
-              project: v.project,
-              company: v.company,
-            };
-            return {
-              ...old,
-              data: [newContract, ...old.data]
-            };
+          createContract.mutate({
+            customerName: v.customerName,
+            initial: v.initial,
+            title: v.title,
+            project: v.project,
+            company: v.company,
+          }, {
+            onSuccess: () => setIsModalOpen(false)
           });
-          setIsModalOpen(false); 
         }}
       />
 
@@ -151,7 +147,13 @@ export function ContractsManagementPage() {
         onClose={closeModal}
         title={t("deleteTitle") || "Delete Contract"}
         itemName={selectedRow?.title}
-        onConfirm={() => { console.log("Delete Contract", selectedRow?.id); closeModal(); }}
+        onConfirm={() => { 
+          if (selectedRow?.id) {
+            deleteContract.mutate(selectedRow.id, {
+              onSuccess: closeModal
+            });
+          }
+        }}
       />
 
       <ViewContractModal
@@ -164,15 +166,11 @@ export function ContractsManagementPage() {
         isOpen={activeModal === "edit"}
         onClose={closeModal}
         data={selectedRow}
+        isPending={updateContract.isPending}
         onUpdate={(id: number, data: any) => { 
-          queryClient.setQueryData(["contracts", { search, page: currentPage, per_page: PAGE_SIZE }], (old: any) => {
-            if (!old) return old;
-            return {
-              ...old,
-              data: old.data.map((p: any) => p.id === id ? { ...p, ...data } : p)
-            };
+          updateContract.mutate({ id, data }, {
+            onSuccess: closeModal
           });
-          closeModal(); 
         }}
       />
     </>

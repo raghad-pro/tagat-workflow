@@ -138,7 +138,7 @@ function DesktopTable<T extends { id: number | string }>({
               </th>
             ))}
             {hasActions && (
-              <th className="text-start px-4 py-3 ds-text-sm ds-font-medium ds-text-gray-200 whitespace-nowrap">
+              <th className="text-end px-4 py-3 ds-text-sm ds-font-medium ds-text-gray-200 whitespace-nowrap w-[120px]">
                 {finalActionsHeader}
               </th>
             )}
@@ -180,8 +180,8 @@ function DesktopTable<T extends { id: number | string }>({
 
                 {/* Actions cell */}
                 {hasActions && (
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
+                  <td className="px-4 py-3 text-end">
+                    <div className="flex items-center justify-end gap-1">
                       {actions!.map((action, i) => (
                         <ActionIconBtn key={i} action={action} row={row} />
                       ))}
