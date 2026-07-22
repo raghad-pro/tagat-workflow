@@ -30,7 +30,9 @@ export function AppProvider({ initialTheme, initialLang = 'en', children }: any)
   const [theme, setTheme] = useState(() => {
     return getCookie('wf-theme') || initialTheme || 'light'
   })
-  const [lang, setLang] = useState(initialLang)
+  const [lang, setLang] = useState(() => {
+    return getCookie('locale') || getCookie('wf-lang') || initialLang
+  })
   const [overrides, setOverrides] = useState(null)
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export function AppProvider({ initialTheme, initialLang = 'en', children }: any)
     document.documentElement.setAttribute('lang', lang)
     document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr')
     persist('wf-lang', lang)
+    persist('locale', lang)
   }, [lang])
 
   useEffect(() => {
