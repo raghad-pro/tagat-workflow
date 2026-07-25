@@ -39,20 +39,27 @@ export default function ConversationsManagementPage() {
 
   const handleStartNewChat = async (userId: number | string, name: string) => {
     try {
-      // Typically, sending an array of members or a specific user_id
+      const numericUserId = Number(userId);
+      const targetUserId = !isNaN(numericUserId) && numericUserId > 0 ? numericUserId : userId;
+
       const res = await createConversation({
-        type: "private",
-        name: name, // For display purposes or group names
-        members: [{ user_id: userId }] as any // Depending on backend spec
-      });
+        users: [targetUserId],
+        type: "team_chat",
+        title: name || "Chat",
+        name: name || "Chat",
+      } as any);
+
+      toast.success(`تم بدء المحادثة مع ${name}`);
       setIsCreateModalOpen(false);
-      if (res?.data?.id) {
-        setActiveConversationId(res.data.id);
-      } else if (res?.id) {
-        setActiveConversationId(res.id);
+
+      const newId = res?.data?.id || res?.id || res?.data?.data?.id;
+      if (newId) {
+        setActiveConversationId(newId);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to start chat", err);
+      const msg = err?.response?.data?.message || err?.message || "فشل في إنشاء المحادثة";
+      toast.error(msg);
     }
   };
 
