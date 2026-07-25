@@ -8,7 +8,7 @@ export const tokenService = {
     Cookies.set(TOKEN_KEY, token, {
       expires: expiresDays,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
     });
   },
 

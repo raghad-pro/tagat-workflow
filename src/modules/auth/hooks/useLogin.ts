@@ -7,6 +7,7 @@ import { authApi } from "../api/auth.api";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTranslations } from "next-intl";
 import type { LoginRequest } from "../types/auth.types";
+import { normalizeUser } from "../types/auth.types";
 import toast from "react-hot-toast";
 
 export const useLogin = () => {
@@ -27,19 +28,29 @@ export const useLogin = () => {
       
       const payload = response?.data ? response.data : response;
 
-      const token = payload?.token || payload?.access_token;
-      const user = payload?.user || payload?.admin || payload?.client || payload?.employee;
+      const token = payload?.token || payload?.access_token || payload?.data?.token || payload?.data?.access_token || response?.token || response?.access_token;
+      
+      const rawUser = payload?.user || payload?.company || payload?.admin || payload?.client || payload?.employee || payload?.company_request || payload?.data?.user || payload?.data?.company || response?.user || response?.company;
 
-      if (!token && !user) {
+      if (!token && !rawUser) {
         toast.error("Unexpected API structure: " + Object.keys(payload || {}).join(", "));
         return;
       }
 
-      const mergedUser = { ...user, role: payload?.role || user?.role };
-      tokenService.setToken(token);
-      setUser(mergedUser as any);
-      toast.success(t("loginSuccess"));
-      router.replace("/dashboard");
+      const normalized = normalizeUser(rawUser, payload);
+
+      if (token) {
+        tokenService.setToken(token);
+      }
+
+      if (normalized) {
+        setUser(normalized);
+        toast.success(t("loginSuccess"));
+        router.replace("/dashboard");
+      } else {
+        toast.error(t("loginError") || "Login failed: Invalid user data received");
+        console.error("Invalid user object extracted:", rawUser, payload);
+      }
     },
     
     onError: (error: any, variables: LoginRequest) => {
