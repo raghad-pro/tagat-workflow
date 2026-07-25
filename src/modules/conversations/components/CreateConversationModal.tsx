@@ -208,10 +208,15 @@ export default function CreateConversationModal({
                     </div>
                     
                     <Button 
+                      type="button"
                       size="sm"
                       disabled={isCreating}
-                      onClick={() => onStartChat(targetId, name)}
-                      className="shrink-0 bg-[#eaf9f9] text-[#00d0d4] hover:bg-[#00d0d4] hover:text-white rounded-full h-8 px-[#12px] font-semibold text-xs border-none transition-colors group"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onStartChat(targetId, name);
+                      }}
+                      className="shrink-0 bg-[#eaf9f9] text-[#00d0d4] hover:bg-[#00d0d4] hover:text-white rounded-full h-8 px-3 font-semibold text-xs border-none transition-colors group"
                     >
                       <MessageSquarePlus size={14} className="mr-1.5 group-hover:text-white text-[#00d0d4]" />
                       محادثة

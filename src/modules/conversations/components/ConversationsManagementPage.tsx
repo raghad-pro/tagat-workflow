@@ -38,18 +38,24 @@ export default function ConversationsManagementPage() {
   const activeConversation = activeConversationData?.data;
 
   const handleStartNewChat = async (userId: number | string, name: string) => {
+    const toastId = toast.loading(`جاري بدء المحادثة مع ${name}...`);
     try {
+      console.log("Starting chat with:", { userId, name });
       const numericUserId = Number(userId);
       const targetUserId = !isNaN(numericUserId) && numericUserId > 0 ? numericUserId : userId;
 
-      const res = await createConversation({
+      const payload = {
         users: [targetUserId],
-        type: "team_chat",
+        type: "private", // Usually one-on-one chats are 'private'
         title: name || "Chat",
         name: name || "Chat",
-      } as any);
+      };
+      console.log("Create conversation payload:", payload);
 
-      toast.success(`تم بدء المحادثة مع ${name}`);
+      const res = await createConversation(payload as any);
+      console.log("Create conversation response:", res);
+
+      toast.success(`تم بدء المحادثة بنجاح`, { id: toastId });
       setIsCreateModalOpen(false);
 
       const newId = res?.data?.id || res?.id || res?.data?.data?.id;
@@ -57,9 +63,9 @@ export default function ConversationsManagementPage() {
         setActiveConversationId(newId);
       }
     } catch (err: any) {
-      console.error("Failed to start chat", err);
+      console.error("Failed to start chat:", err);
       const msg = err?.response?.data?.message || err?.message || "فشل في إنشاء المحادثة";
-      toast.error(msg);
+      toast.error(`خطأ: ${msg}`, { id: toastId });
     }
   };
 
