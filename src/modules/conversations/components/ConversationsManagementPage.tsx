@@ -144,8 +144,11 @@ export default function ConversationsManagementPage() {
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex justify-between items-center mb-0.5">
                       <h4 className={`font-semibold text-[14px] truncate ${isActive ? 'text-[#00d0d4]' : 'text-slate-800'}`}>
-                        {conv.title || conv.name || "Conversation"}
+                        {conv.title || conv.name || conv.participant_name || conv.user?.name || conv.users?.[0]?.name || "Conversation"}
                       </h4>
+                      <span className="text-[10px] text-red-500 truncate block max-w-[150px]">
+                        Keys: {Object.keys(conv).join(", ")}
+                      </span>
                       <span className="text-[11px] text-slate-400 shrink-0 ml-2 font-medium">
                         {conv.last_message_time || ""}
                       </span>
