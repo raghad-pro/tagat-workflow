@@ -48,7 +48,7 @@ export default function ConversationsManagementPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] w-full overflow-hidden bg-white mt-4 rounded-xl border border-slate-100 shadow-sm">
+    <div className="flex h-[calc(100vh-120px)] w-full overflow-hidden bg-white rounded-xl border border-slate-100 shadow-sm">
       
       {/* Sidebar: Chat List */}
       <div className="w-[380px] min-w-[320px] border-r border-slate-100 flex flex-col bg-white relative">
