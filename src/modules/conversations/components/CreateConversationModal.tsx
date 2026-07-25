@@ -210,10 +210,11 @@ export default function CreateConversationModal({
                     <Button 
                       type="button"
                       size="sm"
-                      disabled={isCreating}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        alert("تم الضغط على الزر!");
+                        console.log("Button Clicked for:", { targetId, name });
                         onStartChat(targetId, name);
                       }}
                       className="shrink-0 bg-[#eaf9f9] text-[#00d0d4] hover:bg-[#00d0d4] hover:text-white rounded-full h-8 px-3 font-semibold text-xs border-none transition-colors group"
