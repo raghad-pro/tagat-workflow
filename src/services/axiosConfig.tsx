@@ -40,6 +40,13 @@ axiosInstance.interceptors.response.use(
       serverMessage = "انتهى وقت الاتصال (Timeout). يرجى التأكد من سرعة الإنترنت أو تقليل حجم الصورة.";
     }
 
+    // اعتراض أخطاء Laravel الداخلية وتحويلها لرسائل مفهومة
+    if (serverMessage.includes('Attempt to read property') && serverMessage.includes('on null')) {
+      serverMessage = "خطأ في بيانات الحساب على السيرفر. يرجى التواصل مع مدير النظام لمراجعة إعدادات حسابك.";
+    } else if (error.response?.status === 500) {
+      serverMessage = "حدث خطأ داخلي في السيرفر. يرجى المحاولة لاحقاً أو التواصل مع الدعم الفني.";
+    }
+
     // نرجع error موحد
     return Promise.reject(
       Object.assign(error, { message: serverMessage })
