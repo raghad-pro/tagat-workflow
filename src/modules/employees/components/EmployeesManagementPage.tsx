@@ -312,11 +312,11 @@ export default function EmployeesManagementPage() {
       payment_type: v.paymentType,
       job_title:   v.jobTitle,
       password:    v.password,
-      salary:      v.hourlyRate,
-      hourly_rate: v.hourlyRate,
-      currency_id: v.currency,
+      hourly_rate: v.paymentType === 'hourly' ? Number(v.hourlyRate) : null,
+      monthly_salary: v.paymentType === 'monthly' ? Number(v.hourlyRate) : null,
+      currency_id: v.currency ? Number(v.currency) : null,
     };
-    if (v.company) payload.company_id = v.company;
+    if (v.company) payload.company_id = Number(v.company);
 
     createEmployee.mutate(payload as Partial<Employee>, {
       onSuccess: () => {
@@ -347,12 +347,12 @@ export default function EmployeesManagementPage() {
       email:       v.email,
       payment_type: v.paymentType,
       job_title:   v.jobTitle,
-      salary:      v.hourlyRate,
-      hourly_rate: v.hourlyRate,
-      currency_id: v.currency,
+      hourly_rate: v.paymentType === 'hourly' ? Number(v.hourlyRate) : null,
+      monthly_salary: v.paymentType === 'monthly' ? Number(v.hourlyRate) : null,
+      currency_id: v.currency ? Number(v.currency) : null,
     };
     if (v.password) payload.password    = v.password;
-    if (v.company)  payload.company_id  = v.company;
+    if (v.company)  payload.company_id  = Number(v.company);
 
     updateEmployee.mutate({ id, data: payload as Partial<Employee> }, {
       onSuccess: () => {

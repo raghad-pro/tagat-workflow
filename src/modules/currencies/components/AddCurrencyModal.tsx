@@ -74,11 +74,13 @@ export function AddCurrencyModal({
   }));
 
   const handleSubmit = async (data: FormValues) => {
-    const payload = { ...data };
+    const payload: any = { ...data };
     if (!isSuperAdmin && user?.company_id) {
-      payload.company_id = user.company_id.toString();
+      payload.company_id = Number(user.company_id);
     } else if (!payload.company_id) {
-      delete (payload as any).company_id;
+      delete payload.company_id;
+    } else {
+      payload.company_id = Number(payload.company_id);
     }
     await onSave(payload);
   };
