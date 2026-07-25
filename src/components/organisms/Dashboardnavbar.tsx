@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocale } from "next-intl";
 import ThemeButton from "@/components/atoms/ThemeButton";
 import { useAuth } from "@/providers/AuthProvider";
