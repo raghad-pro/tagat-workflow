@@ -11,6 +11,7 @@ import {
   Smile, Paperclip, Image as ImageIcon
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import CreateConversationModal from "./CreateConversationModal";
 
 export default function ConversationsManagementPage() {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ export default function ConversationsManagementPage() {
   
   const [activeConversationId, setActiveConversationId] = useState<number | string | null>(null);
   const [messageBody, setMessageBody] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const {
     data: conversationsRes,
@@ -30,10 +32,29 @@ export default function ConversationsManagementPage() {
     isLoading: isChatLoading,
   } = useConversation(role, activeConversationId);
 
-  const { sendMessage, isSendingMessage } = useConversations(role);
+  const { sendMessage, isSendingMessage, createConversation, isCreating } = useConversations(role);
 
   const conversations = conversationsRes?.data || [];
   const activeConversation = activeConversationData?.data;
+
+  const handleStartNewChat = async (userId: number | string, name: string) => {
+    try {
+      // Typically, sending an array of members or a specific user_id
+      const res = await createConversation({
+        type: "private",
+        name: name, // For display purposes or group names
+        members: [{ user_id: userId }] as any // Depending on backend spec
+      });
+      setIsCreateModalOpen(false);
+      if (res?.data?.id) {
+        setActiveConversationId(res.data.id);
+      } else if (res?.id) {
+        setActiveConversationId(res.id);
+      }
+    } catch (err) {
+      console.error("Failed to start chat", err);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +77,10 @@ export default function ConversationsManagementPage() {
         {/* Header */}
         <div className="px-6 py-6 flex justify-between items-center">
           <h2 className="text-xl font-bold text-slate-800">Conversations</h2>
-          <button className="w-8 h-8 rounded-full bg-[#00d0d4] text-white flex items-center justify-center hover:bg-[#00b0b4] transition-colors shadow-sm">
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-8 h-8 rounded-full bg-[#00d0d4] text-white flex items-center justify-center hover:bg-[#00b0b4] transition-colors shadow-sm"
+          >
             <Plus size={18} strokeWidth={2.5} />
           </button>
         </div>
@@ -358,6 +382,13 @@ export default function ConversationsManagementPage() {
           </div>
         )}
       </div>
+
+      <CreateConversationModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+        onStartChat={handleStartNewChat}
+        isCreating={isCreating}
+      />
     </div>
   );
 }
