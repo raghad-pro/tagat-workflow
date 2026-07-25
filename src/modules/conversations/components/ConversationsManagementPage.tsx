@@ -38,6 +38,34 @@ export default function ConversationsManagementPage() {
   const conversations = conversationsRes?.data || [];
   const activeConversation = activeConversationData?.data;
 
+  // Helper to get conversation name dynamically based on the current user
+  const getConversationTitle = (conv: any) => {
+    if (!conv) return "Chat";
+    if (conv.title) return conv.title;
+    if (conv.name) return conv.name;
+    if (conv.participant_name) return conv.participant_name;
+
+    // Check users array
+    if (conv.users && Array.isArray(conv.users)) {
+      const otherUser = conv.users.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
+      if (otherUser) {
+        return otherUser.name || otherUser.first_name || otherUser.employee_name || otherUser.user?.name || "Chat";
+      }
+    }
+
+    // Check members array
+    if (conv.members && Array.isArray(conv.members)) {
+      const otherUser = conv.members.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
+      if (otherUser) {
+        return otherUser.name || otherUser.first_name || otherUser.employee_name || otherUser.user?.name || "Chat";
+      }
+    }
+
+    if (conv.user?.name) return conv.user.name;
+    
+    return "Conversation";
+  };
+
   const handleStartNewChat = async (userId: number | string, name: string) => {
     const toastId = toast.loading(`جاري بدء المحادثة مع ${name}...`);
     try {
@@ -144,11 +172,8 @@ export default function ConversationsManagementPage() {
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex justify-between items-center mb-0.5">
                       <h4 className={`font-semibold text-[14px] truncate ${isActive ? 'text-[#00d0d4]' : 'text-slate-800'}`}>
-                        {conv.title || conv.name || conv.participant_name || conv.user?.name || conv.users?.[0]?.name || "Conversation"}
+                        {getConversationTitle(conv)}
                       </h4>
-                      <span className="text-[10px] text-red-500 truncate block max-w-[150px]">
-                        Keys: {Object.keys(conv).join(", ")}
-                      </span>
                       <span className="text-[11px] text-slate-400 shrink-0 ml-2 font-medium">
                         {conv.last_message_time || ""}
                       </span>
@@ -199,7 +224,7 @@ export default function ConversationsManagementPage() {
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <img 
-                    src={activeConversation?.image || `https://ui-avatars.com/api/?name=${activeConversation?.name || 'A'}&background=random`} 
+                    src={activeConversation?.image || `https://ui-avatars.com/api/?name=${getConversationTitle(activeConversation)}&background=random`} 
                     alt="Chat" 
                     className="w-11 h-11 rounded-full object-cover shadow-sm" 
                   />
@@ -209,7 +234,7 @@ export default function ConversationsManagementPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-[15px] text-slate-800 leading-tight">
-                    {activeConversation?.title || activeConversation?.name || "Chat"}
+                    {getConversationTitle(activeConversation)}
                   </h3>
                   <div className="flex items-center gap-1.5 mt-1">
                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
