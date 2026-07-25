@@ -5,13 +5,15 @@ import { useLocale } from "next-intl";
 import ThemeButton from "@/components/atoms/ThemeButton";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLogout } from "@/modules/auth/hooks/useLogout";
-import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check } from "lucide-react";
+import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check, MessageSquare } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import apiClient from "@/services/apiClient";
 import { getRolePrefix } from "@/utils/rolePrefix";
 import LanguageSwitcher from "@/components/atoms/languageSwitcher";
+import { useConversations } from "@/modules/conversations/hooks/useConversations";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTimeAgo(dateStr?: string, isAr?: boolean) {
@@ -397,6 +399,141 @@ function UserDropdown() {
   );
 }
 
+// ─── Conversations Dropdown ───────────────────────────────────────────────────
+function ConversationsDropdown() {
+  const locale = useLocale();
+  const isAr = locale === "ar";
+  const { user } = useAuth();
+  const role = user?.role || "company";
+  const router = useRouter();
+
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { data: conversationsRes, isLoading } = useConversations(role);
+  const conversations = conversationsRes?.data || [];
+
+  const unreadTotal = useMemo(() => {
+    if (!Array.isArray(conversations)) return 0;
+    return conversations.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
+  }, [conversations]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          "relative p-2 rounded-xl text-slate-500 hover:text-[var(--color-primary)] hover:bg-slate-100 dark:hover:bg-[#1e293b] transition-colors cursor-pointer flex items-center justify-center",
+          open && "bg-slate-100 dark:bg-[#1e293b] text-[var(--color-primary)]"
+        )}
+        aria-label="Conversations"
+      >
+        <MessageSquare size={19} />
+        {unreadTotal > 0 && (
+          <span className="absolute top-1.5 end-1.5 w-2.5 h-2.5 rounded-full bg-[#00d0d4] ring-2 ring-white dark:ring-[#0f172a]" />
+        )}
+      </button>
+
+      {open && (
+        <div
+          className="absolute end-0 top-full mt-2 z-50 rounded-2xl overflow-hidden w-80 sm:w-96 border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
+          style={{
+            background: "var(--color-bg-form)",
+            borderColor: "var(--color-border-inputs)",
+          }}
+        >
+          {/* Header */}
+          <div
+            className="px-4 py-3.5 flex items-center justify-between"
+            style={{ borderBottom: "1px solid var(--color-border-form)" }}
+          >
+            <div className="flex items-center gap-2">
+              <MessageSquare size={16} className="text-[#00d0d4]" />
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                {isAr ? "المحادثات" : "Conversations"}
+              </h4>
+            </div>
+            <Link
+              href="/conversations"
+              onClick={() => setOpen(false)}
+              className="text-xs font-bold text-[#00d0d4] hover:underline"
+            >
+              {isAr ? "عرض الكل" : "View All"}
+            </Link>
+          </div>
+
+          {/* List */}
+          <div className="max-h-80 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
+            {isLoading ? (
+              <div className="p-6 text-center text-xs text-slate-400">
+                {isAr ? "جاري التحميل..." : "Loading..."}
+              </div>
+            ) : !Array.isArray(conversations) || conversations.length === 0 ? (
+              <div className="p-6 text-center text-xs text-slate-400">
+                {isAr ? "لا توجد محادثات" : "No conversations found."}
+              </div>
+            ) : (
+              conversations.slice(0, 5).map((conv: any) => (
+                <div
+                  key={conv.id}
+                  onClick={() => {
+                    setOpen(false);
+                    router.push(`/conversations`);
+                  }}
+                  className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                >
+                  <img
+                    src={conv.image || `https://ui-avatars.com/api/?name=${conv.name || 'C'}&background=random`}
+                    alt={conv.name || "Conversation"}
+                    className="w-10 h-10 rounded-full object-cover shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-0.5">
+                      <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                        {conv.name || "Conversation"}
+                      </h5>
+                      <span className="text-[10px] text-slate-400">
+                        {conv.last_message_time || "Recent"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      {conv.last_message?.body || "No messages yet"}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Footer link to start chat or go to page */}
+          <div className="p-2 border-t border-slate-100 dark:border-slate-800 text-center">
+            <button
+              onClick={() => {
+                setOpen(false);
+                router.push("/conversations");
+              }}
+              className="w-full py-2 bg-[#00d0d4]/10 hover:bg-[#00d0d4]/20 text-[#00d0d4] text-xs font-bold rounded-xl transition-colors"
+            >
+              {isAr ? "الانتقال لصفحة المحادثات" : "Go to Conversations"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Navbar ───────────────────────────────────────────────────────────────
 export default function DashboardNavbar() {
   const locale = useLocale();
@@ -429,11 +566,14 @@ export default function DashboardNavbar() {
         </div>
       </div>
 
-      {/* Right Actions (Notifications, Theme, User Profile) */}
+      {/* Right Actions (Notifications, Conversations, Theme, User Profile) */}
       <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
 
         {/* Language Switcher */}
         <LanguageSwitcher />
+
+        {/* Conversations Quick Shortcut */}
+        <ConversationsDropdown />
 
         {/* Notifications */}
         <NotificationsDropdown />
