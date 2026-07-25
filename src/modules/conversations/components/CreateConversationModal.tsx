@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Search, User as UserIcon, MessageSquarePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,11 @@ export default function CreateConversationModal({
   const { user } = useAuth();
   const role = user?.role || "company";
   const [searchQuery, setSearchQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { data: employeesRes, isLoading } = useQuery({
     queryKey: ["employees", role],
@@ -38,10 +44,10 @@ export default function CreateConversationModal({
     emp.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
         
         {/* Header */}
@@ -120,6 +126,7 @@ export default function CreateConversationModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
