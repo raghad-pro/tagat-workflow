@@ -262,7 +262,6 @@ export default function ConversationsManagementPage() {
                 </div>
               )}
             </div>
-            </div>
 
             {/* Input Area */}
             <div className="px-8 pb-8 pt-2 bg-white">
