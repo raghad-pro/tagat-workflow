@@ -137,29 +137,21 @@ export default function ConversationsManagementPage() {
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex justify-between items-center mb-0.5">
                       <h4 className={`font-semibold text-[14px] truncate ${isActive ? 'text-[#00d0d4]' : 'text-slate-800'}`}>
-                        {conv.name || "Conversation"}
+                        {conv.title || conv.name || "Conversation"}
                       </h4>
                       <span className="text-[11px] text-slate-400 shrink-0 ml-2 font-medium">
-                        {conv.last_message_time || (index === 0 ? "2 days ago" : index === 1 ? "3 days ago" : index === 2 ? "1 hour ago" : "Yesterday")}
+                        {conv.last_message_time || ""}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <p className="text-[12px] text-slate-500 truncate pr-2">
-                        {conv.last_message?.body || (index === 0 ? "Upgraded to moderator" : index === 1 ? "111" : index === 2 ? "Meeting tomorrow" : "Thank you very much!")}
+                        {conv.last_message?.body || "لا توجد رسائل بعد"}
                       </p>
-                      {conv.unread_count > 0 ? (
+                      {conv.unread_count > 0 && (
                         <div className="shrink-0 bg-[#00d0d4] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">
                           {conv.unread_count}
                         </div>
-                      ) : index === 1 ? (
-                        <div className="shrink-0 bg-[#00d0d4] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">
-                          2
-                        </div>
-                      ) : index === 2 ? (
-                        <div className="shrink-0 bg-[#00d0d4] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">
-                          4
-                        </div>
-                      ) : null}
+                      )}
                     </div>
                   </div>
                 </div>
@@ -207,11 +199,11 @@ export default function ConversationsManagementPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-[15px] text-slate-800 leading-tight">
-                    {activeConversation?.name || "Ahmad test"}
+                    {activeConversation?.title || activeConversation?.name || "Chat"}
                   </h3>
                   <div className="flex items-center gap-1.5 mt-1">
                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
-                    <p className="text-[12px] text-slate-500 font-medium">2 online • 4 members</p>
+                    <p className="text-[12px] text-slate-500 font-medium">Active Chat</p>
                   </div>
                 </div>
               </div>
@@ -221,17 +213,7 @@ export default function ConversationsManagementPage() {
                   <Users size={16} strokeWidth={2.5} />
                   Members
                 </Button>
-                <Button variant="ghost" className="h-9 px-4 rounded-full text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 text-[13px] font-bold gap-2 border-none ml-1">
-                  <Edit2 size={16} strokeWidth={2.5} />
-                  Edit
-                </Button>
                 <div className="flex items-center gap-1 ml-4 text-slate-400">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-50 hover:text-slate-600">
-                    <Phone size={18} strokeWidth={2} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-50 hover:text-slate-600">
-                    <Video size={18} strokeWidth={2} />
-                  </Button>
                   <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-50 hover:text-slate-600">
                     <MoreHorizontal size={18} strokeWidth={2} />
                   </Button>
@@ -248,12 +230,12 @@ export default function ConversationsManagementPage() {
                 activeConversation.messages.map((msg: any) => {
                   const isMine = msg.user_id === user?.id;
                   return (
-                    <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-end"} group`}>
-                      <div className={`flex flex-col items-end max-w-[65%]`}>
+                    <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group`}>
+                      <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[65%]`}>
                         <span className="text-[13px] text-[#00d0d4] mb-1.5 font-bold">
-                          {msg.user?.name || "client1"}
+                          {msg.user?.name || (isMine ? user?.name : "User")}
                         </span>
-                        <div className="relative px-5 py-3.5 bg-[#f6f7f9] rounded-2xl rounded-tr-sm text-slate-800 text-[14px] leading-relaxed shadow-sm">
+                        <div className={`relative px-5 py-3.5 ${isMine ? "bg-[#eaf9f9] text-slate-800 rounded-2xl rounded-tr-sm" : "bg-[#f6f7f9] text-slate-800 rounded-2xl rounded-tl-sm"} text-[14px] leading-relaxed shadow-sm`}>
                           {msg.attachment && (
                             <div className="w-64 h-40 bg-slate-100 rounded-xl mb-3 flex items-center justify-center border border-slate-200">
                               <ImageIcon size={32} className="text-slate-400" />
@@ -263,87 +245,23 @@ export default function ConversationsManagementPage() {
                         </div>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-[11px] text-slate-400 font-medium">
-                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Now"}
                           </span>
                         </div>
                       </div>
-                      
-                      {isMine && (
-                        <div className="ml-3 mt-auto mb-5 shrink-0">
-                           <div className="w-8 h-8 rounded-full bg-[#00d0d4] text-white flex items-center justify-center text-[11px] font-bold shadow-sm">
-                             {user?.name?.substring(0, 2).toUpperCase() || "ME"}
-                           </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })
               ) : (
-                // Dummy Data matching screenshot precisely
-                <div className="flex flex-col gap-6 pb-4">
-                  <div className="flex justify-center my-2">
-                    <div className="bg-[#f6f7f9] text-slate-500 text-[12px] font-semibold px-4 py-1 rounded-full">
-                      Today
-                    </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-12">
+                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3 text-[#00d0d4]">
+                    <Send size={24} />
                   </div>
-
-                  {/* Dummy Image Message 1 */}
-                  <div className="flex justify-end group">
-                    <div className="flex flex-col items-end max-w-[65%]">
-                      <span className="text-[13px] text-[#00d0d4] mb-1.5 font-bold">client1</span>
-                      <div className="relative p-2 bg-[#f6f7f9] rounded-2xl rounded-br-sm shadow-sm">
-                        <div className="w-[340px] h-[220px] bg-slate-200/50 rounded-xl flex items-center justify-center">
-                          <ImageIcon size={32} className="text-slate-400" strokeWidth={1.5} />
-                        </div>
-                      </div>
-                    </div>
-                    {/* Placeholder for alignment to match last message's avatar space */}
-                    <div className="w-8 ml-3"></div>
-                  </div>
-
-                   {/* Dummy Short Text */}
-                   <div className="flex justify-end group -mt-3">
-                    <div className="flex flex-col items-end max-w-[65%]">
-                      <div className="relative px-5 py-3.5 bg-[#f6f7f9] rounded-2xl rounded-br-sm text-slate-700 text-[14px] shadow-sm">
-                        <p>11</p>
-                      </div>
-                    </div>
-                    <div className="w-8 ml-3"></div>
-                  </div>
-
-                  {/* Dummy Image Message 2 */}
-                  <div className="flex justify-end group -mt-3">
-                    <div className="flex flex-col items-end max-w-[65%]">
-                      <div className="relative p-2 bg-[#f6f7f9] rounded-2xl rounded-br-sm shadow-sm">
-                        <div className="w-[340px] h-[220px] bg-slate-200/50 rounded-xl flex items-center justify-center">
-                          <ImageIcon size={32} className="text-slate-400" strokeWidth={1.5} />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[11px] text-slate-400 font-medium tracking-wide">
-                            10:22 AM
-                          </span>
-                      </div>
-                    </div>
-                    <div className="ml-3 mt-auto mb-6 shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-[#00d0d4] text-white flex items-center justify-center text-[11px] font-bold shadow-sm">
-                          CL
-                        </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center mt-6">
-                    <div className="bg-[#f6f7f9] text-slate-500 text-[12px] font-medium px-5 py-1.5 rounded-full">
-                      client1 promoted to moderator
-                    </div>
-                  </div>
-                  <div className="flex justify-center mt-1">
-                    <div className="bg-[#f6f7f9] text-slate-500 text-[12px] font-medium px-5 py-1.5 rounded-full">
-                      Moderator rights removed from client1
-                    </div>
-                  </div>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">لا توجد رسائل في هذه المحادثة بعد.</p>
+                  <p className="text-xs text-slate-400 mt-1">ابدأ بكتابة رسالتك الأولى أدناه لبدء التواصل الحقيقي مع الموظف!</p>
                 </div>
               )}
+            </div>
             </div>
 
             {/* Input Area */}
