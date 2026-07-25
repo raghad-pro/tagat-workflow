@@ -164,12 +164,16 @@ export default function ConversationsManagementPage() {
         {/* Current User Profile Box */}
         <div className="absolute bottom-6 left-6 right-6">
           <div className="flex items-center gap-3 p-3 bg-white border border-slate-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] rounded-2xl">
-            <div className="w-9 h-9 bg-[#00d0d4] rounded-full flex items-center justify-center text-white shrink-0">
-              <UserIcon size={18} strokeWidth={2.5} />
+            <div className="w-9 h-9 bg-[#00d0d4] rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden">
+              {user?.image ? (
+                <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon size={18} strokeWidth={2.5} />
+              )}
             </div>
-            <div className="flex-1 min-w-0 text-right pr-2">
-              <h4 className="font-bold text-[13px] text-slate-800 truncate">General manager</h4>
-              <p className="text-[11px] text-slate-400 truncate">admin@workflow.com</p>
+            <div className="flex-1 min-w-0 pr-2">
+              <h4 className="font-bold text-[13px] text-slate-800 truncate">{user?.name || "User"}</h4>
+              <p className="text-[11px] text-slate-400 truncate">{user?.email || ""}</p>
             </div>
             <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full shrink-0 mr-1 shadow-sm"></div>
           </div>
