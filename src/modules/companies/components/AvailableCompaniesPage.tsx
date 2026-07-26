@@ -14,6 +14,7 @@ export function AvailableCompaniesPage() {
   const t = useTranslations("company");
   const { data: response, isLoading: isLoadingClient } = useClientCompanies();
   const requestJoin = useRequestJoinCompany();
+  const [joiningId, setJoiningId] = useState<number | null>(null);
 
   let companies = response?.data || [];
   
@@ -29,12 +30,16 @@ export function AvailableCompaniesPage() {
   const isLoading = isLoadingClient;
 
   const handleJoin = (companyId: number) => {
+    setJoiningId(companyId);
     requestJoin.mutate(companyId, {
       onSuccess: (res: any) => {
         toast.success(res?.message || t("messages.joinSuccess") || "Join request sent successfully");
       },
       onError: (error: any) => {
         toast.error(error?.message || t("messages.joinError") || "Failed to send join request");
+      },
+      onSettled: () => {
+        setJoiningId(null);
       }
     });
   };
@@ -67,9 +72,10 @@ export function AvailableCompaniesPage() {
                 id={company.id}
                 name={company.name}
                 domain={company.domain}
+                logo={company.logo}
                 status={joinStatus as any}
                 onJoin={handleJoin}
-                isLoading={requestJoin.isPending}
+                isLoading={requestJoin.isPending && joiningId === company.id}
               />
             );
           })}

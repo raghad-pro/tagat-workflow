@@ -12,11 +12,11 @@ import { Form } from "@/components/ui/form";
 import { useTranslations } from "next-intl";
 import { companyApi } from "@/modules/companies/api/companies.api";
 
-const companySchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-  companyName: z.string().min(2, "Company name must be at least 2 characters"),
-  subdomain: z.string().min(2, "Subdomain is required").regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers and hyphens"),
-  fieldOfWork: z.string().min(1, "Please select field of work"),
+const getCompanySchema = (tCommon: any) => z.object({
+  email: z.string().min(1, tCommon("validation.required")).email(tCommon("validation.email")),
+  companyName: z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+  subdomain: z.string().min(2, tCommon("validation.required")).regex(/^[a-z0-9-]+$/, tCommon("validation.invalid")),
+  fieldOfWork: z.string().min(1, tCommon("validation.required")),
 }).superRefine(async (data, ctx) => {
   if (data.email && data.email.length > 3) {
     try {
@@ -39,16 +39,17 @@ const companySchema = z.object({
 
 import toast from "react-hot-toast";
 
-export type CompanyFormValues = z.infer<typeof companySchema>;
+export type CompanyFormValues = z.infer<ReturnType<typeof getCompanySchema>>;
 
 export function AddCompanyModal({ isOpen, onClose, onSave, isLoading }: { isOpen: boolean; onClose: () => void; onSave: (data: CompanyFormValues & { logoFile?: File | null }) => Promise<void>; isLoading?: boolean }) {
   const t = useTranslations("company");
+  const tCommon = useTranslations("common");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema),
+    resolver: zodResolver(getCompanySchema(tCommon)),
     mode: "onSubmit",
     defaultValues: { email: "", companyName: "", subdomain: "", fieldOfWork: "" },
   });

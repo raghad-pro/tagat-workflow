@@ -13,15 +13,15 @@ import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useCompanyCurrencies } from "../hooks/useWallets";
 import { useAuth } from "@/providers/AuthProvider";
 
-const walletSchema = z.object({
-  name: z.string().min(2, "Wallet name is required"),
+const getWalletSchema = (tCommon: any) => z.object({
+  name: z.string().min(2, tCommon("validation.required")),
   company_id: z.coerce.number().optional(),
-  currency_id: z.coerce.number().min(1, "Currency is required"),
+  currency_id: z.coerce.number().min(1, tCommon("validation.required")),
   balance: z.union([z.string(), z.number()]).transform((v) => Number(v)),
   notes: z.string().optional(),
 });
 
-export type WalletFormValues = z.input<typeof walletSchema>;
+export type WalletFormValues = z.input<ReturnType<typeof getWalletSchema>>;
 
 export function EditWalletModal({ 
   isOpen, 
@@ -42,7 +42,7 @@ export function EditWalletModal({
   const isCompanyAdmin = user?.role === "company";
 
   const form = useForm<WalletFormValues>({
-    resolver: zodResolver(walletSchema),
+    resolver: zodResolver(getWalletSchema(tCommon)),
     mode: "onSubmit",
     defaultValues: { name: "", company_id: isCompanyAdmin ? (user?.company_id || user?.id) : 0, currency_id: 0, balance: 0, notes: "" },
   });
@@ -109,7 +109,7 @@ export function EditWalletModal({
             control={form.control}
             name="name"
             label={t("form.name")}
-            placeholder="Main Wallet"
+            placeholder={t("form.placeholders.name")}
           />
           <div className="grid grid-cols-2 gap-4">
             {!isCompanyAdmin && (
@@ -118,7 +118,7 @@ export function EditWalletModal({
                 name="company_id"
                 label={t("form.company")}
                 options={companyOptions}
-                placeholder="Select company"
+                placeholder={t("form.placeholders.company")}
               />
             )}
             <SelectField 
@@ -126,7 +126,7 @@ export function EditWalletModal({
               name="currency_id"
               label={t("form.currency")}
               options={currencyOptions}
-              placeholder={isCompanyCurrenciesLoading ? "Loading..." : (!selectedCompanyId || currencyOptions.length === 0 ? "No currencies" : "Select currency")}
+              placeholder={isCompanyCurrenciesLoading ? t("form.placeholders.loading") : (!selectedCompanyId || currencyOptions.length === 0 ? t("form.placeholders.noCurrencies") : t("form.placeholders.currency"))}
               disabled={!selectedCompanyId || currencyOptions.length === 0 || isCompanyCurrenciesLoading}
             />
           </div>
@@ -143,7 +143,7 @@ export function EditWalletModal({
             control={form.control}
             name="notes"
             label={t("form.notes")}
-            placeholder="Optional notes..."
+            placeholder={t("form.placeholders.notes")}
           />
         </form>
       </Form>

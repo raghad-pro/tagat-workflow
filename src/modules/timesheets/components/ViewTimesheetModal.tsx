@@ -46,7 +46,12 @@ export function ViewTimesheetModal({ isOpen, onClose, data }: { isOpen: boolean;
       title={tCommon("view") || "View Time Log"}
       headerIcon={<Clock size={24} />}
       headerTitle={empName || '-'}
-      headerSubtitle={<StatusBadge status={data.status} />}
+      headerSubtitle={
+        <StatusBadge 
+          status={data.status} 
+          label={data.status ? (t(`statusOptions.${data.status}`) !== `statusOptions.${data.status}` ? t(`statusOptions.${data.status}`) : undefined) : undefined}
+        />
+      }
     >
       <InfoRow label={t("columns.company") || "Company"}>
         <Text size="sm" tag="span">{compName || '-'}</Text>
@@ -68,11 +73,11 @@ export function ViewTimesheetModal({ isOpen, onClose, data }: { isOpen: boolean;
         <Text size="sm" tag="span">{totalVal || '-'} {currency}</Text>
       </InfoRow>
 
-      <InfoRow label="Created At">
+      <InfoRow label={tCommon("createdAt") || "Created At"}>
         <Text size="sm" tag="span">{formatDate(data.created_at)}</Text>
       </InfoRow>
 
-      <InfoRow label="Updated At">
+      <InfoRow label={tCommon("updatedAt") || "Updated At"}>
         <Text size="sm" tag="span">{formatDate(data.updated_at)}</Text>
       </InfoRow>
     </ViewDetailsLayout>

@@ -47,7 +47,7 @@ export function ViewPaymentModal({
         </div>
       </InfoRow>
 
-      <InfoRow label="Employee">
+      <InfoRow label={t("form.employee")}>
         <div className="flex items-center gap-2">
           <User size={14} className="text-gray-400" />
           <Text size="sm" tag="span">{data.employee?.user?.name || `Employee ID: ${data.employee_id}`}</Text>

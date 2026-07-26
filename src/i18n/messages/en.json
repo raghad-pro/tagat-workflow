@@ -144,6 +144,7 @@
     "noTasksThisMonth": "No tasks this month"
   },
   "common": {
+    "project": "Project",
     "approve": "Approve",
     "reject": "Reject",
     "save": "Save",
@@ -152,7 +153,19 @@
     "edit": "Edit",
     "add": "Add",
     "search": "Search",
+    "select": "Select",
     "loading": "Loading...",
+    "selectClient": "Select client",
+    "noClients": "No clients",
+    "selectProject": "Select project",
+    "noProjects": "No projects",
+    "selectCurrency": "Select currency",
+    "noCurrency": "No currency",
+    "selectCompany": "Select company",
+    "selectStatus": "Select status",
+    "budget": "Budget",
+    "paid": "Paid",
+    "remaining": "Remaining",
     "error": "An error occurred",
     "createSuccess": "Created successfully",
     "createError": "Failed to create",
@@ -195,7 +208,21 @@
     "back": "Back",
     "selectProject": "Select Project",
     "selectStatus": "Select Status",
-    "budgetExceeded": "You have exceeded the budget. Remaining: {budget}"
+    "budgetExceeded": "You have exceeded the budget. Remaining: {budget}",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "validation": {
+      "required": "This field is required",
+      "invalid": "Invalid input",
+      "minLength": "Must be at least {min} characters",
+      "email": "Invalid email format",
+      "invalidOption": "Invalid option selected",
+      "passwordUppercase": "Must contain an uppercase letter",
+      "passwordLowercase": "Must contain a lowercase letter",
+      "passwordNumber": "Must contain a number",
+      "passwordSpecial": "Must contain a special character",
+      "passwordsMatch": "Passwords do not match"
+    }
   },
   "development": {
     "title": "Developments Management",
@@ -214,12 +241,21 @@
       "budget": "Budget",
       "cost": "Cost",
       "status": "Status"
+    },
+    "form": {
+      "title": "Title",
+      "description": "Description",
+      "cost": "Cost",
+      "client": "Client",
+      "currency": "Currency"
     }
   },
   "project": {
     "title": "Projects Management",
     "subtitle": "Manage and track all company projects.",
     "add": "Add Projects",
+    "editProjectTitle": "Edit Project",
+    "viewProjectTitle": "Project Details",
     "searchPlaceholder": "Search projects...",
     "stats": {
       "active": "Active Projects",
@@ -233,6 +269,32 @@
       "budget": "Budget",
       "employees": "Employees",
       "status": "Status"
+    },
+    "labels": {
+      "title": "Project Title",
+      "budget": "Budget",
+      "company": "Company",
+      "status": "Status",
+      "client": "Client",
+      "currency": "Currency",
+      "employees": "Employees",
+      "notes": "Notes"
+    },
+    "placeholders": {
+      "title": "Enter project title",
+      "budget": "e.g. 5000",
+      "company": "Select company",
+      "status": "Select status",
+      "client": "Select client",
+      "currency": "Select currency",
+      "employees": "Select employees",
+      "notes": "Additional details..."
+    },
+    "statusOptions": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "on_hold": "On Hold"
     }
   },
   "employee": {
@@ -253,6 +315,16 @@
       "currency": "Currency",
       "company": "Company Name",
       "status": "Status"
+    },
+    "paymentTypes": {
+      "monthly": "Monthly",
+      "hourly": "Hourly",
+      "part_time": "Part Time"
+    },
+    "rateLabels": {
+      "monthly": "Monthly Rate",
+      "hourly": "Hourly Rate",
+      "part_time": "Hourly Rate"
     },
     "placeholders": {
       "name": "John Doe",
@@ -337,6 +409,26 @@
       "duration": "Duration",
       "budget": "Budget",
       "company": "Company"
+    },
+    "labels": {
+      "project": "Project",
+      "company": "Company",
+      "employee": "Employee",
+      "status": "Status",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "duration": "Duration",
+      "financial": "Financial",
+      "createdAt": "Created At",
+      "description": "Description"
+    },
+    "viewTaskTitle": "Task Details",
+    "statusOptions": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "on_hold": "On Hold"
     }
   },
   "company": {
@@ -379,11 +471,11 @@
     "stats": {
       "total": "Total Companies",
       "active": "Active",
-      "pending": "Pending"
+      "inactive": "Inactive"
     },
     "filter": {
       "active": "Active",
-      "pending": "Pending"
+      "inactive": "Inactive"
     },
     "columns": {
       "company": "Company",
@@ -391,6 +483,10 @@
       "email": "Email",
       "joinedDate": "Added Date",
       "status": "Status"
+    },
+    "statusOptions": {
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "messages": {
       "createSuccess": "Company added successfully",
@@ -408,18 +504,21 @@
     "title": "Invoices Management",
     "subtitle": "Manage and track all billing and invoices",
     "add": "Create Invoice",
+    "edit": "Edit Invoice",
     "searchPlaceholder": "Search invoices by number or client...",
     "stats": {
       "total": "Total Invoices",
       "paid": "Paid",
       "pending": "Pending",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "unpaid": "Unpaid"
     },
     "filter": {
       "all": "All Invoices",
       "paid": "Paid",
       "pending": "Pending",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "unpaid": "Unpaid"
     },
     "columns": {
       "number": "Invoice Number",
@@ -459,6 +558,11 @@
       "month": "Month",
       "jan": "January",
       "feb": "February"
+    },
+    "statusOptions": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
     },
     "columns": {
       "employee": "Employee",
@@ -503,7 +607,16 @@
       "applicantName": "Applicant Name",
       "email": "Email",
       "date": "Application Date",
-      "status": "Status"
+      "status": "Status",
+      "clientName": "Client Name",
+      "company": "Company",
+      "actions": "Actions"
+    },
+    "statusOptions": {
+      "pending": "Pending",
+      "active": "Active",
+      "approved": "Approved",
+      "rejected": "Rejected"
     },
     "filter": {
       "all": "All",
@@ -518,6 +631,15 @@
     "title": "Client Management",
     "subtitle": "Manage and monitor all client accounts and requests across the platform.",
     "add": "+ Add a new Client",
+    "details": "Client Details",
+    "memberSince": "Member since",
+    "noCompanies": "No companies",
+    "email": "Email",
+    "companies": "Companies",
+    "selectCompany": "Select Company",
+    "updateStatus": "Update Client Status",
+    "newStatus": "New Status",
+    "updateStatusBtn": "Update Status",
     "totalCustomers": "Total Customers",
     "status": {
       "active": "Active",
@@ -533,8 +655,23 @@
     "phoneNumber": "Phone Number",
     "subsidiaryCompany": "Subsidiary Company",
     "email": "Email",
+    "searchPlaceholder": "Search by name, email or company...",
+    "emptyMessage": "No clients found.",
+    "columns": {
+      "clientName": "Client Name",
+      "companies": "Companies",
+      "status": "Status"
+    },
+    "actions": {
+      "actionsHeader": "Actions",
+      "view": "View",
+      "editStatus": "Edit Status",
+      "remove": "Remove"
+    },
     "deleteTitle": "Delete Client",
-    "deleteMessage": "Are you sure you want to delete this client? This action cannot be undone."
+    "deleteMessage": "Are you sure you want to delete this client? This action cannot be undone.",
+    "addModalTitle": "Add New Client",
+    "saveClient": "Save Client"
   },
   "form": {
     "clientName": "Client Name",
@@ -542,7 +679,12 @@
     "password": "Password",
     "companyOptional": "Company (optional)",
     "basicInfo": "Basic client Information",
-    "enterDetails": "Enter the client basic details"
+    "enterDetails": "Enter the client basic details",
+    "placeholders": {
+      "clientName": "e.g. Ahmed Ali",
+      "email": "client@example.com",
+      "password": "At least 8 characters"
+    }
   },
   "sidebar": {
     "home": "Home",
@@ -587,6 +729,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "currencyName": "Currency Name",
+    "currencyCode": "Currency Code",
     "selectCompany": "Select Company"
   },
   "Index": {
@@ -721,12 +864,33 @@
       "updateSuccess": "Wallet updated successfully",
       "deleteSuccess": "Wallet deleted successfully",
       "deleteError": "Failed to delete wallet"
+    },
+    "form": {
+      "name": "Wallet Name",
+      "company": "Company",
+      "currency": "Currency",
+      "notes": "Notes",
+      "placeholders": {
+        "name": "Main Wallet",
+        "company": "Select company",
+        "currency": "Select currency",
+        "noCurrencies": "No currencies",
+        "loading": "Loading...",
+        "notes": "Optional notes..."
+      }
     }
   },
   "walletTransactions": {
     "title": "Wallet Transactions Management",
     "description": "Manage and monitor all wallet transactions.",
     "addTransaction": "Add Transaction",
+    "editTransaction": "Edit Transaction",
+    "viewTransaction": "View Transaction",
+    "currentBalance": "Current Balance",
+    "walletAfterTransaction": "Wallet After Transaction",
+    "walletBalance": "Wallet Balance",
+    "notes": "Notes",
+    "notesPlaceholder": "Add notes...",
     "searchPlaceholder": "Search transactions...",
     "deleteTitle": "Delete Transaction",
     "confirmDelete": "Are you sure you want to delete this transaction?",
@@ -783,6 +947,82 @@
     "messages": {
       "deleteSuccess": "Payment deleted successfully",
       "deleteError": "Failed to delete payment"
+    },
+    "form": {
+      "company": "Company",
+      "invoice": "Invoice",
+      "wallet": "Wallet",
+      "employee": "Employee",
+      "amount": "Amount",
+      "method": "Payment Method",
+      "date": "Date",
+      "notes": "Notes"
+    },
+    "validation": {
+      "invoiceRequired": "Invoice is required",
+      "walletRequired": "Wallet is required",
+      "employeeRequired": "Employee is required",
+      "methodRequired": "Payment method is required",
+      "dateRequired": "Payment date is required",
+      "amountRequired": "Amount is required"
+    },
+    "placeholders": {
+      "noInvoices": "No invoices",
+      "selectInvoice": "Select invoice",
+      "noWallets": "No wallets",
+      "selectWallet": "Select wallet",
+      "noEmployees": "No employees",
+      "selectEmployee": "Select employee",
+      "loading": "Loading..."
+    }
+  },
+  "profile": {
+    "pageTitle": "Profile Settings",
+    "pageSubtitle": "Manage your personal information and preferences.",
+    "companyInfo": "Company Info",
+    "accountInfo": "Account Info",
+    "profileDetails": "Profile Details",
+    "profileDetailsSubtitle": "Manage your personal information and preferences.",
+    "changePassword": "Change Password",
+    "changePasswordSubtitle": "Update your account password to maintain security.",
+    "deleteAccount": "Delete Account",
+    "deleteAccountSubtitle": "Permanently remove your account and all associated data.",
+    "labels": {
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "companyDomain": "Company Domain",
+      "memberSince": "Member Since",
+      "jobTitle": "Job Title",
+      "company": "Company",
+      "paymentType": "Payment Type",
+      "salary": "Salary",
+      "status": "Status",
+      "creditLimit": "Credit Limit",
+      "role": "Role",
+      "uploadImage": "Upload New Image"
+    },
+    "placeholders": {
+      "fullName": "Your full name",
+      "email": "your@email.com",
+      "currentPassword": "Enter current password",
+      "newPassword": "Create a strong password",
+      "confirmPassword": "Re-enter your new password"
+    },
+    "passwordHint": "Password must be at least 8 characters long and include a mix of letters, numbers, and symbols.",
+    "dangerZone": "Danger Zone",
+    "deleteWarning": "Are you sure you want to delete your account? This action cannot be undone. All your projects, files, and settings will be permanently erased from our servers immediately.",
+    "confirmDeletion": "I confirm deletion",
+    "deletionUnderstood": "I understand that my data cannot be recovered after this point.",
+    "messages": {
+      "updateSuccess": "Profile updated successfully",
+      "updateError": "Failed to update profile",
+      "passwordSuccess": "Password changed successfully",
+      "passwordError": "Failed to change password",
+      "deleteSuccess": "Account deleted successfully",
+      "deleteError": "Failed to delete account"
     }
   }
 }

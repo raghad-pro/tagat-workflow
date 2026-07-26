@@ -15,24 +15,18 @@ import { useTranslations } from "next-intl";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useCompanyCurrencies } from "../hooks/useEmployees";
 
-const editEmployeeSchema = z.object({
-  employeeName: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().min(1, "Email is required").email("Invalid email"),
-  paymentType: z.string().min(1, "Select payment type"),
-  jobTitle: z.string().min(1, "Job title is required"),
-  password: z.string().optional(),
-  hourlyRate: z.string().min(1, "Rate is required"),
-  currency: z.string().min(1, "Select currency"),
+const getEmployeeSchema = (tCommon: any) => z.object({
+  employeeName: z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+  email: z.string().min(1, tCommon("validation.required")).email(tCommon("validation.email")),
+  paymentType: z.string().min(1, tCommon("validation.required")),
+  jobTitle: z.string().min(1, tCommon("validation.required")),
+  password: z.string().optional().or(z.literal("")),
+  hourlyRate: z.string().min(1, tCommon("validation.required")),
+  currency: z.string().min(1, tCommon("validation.required")),
   company: z.string().optional(),
 });
 
-export type EditEmployeeFormValues = z.infer<typeof editEmployeeSchema>;
-
-const PAYMENT_OPTIONS = [
-  { value: "monthly", label: "Monthly" },
-  { value: "hourly", label: "Hourly" },
-  { value: "part_time", label: "Part Time" }
-];
+export type EditEmployeeFormValues = z.infer<ReturnType<typeof getEmployeeSchema>>;
 
 interface EditEmployeeModalProps {
   isOpen: boolean;
@@ -44,6 +38,13 @@ interface EditEmployeeModalProps {
 export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: EditEmployeeModalProps) {
   const t = useTranslations("employee");
   const tCurrencies = useTranslations("currencies");
+  
+  const PAYMENT_OPTIONS = [
+    { value: "monthly", label: t("paymentTypes.monthly") },
+    { value: "hourly", label: t("paymentTypes.hourly") },
+    { value: "part_time", label: t("paymentTypes.part_time") }
+  ];
+
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
 
@@ -61,8 +62,10 @@ export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: E
     label: c.name || c.domain || c.id?.toString(),
   }));
 
+  const tCommon = useTranslations("common");
+
   const form = useForm<EditEmployeeFormValues>({
-    resolver: zodResolver(editEmployeeSchema),
+    resolver: zodResolver(getEmployeeSchema(tCommon)),
     mode: "onSubmit",
     defaultValues: {
       employeeName: "", email: "", paymentType: "", jobTitle: "",
@@ -138,8 +141,8 @@ export default function EditEmployeeModal({ isOpen, onClose, data, onUpdate }: E
   };
 
   const selectedPaymentType = form.watch("paymentType");
-  const rateLabel = selectedPaymentType === "monthly" ? "Monthly Rate" : 
-                    (selectedPaymentType === "hourly" || selectedPaymentType === "part_time" ? "Hourly Rate" : t("labels.salary"));
+  const rateLabel = selectedPaymentType === "monthly" ? t("rateLabels.monthly") : 
+                    (selectedPaymentType === "hourly" || selectedPaymentType === "part_time" ? t("rateLabels.hourly") : t("labels.salary"));
 
   if (!isOpen || !data) return null;
 

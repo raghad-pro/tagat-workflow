@@ -126,6 +126,7 @@ import React from "react";
 import { Text } from "@/components/atoms/Text";
 import { ViewDetailsLayout, InfoRow, StatusPill } from "@/components/molecules/ViewDetailsLayout";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTranslations } from "next-intl";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type PivotStatus = "pending" | "approved" | "rejected" | "active";
@@ -154,6 +155,7 @@ interface ViewClientModalProps {
 export function ViewClientModal({ isOpen, onClose, client }: ViewClientModalProps) {
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
+  const t = useTranslations("client");
 
   if (!isOpen || !client) return null;
 
@@ -161,16 +163,16 @@ export function ViewClientModal({ isOpen, onClose, client }: ViewClientModalProp
     <ViewDetailsLayout
       isOpen={isOpen}
       onClose={onClose}
-      title="Client Details"
+      title={t("details")}
       avatarName={client.name}
       headerTitle={client.name}
       headerSubtitle={client.email}
     >
-      <InfoRow label="Email">
+      <InfoRow label={t("email")}>
         <Text size="sm" tag="span">{client.email}</Text>
       </InfoRow>
 
-      <InfoRow label="Member since">
+      <InfoRow label={t("memberSince")}>
         <Text size="sm" tag="span">
           {client.createdAt
             ? new Date(client.createdAt).toLocaleDateString()
@@ -179,15 +181,15 @@ export function ViewClientModal({ isOpen, onClose, client }: ViewClientModalProp
       </InfoRow>
 
       {isSuperAdmin && (
-        <InfoRow label="Companies">
+        <InfoRow label={t("companies")}>
           {client.companies.length === 0 ? (
-            <Text size="sm" color="gray-200" tag="span">No companies</Text>
+            <Text size="sm" color="gray-200" tag="span">{t("noCompanies")}</Text>
           ) : (
             <div className="flex flex-col gap-2 items-end">
               {client.companies.map((c) => (
                 <div key={c.id} className="flex items-center gap-2">
                   <Text size="sm" tag="span">{c.name}</Text>
-                  <StatusPill status={c.pivot.status} />
+                  <StatusPill status={c.pivot.status} label={t(`status.${c.pivot.status}`)} />
                 </div>
               ))}
             </div>

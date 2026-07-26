@@ -4,6 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslations } from "next-intl";
 import { User, Mail, Lock } from "lucide-react";
 import { Text } from "@/components/atoms/Text";
 import { ActionModal } from "@/components/molecules/ActionModal";
@@ -12,14 +13,14 @@ import { Form } from "@/components/ui/form";
 import type { AddClientFormValues } from "@/modules/clients/types/clients.types";
 
 // ─── Schema ────────────────────────────────────────────────────────────────────
-const schema = z.object({
-  name:       z.string().min(2, "Name must be at least 2 characters"),
-  email:      z.string().min(1, "Email is required").email("Invalid email address"),
-  password:   z.string().min(8, "Password must be at least 8 characters"),
+const getSchema = (tCommon: any) => z.object({
+  name:       z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+  email:      z.string().min(1, tCommon("validation.required")).email(tCommon("validation.email")),
+  password:   z.string().min(8, tCommon("validation.minLength", { min: 8 })),
   company_id: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<ReturnType<typeof getSchema>>;
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 interface AddClientModalProps {
@@ -40,8 +41,12 @@ export function AddClientModal({
   isSuperAdmin = false,
   companies    = [],
 }: AddClientModalProps) {
+  const tClient = useTranslations("client");
+  const tForm = useTranslations("form");
+  const tCommon = useTranslations("common");
+
   const form = useForm<FormValues>({
-    resolver:      zodResolver(schema),
+    resolver:      zodResolver(getSchema(tCommon)),
     mode:          "onTouched",
     defaultValues: { name: "", email: "", password: "", company_id: undefined },
   });
@@ -67,11 +72,11 @@ export function AddClientModal({
     <ActionModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Add New Client"
+      title={tClient("addModalTitle")}
       mode="add"
       formId="add-client-form"
       size="md"
-      saveLabel="Save Client"
+      saveLabel={tClient("saveClient")}
       isLoading={isPending}
     >
       <div className="flex flex-col gap-5">
@@ -88,8 +93,8 @@ export function AddClientModal({
             <User size={16} style={{ color: "var(--color-primary)" }} />
           </div>
           <div>
-            <Text size="sm" weight="bold" tag="p">Basic Client Information</Text>
-            <Text size="sm" color="gray-200" tag="p">Enter the client's basic details</Text>
+            <Text size="sm" weight="bold" tag="p">{tForm("basicInfo")}</Text>
+            <Text size="sm" color="gray-200" tag="p">{tForm("enterDetails")}</Text>
           </div>
         </div>
 
@@ -104,16 +109,16 @@ export function AddClientModal({
               <TextField
                 control={form.control}
                 name="name"
-                label="Client Name"
-                placeholder="e.g. Ahmed Ali"
+                label={tForm("clientName")}
+                placeholder={tForm("placeholders.clientName")}
                 required
                 icon={User}
               />
               <TextField
                 control={form.control}
                 name="email"
-                label="Email Address"
-                placeholder="client@example.com"
+                label={tForm("emailAddress")}
+                placeholder={tForm("placeholders.email")}
                 type="email"
                 required
                 icon={Mail}
@@ -123,8 +128,8 @@ export function AddClientModal({
             <PasswordField
               control={form.control}
               name="password"
-              label="Password"
-              placeholder="At least 8 characters"
+              label={tForm("password")}
+              placeholder={tForm("placeholders.password")}
               required
               icon={Lock}
             />
@@ -133,8 +138,8 @@ export function AddClientModal({
               <SelectField
                 control={form.control}
                 name="company_id"
-                label="Assign to Company (optional)"
-                placeholder="— Select a company —"
+                label={tForm("companyOptional")}
+                placeholder={`— ${tCommon("selectCompany")} —`}
                 options={companies.map(c => ({ value: c.id.toString(), label: c.name }))}
               />
             )}

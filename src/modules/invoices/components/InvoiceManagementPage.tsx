@@ -26,6 +26,7 @@ import { PageContainer } from "@/components/template/PageContainer";
 import { CreateInvoiceModal } from "./Createinvoicemodal";
 import { ViewInvoiceModal } from "./ViewInvoiceModal";
 import { EditInvoiceModal } from "./EditInvoiceModal";
+import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
 import { useAuth } from "@/providers/AuthProvider";
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
@@ -74,15 +75,17 @@ export default function InvoiceManagementPage() {
   const [editInvoice, setEditInvoice]   = useState<Invoice | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewInvoice, setViewInvoice]   = useState<Invoice | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const { user } = useAuth();
   const isCompanyAdmin = user?.role === "company";
+  const isClient = user?.role === "client";
 
   const statusFilterOptions: FilterOption[] = useMemo(() => [
-    { value: "all",     label: t("filter.all") },
-    { value: "paid",    label: t("filter.paid") },
-    { value: "pending", label: t("filter.pending") },
-    { value: "overdue", label: t("filter.overdue") },
+    { value: "all",     label: t("filter.all") || "All Invoices" },
+    { value: "paid",    label: t("filter.paid") || "Paid" },
+    { value: "unpaid",  label: t("filter.unpaid") || "Unpaid" },
   ], [t]);
 
   // ── Data ────────────────────────────────────────────────────────────────────
@@ -102,57 +105,59 @@ export default function InvoiceManagementPage() {
   // ── Mutations ────────────────────────────────────────────────────────────────
   const { mutate: createInvoice, isPending: isCreating } = useCreateInvoice();
   const { mutate: updateInvoice, isPending: isUpdating } = useUpdateInvoice();
-  const { mutate: deleteInvoice }                        = useDeleteInvoice();
+  const { mutate: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const invoices   = invoicesData?.data ?? [];
   const total      = invoicesData?.total ?? 0;
   const totalPages = invoicesData?.last_page ?? 1;
 
+  // Local filtering to support instant search on current page data
+  const displayedInvoices = useMemo(() => {
+    if (!search) return invoices;
+    const lowerSearch = search.toLowerCase();
+    return invoices.filter(inv => {
+      return (
+        inv.company?.name?.toLowerCase().includes(lowerSearch) ||
+        inv.client?.name?.toLowerCase().includes(lowerSearch)
+      );
+    });
+  }, [invoices, search]);
+
+  const localStats = useMemo(() => {
+    const total = displayedInvoices.length;
+    const paid = displayedInvoices.filter(i => i.status === 'paid').length;
+    const unpaid = total - paid;
+    return { total, paid, unpaid };
+  }, [displayedInvoices]);
+
   // ── Stats cards ─────────────────────────────────────────────────────────────
   const stats: StatItem[] = useMemo(() => [
     {
       icon:      FileText,
-      value:     statsData?.total   ?? 0,
+      value:     localStats.total,
       label:     t("stats.total"),
       iconColor: "var(--color-icon-indigo)",
       iconBg:    "var(--color-icon-indigo-bg)",
     },
     {
       icon:      CheckCircle2,
-      value:     statsData?.paid    ?? 0,
+      value:     localStats.paid,
       label:     t("stats.paid"),
       iconColor: "var(--color-icon-success)",
       iconBg:    "var(--color-icon-success-bg)",
     },
     {
-      icon:      Clock,
-      value:     statsData?.pending ?? 0,
-      label:     t("stats.pending"),
-      iconColor: "var(--color-icon-warning)",
-      iconBg:    "var(--color-icon-warning-bg)",
-    },
-    {
       icon:      XCircle,
-      value:     statsData?.overdue ?? 0,
-      label:     t("stats.overdue"),
+      value:     localStats.unpaid,
+      label:     t("stats.unpaid") || "Unpaid",
       iconColor: "var(--color-icon-danger)",
       iconBg:    "var(--color-icon-danger-bg)",
     },
-  ], [statsData, t]);
+  ], [localStats, t]);
 
   // ── Columns ─────────────────────────────────────────────────────────────────
   const columns: TableColumn<Invoice>[] = useMemo(() => {
     const cols: TableColumn<Invoice>[] = [
-      {
-        key:       "id", // or invoiceNumber if they provide it
-        header:    t("columns.number"),
-        isPrimary: true,
-        render: (row) => (
-          <Text size="sm" weight="medium" color="brand" tag="p" className="cursor-pointer hover:underline">
-            #{row.id}
-          </Text>
-        ),
-      },
       {
         key:    "invoice_date",
         header: t("columns.issueDate"),
@@ -185,30 +190,46 @@ export default function InvoiceManagementPage() {
     ];
 
     if (!isCompanyAdmin) {
-      cols.splice(1, 0, {
+      cols.unshift({
         key:    "company",
         header: t("columns.company"),
-        render: (row) => <Text size="sm" tag="p">{row.company?.name ?? "—"}</Text>,
+        isPrimary: true,
+        render: (row) => <Text size="sm" weight="medium" color="primary" tag="p">{row.company?.name ?? "—"}</Text>,
       });
     }
 
-    // Always show client
-    cols.splice(!isCompanyAdmin ? 2 : 1, 0, {
-      key:    "client",
-      header: t("columns.client") || "Client",
-      render: (row) => <Text size="sm" tag="p">{row.client?.name ?? "—"}</Text>,
-    });
+    // Only show client column if the user is NOT a client
+    if (!isClient) {
+      cols.splice(!isCompanyAdmin ? 1 : 0, 0, {
+        key:    "client",
+        header: t("columns.client") || "Client",
+        isPrimary: isCompanyAdmin,
+        render: (row) => (
+          <Text size="sm" weight={isCompanyAdmin ? "medium" : "regular"} color={isCompanyAdmin ? "primary" : "gray-100"} tag="p">
+            {row.client?.name ?? "—"}
+          </Text>
+        ),
+      });
+    }
 
     return cols;
-  }, [t, isCompanyAdmin]);
+  }, [t, isCompanyAdmin, isClient]);
 
   // ── Actions ─────────────────────────────────────────────────────────────────
-  const actions: TableAction<Invoice>[] = useMemo(() => [
-    { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: (row) => { setViewInvoice(row); setShowViewModal(true); } },
-    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: (row) => { setEditInvoice(row); setShowEditModal(true); } },
-    { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: (row) => deleteInvoice(row.id) },
-   
-  ], [deleteInvoice, tCommon]);
+  const actions: TableAction<Invoice>[] = useMemo(() => {
+    const baseActions: TableAction<Invoice>[] = [
+      { icon: Eye,    label: tCommon("view"),   colorScheme: "send" as const, onClick: (row: Invoice) => { setViewInvoice(row); setShowViewModal(true); } }
+    ];
+    
+    if (!isClient) {
+      baseActions.push(
+        { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit" as const, onClick: (row: Invoice) => { setEditInvoice(row); setShowEditModal(true); } },
+        { icon: Trash2, label: tCommon("delete"), colorScheme: "delete" as const, onClick: (row: Invoice) => { setInvoiceToDelete(row); setShowDeleteModal(true); } }
+      );
+    }
+    
+    return baseActions;
+  }, [deleteInvoice, tCommon, isClient]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleSearch = useCallback((v: string) => {
@@ -261,22 +282,20 @@ export default function InvoiceManagementPage() {
   );
 
   // ── Render ───────────────────────────────────────────────────────────────────
-  const isInitialLoading = isInvoicesLoading || isStatsLoading;
-
+  // Removing full-page skeleton to show UI immediately. DataTable has its own loading spinner.
   return (
-    <PageContainer isLoading={isInitialLoading} skeletonVariant="dashboard">
+    <PageContainer isLoading={false} skeletonVariant="dashboard">
 
-      {/* Header */}
       <PageHeader
         title={t("title")}
         subtitle={t("subtitle")}
-        actions={[
+        actions={!isClient ? [
           {
             label:   t("add"),
             onClick: () => setShowModal(true),
             icon:    Plus,
           },
-        ]}
+        ] : undefined}
       />
 
       {/* Stats */}
@@ -289,22 +308,22 @@ export default function InvoiceManagementPage() {
             search={search}
             onSearchChange={handleSearch}
             searchPlaceholder={t("searchPlaceholder")}
-            filters={[
+            filters={!isClient ? [
               {
                 value:    statusFilter,
                 onChange: handleStatus,
                 options:  statusFilterOptions,
               },
-            ]}
+            ] : []}
           />
         </PageCardSection>
 
         <PageCardBody>
           <DataTable
             columns={columns}
-            data={invoices}
+            data={displayedInvoices}
             actions={actions}
-            actionsHeader="Actions"
+            actionsHeader={tCommon("actions") || "Actions"}
             isLoading={isInvoicesFetching}
             emptyMessage="No invoices found."
           />
@@ -344,6 +363,25 @@ export default function InvoiceManagementPage() {
         isOpen={showViewModal}
         onClose={() => { setShowViewModal(false); setViewInvoice(null); }}
         invoiceId={viewInvoice?.id || null}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setInvoiceToDelete(null); }}
+        onConfirm={() => {
+          if (invoiceToDelete) {
+            deleteInvoice(invoiceToDelete.id, {
+              onSuccess: () => {
+                setShowDeleteModal(false);
+                setInvoiceToDelete(null);
+              }
+            });
+          }
+        }}
+        title={tCommon("delete") || "Delete Invoice"}
+        itemName={invoiceToDelete ? `#INV-${invoiceToDelete.id}` : ""}
+        isLoading={isDeleting}
       />
 
     </PageContainer>

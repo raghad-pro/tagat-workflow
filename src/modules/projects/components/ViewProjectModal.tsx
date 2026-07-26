@@ -8,10 +8,12 @@ import type { Project } from "../types/projects.types";
 import { Briefcase } from "lucide-react";
 
 import { useAuth } from "@/providers/AuthProvider";
+import { useTranslations } from "next-intl";
 
 export function ViewProjectModal({ isOpen, onClose, data }: { isOpen: boolean; onClose: () => void; data: Project | null }) {
   const { user } = useAuth();
   const isClient = user?.role === "client";
+  const t = useTranslations("project");
 
   if (!data) return null;
 
@@ -19,12 +21,12 @@ export function ViewProjectModal({ isOpen, onClose, data }: { isOpen: boolean; o
     <ViewDetailsLayout
       isOpen={isOpen}
       onClose={onClose}
-      title="Project Details"
+      title={t("viewProjectTitle")}
       headerIcon={<Briefcase size={24} />}
       headerTitle={data.title}
       headerSubtitle={typeof data.client === 'object' ? (data.client as any)?.name : data.client}
     >
-      <InfoRow label="Company">
+      <InfoRow label={t("labels.company")}>
         <Text size="sm" tag="span">
           {typeof data.company === 'object' ? (data.company as any)?.name : data.company}
         </Text>
@@ -32,17 +34,17 @@ export function ViewProjectModal({ isOpen, onClose, data }: { isOpen: boolean; o
       
       {!isClient && (
         <>
-          <InfoRow label="Budget">
+          <InfoRow label={t("labels.budget")}>
             <Text size="sm" tag="span">{data.budget}</Text>
           </InfoRow>
 
-          <InfoRow label="Employees">
+          <InfoRow label={t("labels.employees")}>
             <Text size="sm" tag="span">{data.employees}</Text>
           </InfoRow>
         </>
       )}
 
-      <InfoRow label="Status">
+      <InfoRow label={t("labels.status")}>
         {data.status ? (
           <StatusBadge status={data.status as any} />
         ) : (

@@ -131,7 +131,7 @@ export default function JoinRequestsPage() {
     const cols: TableColumn<FlatJoinRequest>[] = [
       {
         key: "clientName",
-        header: "Client Name",
+        header: t("columns.clientName"),
         isPrimary: true,
         render: (row) => (
           <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export default function JoinRequestsPage() {
     if (isSuperAdmin) {
       cols.push({
         key: "company",
-        header: "Company",
+        header: t("columns.company"),
         render: (row) => (
           <Text size="sm" tag="p">
             {row.company.name}
@@ -158,7 +158,7 @@ export default function JoinRequestsPage() {
 
     cols.push({
       key: "email",
-      header: "Email",
+      header: t("columns.email"),
       render: (row) => (
         <Text size="sm" color="gray-200" tag="p">
           {row.company.email}
@@ -168,17 +168,21 @@ export default function JoinRequestsPage() {
 
     cols.push({
       key: "status",
-      header: "Status",
-      render: (row) => (
-        <StatusBadge
-          status={JOIN_REQUEST_STATUS_MAP[row.company.pivot.status as JoinRequestStatus]}
-        />
-      ),
+      header: t("columns.status"),
+      render: (row) => {
+        const mappedStatus = JOIN_REQUEST_STATUS_MAP[row.company.pivot.status as JoinRequestStatus];
+        return (
+          <StatusBadge
+            status={mappedStatus}
+            label={t(`statusOptions.${mappedStatus}`)}
+          />
+        );
+      },
     });
 
     cols.push({
       key: "actions",
-      header: "Actions",
+      header: t("columns.actions"),
       render: (row) => {
         const isPending = row.company.pivot.status === "pending";
         if (!isPending) return null;

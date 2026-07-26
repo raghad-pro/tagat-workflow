@@ -16,22 +16,22 @@ import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useEmployees } from "@/modules/employees/hooks/useEmployees";
 import { useWatch } from "react-hook-form";
 
-const addTimesheetSchema = z.object({
-  employee: z.string().min(1, "Employee is required"),
+const getTimesheetSchema = (tCommon: any) => z.object({
+  employee: z.string().min(1, tCommon("validation.required")),
   company: z.string().optional(),
-  date: z.string().min(1, "Date is required"),
-  hours: z.string().min(1, "Hours is required"),
-  rateHr: z.string().min(1, "Rate per hour is required"),
+  date: z.string().min(1, tCommon("validation.required")),
+  hours: z.string().min(1, tCommon("validation.required")),
+  rateHr: z.string().min(1, tCommon("validation.required")),
 });
 
-type FormValues = z.infer<typeof addTimesheetSchema>;
+type FormValues = z.infer<ReturnType<typeof getTimesheetSchema>>;
 
 export default function AddTimesheetModal({ isOpen, onClose, onSubmit = () => {} }: { isOpen: boolean, onClose: () => void, onSubmit?: (data: any) => void }) {
   const t = useTranslations("timesheets");
   const tCommon = useTranslations("common");
   
   const form = useForm<FormValues>({
-    resolver: zodResolver(addTimesheetSchema),
+    resolver: zodResolver(getTimesheetSchema(tCommon)),
     mode: "onSubmit",
     defaultValues: { employee: "", company: "", date: "", hours: "", rateHr: "" },
   });
@@ -87,9 +87,9 @@ export default function AddTimesheetModal({ isOpen, onClose, onSubmit = () => {}
           <form id="add-Timesheet-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-5">
             <div className="rounded-2xl p-5 flex flex-col gap-5 border ds-border-form">
               {!isCompanyAdmin && (
-                <SelectField control={form.control} name="company" label={t("columns.company") || "Company"} options={companyOptions} required placeholder="Select company" />
+                <SelectField control={form.control} name="company" label={t("columns.company") || "Company"} options={companyOptions} required placeholder={tCommon("selectCompany") || "Select company"} />
               )}
-              <SelectField control={form.control} name="employee" label={t("columns.employee") || "Employee"} options={employeeOptions} required placeholder="Select employee" disabled={!isCompanyAdmin && !selectedCompanyId} />
+              <SelectField control={form.control} name="employee" label={t("columns.employee") || "Employee"} options={employeeOptions} required placeholder={tCommon("selectEmployee") || "Select employee"} disabled={!isCompanyAdmin && !selectedCompanyId} />
               <TextField control={form.control} name="date" label={t("columns.date") || "Date"} placeholder="YYYY-MM-DD" required type="date" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField control={form.control} name="hours" label={t("columns.hours") || "Hours"} placeholder="e.g. 4h30m" required icon={Clock} />

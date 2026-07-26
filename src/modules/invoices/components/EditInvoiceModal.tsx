@@ -12,20 +12,19 @@ import { Calendar } from "lucide-react";
 import type { CreateInvoiceRequest, Invoice } from "@/modules/invoices/types/invoices.types";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
-import { useCompanyClients, useCompanyCurrenciesByCompany } from "@/modules/projects/hooks/useCompanyData";
-import { useProjects } from "@/modules/projects/hooks/useProjects";
+import { useCompanyDataInfo, useProjectData, useClientProjects } from "@/modules/projects/hooks/useCompanyData";
 import { useQuery } from "@tanstack/react-query";
 import { invoiceApi } from "../api/invoices.api";
 
-const editInvoiceSchema = z.object({
+const getEditInvoiceSchema = (tCommon: any) => z.object({
   company_id: z.coerce.number().optional(),
-  client_id: z.coerce.number().min(1, "Client is required"),
-  project_id: z.coerce.number().min(1, "Project is required"),
-  currency_id: z.coerce.number().min(1, "Currency is required"),
-  amount: z.coerce.number().min(1, "Amount is required"),
-  status: z.string().min(1, "Status is required"),
-  invoice_date: z.string().min(1, "Invoice date is required"),
-  due_date: z.string().min(1, "Due date is required"),
+  client_id: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v >= 1, { message: tCommon("validation.required") }),
+  project_id: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v >= 1, { message: tCommon("validation.required") }),
+  currency_id: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v >= 1, { message: tCommon("validation.required") }),
+  amount: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v > 0, { message: tCommon("validation.required") }),
+  status: z.string().min(1, tCommon("validation.required")),
+  invoice_date: z.string().min(1, tCommon("validation.required")),
+  due_date: z.string().min(1, tCommon("validation.required")),
 }).superRefine((data, ctx) => {
   if (data.invoice_date && data.due_date) {
     if (new Date(data.invoice_date) > new Date(data.due_date)) {
@@ -38,7 +37,7 @@ const editInvoiceSchema = z.object({
   }
 });
 
-type FormValues = z.infer<typeof editInvoiceSchema>;
+type FormValues = z.infer<ReturnType<typeof getEditInvoiceSchema>>;
 
 interface EditInvoiceModalProps {
   isOpen: boolean;
@@ -65,7 +64,7 @@ export function EditInvoiceModal({
   const tCommon = useTranslations("common");
   
   const form = useForm<FormValues>({
-    resolver: zodResolver(editInvoiceSchema) as any,
+    resolver: zodResolver(getEditInvoiceSchema(tCommon)) as any,
     mode: "onSubmit",
     defaultValues: {
       company_id: Number(invoice.company_id) || undefined,
@@ -88,15 +87,17 @@ export function EditInvoiceModal({
   const selectedCompanyId = form.watch("company_id");
 
   // Fetch company data (clients, projects, currencies) separately
-  const companyIdForQuery = isCompanyAdmin ? undefined : selectedCompanyId;
+  const companyIdForQuery = isCompanyAdmin ? (user?.company_id || user?.id) : selectedCompanyId;
 
-  const { data: clientsList = [], isLoading: isClientsLoading } = useCompanyClients(companyIdForQuery);
-  const { data: currenciesList = [], isLoading: isCurrenciesLoading } = useCompanyCurrenciesByCompany(companyIdForQuery);
-  const { data: projectsRes, isLoading: isProjectsLoading } = useProjects({ company_id: companyIdForQuery, per_page: 100 });
+  const { data: companyDataRes, isLoading: isCompanyDataInfoLoading } = useCompanyDataInfo(companyIdForQuery);
+  const { data: projectData, isLoading: isProjectDataLoading } = useProjectData(form.watch("project_id"));
+  const { data: clientProjectsRes, isLoading: isClientProjectsLoading } = useClientProjects(form.watch("client_id"));
 
-  const projectsList = projectsRes?.data || [];
+  const clientsList = companyDataRes?.data?.clients || companyDataRes?.clients || [];
+  const projectsList = Array.isArray(clientProjectsRes) ? clientProjectsRes : [];
+  const currenciesList = companyDataRes?.data?.currencies || companyDataRes?.currencies || [];
 
-  const isLoadingCompanyData = !!isOpen && (!!companyIdForQuery || isCompanyAdmin) && (isClientsLoading || isCurrenciesLoading || isProjectsLoading);
+  const isLoadingCompanyData = !!isOpen && (!!companyIdForQuery || isCompanyAdmin) && isCompanyDataInfoLoading;
 
   const companyOptions = useMemo(() => {
     const list = Array.isArray(companiesRes?.data) 
@@ -112,6 +113,8 @@ export function EditInvoiceModal({
   const projectOptions = useMemo(() => projectsList.map((p: any) => ({ value: String(p.id), label: p.title })), [projectsList]);
   const currencyOptions = useMemo(() => currenciesList.map((c: any) => ({ value: String(c.id), label: `${c.name} ${c.symbol ? `(${c.symbol})` : ''}`.trim() })), [currenciesList]);
 
+  const prevClientIdRef = React.useRef<number | string | undefined>(form.watch("client_id"));
+
   // Sync form when invoice changes
   useEffect(() => {
     if (isOpen && invoice) {
@@ -125,8 +128,26 @@ export function EditInvoiceModal({
         invoice_date: invoice.invoice_date || new Date().toISOString().split('T')[0],
         due_date: invoice.due_date || new Date().toISOString().split('T')[0],
       });
+      prevClientIdRef.current = Number(invoice.client_id) || undefined;
     }
   }, [invoice, isOpen, form]);
+
+  const currentClientId = form.watch("client_id");
+  // When client changes, clear selected project
+  useEffect(() => {
+    if (prevClientIdRef.current !== currentClientId) {
+      form.setValue("project_id", "" as any);
+      form.setValue("currency_id", "" as any);
+      prevClientIdRef.current = currentClientId;
+    }
+  }, [currentClientId, form]);
+
+  // When project changes, auto-select currency
+  useEffect(() => {
+    if (projectData && projectData.currency) {
+      form.setValue("currency_id", String(projectData.currency.id) as any, { shouldValidate: true });
+    }
+  }, [projectData, form]);
 
   const handleFormSubmit = (data: FormValues) => {
     onSave(data as unknown as Partial<CreateInvoiceRequest>, form);
@@ -151,19 +172,19 @@ export function EditInvoiceModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {!isCompanyAdmin && (
-                  <SelectField control={form.control} name="company_id" label={t("columns.company") || "Company"} options={companyOptions} required placeholder="Select company" />
+                  <SelectField control={form.control} name="company_id" label={t("columns.company") || "Company"} options={companyOptions} required placeholder={tCommon("selectCompany") || "Select company"} />
                 )}
-                <SelectField control={form.control} name="client_id" label={t("columns.client") || "Client"} options={clientOptions} required placeholder="Select client" disabled={isLoadingCompanyData} />
+                <SelectField control={form.control} name="client_id" label={t("columns.client") || "Client"} options={clientOptions} required placeholder={tCommon("selectClient") || "Select client"} disabled={isLoadingCompanyData} />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SelectField control={form.control} name="project_id" label={tCommon("project") || "Project"} options={projectOptions} required placeholder="Select project" disabled={isLoadingCompanyData} />
-                <SelectField control={form.control} name="currency_id" label={t("columns.currency") || "Currency"} options={currencyOptions} required placeholder="Select currency" disabled={isLoadingCompanyData} />
+                <SelectField control={form.control} name="project_id" label={tCommon("project") || "Project"} options={projectOptions} required placeholder={tCommon("selectProject") || "Select project"} disabled={isClientProjectsLoading} />
+                <SelectField control={form.control} name="currency_id" label={t("columns.currency") || "Currency"} options={currencyOptions} required placeholder={tCommon("selectCurrency") || "Select currency"} disabled={isLoadingCompanyData} />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField control={form.control} name="amount" label={t("columns.amount") || "Amount"} type="number" required placeholder="0.00" />
-                <SelectField control={form.control} name="status" label={t("columns.status") || "Status"} options={STATUS_OPTIONS} required placeholder="Select status" />
+                <SelectField control={form.control} name="status" label={t("columns.status") || "Status"} options={STATUS_OPTIONS} required placeholder={tCommon("selectStatus") || "Select status"} />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

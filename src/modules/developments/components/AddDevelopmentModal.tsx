@@ -11,17 +11,19 @@ import { useCreateDevelopment } from "../hooks/useDevelopments";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { useTranslations } from "next-intl";
 
-const addDevelopmentSchema = z.object({
-  project_id: z.coerce.number().min(1, "Project is required"),
-  client_id: z.coerce.number().min(1, "Client is required"),
-  currency_id: z.coerce.number().min(1, "Currency is required"),
-  title: z.string().min(2, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  status: z.enum(["pending", "in_progress", "completed", "cancelled"]),
-  cost: z.coerce.number().min(0, "Cost is required"),
+const getDevelopmentSchema = (tCommon: any) => z.object({
+  project_id: z.coerce.number().min(1, tCommon("validation.required")),
+  client_id: z.coerce.number().min(1, tCommon("validation.required")),
+  currency_id: z.coerce.number().min(1, tCommon("validation.required")),
+  title: z.string().min(2, tCommon("validation.required")),
+  description: z.string().min(1, tCommon("validation.required")),
+  status: z.enum(["pending", "in_progress", "completed", "cancelled"], {
+    errorMap: () => ({ message: tCommon("validation.required") }),
+  }),
+  cost: z.coerce.number().min(0, tCommon("validation.required")),
 });
 
-type FormValues = z.infer<typeof addDevelopmentSchema>;
+type FormValues = z.infer<ReturnType<typeof getDevelopmentSchema>>;
 
 interface Props {
   isOpen: boolean;
@@ -35,7 +37,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
   const tCommon = useTranslations("common");
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(addDevelopmentSchema) as any,
+    resolver: zodResolver(getDevelopmentSchema(tCommon)) as any,
     mode: "onSubmit",
     defaultValues: {
       project_id: "" as any,
@@ -141,7 +143,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
     <ActionModal
       isOpen={isOpen}
       onClose={() => { form.reset(); onClose(); }}
-      title="Add Development"
+      title={t("title") || "Add Development"}
       mode="add"
       formId="add-development-form"
       size="lg"
@@ -179,7 +181,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
                   <SelectField
                     control={form.control}
                     name="client_id"
-                    label="Client"
+                    label={t("form.client") || "Client"}
                     placeholder={
                       clientOptions[0]?.value === "no-data" 
                         ? tCommon("noClients") || "No clients"
@@ -192,7 +194,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
                   <SelectField
                     control={form.control}
                     name="currency_id"
-                    label="Currency"
+                    label={t("form.currency") || "Currency"}
                     placeholder={
                       currencyOptions[0]?.value === "no-data" 
                         ? "No currencies"
@@ -208,7 +210,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
               <TextField
                 control={form.control}
                 name="title"
-                label="Title"
+                label={t("form.title") || "Title"}
                 placeholder=""
                 required
               />
@@ -216,7 +218,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
               <TextField
                 control={form.control}
                 name="description"
-                label="Description"
+                label={t("form.description") || "Description"}
                 placeholder=""
                 required
               />
@@ -224,7 +226,7 @@ export default function AddDevelopmentModal({ isOpen, onClose, onSubmit }: Props
               <TextField
                 control={form.control}
                 name="cost"
-                label="Cost"
+                label={t("form.cost") || "Cost"}
                 placeholder=""
                 required
                 type="number"

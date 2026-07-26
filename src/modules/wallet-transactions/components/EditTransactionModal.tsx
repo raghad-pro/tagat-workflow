@@ -16,18 +16,18 @@ import { useWallets } from "@/modules/wallets/hooks/useWallets";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useAuth } from "@/providers/AuthProvider";
 
-const transactionSchema = z.object({
+const getTransactionSchema = (tCommon: any) => z.object({
   company_id: z.coerce.number().optional(),
-  wallet_id: z.coerce.number().min(1, "Wallet is required"),
-  type: z.string().min(2, "Type is required"),
+  wallet_id: z.coerce.number().min(1, tCommon("validation.required")),
+  type: z.string().min(1, tCommon("validation.required")),
   related_wallet_id: z.coerce.number().optional(),
   amount: z.union([z.string(), z.number()]).transform((v) => Number(v)),
   exchange_rate: z.union([z.string(), z.number()]).optional(),
-  transaction_date: z.string().min(2, "Date is required"),
+  transaction_date: z.string().min(2, tCommon("validation.required")),
   description: z.string().optional(),
 });
 
-export type TransactionFormValues = z.input<typeof transactionSchema>;
+export type TransactionFormValues = z.input<ReturnType<typeof getTransactionSchema>>;
 
 export function EditTransactionModal({ 
   isOpen, 
@@ -53,7 +53,7 @@ export function EditTransactionModal({
   const { data: walletsData } = useWallets({ per_page: 100 });
 
   const form = useForm<TransactionFormValues>({
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(getTransactionSchema(tCommon)),
     defaultValues: {
       company_id: isCompanyAdmin ? user?.company_id : 0,
       wallet_id: 0,
