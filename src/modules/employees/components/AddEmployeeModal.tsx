@@ -106,8 +106,15 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
   }, [CURRENCY_OPTIONS.length, form]);
 
   const handleFormSubmit = (data: AddEmployeeFormValues) => {
+    const payload = { ...data };
+    if (!isSuperAdmin && user?.company_id) {
+      payload.company = user.company_id.toString();
+    } else if (!payload.company) {
+      delete (payload as any).company;
+    }
+    
     if (onSubmit) {
-      onSubmit(data, form.setError);
+      onSubmit(payload, form.setError);
     } else {
       onClose();
       form.reset();

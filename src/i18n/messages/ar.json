@@ -580,7 +580,8 @@
     "timesheets": "سجلات الوقت",
     "developments": "التطويرات",
     "contracts": "العقود",
-    "systemSettings": "إعدادات النظام"
+    "systemSettings": "إعدادات النظام",
+    "conversations": "المحادثات"
   },
   "currencies": {
     "title": "العملات",

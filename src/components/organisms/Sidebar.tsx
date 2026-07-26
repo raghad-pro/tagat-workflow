@@ -85,6 +85,7 @@ const NAV_GROUPS: NavGroup[] = [
     roles: ["super_admin", "company", "employee", "client"],
     items: [
       { key: "employees", href: "/employees", icon: UserRoundPlus, roles: ["super_admin", "company"] },
+      { key: "conversations", href: "/conversations", icon: MessageSquare, roles: ["company"] },
       { key: "projects", href: "/projects", icon: FileText, roles: ["super_admin", "company", "employee", "client"] },
       { key: "tasks", href: "/tasks", icon: SquareCheck, roles: ["super_admin", "company", "employee"] },
       { key: "timesheets", href: "/timesheets", icon: Clock, roles: ["super_admin", "company", "employee"] },

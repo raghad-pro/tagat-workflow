@@ -13,6 +13,10 @@ export default function ReactQueryProvider({
           queries: {
             staleTime: 5 * 60 * 1000, // 5 minutes
             refetchOnWindowFocus: false, // Don't refetch on tab switch
+            retry: false, // Show errors immediately without retrying
+          },
+          mutations: {
+            retry: false,
           },
         },
       })

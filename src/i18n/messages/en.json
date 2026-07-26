@@ -580,7 +580,8 @@
     "timesheets": "Timesheets",
     "developments": "Developments",
     "contracts": "Contracts",
-    "systemSettings": "System Settings"
+    "systemSettings": "System Settings",
+    "conversations": "Conversations"
   },
   "currencies": {
     "title": "Currencies",

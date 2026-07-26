@@ -10,7 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { tokenService } from "@/services/tokenServices";
-import type { User } from "@/modules/auth/types/auth.types";
+import { type User, normalizeUser } from "@/modules/auth/types/auth.types";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface AuthContextType {
@@ -45,38 +45,13 @@ function loadUser(): User | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as User;
-    
-    // Fallback to role_id if role is missing
-    if (!parsed.role && parsed.role_id) {
-      import("@/modules/auth/types/auth.types").then(({ ROLE_MAP }) => {
-        // we can't do async inside synchronous loadUser easily, so let's just do a static map
-      });
-    }
-
-    // Since we need to be sync, let's just define the map or import it at the top
-    const localRoleMap: Record<number, string> = {
-      1: "super_admin",
-      2: "company",
-      3: "employee",
-      4: "client",
-    };
-
-    if (!parsed.role && parsed.role_id) {
-      parsed.role = localRoleMap[parsed.role_id] as any;
-    }
-
-    if (parsed.role === ("company_admin" as any)) {
-      parsed.role = "company";
-    }
-
-    // Basic sanity check — must have id, email, and a valid role
-    const validRoles = ["super_admin", "company", "employee", "client"];
-    if (!parsed?.id || !parsed?.email || !validRoles.includes(parsed?.role)) {
+    const parsed = JSON.parse(raw);
+    const normalized = normalizeUser(parsed);
+    if (!normalized) {
       localStorage.removeItem(USER_KEY);
       return null;
     }
-    return parsed;
+    return normalized;
   } catch {
     localStorage.removeItem(USER_KEY);
     return null;
@@ -118,26 +93,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── setUser — persists to localStorage ───────────────────────────────────────
   const setUser = useCallback((u: User | null) => {
-    if (u) {
-      const localRoleMap: Record<number, string> = {
-        1: "super_admin",
-        2: "company",
-        3: "employee",
-        4: "client",
-      };
-
-      if (!u.role && u.role_id) {
-        u.role = localRoleMap[u.role_id] as any;
-      }
-
-      if (u.role === ("company_admin" as any)) {
-        u.role = "company";
-      }
-    }
-    
-    setUserState(u);
-    if (u) saveUser(u);
-    else    clearUser();
+    const normalized = u ? normalizeUser(u) : null;
+    setUserState(normalized);
+    if (normalized) saveUser(normalized);
+    else            clearUser();
   }, []);
 
   // ── logout ────────────────────────────────────────────────────────────────────

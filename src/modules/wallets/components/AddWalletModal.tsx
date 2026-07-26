@@ -112,8 +112,8 @@ export function AddWalletModal({
               name="currency_id"
               label={t("form.currency")}
               options={currencyOptions}
-              placeholder={isCompanyCurrenciesLoading ? "Loading..." : (!selectedCompanyId || currencyOptions.length === 0 ? "No currencies" : "Select currency")}
-              disabled={!selectedCompanyId || currencyOptions.length === 0 || isCompanyCurrenciesLoading}
+              placeholder={isCompanyCurrenciesLoading ? "Loading..." : (currencyOptions.length === 0 ? "No currencies" : "Select currency")}
+              disabled={(!isCompanyAdmin && !selectedCompanyId) || currencyOptions.length === 0 || isCompanyCurrenciesLoading}
             />
           </div>
           <div className="grid grid-cols-1 gap-4">
