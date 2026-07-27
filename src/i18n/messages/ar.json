@@ -153,6 +153,7 @@
     "edit": "تعديل",
     "add": "إضافة",
     "search": "بحث",
+    "select": "اختر",
     "loading": "جاري...",
     "selectClient": "اختر العميل",
     "noClients": "لا يوجد عملاء",
@@ -207,7 +208,21 @@
     "back": "رجوع",
     "selectProject": "اختر المشروع",
     "selectStatus": "اختر الحالة",
-    "budgetExceeded": "لقد تجاوزت الميزانية. المتبقي: {budget}"
+    "budgetExceeded": "لقد تجاوزت الميزانية. المتبقي: {budget}",
+    "createdAt": "تاريخ الإنشاء",
+    "updatedAt": "تاريخ التحديث",
+    "validation": {
+      "required": "هذا الحقل مطلوب",
+      "invalid": "إدخال غير صالح",
+      "invalidOption": "خيار غير صالح",
+      "email": "بريد إلكتروني غير صالح",
+      "minLength": "يجب أن يتكون من {min} أحرف على الأقل",
+      "passwordUppercase": "يجب أن يحتوي على حرف كبير",
+      "passwordLowercase": "يجب أن يحتوي على حرف صغير",
+      "passwordNumber": "يجب أن يحتوي على رقم",
+      "passwordSpecial": "يجب أن يحتوي على حرف خاص",
+      "passwordsMatch": "كلمات المرور غير متطابقة"
+    }
   },
   "development": {
     "title": "إدارة التطويرات",
@@ -232,6 +247,8 @@
     "title": "إدارة المشاريع",
     "subtitle": "إدارة وتتبع جميع مشاريع الشركة",
     "add": "إضافة مشروع",
+    "editProjectTitle": "تعديل المشروع",
+    "viewProjectTitle": "تفاصيل المشروع",
     "searchPlaceholder": "ابحث في المشاريع...",
     "stats": {
       "active": "المشاريع النشطة",
@@ -245,6 +262,32 @@
       "budget": "الميزانية",
       "employees": "الموظفون",
       "status": "الحالة"
+    },
+    "labels": {
+      "title": "عنوان المشروع",
+      "budget": "الميزانية",
+      "company": "الشركة",
+      "status": "الحالة",
+      "client": "العميل",
+      "currency": "العملة",
+      "employees": "الموظفون",
+      "notes": "الملاحظات"
+    },
+    "placeholders": {
+      "title": "أدخل عنوان المشروع",
+      "budget": "مثال: 5000",
+      "company": "اختر الشركة",
+      "status": "اختر الحالة",
+      "client": "اختر العميل",
+      "currency": "اختر العملة",
+      "employees": "اختر الموظفين",
+      "notes": "تفاصيل إضافية..."
+    },
+    "statusOptions": {
+      "pending": "قيد الانتظار",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتمل",
+      "on_hold": "معلق"
     }
   },
   "employee": {
@@ -265,6 +308,16 @@
       "currency": "العملة",
       "company": "اسم الشركة",
       "status": "الحالة"
+    },
+    "paymentTypes": {
+      "monthly": "شهري",
+      "hourly": "بالساعة",
+      "part_time": "دوام جزئي"
+    },
+    "rateLabels": {
+      "monthly": "الراتب الشهري",
+      "hourly": "أجر الساعة",
+      "part_time": "أجر الساعة"
     },
     "placeholders": {
       "name": "أحمد محمد",
@@ -349,6 +402,26 @@
       "duration": "المدة",
       "budget": "الميزانية",
       "company": "الشركة"
+    },
+    "labels": {
+      "project": "المشروع",
+      "company": "الشركة",
+      "employee": "الموظف",
+      "status": "الحالة",
+      "date": "التاريخ",
+      "start": "البداية",
+      "end": "النهاية",
+      "duration": "المدة",
+      "financial": "التكلفة",
+      "createdAt": "تاريخ الإنشاء",
+      "description": "الوصف"
+    },
+    "viewTaskTitle": "عرض تفاصيل المهمة",
+    "statusOptions": {
+      "pending": "قيد الانتظار",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "on_hold": "معلقة"
     }
   },
   "company": {
@@ -391,11 +464,11 @@
     "stats": {
       "total": "إجمالي الشركات",
       "active": "نشطة",
-      "pending": "قيد الانتظار"
+      "inactive": "غير نشطة"
     },
     "filter": {
       "active": "نشطة",
-      "pending": "قيد الانتظار"
+      "inactive": "غير نشطة"
     },
     "columns": {
       "company": "الشركة",
@@ -403,6 +476,10 @@
       "email": "البريد الإلكتروني",
       "joinedDate": "تاريخ الإضافة",
       "status": "الحالة"
+    },
+    "statusOptions": {
+      "active": "نشطة",
+      "inactive": "غير نشطة"
     },
     "messages": {
       "createSuccess": "تمت إضافة الشركة بنجاح",
@@ -475,6 +552,11 @@
       "jan": "يناير",
       "feb": "فبراير"
     },
+    "statusOptions": {
+      "pending": "قيد الانتظار",
+      "approved": "مقبول",
+      "rejected": "مرفوض"
+    },
     "columns": {
       "employee": "الموظف",
       "company": "الشركة",
@@ -518,7 +600,16 @@
       "applicantName": "اسم المتقدم",
       "email": "البريد الإلكتروني",
       "date": "تاريخ التقديم",
-      "status": "الحالة"
+      "status": "الحالة",
+      "clientName": "اسم العميل",
+      "company": "الشركة",
+      "actions": "الإجراءات"
+    },
+    "statusOptions": {
+      "pending": "قيد الانتظار",
+      "active": "نشطة",
+      "approved": "مقبول",
+      "rejected": "مرفوض"
     },
     "filter": {
       "all": "الكل",
@@ -533,6 +624,15 @@
     "title": "إدارة العملاء",
     "subtitle": "إدارة ومراقبة جميع حسابات وطلبات العملاء عبر المنصة.",
     "add": "+ إضافة عميل جديد",
+    "details": "تفاصيل العميل",
+    "memberSince": "عضو منذ",
+    "noCompanies": "لا توجد شركات",
+    "email": "البريد الإلكتروني",
+    "companies": "الشركات",
+    "selectCompany": "اختر الشركة",
+    "updateStatus": "تحديث حالة العميل",
+    "newStatus": "الحالة الجديدة",
+    "updateStatusBtn": "تحديث الحالة",
     "totalCustomers": "إجمالي العملاء",
     "status": {
       "active": "نشط",
@@ -548,8 +648,23 @@
     "phoneNumber": "رقم الهاتف",
     "subsidiaryCompany": "الشركة التابعة",
     "email": "البريد الإلكتروني",
+    "searchPlaceholder": "ابحث بالاسم، البريد الإلكتروني أو الشركة...",
+    "emptyMessage": "لا يوجد عملاء.",
+    "columns": {
+      "clientName": "اسم العميل",
+      "companies": "الشركات",
+      "status": "الحالة"
+    },
+    "actions": {
+      "actionsHeader": "الإجراءات",
+      "view": "عرض",
+      "editStatus": "تعديل الحالة",
+      "remove": "إزالة"
+    },
     "deleteTitle": "حذف عميل",
-    "deleteMessage": "هل أنت متأكد أنك تريد حذف هذا العميل؟ لا يمكن التراجع عن هذا الإجراء."
+    "deleteMessage": "هل أنت متأكد أنك تريد حذف هذا العميل؟ لا يمكن التراجع عن هذا الإجراء.",
+    "addModalTitle": "إضافة عميل جديد",
+    "saveClient": "حفظ العميل"
   },
   "form": {
     "clientName": "اسم العميل",
@@ -557,7 +672,12 @@
     "password": "كلمة المرور",
     "companyOptional": "الشركة (اختياري)",
     "basicInfo": "المعلومات الأساسية للعميل",
-    "enterDetails": "أدخل التفاصيل الأساسية للعميل"
+    "enterDetails": "أدخل التفاصيل الأساسية للعميل",
+    "placeholders": {
+      "clientName": "مثال: أحمد علي",
+      "email": "client@example.com",
+      "password": "على الأقل 8 أحرف"
+    }
   },
   "sidebar": {
     "home": "الرئيسية",
@@ -603,6 +723,7 @@
     "save": "حفظ",
     "cancel": "إلغاء",
     "currencyName": "اسم العملة",
+    "currencyCode": "كود العملة",
     "selectCompany": "اختر الشركة"
   },
   "Index": {
@@ -737,12 +858,33 @@
       "updateSuccess": "تم تحديث المحفظة بنجاح",
       "deleteSuccess": "تم حذف المحفظة بنجاح",
       "deleteError": "فشل في حذف المحفظة"
+    },
+    "form": {
+      "name": "اسم المحفظة",
+      "company": "الشركة",
+      "currency": "العملة",
+      "notes": "ملاحظات",
+      "placeholders": {
+        "name": "المحفظة الرئيسية",
+        "company": "اختر الشركة",
+        "currency": "اختر العملة",
+        "noCurrencies": "لا توجد عملات",
+        "loading": "جاري التحميل...",
+        "notes": "ملاحظات اختيارية..."
+      }
     }
   },
   "walletTransactions": {
     "title": "إدارة حركات المحافظ",
     "description": "تتبع وإدارة جميع الحركات والتحويلات المالية للمحافظ",
     "addTransaction": "إضافة حركة جديدة",
+    "editTransaction": "تعديل الحركة",
+    "viewTransaction": "عرض الحركة",
+    "currentBalance": "الرصيد الحالي",
+    "walletAfterTransaction": "الرصيد بعد الحركة",
+    "walletBalance": "رصيد المحفظة",
+    "notes": "ملاحظات",
+    "notesPlaceholder": "أضف ملاحظات...",
     "searchPlaceholder": "ابحث في الحركات...",
     "deleteTitle": "حذف الحركة",
     "confirmDelete": "هل أنت متأكد من حذف هذه الحركة؟",
@@ -799,6 +941,82 @@
     "messages": {
       "deleteSuccess": "تم حذف الدفعة بنجاح",
       "deleteError": "فشل في حذف الدفعة"
+    },
+    "form": {
+      "company": "الشركة",
+      "invoice": "الفاتورة",
+      "wallet": "المحفظة",
+      "employee": "الموظف",
+      "amount": "المبلغ",
+      "method": "طريقة الدفع",
+      "date": "التاريخ",
+      "notes": "الملاحظات"
+    },
+    "validation": {
+      "invoiceRequired": "الفاتورة مطلوبة",
+      "walletRequired": "المحفظة مطلوبة",
+      "employeeRequired": "الموظف مطلوب",
+      "methodRequired": "طريقة الدفع مطلوبة",
+      "dateRequired": "التاريخ مطلوب",
+      "amountRequired": "المبلغ مطلوب"
+    },
+    "placeholders": {
+      "noInvoices": "لا توجد فواتير",
+      "selectInvoice": "اختر الفاتورة",
+      "noWallets": "لا توجد محافظ",
+      "selectWallet": "اختر المحفظة",
+      "noEmployees": "لا يوجد موظفين",
+      "selectEmployee": "اختر الموظف",
+      "loading": "جاري التحميل..."
+    }
+  },
+  "profile": {
+    "pageTitle": "إعدادات الملف الشخصي",
+    "pageSubtitle": "إدارة معلوماتك الشخصية وتفضيلاتك.",
+    "companyInfo": "معلومات الشركة",
+    "accountInfo": "معلومات الحساب",
+    "profileDetails": "تفاصيل الملف الشخصي",
+    "profileDetailsSubtitle": "إدارة معلوماتك الشخصية وتفضيلاتك.",
+    "changePassword": "تغيير كلمة المرور",
+    "changePasswordSubtitle": "تحديث كلمة مرور حسابك للحفاظ على الأمان.",
+    "deleteAccount": "حذف الحساب",
+    "deleteAccountSubtitle": "حذف حسابك نهائياً وجميع البيانات المرتبطة به.",
+    "labels": {
+      "fullName": "الاسم الكامل",
+      "email": "البريد الإلكتروني",
+      "currentPassword": "كلمة المرور الحالية",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور الجديدة",
+      "companyDomain": "نطاق الشركة",
+      "memberSince": "عضو منذ",
+      "jobTitle": "المسمى الوظيفي",
+      "company": "الشركة",
+      "paymentType": "نوع الدفع",
+      "salary": "الراتب",
+      "status": "الحالة",
+      "creditLimit": "الحد الائتماني",
+      "role": "الدور",
+      "uploadImage": "تحميل صورة جديدة"
+    },
+    "placeholders": {
+      "fullName": "اسمك الكامل",
+      "email": "your@email.com",
+      "currentPassword": "أدخل كلمة المرور الحالية",
+      "newPassword": "أنشئ كلمة مرور قوية",
+      "confirmPassword": "أعد إدخال كلمة المرور الجديدة"
+    },
+    "passwordHint": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل وتشمل مزيجاً من الحروف والأرقام والرموز.",
+    "dangerZone": "منطقة الخطر",
+    "deleteWarning": "هل أنت متأكد من أنك تريد حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء. سيتم مسح جميع مشاريعك وملفاتك وإعداداتك بشكل دائم من خوادمنا على الفور.",
+    "confirmDeletion": "أؤكد الحذف",
+    "deletionUnderstood": "أفهم أنه لا يمكن استرداد بياناتي بعد هذه النقطة.",
+    "messages": {
+      "updateSuccess": "تم تحديث الملف الشخصي بنجاح",
+      "updateError": "فشل في تحديث الملف الشخصي",
+      "passwordSuccess": "تم تغيير كلمة المرور بنجاح",
+      "passwordError": "فشل في تغيير كلمة المرور",
+      "deleteSuccess": "تم حذف الحساب بنجاح",
+      "deleteError": "فشل في حذف الحساب"
     }
   }
 }

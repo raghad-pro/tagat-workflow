@@ -60,13 +60,6 @@ interface NormalizedClient {
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 4;
 
-const STATUS_OPTIONS: FilterOption[] = [
-  { value: "all",      label: "All cases" },
-  { value: "approved", label: "Approved"  },
-  { value: "pending",  label: "Pending"   },
-  { value: "rejected", label: "Rejected"  },
-];
-
 const STATUS_CONFIG: Record<PivotStatus, { bg: string; color: string; dot: string }> = {
   approved: { bg: "rgba(16,185,129,0.12)", color: "#059669", dot: "#10b981" },
   active:   { bg: "rgba(16,185,129,0.12)", color: "#059669", dot: "#10b981" },
@@ -118,6 +111,13 @@ export default function ClientManagementPage() {
   const t       = useTranslations("client");
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
+
+  const STATUS_OPTIONS: FilterOption[] = useMemo(() => [
+    { value: "all",      label: t("filter.all") },
+    { value: "approved", label: t("status.approved")  },
+    { value: "pending",  label: t("status.pending")   },
+    { value: "rejected", label: t("status.rejected")  },
+  ], [t]);
 
   // ── Filters state ────────────────────────────────────────────────────────────
   const [search, setSearch]             = useState("");
@@ -219,28 +219,28 @@ export default function ClientManagementPage() {
     {
       icon:      Users,
       value:     stats?.total    ?? 0,
-      label:     "Total Clients",
+      label:     t("totalCustomers"),
       iconColor: "var(--color-primary)",
       iconBg:    "var(--color-bg-primary-200)",
     },
     {
       icon:      ShieldCheck,
       value:     stats?.approved ?? 0,
-      label:     "Approved",
+      label:     t("status.approved"),
       iconColor: "#059669",
       iconBg:    "rgba(52,211,153,0.12)",
     },
     {
       icon:      Clock,
       value:     stats?.pending  ?? 0,
-      label:     "Pending",
+      label:     t("status.pending"),
       iconColor: "#d97706",
       iconBg:    "rgba(251,191,36,0.12)",
     },
     {
       icon:      ShieldAlert,
       value:     stats?.rejected ?? 0,
-      label:     "Rejected",
+      label:     t("status.rejected"),
       iconColor: "#dc2626",
       iconBg:    "rgba(239,68,68,0.10)",
     },
@@ -250,7 +250,7 @@ export default function ClientManagementPage() {
   const columns: TableColumn<NormalizedClient>[] = [
     {
       key:       "name",
-      header:    "Client Name",
+      header:    t("columns.clientName"),
       isPrimary: true,
       width:     isSuperAdmin ? "40%" : "60%",
       render: (row) => (
@@ -271,7 +271,7 @@ export default function ClientManagementPage() {
     ...(isSuperAdmin
       ? [{
           key:    "companies",
-          header: "Companies",
+          header: t("columns.companies"),
           width:  "30%",
           render: (row: NormalizedClient) =>
             row.companies.length === 0 ? (
@@ -287,7 +287,7 @@ export default function ClientManagementPage() {
       : []),
     {
       key:    "status",
-      header: "Status",
+      header: t("columns.status"),
       width:  isSuperAdmin ? "20%" : "25%",
       render: (row) => {
         const toShow = !isSuperAdmin
@@ -316,19 +316,19 @@ export default function ClientManagementPage() {
   const actions = [
     {
       icon:        Eye,
-      label:       "View",
+      label:       t("actions.view"),
       colorScheme: "send" as const,
       onClick:     (row: NormalizedClient) => setViewClient(row),
     },
     {
       icon:        Edit2,
-      label:       "Edit Status",
+      label:       t("actions.editStatus"),
       colorScheme: "edit" as const,
       onClick:     (row: NormalizedClient) => setEditClient(row),
     },
     {
       icon:        Trash2,
-      label:       "Remove",
+      label:       t("actions.remove"),
       colorScheme: "delete" as const,
       onClick:     (row: NormalizedClient) => setDeleteClient(row),
     },
@@ -343,11 +343,11 @@ export default function ClientManagementPage() {
         skeletonRows={PAGE_SIZE}
       >
         <PageHeader
-          title="Client Management"
-          subtitle="View and manage all platform clients"
+          title={t("title")}
+          subtitle={t("subtitle")}
           actions={[
             {
-              label:   "Add a new Client",
+              label:   t("add"),
               icon:    Plus,
               onClick: () => setAddOpen(true),
             },
@@ -361,7 +361,7 @@ export default function ClientManagementPage() {
             <SearchFilterBar
               search={search}
               onSearchChange={handleSearch}
-              searchPlaceholder="Search by name, email or company..."
+              searchPlaceholder={t("searchPlaceholder")}
               filters={[
                 {
                   value:    statusFilter,
@@ -377,9 +377,9 @@ export default function ClientManagementPage() {
               columns={columns}
               data={clients}
               actions={actions}
-              actionsHeader="Actions"
+              actionsHeader={t("actions.actionsHeader")}
               isLoading={isFetching}
-              emptyMessage="No clients found."
+              emptyMessage={t("emptyMessage")}
             />
           </PageCardBody>
 

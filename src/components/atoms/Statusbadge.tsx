@@ -28,7 +28,7 @@ const STATUS_CONFIG: Record<
   approved:    { label: "Approved",     bg: "rgba(16,185,129,0.12)", color: "#059669", dot: "#10b981" },
   cancelled:   { label: "Cancelled",    bg: "rgba(107,114,128,0.10)", color: "#6b7280", dot: "#9ca3af" },
   onboarding:  { label: "Onboarding",   bg: "rgba(59,130,246,0.12)", color: "#1d4ed8", dot: "#3b82f6" },
-  inactive:    { label: "Inactive",     bg: "rgba(107,114,128,0.10)", color: "#6b7280", dot: "#9ca3af" },
+  inactive:    { label: "Inactive",     bg: "rgba(239,68,68,0.10)", color: "#dc2626", dot: "#ef4444" },
 };
 
 export function StatusBadge({ status, label, withDot = true }: StatusBadgeProps) {

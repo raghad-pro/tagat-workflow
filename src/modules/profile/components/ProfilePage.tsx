@@ -123,6 +123,7 @@ function AvatarSection({
     employee: "Employee",
     client: "Client",
   };
+  const t = useTranslations("profile");
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -190,18 +191,17 @@ function AvatarSection({
         onClick={() => fileRef.current?.click()}
         licon={<Upload size={14} />}
       >
-        Upload New Image
+        {t("labels.uploadImage")}
       </Button>
     </div>
   );
 }
 
-// ─── Personal Info Form ───────────────────────────────────────────────────────
-const personalSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email"),
+const getPersonalSchema = (tCommon: any) => z.object({
+  name: z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+  email: z.string().email(tCommon("validation.email")),
 });
-type PersonalValues = z.infer<typeof personalSchema>;
+type PersonalValues = z.infer<ReturnType<typeof getPersonalSchema>>;
 
 function PersonalInfoForm({
   defaultName,
@@ -214,8 +214,11 @@ function PersonalInfoForm({
   isPending: boolean;
   onSubmit: (data: PersonalValues) => void;
 }) {
+  const t = useTranslations("profile");
+  const tCommon = useTranslations("common");
+
   const form = useForm<PersonalValues>({
-    resolver: zodResolver(personalSchema),
+    resolver: zodResolver(getPersonalSchema(tCommon)),
     defaultValues: { name: defaultName, email: defaultEmail },
   });
 
@@ -234,16 +237,16 @@ function PersonalInfoForm({
           <TextField
             control={form.control}
             name="name"
-            label="Full Name"
-            placeholder="Your full name"
+            label={t("labels.fullName")}
+            placeholder={t("placeholders.fullName")}
             required
             icon={User}
           />
           <TextField
             control={form.control}
             name="email"
-            label="Email Address"
-            placeholder="your@email.com"
+            label={t("labels.email")}
+            placeholder={t("placeholders.email")}
             type="email"
             required
             icon={Mail}
@@ -256,7 +259,7 @@ function PersonalInfoForm({
             variant="ghost"
             onClick={() => form.reset()}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             type="submit"
@@ -264,7 +267,7 @@ function PersonalInfoForm({
             loading={isPending}
             licon={<User size={15} />}
           >
-            Save
+            {tCommon("save")}
           </Button>
         </div>
       </form>
@@ -273,24 +276,24 @@ function PersonalInfoForm({
 }
 
 // ─── Change Password Form ─────────────────────────────────────────────────────
-const passwordSchema = z
+const getPasswordSchema = (tCommon: any) => z
   .object({
-    current_password: z.string().min(1, "Current password is required"),
+    current_password: z.string().min(1, tCommon("validation.required")),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Must contain an uppercase letter")
-      .regex(/[a-z]/, "Must contain a lowercase letter")
-      .regex(/[0-9]/, "Must contain a number")
-      .regex(/[^A-Za-z0-9]/, "Must contain a special character"),
-    password_confirmation: z.string().min(1, "Confirm password is required"),
+      .min(8, tCommon("validation.minLength", { min: 8 }))
+      .regex(/[A-Z]/, tCommon("validation.passwordUppercase"))
+      .regex(/[a-z]/, tCommon("validation.passwordLowercase"))
+      .regex(/[0-9]/, tCommon("validation.passwordNumber"))
+      .regex(/[^A-Za-z0-9]/, tCommon("validation.passwordSpecial")),
+    password_confirmation: z.string().min(1, tCommon("validation.required")),
   })
   .refine((d) => d.password === d.password_confirmation, {
-    message: "Passwords do not match",
+    message: tCommon("validation.passwordsMatch"),
     path: ["password_confirmation"],
   });
 
-type PasswordValues = z.infer<typeof passwordSchema>;
+type PasswordValues = z.infer<ReturnType<typeof getPasswordSchema>>;
 
 function ChangePasswordForm({
   isPending,
@@ -299,8 +302,11 @@ function ChangePasswordForm({
   isPending: boolean;
   onSubmit: (data: PasswordValues) => void;
 }) {
+  const t = useTranslations("profile");
+  const tCommon = useTranslations("common");
+
   const form = useForm<PasswordValues>({
-    resolver: zodResolver(passwordSchema),
+    resolver: zodResolver(getPasswordSchema(tCommon)),
     defaultValues: {
       current_password: "",
       password: "",
@@ -322,34 +328,33 @@ function ChangePasswordForm({
         <PasswordField
           control={form.control}
           name="current_password"
-          label="Current Password"
-          placeholder="Enter current password"
+          label={t("labels.currentPassword")}
+          placeholder={t("placeholders.currentPassword")}
           required
           icon={Lock}
         />
         <PasswordField
           control={form.control}
           name="password"
-          label="New Password"
-          placeholder="Create a strong password"
+          label={t("labels.newPassword")}
+          placeholder={t("placeholders.newPassword")}
           required
           icon={Lock}
         />
         <Text size="sm" color="gray-200" tag="p" className="-mt-2">
-          Password must be at least 8 characters long and include a mix of
-          letters, numbers, and symbols.
+          {t("passwordHint")}
         </Text>
         <PasswordField
           control={form.control}
           name="password_confirmation"
-          label="Confirm New Password"
-          placeholder="Re-enter your new password"
+          label={t("labels.confirmPassword")}
+          placeholder={t("placeholders.confirmPassword")}
           required
           icon={Lock}
         />
         <div className="flex gap-3 justify-end mt-2">
           <Button type="button" variant="ghost" onClick={() => form.reset()}>
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             type="submit"
@@ -357,7 +362,7 @@ function ChangePasswordForm({
             loading={isPending}
             licon={<Lock size={15} />}
           >
-            Save
+            {tCommon("save")}
           </Button>
         </div>
       </form>
@@ -373,6 +378,7 @@ function DeleteAccountSection({
   isPending: boolean;
   onConfirm: () => void;
 }) {
+  const t = useTranslations("profile");
   const [checked, setChecked] = useState(false);
 
   return (
@@ -392,12 +398,10 @@ function DeleteAccountSection({
         />
         <div>
           <Text size="sm" weight="bold" tag="p" color="error">
-            Danger Zone
+            {t("dangerZone")}
           </Text>
           <Text size="sm" color="gray-200" tag="p" className="mt-0.5">
-            Are you sure you want to delete your account? This action cannot be
-            undone. All your projects, files, and settings will be permanently
-            erased from our servers immediately.
+            {t("deleteWarning")}
           </Text>
         </div>
       </div>
@@ -412,10 +416,10 @@ function DeleteAccountSection({
         />
         <div>
           <Text size="sm" weight="bold" tag="span">
-            I confirm deletion
+            {t("confirmDeletion")}
           </Text>
           <Text size="sm" color="gray-200" tag="p">
-            I understand that my data cannot be recovered after this point.
+            {t("deletionUnderstood")}
           </Text>
         </div>
       </label>
@@ -469,12 +473,13 @@ function DeleteAccountSection({
 
 // ─── Role-specific read-only info ─────────────────────────────────────────────
 function RoleInfoPanel({ profile, role }: { profile: any; role: string }) {
+  const t = useTranslations("profile");
   if (role === "company") {
     return (
       <div className="flex flex-col">
-        <InfoRow label="Company Domain" value={profile?.domain} />
+        <InfoRow label={t("labels.companyDomain")} value={profile?.domain} />
         <InfoRow
-          label="Member Since"
+          label={t("labels.memberSince")}
           value={
             profile?.created_at
               ? new Date(profile.created_at).toLocaleDateString("en-US", {
@@ -508,15 +513,15 @@ function RoleInfoPanel({ profile, role }: { profile: any; role: string }) {
 
     return (
       <div className="flex flex-col">
-        <InfoRow label="Job Title" value={jobTitle} />
-        <InfoRow label="Company" value={companyName} />
-        <InfoRow label="Payment Type" value={paymentType} />
+        <InfoRow label={t("labels.jobTitle")} value={jobTitle} />
+        <InfoRow label={t("labels.company")} value={companyName} />
+        <InfoRow label={t("labels.paymentType")} value={paymentType} />
         <InfoRow
-          label="Salary"
+          label={t("labels.salary")}
           value={salary ? `${salary} ${currencyCode || ""}` : undefined}
         />
         <InfoRow
-          label="Status"
+          label={t("labels.status")}
           value={profile?.status}
         />
       </div>
@@ -528,7 +533,7 @@ function RoleInfoPanel({ profile, role }: { profile: any; role: string }) {
     return (
       <div className="flex flex-col">
         <InfoRow
-          label="Credit Limit"
+          label={t("labels.creditLimit")}
           value={
             profile?.credit_limit != null
               ? `$${Number(profile.credit_limit).toLocaleString("en-US")}`
@@ -536,7 +541,7 @@ function RoleInfoPanel({ profile, role }: { profile: any; role: string }) {
           }
         />
         <InfoRow
-          label="Member Since"
+          label={t("labels.memberSince")}
           value={
             profile?.created_at
               ? new Date(profile.created_at).toLocaleDateString("en-US", {
@@ -588,7 +593,7 @@ function RoleInfoPanel({ profile, role }: { profile: any; role: string }) {
   return (
     <div className="flex flex-col">
       <InfoRow
-        label="Role"
+        label={t("labels.role")}
         value={
           typeof profile?.role === "string"
             ? profile.role
@@ -598,7 +603,7 @@ function RoleInfoPanel({ profile, role }: { profile: any; role: string }) {
         }
       />
       <InfoRow
-        label="Member Since"
+        label={t("labels.memberSince")}
         value={
           profile?.created_at
             ? new Date(profile.created_at).toLocaleDateString("en-US", {
@@ -615,6 +620,7 @@ function RoleInfoPanel({ profile, role }: { profile: any; role: string }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
+  const t = useTranslations("profile");
   const { user } = useAuth();
   const role = user?.role ?? "super_admin";
 
@@ -657,8 +663,8 @@ export default function ProfilePage() {
   return (
     <PageContainer isLoading={isLoading} skeletonVariant="form">
       <PageHeader
-        title="Profile Settings"
-        subtitle="Manage your personal information and preferences."
+        title={t("pageTitle")}
+        subtitle={t("pageSubtitle")}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -683,8 +689,8 @@ export default function ProfilePage() {
             <SectionCard
               title={
                 role === "company"
-                  ? "Company Info"
-                  : "Account Info"
+                  ? t("companyInfo")
+                  : t("accountInfo")
               }
             >
               <RoleInfoPanel profile={profile} role={role} />
@@ -696,8 +702,8 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Personal Info */}
           <SectionCard
-            title="Profile Details"
-            subtitle="Manage your personal information and preferences."
+            title={t("profileDetails")}
+            subtitle={t("profileDetailsSubtitle")}
           >
             <PersonalInfoForm
               defaultName={displayName}
@@ -709,8 +715,8 @@ export default function ProfilePage() {
 
           {/* Change Password */}
           <SectionCard
-            title="Change Password"
-            subtitle="Update your account password to maintain security."
+            title={t("changePassword")}
+            subtitle={t("changePasswordSubtitle")}
           >
             <ChangePasswordForm
               isPending={isUpdatingPassword}
@@ -720,8 +726,8 @@ export default function ProfilePage() {
 
           {/* Delete Account */}
           <SectionCard
-            title="Delete Account"
-            subtitle="Permanently remove your account and all associated data."
+            title={t("deleteAccount")}
+            subtitle={t("deleteAccountSubtitle")}
           >
             <DeleteAccountSection
               isPending={isDeletingAccount}

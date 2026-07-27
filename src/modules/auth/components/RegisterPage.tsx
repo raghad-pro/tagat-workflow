@@ -171,6 +171,7 @@ function LogoUpload({ preview, error, onChange, onRemove }: {
 // ─── Step 2: Company Form ──────────────────────────────────────────────────────
 function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormProps) {
   const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoError, setLogoError] = useState("");
@@ -178,7 +179,7 @@ function CompanyForm({ onBack, isPending, onRegister, onSuccessRegister }: FormP
 
   const companySchema = z.object({
     companyName: z.string().min(2, t("company_name_required")),
-    domain: z.string().min(2, "Domain is required").regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers and hyphens"),
+    domain: z.string().min(2, tCommon("validation.required")).regex(/^[a-z0-9-]+$/, tCommon("validation.invalid")),
     email: z.string().min(1, t("email_required")).email(t("email_invalid")),
     password: z.string().min(8, t("password_too_short"))
       .regex(/[A-Z]/, t("password_uppercase"))

@@ -48,8 +48,12 @@ export function ViewEmployeeModal({ isOpen, onClose, data }: { isOpen: boolean; 
       </InfoRow>
 
       <InfoRow label={t("labels.status")}>
-        <span className="capitalize bg-gray-100 dark:bg-gray-800 text-[var(--color-primary)] px-3 py-1 rounded-full text-sm font-medium">
-          {data.status || 'Active'}
+        <span className={`capitalize px-3 py-1 rounded-full text-sm font-medium ${
+          (data.status?.toLowerCase() || 'active') === 'active' 
+            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+        }`}>
+          {data.status ? t(`filter.${data.status.toLowerCase()}`) : t('filter.active')}
         </span>
       </InfoRow>
     </ViewDetailsLayout>

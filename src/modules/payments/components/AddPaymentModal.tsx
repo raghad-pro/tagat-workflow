@@ -15,18 +15,18 @@ import { AddPaymentRequest } from "../types/payments.types";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useAuth } from "@/providers/AuthProvider";
 
-const paymentSchema = z.object({
+const getPaymentSchema = (tCommon: any) => z.object({
   company_id: z.coerce.number().optional(),
-  invoice_id: z.coerce.number().min(1, "Invoice is required"),
-  wallet_id: z.coerce.number().min(1, "Wallet is required"),
-  employee_id: z.coerce.number().min(1, "Employee is required"),
-  amount: z.union([z.string(), z.number()]).transform((v) => Number(v)),
-  payment_method: z.string().min(2, "Payment method is required"),
-  payment_date: z.string().min(2, "Payment date is required"),
+  invoice_id: z.coerce.number().min(1, tCommon("validation.required")),
+  wallet_id: z.coerce.number().min(1, tCommon("validation.required")),
+  employee_id: z.coerce.number().min(1, tCommon("validation.required")),
+  amount: z.coerce.number().min(1, tCommon("validation.required")),
+  payment_method: z.string().min(2, tCommon("validation.required")),
+  payment_date: z.string().min(2, tCommon("validation.required")),
   notes: z.string().optional(),
 });
 
-export type PaymentFormValues = z.input<typeof paymentSchema>;
+export type PaymentFormValues = z.input<ReturnType<typeof getPaymentSchema>>;
 
 export function AddPaymentModal({ 
   isOpen, 
@@ -36,6 +36,7 @@ export function AddPaymentModal({
   onClose: () => void; 
 }) {
   const t = useTranslations("payments");
+  const tCommon = useTranslations("common");
   const { user } = useAuth();
   const { mutateAsync: createPayment, isPending: isLoading } = useCreatePayment();
   const isCompanyAdmin = user?.role === "company";
@@ -47,7 +48,7 @@ export function AddPaymentModal({
   }, [companiesData]);
 
   const form = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentSchema),
+    resolver: zodResolver(getPaymentSchema(tCommon)),
     mode: "onSubmit",
     defaultValues: { 
       company_id: isCompanyAdmin ? user?.company_id : 0, 
@@ -135,13 +136,13 @@ export function AddPaymentModal({
   };
 
   const isInvoiceDisabled = (!isCompanyAdmin && !selectedCompanyId) || isDataLoading || invoiceOptions.length === 0;
-  const invoicePlaceholder = isDataLoading ? "Loading..." : ((!isCompanyAdmin && !selectedCompanyId) || invoiceOptions.length === 0 ? "No invoices" : "Select invoice");
+  const invoicePlaceholder = isDataLoading ? t("placeholders.loading") : ((!isCompanyAdmin && !selectedCompanyId) || invoiceOptions.length === 0 ? t("placeholders.noInvoices") : t("placeholders.selectInvoice"));
 
   const isWalletDisabled = (!isCompanyAdmin && !selectedCompanyId) || isDataLoading || walletOptions.length === 0;
-  const walletPlaceholder = isDataLoading ? "Loading..." : ((!isCompanyAdmin && !selectedCompanyId) || walletOptions.length === 0 ? "No wallets" : "Select wallet");
+  const walletPlaceholder = isDataLoading ? t("placeholders.loading") : ((!isCompanyAdmin && !selectedCompanyId) || walletOptions.length === 0 ? t("placeholders.noWallets") : t("placeholders.selectWallet"));
 
   const isEmployeeDisabled = (!isCompanyAdmin && !selectedCompanyId) || isDataLoading || employeeOptions.length === 0;
-  const employeePlaceholder = isDataLoading ? "Loading..." : ((!isCompanyAdmin && !selectedCompanyId) || employeeOptions.length === 0 ? "No employees" : "Select employee");
+  const employeePlaceholder = isDataLoading ? t("placeholders.loading") : ((!isCompanyAdmin && !selectedCompanyId) || employeeOptions.length === 0 ? t("placeholders.noEmployees") : t("placeholders.selectEmployee"));
 
   return (
     <ActionModal 
@@ -186,7 +187,7 @@ export function AddPaymentModal({
             <SelectField 
               control={form.control}
               name="employee_id"
-              label="Employee"
+              label={t("form.employee")}
               options={employeeOptions}
               disabled={isEmployeeDisabled}
               placeholder={employeePlaceholder}

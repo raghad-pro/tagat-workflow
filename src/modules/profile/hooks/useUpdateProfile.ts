@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 export const useUpdateProfile = () => {
   const { user, setUser } = useAuth();
   const queryClient = useQueryClient();
-  const t = useTranslations("common"); // Or create a profile namespace
+  const t = useTranslations("profile");
 
   return useMutation({
     mutationFn: async (data: UpdateProfileRequest) => {
@@ -16,7 +16,7 @@ export const useUpdateProfile = () => {
       return profileApi.updateProfile(user.role, data);
     },
     onSuccess: (res: any) => {
-      toast.success(res.message || "Profile updated successfully");
+      toast.success(res.message || t("messages.updateSuccess"));
       queryClient.invalidateQueries({ queryKey: ["profile", user?.role] });
       
       // Update local user state
@@ -26,7 +26,7 @@ export const useUpdateProfile = () => {
     },
     onError: (error: any) => {
       const backendMsg = error?.response?.data?.message || error?.message;
-      toast.error(backendMsg || "Failed to update profile");
+      toast.error(backendMsg || t("messages.updateError"));
     },
   });
 };

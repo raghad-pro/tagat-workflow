@@ -12,17 +12,19 @@ import { useUpdateDevelopment } from "../hooks/useDevelopments";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { useTranslations } from "next-intl";
 
-const editDevelopmentSchema = z.object({
-  project_id: z.coerce.number().min(1, "Project is required"),
-  client_id: z.coerce.number().min(1, "Client is required"),
-  currency_id: z.coerce.number().min(1, "Currency is required"),
-  title: z.string().min(2, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  status: z.enum(["pending", "in_progress", "completed", "cancelled"]),
-  cost: z.coerce.number().min(0, "Cost is required"),
+const getDevelopmentSchema = (tCommon: any) => z.object({
+  project_id: z.coerce.number().min(1, tCommon("validation.required")),
+  client_id: z.coerce.number().min(1, tCommon("validation.required")),
+  currency_id: z.coerce.number().min(1, tCommon("validation.required")),
+  title: z.string().min(2, tCommon("validation.required")),
+  description: z.string().min(1, tCommon("validation.required")),
+  status: z.enum(["pending", "in_progress", "completed", "cancelled"], {
+    error: tCommon("validation.required"),
+  }),
+  cost: z.coerce.number().min(0, tCommon("validation.required")),
 });
 
-type FormValues = z.infer<typeof editDevelopmentSchema>;
+type FormValues = z.infer<ReturnType<typeof getDevelopmentSchema>>;
 
 interface Props {
   isOpen: boolean;
@@ -37,7 +39,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
   const tCommon = useTranslations("common");
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(editDevelopmentSchema) as any,
+    resolver: zodResolver(getDevelopmentSchema(tCommon)) as any,
     mode: "onSubmit",
     defaultValues: {
       project_id: 1,
@@ -161,7 +163,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
     <ActionModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Edit Development"
+      title={t("title") || "Edit Development"}
       mode="edit"
       formId="edit-development-form"
       size="lg"
@@ -199,7 +201,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
                   <SelectField
                     control={form.control}
                     name="client_id"
-                    label="Client"
+                    label={t("form.client") || "Client"}
                     placeholder={
                       clientOptions[0]?.value === "no-data" 
                         ? tCommon("noClients") || "No clients"
@@ -212,7 +214,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
                   <SelectField
                     control={form.control}
                     name="currency_id"
-                    label="Currency"
+                    label={t("form.currency") || "Currency"}
                     placeholder={
                       currencyOptions[0]?.value === "no-data" 
                         ? "No currencies"
@@ -228,7 +230,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
               <TextField
                 control={form.control}
                 name="title"
-                label="Title"
+                label={t("form.title") || "Title"}
                 placeholder=""
                 required
               />
@@ -236,7 +238,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
               <TextField
                 control={form.control}
                 name="description"
-                label="Description"
+                label={t("form.description") || "Description"}
                 placeholder=""
                 required
               />
@@ -244,7 +246,7 @@ export default function EditDevelopmentModal({ isOpen, onClose, data, onUpdate }
               <TextField
                 control={form.control}
                 name="cost"
-                label="Cost"
+                label={t("form.cost") || "Cost"}
                 placeholder=""
                 required
                 type="number"

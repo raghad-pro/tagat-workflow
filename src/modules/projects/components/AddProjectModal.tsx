@@ -27,15 +27,15 @@ import { useEmployees } from "@/modules/employees/hooks/useEmployees";
 
 const getProjectSchema = (isCompanyAdmin: boolean, tCommon: any) =>
   z.object({
-    title:     z.string().min(2, "Title must be at least 2 characters"),
-    budget:    z.string().min(1, "Budget is required"),
+    title:     z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+    budget:    z.string().min(1, tCommon("validation.required")),
     company:   isCompanyAdmin
                  ? z.string().optional()
-                 : z.string().min(1, "Company is required"),
-    client_id: z.string().min(1, "Client is required").refine(val => val !== "no-data", { message: tCommon("requiredField") }),
-    status:    z.string().min(1, "Select status"),
-    currency:  z.string().min(1, "Currency is required").refine(val => val !== "no-data", { message: tCommon("requiredField") }),
-    employees: z.array(z.string()).min(1, "At least one employee is required").refine(val => !val.includes("no-data"), { message: tCommon("requiredField") }),
+                 : z.string().min(1, tCommon("validation.required")),
+    client_id: z.string().min(1, tCommon("validation.required")).refine(val => val !== "no-data", { message: tCommon("validation.required") }),
+    status:    z.string().min(1, tCommon("validation.required")),
+    currency:  z.string().min(1, tCommon("validation.required")).refine(val => val !== "no-data", { message: tCommon("validation.required") }),
+    employees: z.array(z.string()).min(1, tCommon("validation.required")).refine(val => !val.includes("no-data"), { message: tCommon("validation.required") }),
     notes:     z.string().optional(),
   });
 
@@ -43,11 +43,11 @@ type FormValues = z.infer<ReturnType<typeof getProjectSchema>>;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const STATUS_OPTIONS = [
-  { value: "pending",     label: "Pending"     },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed",   label: "Completed"   },
-  { value: "on_hold",     label: "On Hold"     },
+const getStatusOptions = (t: any) => [
+  { value: "pending",     label: t("statusOptions.pending")     },
+  { value: "in_progress", label: t("statusOptions.in_progress") },
+  { value: "completed",   label: t("statusOptions.completed")   },
+  { value: "on_hold",     label: t("statusOptions.on_hold")     },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -82,6 +82,9 @@ export default function AddProjectModal({
   const isCompanyAdmin = user?.role === "company";
   const tCommon        = useTranslations("common");
   const tCurrencies    = useTranslations("currencies");
+  const tProject       = useTranslations("project");
+
+  const STATUS_OPTIONS = getStatusOptions(tProject);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(getProjectSchema(isCompanyAdmin, tCommon)),
@@ -201,7 +204,7 @@ export default function AddProjectModal({
     <ActionModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Add Project"
+      title={tProject("add")}
       mode="add"
       formId="add-project-form"
       size="lg"
@@ -223,16 +226,16 @@ export default function AddProjectModal({
                 <TextField
                   control={form.control}
                   name="title"
-                  label="Project Title"
-                  placeholder="Enter project title"
+                  label={tProject("labels.title")}
+                  placeholder={tProject("placeholders.title")}
                   required
                   icon={Briefcase}
                 />
                 <TextField
                   control={form.control}
                   name="budget"
-                  label="Budget"
-                  placeholder="e.g. 5000"
+                  label={tProject("labels.budget")}
+                  placeholder={tProject("placeholders.budget")}
                   required
                   icon={DollarSign}
                 />
@@ -244,19 +247,19 @@ export default function AddProjectModal({
                   <SelectField
                     control={form.control}
                     name="company"
-                    label="Company"
+                    label={tProject("labels.company")}
                     options={companyOptions}
                     required
-                    placeholder="Select company"
+                    placeholder={tProject("placeholders.company")}
                   />
                 )}
                 <SelectField
                   control={form.control}
                   name="status"
-                  label="Status"
+                  label={tProject("labels.status")}
                   options={STATUS_OPTIONS}
                   required
-                  placeholder="Select status"
+                  placeholder={tProject("placeholders.status")}
                 />
               </div>
 
@@ -267,26 +270,26 @@ export default function AddProjectModal({
                     <SelectField
                       control={form.control}
                       name="client_id"
-                      label="Client"
+                      label={tProject("labels.client")}
                       options={clientOptions}
                       required
                       placeholder={
                         clientOptions.length === 0 || clientOptions[0]?.value === "no-data"
                           ? tCommon("noClients")
-                          : "Select client"
+                          : tProject("placeholders.client")
                       }
                       disabled={clientOptions[0]?.value === "no-data"}
                     />
                     <SelectField
                       control={form.control}
                       name="currency"
-                      label="Currency"
+                      label={tProject("labels.currency")}
                       options={CURRENCY_OPTIONS}
                       required
                       placeholder={
                         CURRENCY_OPTIONS.length === 0 || CURRENCY_OPTIONS[0]?.value === "no-data"
                           ? tCurrencies("noCurrencies")
-                          : "Select currency"
+                          : tProject("placeholders.currency")
                       }
                       disabled={CURRENCY_OPTIONS[0]?.value === "no-data"}
                     />
@@ -295,13 +298,13 @@ export default function AddProjectModal({
                   <MultiSelectField
                     control={form.control}
                     name="employees"
-                    label="Employees"
+                    label={tProject("labels.employees")}
                     options={employeeOptions}
                     required
                     placeholder={
                       employeeOptions.length === 0 || employeeOptions[0]?.value === "no-data"
                         ? tCommon("noEmployees")
-                        : "Select employees"
+                        : tProject("placeholders.employees")
                     }
                     disabled={employeeOptions[0]?.value === "no-data"}
                   />
@@ -312,8 +315,8 @@ export default function AddProjectModal({
               <TextAreaField
                 control={form.control}
                 name="notes"
-                label="Notes"
-                placeholder="Additional details..."
+                label={tProject("labels.notes")}
+                placeholder={tProject("placeholders.notes")}
                 rows={4}
               />
             </div>

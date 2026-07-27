@@ -16,15 +16,15 @@ import { useCompanyDataInfo, useProjectData, useClientProjects } from "@/modules
 import { useQuery } from "@tanstack/react-query";
 import { invoiceApi } from "../api/invoices.api";
 
-const editInvoiceSchema = z.object({
+const getEditInvoiceSchema = (tCommon: any) => z.object({
   company_id: z.coerce.number().optional(),
-  client_id: z.coerce.number().min(1, "Client is required"),
-  project_id: z.coerce.number().min(1, "Project is required"),
-  currency_id: z.coerce.number().min(1, "Currency is required"),
-  amount: z.coerce.number().min(1, "Amount is required"),
-  status: z.string().min(1, "Status is required"),
-  invoice_date: z.string().min(1, "Invoice date is required"),
-  due_date: z.string().min(1, "Due date is required"),
+  client_id: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v >= 1, { message: tCommon("validation.required") }),
+  project_id: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v >= 1, { message: tCommon("validation.required") }),
+  currency_id: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v >= 1, { message: tCommon("validation.required") }),
+  amount: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v > 0, { message: tCommon("validation.required") }),
+  status: z.string().min(1, tCommon("validation.required")),
+  invoice_date: z.string().min(1, tCommon("validation.required")),
+  due_date: z.string().min(1, tCommon("validation.required")),
 }).superRefine((data, ctx) => {
   if (data.invoice_date && data.due_date) {
     if (new Date(data.invoice_date) > new Date(data.due_date)) {
@@ -37,7 +37,7 @@ const editInvoiceSchema = z.object({
   }
 });
 
-type FormValues = z.infer<typeof editInvoiceSchema>;
+type FormValues = z.infer<ReturnType<typeof getEditInvoiceSchema>>;
 
 interface EditInvoiceModalProps {
   isOpen: boolean;
@@ -64,7 +64,7 @@ export function EditInvoiceModal({
   const tCommon = useTranslations("common");
   
   const form = useForm<FormValues>({
-    resolver: zodResolver(editInvoiceSchema) as any,
+    resolver: zodResolver(getEditInvoiceSchema(tCommon)) as any,
     mode: "onSubmit",
     defaultValues: {
       company_id: Number(invoice.company_id) || undefined,

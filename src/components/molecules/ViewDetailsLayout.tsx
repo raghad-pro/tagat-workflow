@@ -19,18 +19,18 @@ const STATUS_CONFIG: Record<string, { bg: string; color: string; dot: string }> 
   cancelled: { bg: "rgba(239,68,68,0.10)", color: "var(--color-error)", dot: "#ef4444" },
 };
 
-export function StatusPill({ status }: { status: PivotStatus }) {
+export function StatusPill({ status, label }: { status: PivotStatus; label?: string }) {
   if (!status) return null;
   const statusKey = status.toLowerCase();
   const cfg = STATUS_CONFIG[statusKey] ?? STATUS_CONFIG.pending;
-  const label = status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ");
+  const displayLabel = label ?? (status.charAt(0).toUpperCase() + status.slice(1).replace("-", " "));
   return (
     <span
       className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
       style={{ background: cfg.bg, color: cfg.color }}
     >
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.dot }} />
-      {label}
+      {displayLabel}
     </span>
   );
 }

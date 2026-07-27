@@ -15,26 +15,27 @@ import { useProjectEmployees } from "../hooks/useTasks";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { useTranslations } from "next-intl";
 
-const getTaskSchema = (t: any, isSuperAdmin: boolean, isEmployee: boolean) =>
+const getTaskSchema = (t: any, tCommon: any, isSuperAdmin: boolean, isEmployee: boolean) =>
   z
     .object({
       company: !isSuperAdmin
         ? z.string().optional()
-        : z.string().min(1, t("companyRequired") || "Company is required"),
+        : z.string().min(1, tCommon("validation.required")),
       project: z
         .string()
-        .min(1, t("projectRequired"))
-        .refine((val) => val !== "no-data", t("projectRequired")),
-      employee: isEmployee
-        ? z.string().optional()
+        .min(1, tCommon("validation.required"))
+        .refine((val) => val !== "no-data", tCommon("validation.required")),
+      employee: isEmployee 
+        ? z.string().optional() 
         : z
           .string()
-          .min(1, t("employeeRequired"))
-          .refine((val) => val !== "no-data", t("employeeRequired")),
-      title: z.string().min(2, "Title is required"),
-      start: z.string().min(1, "Start time is required"),
-      end: z.string().min(1, "End time is required"),
+          .min(1, tCommon("validation.required"))
+          .refine((val) => val !== "no-data", tCommon("validation.required")),
+      title: z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+      start: z.string().min(1, tCommon("validation.required")),
+      end: z.string().min(1, tCommon("validation.required")),
       duration: z.string().optional(),
+      status: z.string().min(1, tCommon("validation.required")),
       notes: z.string().optional(),
     })
     .superRefine((data, ctx) => {
@@ -81,8 +82,10 @@ export default function EditTaskModal({
   const isSuperAdmin = user?.role === "super_admin";
   const isEmployee = user?.role === "employee";
 
+  const tCommon = useTranslations("common");
+
   const form = useForm<FormValues>({
-    resolver: zodResolver(getTaskSchema(t, isSuperAdmin, isEmployee)),
+    resolver: zodResolver(getTaskSchema(t, tCommon, isSuperAdmin, isEmployee)),
     mode: "onSubmit",
     defaultValues: {
       company: "",
@@ -92,6 +95,7 @@ export default function EditTaskModal({
       start: "",
       end: "",
       duration: "",
+      status: "pending",
       notes: "",
     },
   });
@@ -235,6 +239,7 @@ export default function EditTaskModal({
       start: formatTime(data.start_time ?? data.start),
       end: formatTime(data.end_time ?? data.end),
       duration: data.duration ?? "0",
+      status: data.status ?? "pending",
       notes: data.description ?? "",
     });
   }, [data, isOpen, form]);
@@ -354,7 +359,7 @@ export default function EditTaskModal({
                   control={form.control}
                   name="title"
                   label={t("columns.title") || "Title"}
-                  placeholder="Enter task title"
+                  placeholder={t("columns.title") || "Enter task title"}
                   required
                   icon={Briefcase}
                 />
@@ -395,8 +400,8 @@ export default function EditTaskModal({
                 <TextAreaField
                   control={form.control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Enter any notes here..."
+                  label={t("labels.description") || "Notes"}
+                  placeholder=""
                 />
               </div>
             </div>

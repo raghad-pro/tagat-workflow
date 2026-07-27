@@ -5,6 +5,7 @@ import { profileApi, UpdateProfilePayload, UpdatePasswordPayload } from "../api/
 import { useAuth } from "@/providers/AuthProvider";
 import type { Role } from "@/modules/auth/types/auth.types";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 export const useProfile = () => {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ export const useUpdateProfile = () => {
   const { user, setUser } = useAuth();
   const role = (user?.role ?? "super_admin") as Role;
   const queryClient = useQueryClient();
+  const t = useTranslations("profile");
 
   return useMutation({
     mutationFn: (payload: UpdateProfilePayload) =>
@@ -31,10 +33,10 @@ export const useUpdateProfile = () => {
       if (user && res?.name) {
         setUser({ ...user, name: res.name });
       }
-      toast.success("Profile updated successfully");
+      toast.success(t("messages.updateSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to update profile");
+      toast.error(err?.response?.data?.message || t("messages.updateError"));
     },
   });
 };
@@ -42,15 +44,16 @@ export const useUpdateProfile = () => {
 export const useUpdatePassword = () => {
   const { user } = useAuth();
   const role = (user?.role ?? "super_admin") as Role;
+  const t = useTranslations("profile");
 
   return useMutation({
     mutationFn: (payload: UpdatePasswordPayload) =>
       profileApi.updatePassword(role, payload),
     onSuccess: () => {
-      toast.success("Password changed successfully");
+      toast.success(t("messages.passwordSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to change password");
+      toast.error(err?.response?.data?.message || t("messages.passwordError"));
     },
   });
 };
@@ -58,15 +61,16 @@ export const useUpdatePassword = () => {
 export const useDeleteAccount = () => {
   const { user, logout } = useAuth();
   const role = (user?.role ?? "super_admin") as Role;
+  const t = useTranslations("profile");
 
   return useMutation({
     mutationFn: () => profileApi.deleteAccount(role),
     onSuccess: () => {
-      toast.success("Account deleted");
+      toast.success(t("messages.deleteSuccess"));
       logout();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to delete account");
+      toast.error(err?.response?.data?.message || t("messages.deleteError"));
     },
   });
 };

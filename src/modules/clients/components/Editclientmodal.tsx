@@ -5,6 +5,7 @@ import { ActionModal } from "@/components/molecules/ActionModal";
 import { Text } from "@/components/atoms/Text";
 import { ClientAvatar } from "@/components/atoms/Clientavatar";
 import type { UpdateClientStatusRequest } from "@/modules/clients/types/clients.types";
+import { useTranslations } from "next-intl";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type PivotStatus = "pending" | "approved" | "rejected" | "active";
@@ -55,6 +56,7 @@ export function EditClientModal({
   isCompanyAdmin = false,
   userCompanyId,
 }: EditClientModalProps) {
+  const t = useTranslations("client");
   const [selectedCompanyId, setSelectedCompanyId] = React.useState<number | null>(null);
   const [selectedStatus, setSelectedStatus]       = React.useState<PivotStatus>("pending");
 
@@ -86,10 +88,10 @@ export function EditClientModal({
     <ActionModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Update Client Status"
+      title={t("updateStatus")}
       mode="edit"
       size="md"
-      saveLabel="Update Status"
+      saveLabel={t("updateStatusBtn")}
       isLoading={isPending}
       onSubmit={handleSubmit}
     >
@@ -110,7 +112,7 @@ export function EditClientModal({
         {/* Company selector — super_admin + more than one company */}
         {!isCompanyAdmin && companies.length > 1 && (
           <div className="flex flex-col gap-2">
-            <Text size="sm" weight="bold" tag="p">Select Company</Text>
+            <Text size="sm" weight="bold" tag="p">{t("selectCompany")}</Text>
             <div className="flex flex-col gap-2">
               {companies.map((c) => (
                 <button
@@ -144,7 +146,7 @@ export function EditClientModal({
                       color:      STATUS_OPTIONS.find((s) => s.value === c.pivot.status)?.color,
                     }}
                   >
-                    {c.pivot.status}
+                    {t(`status.${c.pivot.status}`) || c.pivot.status}
                   </span>
                 </button>
               ))}
@@ -154,7 +156,7 @@ export function EditClientModal({
 
         {/* Status selector */}
         <div className="flex flex-col gap-2">
-          <Text size="sm" weight="bold" tag="p">New Status</Text>
+          <Text size="sm" weight="bold" tag="p">{t("newStatus")}</Text>
           <div className="grid grid-cols-3 gap-2">
             {STATUS_OPTIONS.map((opt) => {
               const isSelected = selectedStatus === opt.value;
@@ -176,7 +178,7 @@ export function EditClientModal({
                     tag="span"
                     style={{ color: isSelected ? opt.color : undefined }}
                   >
-                    {opt.label}
+                    {t(`status.${opt.value}`) || opt.label}
                   </Text>
                 </button>
               );

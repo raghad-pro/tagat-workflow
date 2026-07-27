@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 
 export function ViewTaskModal({ isOpen, onClose, data }: { isOpen: boolean; onClose: () => void; data: Task | null }) {
-  const t = useTranslations("common");
+  const t = useTranslations("task");
   const { user } = useAuth();
   const isEmployee = user?.role === "employee";
   
@@ -74,61 +74,64 @@ export function ViewTaskModal({ isOpen, onClose, data }: { isOpen: boolean; onCl
     <ViewDetailsLayout
       isOpen={isOpen}
       onClose={onClose}
-      title={t("viewTaskTitle") || "Task Details"}
+      title={t("viewTaskTitle")}
       avatarName={data.title}
       headerTitle={data.title || "Task"}
       headerSubtitle={projectName}
     >
-      <InfoRow label="Project">
+      <InfoRow label={t("labels.project")}>
         <Text size="sm" tag="span">{projectName}</Text>
       </InfoRow>
 
-      <InfoRow label="Company">
+      <InfoRow label={t("labels.company")}>
         <Text size="sm" tag="span">{companyName}</Text>
       </InfoRow>
 
       {!isEmployee && (
-        <InfoRow label="Employee">
+        <InfoRow label={t("labels.employee")}>
           <Text size="sm" tag="span">{employeeName}</Text>
         </InfoRow>
       )}
 
-      <InfoRow label="Status">
+      <InfoRow label={t("labels.status")}>
         {(data as any).status ? (
-          <StatusBadge status={(data as any).status as any} />
+          <StatusBadge 
+            status={(data as any).status as any} 
+            label={t(`statusOptions.${(data as any).status}`) !== `statusOptions.${(data as any).status}` ? t(`statusOptions.${(data as any).status}`) : undefined}
+          />
         ) : (
           <span className="ds-text-main">-</span>
         )}
       </InfoRow>
 
-      <InfoRow label="Date">
+      <InfoRow label={t("labels.date")}>
         <Text size="sm" tag="span">{startDate}</Text>
       </InfoRow>
 
-      <InfoRow label="Start">
+      <InfoRow label={t("labels.start")}>
         <Text size="sm" tag="span">{startTime}</Text>
       </InfoRow>
 
-      <InfoRow label="End">
+      <InfoRow label={t("labels.end")}>
         <Text size="sm" tag="span">{endTime}</Text>
       </InfoRow>
 
-      <InfoRow label="Duration">
+      <InfoRow label={t("labels.duration")}>
         <Text size="sm" tag="span">{data.duration || "-"}</Text>
       </InfoRow>
 
-      <InfoRow label="Financial">
+      <InfoRow label={t("labels.financial")}>
         <Text size="sm" tag="span">{totalCostDisplay}</Text>
       </InfoRow>
 
-      <InfoRow label="Created At">
+      <InfoRow label={t("labels.createdAt")}>
         <Text size="sm" tag="span">{((data as any).created_at || (data as any).createdAt || "-").replace('T', ' ').substring(0, 19)}</Text>
       </InfoRow>
 
       {((data as any).description || (data as any).notes) && (
         <div className="flex flex-col gap-2 mt-4 pt-4 border-t ds-border-form">
           <Text size="sm" color="gray-200" tag="span" className="font-bold text-[var(--color-primary)]">
-            Description
+            {t("labels.description")}
           </Text>
           <div className="ds-text-main p-3 rounded-lg bg-[var(--color-bg-primary-200)] w-full text-sm">
             {(data as any).description || (data as any).notes}

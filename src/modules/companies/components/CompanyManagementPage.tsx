@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Building2, CheckCircle2, Clock, Plus, Eye, Edit2, Trash2 } from "lucide-react";
+import { Building2, CheckCircle2, XCircle, Plus, Eye, Edit2, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { StatsGrid, StatItem } from "@/components/molecules/Statsgrid";
 import { SearchFilterBar, FilterConfig } from "@/components/molecules/Searchfilterbar";
@@ -70,12 +70,13 @@ export function CompanyManagementPage() {
     return allCompanies.filter((comp: any) => {
       // Status filter
       if (status !== "all") {
-        const compStatus = (comp.status ?? "").toLowerCase();
+        const isActive = comp.admin?.is_active === 1;
+        const compStatus = isActive ? "active" : "inactive";
         const target = status.toLowerCase();
-        const isApprovedActive = (target === "approved" || target === "active") && (compStatus === "approved" || compStatus === "active");
-        if (compStatus !== target && !isApprovedActive) {
-          return false;
-        }
+        
+        // Let target "active" match "active", and target "pending" or "inactive" match "inactive"
+        if (target === "active" && !isActive) return false;
+        if ((target === "pending" || target === "inactive") && isActive) return false;
       }
       // Search filter
       if (search.trim()) {
@@ -113,7 +114,7 @@ export function CompanyManagementPage() {
     return [
       { icon: Building2,    value: apiStats.total || 0,   label: t("stats.total"), iconColor: "#0ea5e9", iconBg: "rgba(14,165,233,0.12)" },
       { icon: CheckCircle2, value: apiStats.active || 0,  label: t("stats.active"),  iconColor: "#22c55e", iconBg: "rgba(34,197,94,0.12)"  },
-      { icon: Clock,        value: apiStats.pending || 0, label: t("stats.pending"), iconColor: "#f59e0b", iconBg: "rgba(251,191,36,0.12)" },
+      { icon: XCircle,      value: apiStats.pending || 0, label: t("stats.inactive"), iconColor: "#dc2626", iconBg: "rgba(239,68,68,0.10)" },
     ];
   }, [t, apiStats]);
 
@@ -150,7 +151,11 @@ export function CompanyManagementPage() {
     {
       key: "status",
       header: t("columns.status"),
-      render: (row) => <StatusBadge status={row.status} withDot />,
+      render: (row) => {
+        const isActive = row.admin?.is_active === 1;
+        const statusKey = isActive ? "active" : "inactive";
+        return <StatusBadge status={statusKey} label={t(`statusOptions.${statusKey}`)} withDot />;
+      }
     },
   ], [t]);
 
@@ -167,7 +172,7 @@ export function CompanyManagementPage() {
       options: [
         { value: "all",       label: tCommon("status")  },
         { value: "active",    label: t("filter.active")      },
-        { value: "pending",   label: t("filter.pending")     },
+        { value: "inactive",  label: t("filter.inactive")    },
       ],
     },
   ], [status, handleStatus, t, tCommon]);

@@ -10,15 +10,15 @@ import { TextField } from "@/components/molecules/FormFields";
 import { Form } from "@/components/ui/form";
 import { User, FileText, Briefcase, Building } from "lucide-react";
 
-const addContractSchema = z.object({
-  customerName: z.string().min(2, "Customer Name is required"),
-  initial: z.string().min(1, "Initial value is required"),
-  title: z.string().min(2, "Title is required"),
-  project: z.string().min(1, "Project is required"),
-  company: z.string().min(1, "Company is required"),
+const getAddContractSchema = (tCommon: any) => z.object({
+  customerName: z.string().min(2, tCommon("validation.required")),
+  initial: z.string().min(1, tCommon("validation.required")),
+  title: z.string().min(2, tCommon("validation.required")),
+  project: z.string().min(1, tCommon("validation.required")),
+  company: z.string().min(1, tCommon("validation.required")),
 });
 
-type FormValues = z.infer<typeof addContractSchema>;
+type FormValues = z.infer<ReturnType<typeof getAddContractSchema>>;
 
 export default function AddContractModal({ 
   isOpen, 
@@ -32,8 +32,9 @@ export default function AddContractModal({
   isPending?: boolean;
 }) {
   const t = useTranslations("contract");
+  const tCommon = useTranslations("common");
   const form = useForm<FormValues>({
-    resolver: zodResolver(addContractSchema),
+    resolver: zodResolver(getAddContractSchema(tCommon)),
     mode: "onSubmit",
     defaultValues: { customerName: "", initial: "", title: "", project: "", company: "" },
   });

@@ -11,15 +11,15 @@ import { Form } from "@/components/ui/form";
 import { User, FileText, Briefcase, Building } from "lucide-react";
 import type { Contract } from "../types/contracts.types";
 
-const editContractSchema = z.object({
-  customerName: z.string().min(2, "Customer Name is required"),
-  initial: z.string().min(1, "Initial value is required"),
-  title: z.string().min(2, "Title is required"),
-  project: z.string().min(1, "Project is required"),
-  company: z.string().min(1, "Company is required"),
+const getEditContractSchema = (tCommon: any) => z.object({
+  customerName: z.string().min(2, tCommon("validation.required")),
+  initial: z.string().min(1, tCommon("validation.required")),
+  title: z.string().min(2, tCommon("validation.required")),
+  project: z.string().min(1, tCommon("validation.required")),
+  company: z.string().min(1, tCommon("validation.required")),
 });
 
-type FormValues = z.infer<typeof editContractSchema>;
+type FormValues = z.infer<ReturnType<typeof getEditContractSchema>>;
 
 export default function EditContractModal({ 
   isOpen, 
@@ -35,8 +35,9 @@ export default function EditContractModal({
   isPending?: boolean;
 }) {
   const t = useTranslations("contract");
+  const tCommon = useTranslations("common");
   const form = useForm<FormValues>({
-    resolver: zodResolver(editContractSchema),
+    resolver: zodResolver(getEditContractSchema(tCommon)),
     mode: "onSubmit",
     defaultValues: { customerName: "", initial: "", title: "", project: "", company: "" },
   });
