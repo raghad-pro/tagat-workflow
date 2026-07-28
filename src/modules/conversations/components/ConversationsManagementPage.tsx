@@ -13,6 +13,15 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import CreateConversationModal from "./CreateConversationModal";
+import GroupMembersModal from "./GroupMembersModal";
+import EditGroupModal from "./EditGroupModal";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+const COMMON_EMOJIS = ["😀","😂","🥰","😎","🤔","😭","👍","🙏","🔥","❤️","🎉","✨"];
 
 export default function ConversationsManagementPage() {
   const { user } = useAuth();
@@ -22,6 +31,8 @@ export default function ConversationsManagementPage() {
   const [activeConversationId, setActiveConversationId] = useState<number | string | null>(null);
   const [messageBody, setMessageBody] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isGroupMembersModalOpen, setIsGroupMembersModalOpen] = useState(false);
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
 
   const {
     data: conversationsRes,
@@ -66,19 +77,36 @@ export default function ConversationsManagementPage() {
     return "Conversation";
   };
 
-  const handleStartNewChat = async (userId: number | string, name: string) => {
-    const toastId = toast.loading(`جاري بدء المحادثة مع ${name}...`);
+  const getConversationImage = (conv: any) => {
+    if (!conv) return null;
+    if (conv.image) return conv.image;
+    if (conv.users && Array.isArray(conv.users)) {
+      const otherUser = conv.users.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
+      if (otherUser?.image) return otherUser.image;
+    }
+    if (conv.members && Array.isArray(conv.members)) {
+      const otherUser = conv.members.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
+      if (otherUser?.image) return otherUser.image;
+    }
+    return null;
+  };
+
+  const handleStartNewChat = async (userIdsParam: (number | string)[], type: string = "private", titleParam?: string, imageFile?: File) => {
+    const userIds = userIdsParam.map(id => Number(id)).filter(id => !isNaN(id) && id > 0);
+    const title = titleParam || "Chat";
+    const isGroup = type === "group";
+    const toastId = toast.loading(isGroup ? `جاري إنشاء المجموعة ${title}...` : `جاري بدء المحادثة مع ${title}...`);
+    
     try {
-      console.log("Starting chat with:", { userId, name });
-      const numericUserId = Number(userId);
-      const targetUserId = !isNaN(numericUserId) && numericUserId > 0 ? numericUserId : userId;
+      console.log("Starting chat with:", { userIds, title, type });
 
       const payload = {
-        users: [targetUserId],
-        type: "private", // Usually one-on-one chats are 'private'
-        title: name || "Chat",
-        name: name || "Chat",
+        users: userIds,
+        type: type,
+        title: title,
+        name: title,
       };
+      // If we needed to support imageFile, we might use FormData, but for now we send JSON
       console.log("Create conversation payload:", payload);
 
       const res = await createConversation(payload as any);
@@ -103,7 +131,7 @@ export default function ConversationsManagementPage() {
     if (!messageBody.trim() || !activeConversationId) return;
 
     try {
-      await sendMessage({ id: activeConversationId, body: messageBody });
+      await sendMessage({ id: activeConversationId, message: messageBody, body: messageBody });
       setMessageBody("");
     } catch (err) {
       console.error("Failed to send message", err);
@@ -146,10 +174,9 @@ export default function ConversationsManagementPage() {
             <div className="p-4 text-center text-sm text-slate-500">No conversations found.</div>
           ) : (
             conversations.map((conv: any, index: number) => {
-              const isActive = activeConversationId === conv.id || (index === 0 && !activeConversationId); 
-              if (index === 0 && !activeConversationId) {
-                setTimeout(() => setActiveConversationId(conv.id), 0);
-              }
+              const isActive = activeConversationId === conv.id;
+              const convTitle = getConversationTitle(conv);
+              const convImage = getConversationImage(conv);
               return (
                 <div
                   key={conv.id}
@@ -160,8 +187,8 @@ export default function ConversationsManagementPage() {
                 >
                   <div className="relative shrink-0 mt-0.5">
                     <img 
-                      src={conv.image || `https://ui-avatars.com/api/?name=${conv.name}&background=random`} 
-                      alt={conv.name}
+                      src={convImage || `https://ui-avatars.com/api/?name=${convTitle}&background=random`} 
+                      alt={convTitle}
                       className="w-11 h-11 rounded-full object-cover"
                     />
                     {conv.is_online && (
@@ -172,7 +199,7 @@ export default function ConversationsManagementPage() {
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex justify-between items-center mb-0.5">
                       <h4 className={`font-semibold text-[14px] truncate ${isActive ? 'text-[#00d0d4]' : 'text-slate-800'}`}>
-                        {getConversationTitle(conv)}
+                        {convTitle}
                       </h4>
                       <span className="text-[11px] text-slate-400 shrink-0 ml-2 font-medium">
                         {conv.last_message_time || ""}
@@ -218,24 +245,30 @@ export default function ConversationsManagementPage() {
       {/* Main Area: Chat Window */}
       <div className="flex-1 flex flex-col bg-white relative">
         {activeConversationId ? (
-          <>
-            {/* Chat Header */}
-            <div className="h-[80px] px-8 border-b border-slate-100 flex justify-between items-center bg-white/60 backdrop-blur-md z-10 sticky top-0">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <img 
-                    src={activeConversation?.image || `https://ui-avatars.com/api/?name=${getConversationTitle(activeConversation)}&background=random`} 
-                    alt="Chat" 
-                    className="w-11 h-11 rounded-full object-cover shadow-sm" 
-                  />
-                  {activeConversation?.is_online !== false && (
-                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-bold text-[15px] text-slate-800 leading-tight">
-                    {getConversationTitle(activeConversation)}
-                  </h3>
+          (() => {
+            const currentConv = activeConversation || conversations.find((c: any) => c.id === activeConversationId);
+            const currentTitle = getConversationTitle(currentConv);
+            const currentImage = getConversationImage(currentConv);
+            
+            return (
+              <>
+                {/* Chat Header */}
+                <div className="h-[80px] px-8 border-b border-slate-100 flex justify-between items-center bg-white/60 backdrop-blur-md z-10 sticky top-0">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <img 
+                        src={currentImage || `https://ui-avatars.com/api/?name=${currentTitle}&background=random`} 
+                        alt={currentTitle} 
+                        className="w-11 h-11 rounded-full object-cover shadow-sm" 
+                      />
+                      {currentConv?.is_online !== false && (
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[15px] text-slate-800 leading-tight">
+                        {currentTitle}
+                      </h3>
                   <div className="flex items-center gap-1.5 mt-1">
                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
                     <p className="text-[12px] text-slate-500 font-medium">Active Chat</p>
@@ -244,10 +277,26 @@ export default function ConversationsManagementPage() {
               </div>
               
               <div className="flex items-center gap-2">
-                <Button variant="ghost" className="h-9 px-4 rounded-full bg-[#eaf9f9] text-[#00d0d4] hover:bg-[#d4f2f3] hover:text-[#00b0b4] text-[13px] font-bold gap-2 border-none">
-                  <Users size={16} strokeWidth={2.5} />
-                  Members
-                </Button>
+                {currentConv?.is_group && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setIsGroupMembersModalOpen(true)}
+                      className="h-9 px-4 rounded-full bg-[#eaf9f9] text-[#00d0d4] hover:bg-[#d4f2f3] hover:text-[#00b0b4] text-[13px] font-bold gap-2 border-none"
+                    >
+                      <Users size={16} strokeWidth={2.5} />
+                      Members
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setIsEditGroupModalOpen(true)}
+                      className="h-9 px-4 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 text-[13px] font-bold gap-2 border-none"
+                    >
+                      <Edit2 size={16} strokeWidth={2.5} />
+                      Edit
+                    </Button>
+                  </>
+                )}
                 <div className="flex items-center gap-1 ml-4 text-slate-400">
                   <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-50 hover:text-slate-600">
                     <MoreHorizontal size={18} strokeWidth={2} />
@@ -263,20 +312,24 @@ export default function ConversationsManagementPage() {
               ) : activeConversation?.messages?.length > 0 ? (
                 // Real messages from API
                 activeConversation.messages.map((msg: any) => {
-                  const isMine = msg.user_id === user?.id;
+                  const msgUserId = msg.user_id || msg.sender_id;
+                  const isMine = msgUserId === user?.id;
+                  const msgText = msg.message || msg.body;
+                  const msgUserName = msg.sender?.name || msg.user?.name || (isMine ? user?.name : "User");
+                  
                   return (
                     <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group`}>
                       <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[65%]`}>
                         <span className="text-[13px] text-[#00d0d4] mb-1.5 font-bold">
-                          {msg.user?.name || (isMine ? user?.name : "User")}
+                          {msgUserName}
                         </span>
                         <div className={`relative px-5 py-3.5 ${isMine ? "bg-[#eaf9f9] text-slate-800 rounded-2xl rounded-tr-sm" : "bg-[#f6f7f9] text-slate-800 rounded-2xl rounded-tl-sm"} text-[14px] leading-relaxed shadow-sm`}>
-                          {msg.attachment && (
+                          {(msg.attachment || (msg.attachments && msg.attachments.length > 0)) && (
                             <div className="w-64 h-40 bg-slate-100 rounded-xl mb-3 flex items-center justify-center border border-slate-200">
                               <ImageIcon size={32} className="text-slate-400" />
                             </div>
                           )}
-                          <p>{msg.body}</p>
+                          <p>{msgText}</p>
                         </div>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-[11px] text-slate-400 font-medium">
@@ -311,15 +364,40 @@ export default function ConversationsManagementPage() {
                     disabled={isSendingMessage}
                   />
                   <div className="flex items-center gap-4 text-slate-400 ml-2">
-                    <button type="button" className="hover:text-slate-600 transition-colors">
-                      <Smile size={20} strokeWidth={2} />
-                    </button>
-                    <button type="button" className="hover:text-slate-600 transition-colors">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button type="button" className="hover:text-slate-600 transition-colors" title="إدراج رمز تعبيري">
+                          <Smile size={20} strokeWidth={2} />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-2 bg-white rounded-xl shadow-lg border border-slate-100" align="end" sideOffset={12}>
+                        <div className="grid grid-cols-6 gap-2">
+                          {COMMON_EMOJIS.map(emoji => (
+                            <button 
+                              key={emoji}
+                              type="button"
+                              onClick={() => setMessageBody(prev => prev + emoji)}
+                              className="w-8 h-8 flex items-center justify-center hover:bg-slate-50 rounded-lg text-lg transition-colors"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-2 text-center border-t border-slate-50 pt-2">
+                          تلميح: يمكنك استخدام <kbd className="bg-slate-100 px-1 rounded">Win + .</kbd> أو <kbd className="bg-slate-100 px-1 rounded">Cmd + Ctrl + Space</kbd> للوحة الجهاز.
+                        </p>
+                      </PopoverContent>
+                    </Popover>
+
+                    <button type="button" onClick={() => document.getElementById('file-upload-input')?.click()} className="hover:text-slate-600 transition-colors" title="إرفاق ملف">
                       <Paperclip size={20} strokeWidth={2} />
                     </button>
-                    <button type="button" className="hover:text-slate-600 transition-colors">
+                    <button type="button" onClick={() => document.getElementById('image-upload-input')?.click()} className="hover:text-slate-600 transition-colors" title="إرفاق صورة">
                       <ImageIcon size={20} strokeWidth={2} />
                     </button>
+                    
+                    <input type="file" id="file-upload-input" className="hidden" />
+                    <input type="file" id="image-upload-input" accept="image/*" className="hidden" />
                   </div>
                 </div>
                 
@@ -333,6 +411,8 @@ export default function ConversationsManagementPage() {
               </form>
             </div>
           </>
+        );
+        })()
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-50/30">
             <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-[#00d0d4]">
@@ -352,6 +432,23 @@ export default function ConversationsManagementPage() {
         onStartChat={handleStartNewChat}
         isCreating={isCreating}
       />
+      
+      {/* Group Modals */}
+      {isGroupMembersModalOpen && activeConversation && (
+        <GroupMembersModal
+          isOpen={isGroupMembersModalOpen}
+          onClose={() => setIsGroupMembersModalOpen(false)}
+          conversation={activeConversation}
+        />
+      )}
+      
+      {isEditGroupModalOpen && activeConversation && (
+        <EditGroupModal
+          isOpen={isEditGroupModalOpen}
+          onClose={() => setIsEditGroupModalOpen(false)}
+          conversation={activeConversation}
+        />
+      )}
     </div>
   );
 }
