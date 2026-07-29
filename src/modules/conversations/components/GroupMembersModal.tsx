@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, UserPlus, UserMinus, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/providers/AuthProvider";
+import { useConversations } from "../hooks/useConversations";
+import toast from "react-hot-toast";
 
 interface GroupMembersModalProps {
   isOpen: boolean;
@@ -13,6 +16,9 @@ interface GroupMembersModalProps {
 
 export default function GroupMembersModal({ isOpen, onClose, conversation }: GroupMembersModalProps) {
   const [mounted, setMounted] = useState(false);
+  const { user } = useAuth();
+  const role = user?.role || "company";
+  const { removeMember, isRemovingMember } = useConversations(role);
 
   useEffect(() => {
     setMounted(true);
@@ -20,17 +26,35 @@ export default function GroupMembersModal({ isOpen, onClose, conversation }: Gro
 
   if (!isOpen || !mounted) return null;
 
-  const members = conversation?.users || conversation?.members || [];
+  const members = 
+    (Array.isArray(conversation?.users) && conversation.users.length > 0 ? conversation.users : null) ||
+    (Array.isArray(conversation?.members) && conversation.members.length > 0 ? conversation.members : null) ||
+    (Array.isArray(conversation?.participants) && conversation.participants.length > 0 ? conversation.participants : null) ||
+    (Array.isArray(conversation?.group_members) && conversation.group_members.length > 0 ? conversation.group_members : null) ||
+    (Array.isArray(conversation?.data?.users) ? conversation.data.users : null) ||
+    (Array.isArray(conversation?.data?.members) ? conversation.data.members : null) ||
+    [];
 
   const getRoleBadge = (pivotRole: string) => {
-    switch (pivotRole) {
+    switch (String(pivotRole).toLowerCase()) {
       case 'owner':
       case 'admin':
+      case 'company':
         return <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold">Owner</span>;
       case 'moderator':
         return <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold">Moderator</span>;
       default:
         return <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full text-[10px] font-bold">Member</span>;
+    }
+  };
+
+  const handleRemove = async (memberId: number | string, name: string) => {
+    if (!conversation?.id || !memberId) return;
+    try {
+      await removeMember({ id: conversation.id, userId: memberId });
+      toast.success(`تم إزالة ${name} من المجموعة`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "فشل إزالة العضو");
     }
   };
 
@@ -61,41 +85,66 @@ export default function GroupMembersModal({ isOpen, onClose, conversation }: Gro
 
         {/* Member List */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <div className="space-y-4">
-            {members.map((member: any, idx: number) => {
-              const name = member.name || member.first_name || "User";
-              const pivotRole = member.pivot?.role || "member";
-              const bgColor = idx % 3 === 0 ? 'bg-orange-400' : idx % 3 === 1 ? 'bg-blue-400' : 'bg-purple-500';
+          {members.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-sm font-medium">
+              لا يوجد أعضاء في هذه المجموعة بعد.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {members.map((member: any, idx: number) => {
+                const memberId = member.id ?? member.user_id ?? member.user?.id ?? idx;
+                const name = 
+                  member.name || 
+                  member.user?.name || 
+                  member.first_name || 
+                  (member.user?.first_name ? `${member.user.first_name} ${member.user.last_name || ''}`.trim() : null) || 
+                  member.employee_name || 
+                  member.email || 
+                  member.user?.email || 
+                  "User";
 
-              return (
-                <div key={member.id} className="flex items-center justify-between py-2 group">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className={`w-[46px] h-[46px] rounded-full text-white font-bold flex items-center justify-center text-sm ${bgColor}`}>
-                        {name.substring(0, 2).toUpperCase()}
+                const image = member.image || member.avatar || member.user?.image || member.user?.avatar;
+                const pivotRole = member.pivot?.role || member.role || member.member_role || (idx === 0 ? "owner" : "member");
+                const bgColor = idx % 3 === 0 ? 'bg-orange-400' : idx % 3 === 1 ? 'bg-blue-400' : 'bg-purple-500';
+
+                return (
+                  <div key={memberId} className="flex items-center justify-between py-2 group">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        {image ? (
+                          <img src={image} alt={name} className="w-[46px] h-[46px] rounded-full object-cover shadow-sm" />
+                        ) : (
+                          <div className={`w-[46px] h-[46px] rounded-full text-white font-bold flex items-center justify-center text-sm ${bgColor}`}>
+                            {name.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-slate-800 dark:text-white text-[15px]">{name}</span>
+                        {getRoleBadge(pivotRole)}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-slate-800 dark:text-white text-[15px]">{name}</span>
-                      {getRoleBadge(pivotRole)}
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-1.5 px-4 h-9 rounded-full border border-slate-200 text-slate-600 text-[13px] font-bold hover:bg-slate-50 transition-colors">
-                      Member
-                      <ChevronDown size={14} className="text-slate-400" />
-                    </button>
-                    <button className="flex items-center gap-1.5 px-4 h-9 rounded-full border border-rose-100 text-rose-500 bg-rose-50/50 hover:bg-rose-50 text-[13px] font-bold transition-colors">
-                      <UserMinus size={14} />
-                      Remove
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button className="flex items-center gap-1.5 px-4 h-9 rounded-full border border-slate-200 text-slate-600 text-[13px] font-bold hover:bg-slate-50 transition-colors">
+                        Member
+                        <ChevronDown size={14} className="text-slate-400" />
+                      </button>
+                      <button 
+                        onClick={() => handleRemove(memberId, name)}
+                        disabled={isRemovingMember}
+                        className="flex items-center gap-1.5 px-4 h-9 rounded-full border border-rose-100 text-rose-500 bg-rose-50/50 hover:bg-rose-50 text-[13px] font-bold transition-colors disabled:opacity-50"
+                      >
+                        <UserMinus size={14} />
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
       </div>

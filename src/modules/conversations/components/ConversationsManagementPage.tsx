@@ -246,9 +246,18 @@ export default function ConversationsManagementPage() {
       <div className="flex-1 flex flex-col bg-white relative">
         {activeConversationId ? (
           (() => {
-            const currentConv = activeConversation || conversations.find((c: any) => c.id === activeConversationId);
+            const currentConv = activeConversation || activeConversationData?.data || activeConversationData || conversations.find((c: any) => c.id === activeConversationId);
             const currentTitle = getConversationTitle(currentConv);
             const currentImage = getConversationImage(currentConv);
+            const isGroup = Boolean(
+              currentConv?.is_group || 
+              currentConv?.type === 'group' || 
+              currentConv?.type === 'Group' || 
+              currentConv?.is_group_chat || 
+              (Array.isArray(currentConv?.members) && currentConv.members.length > 1) || 
+              (Array.isArray(currentConv?.users) && currentConv.users.length > 1) ||
+              (Array.isArray(currentConv?.participants) && currentConv.participants.length > 1)
+            );
             
             return (
               <>
@@ -271,13 +280,13 @@ export default function ConversationsManagementPage() {
                       </h3>
                   <div className="flex items-center gap-1.5 mt-1">
                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
-                    <p className="text-[12px] text-slate-500 font-medium">Active Chat</p>
+                    <p className="text-[12px] text-slate-500 font-medium">{isGroup ? "Group Chat" : "Active Chat"}</p>
                   </div>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
-                {currentConv?.is_group && (
+                {isGroup && (
                   <>
                     <Button 
                       variant="ghost" 
@@ -434,19 +443,19 @@ export default function ConversationsManagementPage() {
       />
       
       {/* Group Modals */}
-      {isGroupMembersModalOpen && activeConversation && (
+      {isGroupMembersModalOpen && (activeConversation || activeConversationData || conversations.find((c: any) => c.id === activeConversationId)) && (
         <GroupMembersModal
           isOpen={isGroupMembersModalOpen}
           onClose={() => setIsGroupMembersModalOpen(false)}
-          conversation={activeConversation}
+          conversation={activeConversation || activeConversationData?.data || activeConversationData || conversations.find((c: any) => c.id === activeConversationId)}
         />
       )}
       
-      {isEditGroupModalOpen && activeConversation && (
+      {isEditGroupModalOpen && (activeConversation || activeConversationData || conversations.find((c: any) => c.id === activeConversationId)) && (
         <EditGroupModal
           isOpen={isEditGroupModalOpen}
           onClose={() => setIsEditGroupModalOpen(false)}
-          conversation={activeConversation}
+          conversation={activeConversation || activeConversationData?.data || activeConversationData || conversations.find((c: any) => c.id === activeConversationId)}
         />
       )}
     </div>
