@@ -5,27 +5,28 @@ import { contractApi } from "../api/contracts.api";
 import type { Contract, ContractsQueryParams } from "../types/contracts.types";
 import toast from "react-hot-toast";
 
-export const useContracts = (params: ContractsQueryParams) => {
+export const useContracts = (role: string, params: ContractsQueryParams) => {
   return useQuery({
-    queryKey: ["contracts", params],
-    queryFn: () => contractApi.getAll(params),
+    queryKey: ["contracts", role, params],
+    queryFn: () => contractApi.getAll(role, params),
     placeholderData: keepPreviousData,
   });
 };
 
-export const useContractStats = () => {
+export const useContractStats = (role: string) => {
   return useQuery({
-    queryKey: ["contract-stats"],
-    queryFn: () => contractApi.getStats(),
+    queryKey: ["contract-stats", role],
+    queryFn: () => contractApi.getStats(role),
   });
 };
 
-export const useCreateContract = () => {
+export const useCreateContract = (role: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Omit<Contract, "id">) => contractApi.create(data),
+    mutationFn: (data: Omit<Contract, "id">) => contractApi.create(role, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["contract-stats"] });
       toast.success("تم إضافة العقد بنجاح");
     },
     onError: () => {
@@ -34,12 +35,13 @@ export const useCreateContract = () => {
   });
 };
 
-export const useUpdateContract = () => {
+export const useUpdateContract = (role: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<Contract> }) => contractApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Partial<Contract> }) => contractApi.update(role, id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["contract-stats"] });
       toast.success("تم تعديل العقد بنجاح");
     },
     onError: () => {
@@ -48,12 +50,13 @@ export const useUpdateContract = () => {
   });
 };
 
-export const useDeleteContract = () => {
+export const useDeleteContract = (role: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => contractApi.delete(id),
+    mutationFn: (id: number) => contractApi.delete(role, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["contract-stats"] });
       toast.success("تم حذف العقد بنجاح");
     },
     onError: () => {

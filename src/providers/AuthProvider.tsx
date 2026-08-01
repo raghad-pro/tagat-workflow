@@ -32,10 +32,19 @@ const AuthContext = createContext<AuthContextType>({
 
 // ─── Storage helpers ───────────────────────────────────────────────────────────
 const USER_KEY = "user";
+const USER_SCHEMA_KEY = "user_schema";
+/**
+ * Bumped when a fix changes how a cached user is derived. Sessions written by
+ * an older version are dropped so the user is re-read from the API instead of
+ * keeping a wrong value — v2 discards caches from before the role fix, which
+ * stored every super admin as "company".
+ */
+const USER_SCHEMA_VERSION = "2";
 
 function saveUser(u: User): void {
   try {
     localStorage.setItem(USER_KEY, JSON.stringify(u));
+    localStorage.setItem(USER_SCHEMA_KEY, USER_SCHEMA_VERSION);
   } catch {
     // localStorage unavailable (e.g. private browsing quota)
   }
@@ -43,6 +52,11 @@ function saveUser(u: User): void {
 
 function loadUser(): User | null {
   try {
+    if (localStorage.getItem(USER_SCHEMA_KEY) !== USER_SCHEMA_VERSION) {
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(USER_SCHEMA_KEY);
+      return null;
+    }
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
@@ -61,6 +75,7 @@ function loadUser(): User | null {
 function clearUser(): void {
   try {
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(USER_SCHEMA_KEY);
   } catch {
     // ignore
   }

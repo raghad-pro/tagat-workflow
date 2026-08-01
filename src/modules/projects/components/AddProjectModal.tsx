@@ -25,7 +25,7 @@ import { useEmployees } from "@/modules/employees/hooks/useEmployees";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
-const getProjectSchema = (isCompanyAdmin: boolean, tCommon: any) =>
+const getProjectSchema = (isCompanyAdmin: boolean, tCommon: any, tProject: any) =>
   z.object({
     title:     z.string().min(2, tCommon("validation.minLength", { min: 2 })),
     budget:    z.string().min(1, tCommon("validation.required")),
@@ -36,18 +36,25 @@ const getProjectSchema = (isCompanyAdmin: boolean, tCommon: any) =>
     status:    z.string().min(1, tCommon("validation.required")),
     currency:  z.string().min(1, tCommon("validation.required")).refine(val => val !== "no-data", { message: tCommon("validation.required") }),
     employees: z.array(z.string()).min(1, tCommon("validation.required")).refine(val => !val.includes("no-data"), { message: tCommon("validation.required") }),
+    leader_id: z.string().min(1, tCommon("validation.required")),
     notes:     z.string().optional(),
+  })
+  // The lead must be one of the assigned members — picking members and then
+  // removing the one who leads them would otherwise submit a dangling id.
+  .refine((v) => !v.leader_id || v.employees.includes(v.leader_id), {
+    path: ["leader_id"],
+    message: tProject("validation.leaderNotMember"),
   });
 
 type FormValues = z.infer<ReturnType<typeof getProjectSchema>>;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// Only these three pass the API's status validation — `on_hold` is rejected.
 const getStatusOptions = (t: any) => [
   { value: "pending",     label: t("statusOptions.pending")     },
   { value: "in_progress", label: t("statusOptions.in_progress") },
   { value: "completed",   label: t("statusOptions.completed")   },
-  { value: "on_hold",     label: t("statusOptions.on_hold")     },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -59,7 +66,10 @@ export interface AddProjectFormValues {
   client_id: string;
   status:    string;
   currency:  string;
+  /** User ids — the API resolves `employees[]` against the users table. */
   employees: string[];
+  /** User id of the project lead; must be one of `employees`. */
+  leader_id: string;
   notes?:    string;
 }
 
@@ -87,7 +97,7 @@ export default function AddProjectModal({
   const STATUS_OPTIONS = getStatusOptions(tProject);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(getProjectSchema(isCompanyAdmin, tCommon)),
+    resolver: zodResolver(getProjectSchema(isCompanyAdmin, tCommon, tProject)),
     mode: "onSubmit",
     defaultValues: {
       title:     "",
@@ -97,6 +107,7 @@ export default function AddProjectModal({
       status:    "",
       currency:  "",
       employees: [],
+      leader_id: "",
       notes:     "",
     },
   });
@@ -112,6 +123,7 @@ export default function AddProjectModal({
         status:    "",
         currency:  "",
         employees: [],
+        leader_id: "",
         notes:     "",
       });
     }
@@ -153,15 +165,33 @@ export default function AddProjectModal({
   let employeeOptions = (companyIdForQuery || isCompanyAdmin)
     ? allEmployeesList
         .filter((e: any) => isCompanyAdmin || e.company_id == companyIdForQuery || e.company?.id == companyIdForQuery)
+        // The API validates `employees[]` and `leader_id` against the *users*
+        // table, so the option value must be the user id. Sending the employee
+        // record id silently assigned whoever happened to own that user id.
         .map((e: any) => ({
-          value: e.id.toString(),
-          label: e.user?.name ?? e.name ?? e.employee_name ?? (e.user?.first_name ? `${e.user.first_name} ${e.user.last_name ?? ""}`.trim() : null) ?? e.id.toString(),
+          value: String(e.user_id ?? e.user?.id ?? ""),
+          label: e.user?.name ?? e.name ?? e.employee_name ?? (e.user?.first_name ? `${e.user.first_name} ${e.user.last_name ?? ""}`.trim() : null) ?? String(e.user_id ?? e.id),
         }))
+        .filter((o: any) => o.value !== "")
     : [];
 
   if (companyIdForQuery && employeeOptions.length === 0) {
     employeeOptions = [{ value: "no-data", label: tCommon("noEmployees") }];
   }
+
+  // ── Project lead — chosen from the members assigned above ────────────────
+  const selectedEmployees: string[] = form.watch("employees") ?? [];
+  const leaderOptions = employeeOptions.filter(
+    (o: any) => o.value !== "no-data" && selectedEmployees.includes(o.value)
+  );
+
+  // Drop the lead if they are removed from the member list.
+  const selectedLeader = form.watch("leader_id");
+  useEffect(() => {
+    if (selectedLeader && !selectedEmployees.includes(selectedLeader)) {
+      form.setValue("leader_id", "");
+    }
+  }, [selectedEmployees, selectedLeader, form]);
 
   // GET /companies/{id}/currencies
   const { data: currenciesList = [] } = useCompanyCurrenciesByCompany(companyIdForQuery);
@@ -180,6 +210,7 @@ export default function AddProjectModal({
       form.setValue("client_id", "");
       form.setValue("currency",  "");
       form.setValue("employees", []);
+      form.setValue("leader_id", "");
     }
   }, [selectedCompany]);  
 
@@ -307,6 +338,21 @@ export default function AddProjectModal({
                         : tProject("placeholders.employees")
                     }
                     disabled={employeeOptions[0]?.value === "no-data"}
+                  />
+
+                  {/* Project lead — restricted to the members chosen above */}
+                  <SelectField
+                    control={form.control}
+                    name="leader_id"
+                    label={tProject("labels.leader")}
+                    options={leaderOptions}
+                    required
+                    placeholder={
+                      leaderOptions.length === 0
+                        ? tProject("placeholders.leaderPickEmployeesFirst")
+                        : tProject("placeholders.leader")
+                    }
+                    disabled={leaderOptions.length === 0}
                   />
                 </>
               )}

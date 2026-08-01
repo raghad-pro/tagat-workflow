@@ -19,29 +19,75 @@ export type User = {
   image: string | null;
 };
 
-export function normalizeRole(roleInput: any, roleIdInput?: any): Role {
-  if (roleIdInput !== undefined && roleIdInput !== null) {
-    const roleIdMap: Record<number, Role> = {
-      1: "super_admin",
-      2: "company",
-      3: "employee",
-      4: "client",
-    };
-    const rId = Number(roleIdInput);
-    if (roleIdMap[rId]) {
-      return roleIdMap[rId];
-    }
+/**
+ * The API does not send a scalar role — it sends a Spatie-style relation, e.g.
+ * `role: [{ id: 1, name: "super_admin", pivot: { role_id: 1 } }]`. Passing that
+ * straight to `String()` yields "[object Object]", which matched nothing and
+ * silently fell through to the "company" default, so every super admin was
+ * downgraded on login. This flattens the array/object forms to `{ name, id }`.
+ */
+function extractRoleSource(roleInput: any): { name?: string; id?: number } {
+  if (roleInput === null || roleInput === undefined) return {};
+
+  // `roles: [...]` / `role: [...]` — prefer the most privileged (lowest id).
+  if (Array.isArray(roleInput)) {
+    const entries = roleInput
+      .map((entry) => extractRoleSource(entry))
+      .filter((entry) => entry.name || entry.id !== undefined);
+    if (entries.length === 0) return {};
+    return entries.reduce((best, entry) =>
+      (entry.id ?? Number.MAX_SAFE_INTEGER) < (best.id ?? Number.MAX_SAFE_INTEGER) ? entry : best
+    );
   }
 
-  if (roleInput) {
-    const s = String(roleInput).toLowerCase().trim();
+  if (typeof roleInput === "object") {
+    const id = roleInput.id ?? roleInput.role_id ?? roleInput.pivot?.role_id;
+    return {
+      name: roleInput.name ?? roleInput.role ?? roleInput.slug,
+      id: id === undefined || id === null ? undefined : Number(id),
+    };
+  }
+
+  if (typeof roleInput === "number") return { id: roleInput };
+  return { name: String(roleInput) };
+}
+
+export function normalizeRole(roleInput: any, roleIdInput?: any): Role {
+  const roleIdMap: Record<number, Role> = {
+    1: "super_admin",
+    2: "company",
+    3: "employee",
+    4: "client",
+  };
+
+  const source = extractRoleSource(roleInput);
+
+  // The role *name* is the most explicit signal, so it is checked first —
+  // a stale numeric id must not override it.
+  const name = source.name;
+  if (name) {
+    const s = String(name).toLowerCase().trim();
     if (s === "super_admin" || s === "superadmin" || s === "admin" || s === "super_admin_role") return "super_admin";
     if (s === "company" || s === "company_admin" || s === "companyadmin" || s === "company_request" || s === "company_user") return "company";
     if (s === "employee" || s === "staff") return "employee";
     if (s === "client" || s === "customer") return "client";
   }
 
+  const explicitId = roleIdInput ?? source.id;
+  if (explicitId !== undefined && explicitId !== null) {
+    const mapped = roleIdMap[Number(explicitId)];
+    if (mapped) return mapped;
+  }
+
   return "company";
+}
+
+/** Reads the role off a user object regardless of which shape the API used. */
+export function resolveUserRole(u: any, rawPayload?: any): Role {
+  const roleSource =
+    u?.role ?? u?.roles ?? rawPayload?.role ?? rawPayload?.roles ?? undefined;
+  const roleId = u?.role_id ?? u?.roleId ?? rawPayload?.role_id;
+  return normalizeRole(roleSource, roleId);
 }
 
 export function normalizeUser(rawUser: any, rawPayload?: any): User | null {
@@ -55,7 +101,8 @@ export function normalizeUser(rawUser: any, rawPayload?: any): User | null {
   const email = u.email ?? rawPayload?.email ?? "";
   const name = u.name ?? u.company_name ?? rawPayload?.name ?? rawPayload?.company_name ?? "User";
   const role_id = u.role_id ?? rawPayload?.role_id ?? u.roleId;
-  const role = normalizeRole(u.role || rawPayload?.role, role_id);
+  // Reads `role`/`roles` in array, object or scalar form — the API sends an array.
+  const role = resolveUserRole(u, rawPayload);
 
   if (!id || !email) {
     return null;

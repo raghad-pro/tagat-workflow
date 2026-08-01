@@ -11,6 +11,7 @@ import { Pagination } from "@/components/molecules/Pagination";
 import { Text } from "@/components/atoms/Text";
 import { PageCard, PageCardSection, PageCardBody, PageCardFooter } from "@/components/molecules/Pagecard";
 import { PageContainer } from "@/components/template/PageContainer";
+import { useAuth } from "@/providers/AuthProvider";
 import { useContracts, useContractStats, useCreateContract, useUpdateContract, useDeleteContract } from "../hooks/useContracts";
 import { DUMMY_STATS } from "../data/mockData";
 import { Contract } from "../types/contracts.types";
@@ -25,6 +26,9 @@ const PAGE_SIZE = 4;
 export function ContractsManagementPage() {
   const t = useTranslations("contract");
   const tCommon = useTranslations("common");
+  
+  const { user } = useAuth();
+  const role = user?.role || "company";
 
   const [search, setSearch]           = useState("");
   const [currentPage, setPage]        = useState(1);
@@ -70,11 +74,11 @@ export function ContractsManagementPage() {
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
   ], [tCommon, openView, openEdit, openDelete]);
 
-  const { data: res, isLoading }  = useContracts({ search, page: currentPage, per_page: PAGE_SIZE });
-  const { data: statsData }       = useContractStats();
-  const createContract            = useCreateContract();
-  const updateContract            = useUpdateContract();
-  const deleteContract            = useDeleteContract();
+  const { data: res, isLoading }  = useContracts(role, { search, page: currentPage, per_page: PAGE_SIZE });
+  const { data: statsData }       = useContractStats(role);
+  const createContract            = useCreateContract(role);
+  const updateContract            = useUpdateContract(role);
+  const deleteContract            = useDeleteContract(role);
 
   const stats = statsData || DUMMY_STATS;
 

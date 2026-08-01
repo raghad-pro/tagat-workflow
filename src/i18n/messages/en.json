@@ -157,12 +157,12 @@
     "loading": "Loading...",
     "selectClient": "Select client",
     "noClients": "No clients",
-    "selectProject": "Select project",
+    "selectProject": "Select Project",
     "noProjects": "No projects",
     "selectCurrency": "Select currency",
     "noCurrency": "No currency",
     "selectCompany": "Select company",
-    "selectStatus": "Select status",
+    "selectStatus": "Select Status",
     "budget": "Budget",
     "paid": "Paid",
     "remaining": "Remaining",
@@ -198,7 +198,6 @@
     "actions": "Actions",
     "requiredField": "Required",
     "noEmployees": "No employees",
-    "noClients": "No clients",
     "dashboard": "Dashboard",
     "status": "Status",
     "searchPlaceholder": "Search...",
@@ -206,8 +205,6 @@
     "deleteConfirm1": "Are you sure you want to delete ",
     "deleteConfirm2": " ?",
     "back": "Back",
-    "selectProject": "Select Project",
-    "selectStatus": "Select Status",
     "budgetExceeded": "You have exceeded the budget. Remaining: {budget}",
     "createdAt": "Created At",
     "updatedAt": "Updated At",
@@ -278,7 +275,8 @@
       "client": "Client",
       "currency": "Currency",
       "employees": "Employees",
-      "notes": "Notes"
+      "notes": "Notes",
+      "leader": "Project Lead"
     },
     "placeholders": {
       "title": "Enter project title",
@@ -288,13 +286,18 @@
       "client": "Select client",
       "currency": "Select currency",
       "employees": "Select employees",
-      "notes": "Additional details..."
+      "notes": "Additional details...",
+      "leader": "Select the project lead",
+      "leaderPickEmployeesFirst": "Select team members first"
     },
     "statusOptions": {
       "pending": "Pending",
       "in_progress": "In Progress",
       "completed": "Completed",
       "on_hold": "On Hold"
+    },
+    "validation": {
+      "leaderNotMember": "The lead must be one of the selected team members"
     }
   },
   "employee": {
@@ -654,7 +657,6 @@
     "customerName": "Customer Name",
     "phoneNumber": "Phone Number",
     "subsidiaryCompany": "Subsidiary Company",
-    "email": "Email",
     "searchPlaceholder": "Search by name, email or company...",
     "emptyMessage": "No clients found.",
     "columns": {
@@ -1025,5 +1027,92 @@
       "deleteSuccess": "Account deleted successfully",
       "deleteError": "Failed to delete account"
     }
+  },
+  "conversations": {
+    "title": "Conversations",
+    "searchPlaceholder": "Search conversations...",
+    "noConversations": "No conversations found.",
+    "loading": "Loading...",
+    "loadingMessages": "Loading messages...",
+    "loadFailed": "Failed to load conversations.",
+    "threadLoadFailed": "Failed to load this conversation.",
+    "retry": "Retry",
+    "noMessages": "No messages in this conversation yet.",
+    "noMessagesHint": "Write your first message below to get started.",
+    "noLastMessage": "No messages yet",
+    "typeMessage": "Type a message...",
+    "send": "Send",
+    "emptyStateTitle": "Your Conversations",
+    "emptyStateHint": "Select a chat from the sidebar to view your messages or start a new conversation.",
+    "groupChat": "Group Chat",
+    "privateChat": "Private Chat",
+    "members": "Members",
+    "edit": "Edit",
+    "attachFile": "Attach a file",
+    "attachImage": "Attach an image",
+    "insertEmoji": "Insert emoji",
+    "removeAttachment": "Remove attachment",
+    "sendFailed": "Failed to send the message",
+    "fileTooLarge": "\"{name}\" is larger than {size} MB",
+    "create": {
+      "title": "Create a new conversation",
+      "subtitle": "Choose type and participants",
+      "type": "Conversation Type",
+      "typePlaceholder": "Select conversation type...",
+      "private": "Personal Chat",
+      "group": "Group",
+      "groupName": "Group Name",
+      "groupNamePlaceholder": "Group name",
+      "groupPicture": "Group Picture",
+      "chooseFile": "Choose File",
+      "noFileChosen": "No file chosen",
+      "participants": "Participants",
+      "hintPrivate": "Select one person for a personal chat.",
+      "hintGroup": "Select multiple people to create a group.",
+      "loadingParticipants": "Loading participants...",
+      "noUsers": "No users found.",
+      "noCompany": "No Company",
+      "save": "Save",
+      "cancel": "Cancel",
+      "creatingGroup": "Creating group \"{name}\"...",
+      "creatingPrivate": "Starting a chat with {name}...",
+      "created": "Conversation created successfully",
+      "createFailed": "Failed to create the conversation",
+      "selected": "{count} selected",
+      "opened": "Opened your existing conversation"
+    },
+    "membersModal": {
+      "title": "Group Members",
+      "count": "{count} Members",
+      "addMember": "Add Member",
+      "empty": "This group has no members yet.",
+      "remove": "Remove",
+      "removed": "{name} was removed from the group",
+      "removeFailed": "Failed to remove the member",
+      "roleChanged": "{name} is now {role}",
+      "roleChangeFailed": "Failed to change the member role",
+      "confirmRemove": "Remove {name} from this group?",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "moderator": "Moderator",
+        "member": "Member"
+      }
+    },
+    "editModal": {
+      "title": "Edit Group",
+      "subtitle": "Update the group name and picture",
+      "saveChanges": "Save Changes",
+      "cancel": "Cancel",
+      "saved": "Group updated successfully",
+      "saveFailed": "Failed to update the group",
+      "imageUnsupported": "Group name saved. The server does not accept a group picture yet."
+    },
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "you": "You",
+    "orphanedTitle": "This conversation was deleted on the server",
+    "orphanedHint": "You can read its history, but it will not appear in your conversations list and new messages may be lost. Ask the backend team to restore it.",
+    "orphanedToast": "That conversation was deleted on the server and cannot be reopened from the list."
   }
 }

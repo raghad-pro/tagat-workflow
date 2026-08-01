@@ -25,7 +25,7 @@ import { useEmployees } from "@/modules/employees/hooks/useEmployees";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
-const getProjectSchema = (isCompanyAdmin: boolean, tCommon: any) =>
+const getProjectSchema = (isCompanyAdmin: boolean, tCommon: any, tProject: any) =>
   z.object({
     title:     z.string().min(2, tCommon("validation.minLength", { min: 2 })),
     budget:    z.string().min(1, tCommon("validation.required")),
@@ -36,7 +36,12 @@ const getProjectSchema = (isCompanyAdmin: boolean, tCommon: any) =>
     status:    z.string().min(1, tCommon("validation.required")),
     currency:  z.string().min(1, tCommon("validation.required")).refine(val => val !== "no-data", { message: tCommon("validation.required") }),
     employees: z.array(z.string()).min(1, tCommon("validation.required")).refine(val => !val.includes("no-data"), { message: tCommon("validation.required") }),
+    leader_id: z.string().min(1, tCommon("validation.required")),
     notes:     z.string().optional(),
+  })
+  .refine((v) => !v.leader_id || v.employees.includes(v.leader_id), {
+    path: ["leader_id"],
+    message: tProject("validation.leaderNotMember"),
   });
 
 type FormValues = z.infer<ReturnType<typeof getProjectSchema>>;
@@ -71,7 +76,7 @@ export default function EditProjectModal({
   const t              = useTranslations("project");
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(getProjectSchema(isCompanyAdmin, tCommon)),
+    resolver: zodResolver(getProjectSchema(isCompanyAdmin, tCommon, t)),
     mode: "onSubmit",
     defaultValues: {
       title:     "",
@@ -81,6 +86,7 @@ export default function EditProjectModal({
       status:    "",
       currency:  "",
       employees: [],
+      leader_id: "",
       notes:     "",
     },
   });
@@ -118,14 +124,30 @@ export default function EditProjectModal({
     ? allEmployeesList
         .filter((e: any) => isCompanyAdmin || e.company_id == companyIdForQuery || e.company?.id == companyIdForQuery)
         .map((e: any) => ({
-          value: e.id.toString(),
-          label: e.user?.name ?? e.name ?? e.employee_name ?? (e.user?.first_name ? `${e.user.first_name} ${e.user.last_name ?? ""}`.trim() : null) ?? e.id.toString(),
+          // Must be the user id: the API resolves employees/leader against the
+          // users table, and the prefill below also reads user ids.
+          value: String(e.user_id ?? e.user?.id ?? ""),
+          label: e.user?.name ?? e.name ?? e.employee_name ?? (e.user?.first_name ? `${e.user.first_name} ${e.user.last_name ?? ""}`.trim() : null) ?? String(e.user_id ?? e.id),
         }))
+        .filter((o: any) => o.value !== "")
     : [];
 
   if ((companyIdForQuery || isCompanyAdmin) && employeeOptions.length === 0) {
     employeeOptions = [{ value: "no-data", label: tCommon("noEmployees") || "No employees" }];
   }
+
+  // ── Project lead — chosen from the members assigned above ────────────────
+  const selectedEmployees: string[] = form.watch("employees") ?? [];
+  const leaderOptions = employeeOptions.filter(
+    (o: any) => o.value !== "no-data" && selectedEmployees.includes(o.value)
+  );
+
+  const selectedLeader = form.watch("leader_id");
+  useEffect(() => {
+    if (selectedLeader && !selectedEmployees.includes(selectedLeader)) {
+      form.setValue("leader_id", "");
+    }
+  }, [selectedEmployees, selectedLeader, form]);
 
   // GET /companies/{id}/currencies
   const { data: currenciesList = [] } = useCompanyCurrenciesByCompany(companyIdForQuery);
@@ -177,6 +199,12 @@ export default function EditProjectModal({
       status:    data.status?.toLowerCase() ?? "",
       currency:  (data as any).currency_id?.toString() ?? "",
       employees: currentEmployees,
+      // Keep the lead only if they are still among the members.
+      leader_id: (() => {
+        const id = (data as any).leader_id ?? (data as any).leader?.id;
+        const asString = id === undefined || id === null ? "" : String(id);
+        return currentEmployees.includes(asString) ? asString : "";
+      })(),
       notes:     (data as any).description ?? (data as any).notes ?? "",
     });
   }, [data, isOpen]);  
@@ -281,7 +309,6 @@ export default function EditProjectModal({
                     { value: "pending",     label: t("statusOptions.pending") },
                     { value: "in_progress", label: t("statusOptions.in_progress") },
                     { value: "completed",   label: t("statusOptions.completed") },
-                    { value: "on_hold",     label: t("statusOptions.on_hold") },
                   ]}
                   required
                   placeholder={t("placeholders.status")}
@@ -336,6 +363,21 @@ export default function EditProjectModal({
                     : t("placeholders.employees")
                 }
                 disabled={noCompany || employeeOptions[0]?.value === "no-data"}
+              />
+
+              {/* Project lead — restricted to the members chosen above */}
+              <SelectField
+                control={form.control}
+                name="leader_id"
+                label={t("labels.leader")}
+                options={leaderOptions}
+                required
+                placeholder={
+                  leaderOptions.length === 0
+                    ? t("placeholders.leaderPickEmployeesFirst")
+                    : t("placeholders.leader")
+                }
+                disabled={leaderOptions.length === 0}
               />
 
               {/* Notes */}

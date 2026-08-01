@@ -349,10 +349,17 @@ export function buildProjectPayload(values: Record<string, any>) {
     payload.description = payload.notes;
     delete payload.notes;
   }
+  // `employees[]` and `leader_id` are resolved against the users table by the
+  // API, so these carry user ids (not employee record ids).
   if (payload.employees) {
     payload.employees = Array.isArray(payload.employees)
       ? payload.employees.map((id: any) => parseInt(id, 10))
       : [parseInt(payload.employees, 10)];
+  }
+  if (payload.leader_id) {
+    payload.leader_id = parseInt(payload.leader_id, 10);
+  } else {
+    delete payload.leader_id;
   }
 
   return payload;
