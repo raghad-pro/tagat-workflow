@@ -198,7 +198,6 @@
     "actions": "الإجراءات",
     "requiredField": "مطلوب",
     "noEmployees": "لا يوجد موظفين",
-    "noClients": "لا يوجد عملاء",
     "dashboard": "لوحة التحكم",
     "status": "الحالة",
     "searchPlaceholder": "بحث...",
@@ -206,8 +205,6 @@
     "deleteConfirm1": "هل أنت متأكد من حذف ",
     "deleteConfirm2": " ؟",
     "back": "رجوع",
-    "selectProject": "اختر المشروع",
-    "selectStatus": "اختر الحالة",
     "budgetExceeded": "لقد تجاوزت الميزانية. المتبقي: {budget}",
     "createdAt": "تاريخ الإنشاء",
     "updatedAt": "تاريخ التحديث",
@@ -271,7 +268,8 @@
       "client": "العميل",
       "currency": "العملة",
       "employees": "الموظفون",
-      "notes": "الملاحظات"
+      "notes": "الملاحظات",
+      "leader": "قائد المشروع"
     },
     "placeholders": {
       "title": "أدخل عنوان المشروع",
@@ -281,13 +279,18 @@
       "client": "اختر العميل",
       "currency": "اختر العملة",
       "employees": "اختر الموظفين",
-      "notes": "تفاصيل إضافية..."
+      "notes": "تفاصيل إضافية...",
+      "leader": "اختر قائد المشروع",
+      "leaderPickEmployeesFirst": "اختر أعضاء الفريق أولاً"
     },
     "statusOptions": {
       "pending": "قيد الانتظار",
       "in_progress": "قيد التنفيذ",
       "completed": "مكتمل",
       "on_hold": "معلق"
+    },
+    "validation": {
+      "leaderNotMember": "يجب أن يكون القائد أحد أعضاء الفريق المختارين"
     }
   },
   "employee": {
@@ -647,7 +650,6 @@
     "customerName": "اسم العميل",
     "phoneNumber": "رقم الهاتف",
     "subsidiaryCompany": "الشركة التابعة",
-    "email": "البريد الإلكتروني",
     "searchPlaceholder": "ابحث بالاسم، البريد الإلكتروني أو الشركة...",
     "emptyMessage": "لا يوجد عملاء.",
     "columns": {
@@ -1018,5 +1020,92 @@
       "deleteSuccess": "تم حذف الحساب بنجاح",
       "deleteError": "فشل في حذف الحساب"
     }
+  },
+  "conversations": {
+    "title": "المحادثات",
+    "searchPlaceholder": "ابحث في المحادثات...",
+    "noConversations": "لا توجد محادثات.",
+    "loading": "جارٍ التحميل...",
+    "loadingMessages": "جارٍ تحميل الرسائل...",
+    "loadFailed": "تعذّر تحميل المحادثات.",
+    "threadLoadFailed": "تعذّر تحميل هذه المحادثة.",
+    "retry": "إعادة المحاولة",
+    "noMessages": "لا توجد رسائل في هذه المحادثة بعد.",
+    "noMessagesHint": "اكتب رسالتك الأولى بالأسفل للبدء.",
+    "noLastMessage": "لا توجد رسائل بعد",
+    "typeMessage": "اكتب رسالة...",
+    "send": "إرسال",
+    "emptyStateTitle": "محادثاتك",
+    "emptyStateHint": "اختر محادثة من القائمة لعرض الرسائل أو ابدأ محادثة جديدة.",
+    "groupChat": "محادثة جماعية",
+    "privateChat": "محادثة خاصة",
+    "members": "الأعضاء",
+    "edit": "تعديل",
+    "attachFile": "إرفاق ملف",
+    "attachImage": "إرفاق صورة",
+    "insertEmoji": "إدراج رمز تعبيري",
+    "removeAttachment": "إزالة المرفق",
+    "sendFailed": "فشل إرسال الرسالة",
+    "fileTooLarge": "حجم \"{name}\" أكبر من {size} ميجابايت",
+    "create": {
+      "title": "إنشاء محادثة جديدة",
+      "subtitle": "اختر النوع والمشاركين",
+      "type": "نوع المحادثة",
+      "typePlaceholder": "اختر نوع المحادثة...",
+      "private": "محادثة خاصة",
+      "group": "مجموعة",
+      "groupName": "اسم المجموعة",
+      "groupNamePlaceholder": "اسم المجموعة",
+      "groupPicture": "صورة المجموعة",
+      "chooseFile": "اختر ملفاً",
+      "noFileChosen": "لم يتم اختيار ملف",
+      "participants": "المشاركون",
+      "hintPrivate": "اختر شخصاً واحداً للمحادثة الخاصة.",
+      "hintGroup": "اختر عدة أشخاص لإنشاء مجموعة.",
+      "loadingParticipants": "جارٍ تحميل المشاركين...",
+      "noUsers": "لا يوجد مستخدمون.",
+      "noCompany": "بدون شركة",
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "creatingGroup": "جارٍ إنشاء المجموعة \"{name}\"...",
+      "creatingPrivate": "جارٍ بدء المحادثة مع {name}...",
+      "created": "تم إنشاء المحادثة بنجاح",
+      "createFailed": "فشل إنشاء المحادثة",
+      "selected": "تم اختيار {count}",
+      "opened": "تم فتح المحادثة الموجودة مسبقاً"
+    },
+    "membersModal": {
+      "title": "أعضاء المجموعة",
+      "count": "{count} عضو",
+      "addMember": "إضافة عضو",
+      "empty": "لا يوجد أعضاء في هذه المجموعة بعد.",
+      "remove": "إزالة",
+      "removed": "تمت إزالة {name} من المجموعة",
+      "removeFailed": "فشل إزالة العضو",
+      "roleChanged": "أصبح {name} الآن {role}",
+      "roleChangeFailed": "فشل تغيير دور العضو",
+      "confirmRemove": "هل تريد إزالة {name} من المجموعة؟",
+      "roles": {
+        "owner": "المالك",
+        "admin": "مشرف",
+        "moderator": "منسّق",
+        "member": "عضو"
+      }
+    },
+    "editModal": {
+      "title": "تعديل المجموعة",
+      "subtitle": "حدّث اسم المجموعة وصورتها",
+      "saveChanges": "حفظ التغييرات",
+      "cancel": "إلغاء",
+      "saved": "تم تحديث المجموعة بنجاح",
+      "saveFailed": "فشل تحديث المجموعة",
+      "imageUnsupported": "تم حفظ اسم المجموعة. السيرفر لا يقبل صورة المجموعة حالياً."
+    },
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "you": "أنت",
+    "orphanedTitle": "هذه المحادثة محذوفة على السيرفر",
+    "orphanedHint": "يمكنك قراءة سجلها، لكنها لن تظهر في قائمة محادثاتك وقد تضيع الرسائل الجديدة. اطلب من فريق الباك-إند استعادتها.",
+    "orphanedToast": "هذه المحادثة محذوفة على السيرفر ولا يمكن إظهارها في القائمة."
   }
 }

@@ -1,452 +1,952 @@
 "use client";
 
-import React, { useState } from "react";
-import { useAuth } from "@/providers/AuthProvider";
-import { useConversations, useConversation } from "../hooks/useConversations";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Send, User as UserIcon, Plus, Search, 
-  Users, Edit2, Phone, Video, MoreHorizontal, 
-  Smile, Paperclip, Image as ImageIcon
+import {
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  FileText,
+  Image as ImageIcon,
+  MessagesSquare,
+  AlertTriangle,
+  Paperclip,
+  Plus,
+  Search,
+  Send,
+  Smile,
+  User as UserIcon,
+  Users,
+  X,
+  Edit2,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import CreateConversationModal from "./CreateConversationModal";
-import GroupMembersModal from "./GroupMembersModal";
-import EditGroupModal from "./EditGroupModal";
+
+import { useAuth } from "@/providers/AuthProvider";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const COMMON_EMOJIS = ["😀","😂","🥰","😎","🤔","😭","👍","🙏","🔥","❤️","🎉","✨"];
+import { useConversation, useConversations } from "../hooks/useConversations";
+import CreateConversationModal from "./CreateConversationModal";
+import GroupMembersModal from "./GroupMembersModal";
+import EditGroupModal from "./EditGroupModal";
+import { ConversationListSkeleton, MessagesSkeleton } from "./ConversationSkeleton";
+import type {
+  Conversation,
+  ConversationType,
+  CreateConversationPayload,
+} from "../types/conversations.types";
+import {
+  avatarFallbackUrl,
+  getConversationImage,
+  getConversationTitle,
+  getInitials,
+  getLastActivityAt,
+  getLastMessage,
+  getMembers,
+  getMessageAttachments,
+  getMessageSender,
+  getMessageText,
+  isGroupConversation,
+  toTimestamp,
+} from "../utils/conversation.helpers";
+import {
+  formatClock,
+  formatDayLabel,
+  formatListStamp,
+  groupMessages,
+} from "../utils/message.format";
+
+const COMMON_EMOJIS = ["😀", "😂", "🥰", "😎", "🤔", "😭", "👍", "🙏", "🔥", "❤️", "🎉", "✨"];
+const MAX_FILE_MB = 10;
+const SEARCH_DEBOUNCE_MS = 400;
+/** Only auto-scroll when the reader is already near the bottom. */
+const STICK_TO_BOTTOM_PX = 120;
 
 export default function ConversationsManagementPage() {
   const { user } = useAuth();
   const role = user?.role || "company";
-  const t = useTranslations();
-  
+  const t = useTranslations("conversations");
+  const locale = useLocale();
+
   const [activeConversationId, setActiveConversationId] = useState<number | string | null>(null);
   const [messageBody, setMessageBody] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isGroupMembersModalOpen, setIsGroupMembersModalOpen] = useState(false);
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
 
-  const {
-    data: conversationsRes,
-    isLoading: isConversationsLoading,
-  } = useConversations(role);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const readSentRef = useRef<Set<string>>(new Set());
+  const stickToBottomRef = useRef(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const listParams = useMemo(
+    () => (debouncedSearch ? { search: debouncedSearch } : undefined),
+    [debouncedSearch]
+  );
 
   const {
-    data: activeConversationData,
+    conversations: unsortedConversations,
+    isLoading: isConversationsLoading,
+    isError: isConversationsError,
+    refetch: refetchConversations,
+    sendMessage,
+    isSendingMessage,
+    createConversation,
+    isCreating,
+    markAsRead,
+  } = useConversations(role, listParams);
+
+  const {
+    conversation: activeConversation,
+    messages,
     isLoading: isChatLoading,
+    isError: isChatError,
+    refetch: refetchThread,
   } = useConversation(role, activeConversationId);
 
-  const { sendMessage, isSendingMessage, createConversation, isCreating } = useConversations(role);
+  // Most recently active first — the endpoint returns no explicit ordering.
+  // Compared as parsed instants, since the API mixes two timestamp formats.
+  const conversations = useMemo(
+    () =>
+      [...unsortedConversations].sort(
+        (a, b) => toTimestamp(getLastActivityAt(b)) - toTimestamp(getLastActivityAt(a))
+      ),
+    [unsortedConversations]
+  );
 
-  const conversations = conversationsRes?.data || [];
-  const activeConversation = activeConversationData?.data;
+  const listConversation = useMemo(
+    () => conversations.find((c: Conversation) => String(c.id) === String(activeConversationId)),
+    [conversations, activeConversationId]
+  );
 
-  // Helper to get conversation name dynamically based on the current user
-  const getConversationTitle = (conv: any) => {
-    if (!conv) return "Chat";
-    if (conv.title) return conv.title;
-    if (conv.name) return conv.name;
-    if (conv.participant_name) return conv.participant_name;
+  const currentConversation = activeConversation ?? listConversation ?? null;
+  const isGroup = isGroupConversation(currentConversation);
+  const memberCount = getMembers(currentConversation).length;
 
-    // Check users array
-    if (conv.users && Array.isArray(conv.users)) {
-      const otherUser = conv.users.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
-      if (otherUser) {
-        return otherUser.name || otherUser.first_name || otherUser.employee_name || otherUser.user?.name || "Chat";
-      }
+  /**
+   * The detail endpoint serves soft-deleted conversations while the list filters
+   * them out, so a chat can be readable and writable yet permanently invisible.
+   * Surfacing that beats silently letting the user type into a void.
+   */
+  const isOrphaned = Boolean(
+    activeConversationId &&
+      activeConversation &&
+      !listConversation &&
+      !isConversationsLoading &&
+      !isConversationsError &&
+      !debouncedSearch
+  );
+
+  const daySections = useMemo(() => groupMessages(messages, user?.id), [messages, user?.id]);
+
+  const totalUnread = useMemo(
+    () => conversations.reduce((sum, c) => sum + Number(c.unread_count ?? 0), 0),
+    [conversations]
+  );
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+    const key = String(activeConversationId);
+    const unread = Number(listConversation?.unread_count ?? 0);
+    if (unread > 0 && !readSentRef.current.has(key)) {
+      readSentRef.current.add(key);
+      markAsRead(activeConversationId);
     }
+  }, [activeConversationId, listConversation?.unread_count, markAsRead]);
 
-    // Check members array
-    if (conv.members && Array.isArray(conv.members)) {
-      const otherUser = conv.members.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
-      if (otherUser) {
-        return otherUser.name || otherUser.first_name || otherUser.employee_name || otherUser.user?.name || "Chat";
-      }
-    }
+  // Jump to the newest message, but don't yank the view if the user scrolled up
+  // to read history while polling brings in new messages.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !stickToBottomRef.current) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length, activeConversationId]);
 
-    if (conv.user?.name) return conv.user.name;
-    
-    return "Conversation";
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = distanceFromBottom < STICK_TO_BOTTOM_PX;
   };
 
-  const getConversationImage = (conv: any) => {
-    if (!conv) return null;
-    if (conv.image) return conv.image;
-    if (conv.users && Array.isArray(conv.users)) {
-      const otherUser = conv.users.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
-      if (otherUser?.image) return otherUser.image;
-    }
-    if (conv.members && Array.isArray(conv.members)) {
-      const otherUser = conv.members.find((u: any) => u.id !== user?.id && u.user_id !== user?.id);
-      if (otherUser?.image) return otherUser.image;
-    }
-    return null;
+  const handleSelectConversation = (id: number | string) => {
+    setActiveConversationId(id);
+    setMessageBody("");
+    setPendingFiles([]);
+    stickToBottomRef.current = true;
   };
 
-  const handleStartNewChat = async (userIdsParam: (number | string)[], type: string = "private", titleParam?: string, imageFile?: File) => {
-    const userIds = userIdsParam.map(id => Number(id)).filter(id => !isNaN(id) && id > 0);
-    const title = titleParam || "Chat";
-    const isGroup = type === "group";
-    const toastId = toast.loading(isGroup ? `جاري إنشاء المجموعة ${title}...` : `جاري بدء المحادثة مع ${title}...`);
-    
+  const handleFilesPicked = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(event.target.files ?? []);
+    const accepted = picked.filter((file) => {
+      if (file.size > MAX_FILE_MB * 1024 * 1024) {
+        toast.error(t("fileTooLarge", { name: file.name, size: MAX_FILE_MB }));
+        return false;
+      }
+      return true;
+    });
+    if (accepted.length > 0) setPendingFiles((prev) => [...prev, ...accepted]);
+    event.target.value = "";
+  };
+
+  const handleStartNewChat = useCallback(
+    async (
+      userIds: (number | string)[],
+      type: ConversationType,
+      title: string,
+      _imageFile?: File
+    ) => {
+      const ids = userIds.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
+      if (ids.length === 0) return;
+
+      const isGroupChat = ids.length > 1;
+      const toastId = toast.loading(
+        isGroupChat
+          ? t("create.creatingGroup", { name: title })
+          : t("create.creatingPrivate", { name: title })
+      );
+
+      try {
+        // The server derives is_group from the member count and only stores a
+        // title for groups; a 1-on-1 title is left to the client to display.
+        const payload: CreateConversationPayload = {
+          type,
+          users: ids,
+          ...(isGroupChat ? { title } : {}),
+        };
+        const created = await createConversation(payload);
+
+        // The server de-duplicates 1-on-1 chats, including against *soft-deleted*
+        // ones — so "created" can hand back a conversation the list will never
+        // show. Confirm against a fresh list before claiming success.
+        const wasExisting = conversations.some((c) => String(c.id) === String(created?.id));
+        const { data: fresh } = await refetchConversations();
+        const isVisible = fresh?.data?.some((c) => String(c.id) === String(created?.id));
+
+        if (created?.id && !isVisible) {
+          toast.error(t("orphanedToast"), { id: toastId });
+        } else {
+          toast.success(wasExisting ? t("create.opened") : t("create.created"), {
+            id: toastId,
+          });
+        }
+
+        setIsCreateModalOpen(false);
+        if (created?.id) handleSelectConversation(created.id);
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data
+            ?.message ??
+          (err as { message?: string })?.message ??
+          t("create.createFailed");
+        toast.error(message, { id: toastId });
+      }
+    },
+    [createConversation, conversations, refetchConversations, t]
+  );
+
+  const submitMessage = async () => {
+    const text = messageBody.trim();
+    if ((!text && pendingFiles.length === 0) || !activeConversationId || isSendingMessage) return;
+
+    const files = pendingFiles;
+    setMessageBody("");
+    setPendingFiles([]);
+    stickToBottomRef.current = true;
+
     try {
-      console.log("Starting chat with:", { userIds, title, type });
-
-      const payload = {
-        users: userIds,
-        type: type,
-        title: title,
-        name: title,
-      };
-      // If we needed to support imageFile, we might use FormData, but for now we send JSON
-      console.log("Create conversation payload:", payload);
-
-      const res = await createConversation(payload as any);
-      console.log("Create conversation response:", res);
-
-      toast.success(`تم بدء المحادثة بنجاح`, { id: toastId });
-      setIsCreateModalOpen(false);
-
-      const newId = res?.data?.id || res?.id || res?.data?.data?.id;
-      if (newId) {
-        setActiveConversationId(newId);
-      }
-    } catch (err: any) {
-      console.error("Failed to start chat:", err);
-      const msg = err?.response?.data?.message || err?.message || "فشل في إنشاء المحادثة";
-      toast.error(`خطأ: ${msg}`, { id: toastId });
+      await sendMessage({
+        id: activeConversationId,
+        message: text,
+        files,
+        currentUser: user ? { id: user.id, name: user.name, image: user.image } : undefined,
+      });
+    } catch (err: unknown) {
+      setMessageBody(text);
+      setPendingFiles(files);
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data
+          ?.message ??
+        (err as { message?: string })?.message ??
+        t("sendFailed");
+      toast.error(message);
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageBody.trim() || !activeConversationId) return;
-
-    try {
-      await sendMessage({ id: activeConversationId, message: messageBody, body: messageBody });
-      setMessageBody("");
-    } catch (err) {
-      console.error("Failed to send message", err);
+  const handleComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter sends, Shift+Enter inserts a newline.
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void submitMessage();
     }
   };
+
+  // Grow the composer with its content, up to a few lines.
+  useEffect(() => {
+    const el = composerRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
+  }, [messageBody]);
+
+  const canSend = Boolean(messageBody.trim() || pendingFiles.length > 0);
 
   return (
-    <div className="flex h-[calc(100vh-120px)] w-full overflow-hidden bg-white rounded-xl border border-slate-100 shadow-sm">
-      
-      {/* Sidebar: Chat List */}
-      <div className="w-[380px] min-w-[320px] border-r border-slate-100 flex flex-col bg-white relative">
-        
-        {/* Header */}
-        <div className="px-6 py-6 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-slate-800">Conversations</h2>
-          <button 
+    <div
+      className="flex h-[calc(100vh-120px)] min-h-[520px] w-full overflow-hidden rounded-2xl ds-bg-form"
+      style={{
+        border: "1px solid var(--color-border-form)",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+      <aside
+        className={`${
+          activeConversationId ? "hidden md:flex" : "flex"
+        } w-full flex-col md:w-[350px] md:min-w-[300px] lg:w-[380px]`}
+        style={{ borderInlineEnd: "1px solid var(--color-border-form)" }}
+      >
+        <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-6">
+          <div className="flex items-center gap-2.5">
+            <h2 className="ds-text-primary text-lg font-bold">{t("title")}</h2>
+            {totalUnread > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--color-bg-primary)] px-1.5 text-[11px] font-bold text-white">
+                {totalUnread}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="w-8 h-8 rounded-full bg-[#00d0d4] text-white flex items-center justify-center hover:bg-[#00b0b4] transition-colors shadow-sm"
+            aria-label={t("create.title")}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-bg-primary)] text-white transition-transform hover:scale-105 active:scale-95"
+            style={{ boxShadow: "0 4px 12px 0 color-mix(in srgb, var(--color-bg-primary) 35%, transparent)" }}
           >
             <Plus size={18} strokeWidth={2.5} />
           </button>
         </div>
 
-        {/* Search */}
-        <div className="px-6 pb-6">
+        <div className="px-5 pb-4">
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <Input 
-              placeholder="Search conversations..." 
-              className="w-full bg-[#f6f7f9] border-none rounded-full pl-10 pr-4 h-11 text-[13px] text-slate-600 focus-visible:ring-1 focus-visible:ring-[#00d0d4]" 
+            <Search
+              className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 ds-text-gray-200"
+              size={15}
             />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="ds-text-primary h-11 w-full rounded-xl bg-[var(--color-bg)] ps-10 pe-9 text-[13px] outline-none transition-colors placeholder:text-[var(--color-text-gray-200)] focus:bg-[var(--color-bg-form)]"
+              style={{ border: "1px solid var(--color-border-form)" }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-border-inputs-focus)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border-form)")}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute end-3 top-1/2 -translate-y-1/2 ds-text-gray-200 hover:ds-text-primary"
+                aria-label={t("removeAttachment")}
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-2 custom-scrollbar">
+        <div className="custom-scrollbar flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
           {isConversationsLoading ? (
-            <div className="p-4 text-center text-sm text-slate-500">Loading...</div>
+            <ConversationListSkeleton />
+          ) : isConversationsError ? (
+            <div className="flex flex-col items-center gap-3 p-6 text-center">
+              <p className="ds-text-gray-100 text-sm">{t("loadFailed")}</p>
+              <Button variant="outline" size="sm" onClick={() => refetchConversations()}>
+                {t("retry")}
+              </Button>
+            </div>
           ) : conversations.length === 0 ? (
-            <div className="p-4 text-center text-sm text-slate-500">No conversations found.</div>
+            <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+              <MessagesSquare size={28} className="ds-text-gray-200" />
+              <p className="ds-text-gray-100 text-sm">
+                {debouncedSearch ? t("create.noUsers") : t("noConversations")}
+              </p>
+            </div>
           ) : (
-            conversations.map((conv: any, index: number) => {
-              const isActive = activeConversationId === conv.id;
-              const convTitle = getConversationTitle(conv);
-              const convImage = getConversationImage(conv);
+            conversations.map((conv: Conversation) => {
+              const isActive = String(activeConversationId) === String(conv.id);
+              const convTitle = getConversationTitle(conv, user?.id, t("title"));
+              const convImage = getConversationImage(conv, user?.id);
+              const unread = Number(conv.unread_count ?? 0);
+              const lastMessage = getLastMessage(conv);
+              const preview = lastMessage
+                ? getMessageText(lastMessage) || t("attachFile")
+                : t("noLastMessage");
+              const convIsGroup = isGroupConversation(conv);
+
               return (
-                <div
+                <button
+                  type="button"
                   key={conv.id}
-                  onClick={() => setActiveConversationId(conv.id)}
-                  className={`flex items-start gap-3 p-3.5 rounded-2xl cursor-pointer transition-colors ${
-                    isActive ? "bg-[#eaf9f9]" : "hover:bg-slate-50"
-                  }`}
+                  onClick={() => handleSelectConversation(conv.id)}
+                  className="relative flex w-full items-center gap-3 rounded-xl p-3 text-start transition-colors"
+                  style={{
+                    backgroundColor: isActive
+                      ? "var(--color-bg-primary-200)"
+                      : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = "var(--color-bg)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+                  }}
                 >
-                  <div className="relative shrink-0 mt-0.5">
-                    <img 
-                      src={convImage || `https://ui-avatars.com/api/?name=${convTitle}&background=random`} 
-                      alt={convTitle}
-                      className="w-11 h-11 rounded-full object-cover"
-                    />
-                    {conv.is_online && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                  {isActive && (
+                    <span className="absolute inset-y-2 start-0 w-1 rounded-full bg-[var(--color-bg-primary)]" />
+                  )}
+
+                  <div className="relative shrink-0">
+                    {convImage ? (
+                      <img
+                        src={convImage}
+                        alt=""
+                        className="h-11 w-11 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-bg-primary-200)] text-[13px] font-bold text-[var(--color-text-brand)]">
+                        {convIsGroup ? <Users size={17} /> : getInitials(convTitle)}
+                      </div>
                     )}
                   </div>
-                  
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <h4 className={`font-semibold text-[14px] truncate ${isActive ? 'text-[#00d0d4]' : 'text-slate-800'}`}>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-0.5 flex items-baseline justify-between gap-2">
+                      <h4
+                        className={`truncate text-[14px] ${
+                          unread > 0 ? "font-bold" : "font-semibold"
+                        }`}
+                        style={{
+                          color: isActive
+                            ? "var(--color-text-brand)"
+                            : "var(--color-text-primary)",
+                        }}
+                      >
                         {convTitle}
                       </h4>
-                      <span className="text-[11px] text-slate-400 shrink-0 ml-2 font-medium">
-                        {conv.last_message_time || ""}
+                      <span className="ds-text-gray-200 shrink-0 text-[11px] font-medium">
+                        {formatListStamp(getLastActivityAt(conv), locale)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-[12px] text-slate-500 truncate pr-2">
-                        {conv.last_message?.body || "لا توجد رسائل بعد"}
+                    <div className="flex items-center justify-between gap-2">
+                      <p
+                        className={`truncate text-[12px] ${
+                          unread > 0 ? "ds-text-gray font-semibold" : "ds-text-gray-200"
+                        }`}
+                      >
+                        {preview}
                       </p>
-                      {conv.unread_count > 0 && (
-                        <div className="shrink-0 bg-[#00d0d4] text-white text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">
-                          {conv.unread_count}
-                        </div>
+                      {unread > 0 && (
+                        <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-primary)] px-1 text-[10px] font-bold text-white">
+                          {unread > 99 ? "99+" : unread}
+                        </span>
                       )}
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })
           )}
         </div>
 
-        {/* Current User Profile Box */}
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="flex items-center gap-3 p-3 bg-white border border-slate-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] rounded-2xl">
-            <div className="w-9 h-9 bg-[#00d0d4] rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden">
+        <div className="p-3" style={{ borderTop: "1px solid var(--color-border-form)" }}>
+          <div className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-bg-primary)] text-white">
               {user?.image ? (
-                <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                <img src={user.image} alt="" className="h-full w-full object-cover" />
               ) : (
-                <UserIcon size={18} strokeWidth={2.5} />
+                <UserIcon size={17} strokeWidth={2.5} />
               )}
             </div>
-            <div className="flex-1 min-w-0 pr-2">
-              <h4 className="font-bold text-[13px] text-slate-800 truncate">{user?.name || "User"}</h4>
-              <p className="text-[11px] text-slate-400 truncate">{user?.email || ""}</p>
+            <div className="min-w-0 flex-1">
+              <h4 className="ds-text-primary truncate text-[13px] font-bold">{user?.name}</h4>
+              <p className="ds-text-gray-200 truncate text-[11px]">{user?.email}</p>
             </div>
-            <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full shrink-0 mr-1 shadow-sm"></div>
           </div>
         </div>
+      </aside>
 
-      </div>
+      {/* ── Chat ─────────────────────────────────────────────────────────── */}
+      <section
+        className={`${
+          activeConversationId ? "flex" : "hidden md:flex"
+        } relative min-w-0 flex-1 flex-col`}
+        style={{ backgroundColor: "var(--color-bg)" }}
+      >
+        {activeConversationId && currentConversation ? (
+          <>
+            {/* Header */}
+            <header
+              className="flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 md:px-6 ds-bg-form"
+              style={{ borderBottom: "1px solid var(--color-border-form)" }}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveConversationId(null)}
+                  className="ds-text-gray flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-[var(--color-bg)] md:hidden rtl:rotate-180"
+                  aria-label={t("title")}
+                >
+                  <ArrowLeft size={20} />
+                </button>
 
-      {/* Main Area: Chat Window */}
-      <div className="flex-1 flex flex-col bg-white relative">
-        {activeConversationId ? (
-          (() => {
-            const currentConv = activeConversation || conversations.find((c: any) => c.id === activeConversationId);
-            const currentTitle = getConversationTitle(currentConv);
-            const currentImage = getConversationImage(currentConv);
-            
-            return (
-              <>
-                {/* Chat Header */}
-                <div className="h-[80px] px-8 border-b border-slate-100 flex justify-between items-center bg-white/60 backdrop-blur-md z-10 sticky top-0">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <img 
-                        src={currentImage || `https://ui-avatars.com/api/?name=${currentTitle}&background=random`} 
-                        alt={currentTitle} 
-                        className="w-11 h-11 rounded-full object-cover shadow-sm" 
-                      />
-                      {currentConv?.is_online !== false && (
-                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[15px] text-slate-800 leading-tight">
-                        {currentTitle}
-                      </h3>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
-                    <p className="text-[12px] text-slate-500 font-medium">Active Chat</p>
+                {getConversationImage(currentConversation, user?.id) ? (
+                  <img
+                    src={getConversationImage(currentConversation, user?.id) as string}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-primary-200)] text-[13px] font-bold text-[var(--color-text-brand)]">
+                    {isGroup ? (
+                      <Users size={16} />
+                    ) : (
+                      getInitials(getConversationTitle(currentConversation, user?.id))
+                    )}
                   </div>
+                )}
+
+                <div className="min-w-0">
+                  <h3 className="ds-text-primary truncate text-[15px] font-bold leading-tight">
+                    {getConversationTitle(currentConversation, user?.id)}
+                  </h3>
+                  <p className="ds-text-gray-200 mt-0.5 truncate text-[12px]">
+                    {isGroup
+                      ? t("membersModal.count", { count: memberCount })
+                      : t("privateChat")}
+                  </p>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                {currentConv?.is_group && (
-                  <>
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => setIsGroupMembersModalOpen(true)}
-                      className="h-9 px-4 rounded-full bg-[#eaf9f9] text-[#00d0d4] hover:bg-[#d4f2f3] hover:text-[#00b0b4] text-[13px] font-bold gap-2 border-none"
-                    >
-                      <Users size={16} strokeWidth={2.5} />
-                      Members
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => setIsEditGroupModalOpen(true)}
-                      className="h-9 px-4 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 text-[13px] font-bold gap-2 border-none"
-                    >
-                      <Edit2 size={16} strokeWidth={2.5} />
-                      Edit
-                    </Button>
-                  </>
-                )}
-                <div className="flex items-center gap-1 ml-4 text-slate-400">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-50 hover:text-slate-600">
-                    <MoreHorizontal size={18} strokeWidth={2} />
+
+              {isGroup && (
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsGroupMembersModalOpen(true)}
+                    className="h-9 gap-2 rounded-full border-none bg-[var(--color-bg-primary-200)] px-3.5 text-[13px] font-bold text-[var(--color-text-brand)] hover:opacity-80 sm:px-4"
+                  >
+                    <Users size={15} strokeWidth={2.5} />
+                    <span className="hidden sm:inline">{t("members")}</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsEditGroupModalOpen(true)}
+                    className="ds-text-gray h-9 w-9 rounded-full border-none p-0 hover:bg-[var(--color-bg)]"
+                    aria-label={t("edit")}
+                  >
+                    <Edit2 size={15} strokeWidth={2.5} />
                   </Button>
                 </div>
-              </div>
-            </div>
+              )}
+            </header>
 
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto px-8 py-8 flex flex-col gap-6 bg-white custom-scrollbar">
-              {isChatLoading ? (
-                <div className="flex-1 flex items-center justify-center text-slate-500">Loading messages...</div>
-              ) : activeConversation?.messages?.length > 0 ? (
-                // Real messages from API
-                activeConversation.messages.map((msg: any) => {
-                  const msgUserId = msg.user_id || msg.sender_id;
-                  const isMine = msgUserId === user?.id;
-                  const msgText = msg.message || msg.body;
-                  const msgUserName = msg.sender?.name || msg.user?.name || (isMine ? user?.name : "User");
-                  
-                  return (
-                    <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group`}>
-                      <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[65%]`}>
-                        <span className="text-[13px] text-[#00d0d4] mb-1.5 font-bold">
-                          {msgUserName}
+            {isOrphaned && (
+              <div
+                className="flex shrink-0 items-start gap-2.5 px-4 py-3 md:px-6"
+                style={{
+                  backgroundColor: "color-mix(in srgb, #f97316 12%, transparent)",
+                  borderBottom: "1px solid color-mix(in srgb, #f97316 30%, transparent)",
+                }}
+                role="status"
+              >
+                <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[#f97316]" />
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold text-[#f97316]">{t("orphanedTitle")}</p>
+                  <p className="ds-text-gray mt-0.5 text-[12px] leading-relaxed">
+                    {t("orphanedHint")}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Thread */}
+            <div
+              ref={scrollRef}
+              onScroll={handleScroll}
+              className="custom-scrollbar flex-1 overflow-y-auto px-4 py-6 md:px-8"
+            >
+              {isChatLoading && messages.length === 0 ? (
+                <MessagesSkeleton />
+              ) : isChatError ? (
+                <div className="flex h-full flex-col items-center justify-center gap-3">
+                  <p className="ds-text-gray-100 text-sm">{t("threadLoadFailed")}</p>
+                  <Button variant="outline" size="sm" onClick={() => refetchThread()}>
+                    {t("retry")}
+                  </Button>
+                </div>
+              ) : daySections.length > 0 ? (
+                <div className="mx-auto flex max-w-3xl flex-col gap-1">
+                  {daySections.map((section) => (
+                    <div key={section.day} className="flex flex-col gap-1">
+                      {/* Date separator */}
+                      <div className="my-4 flex items-center justify-center">
+                        <span
+                          className="ds-text-gray-100 rounded-full px-3 py-1 text-[11px] font-semibold ds-bg-form"
+                          style={{ border: "1px solid var(--color-border-form)" }}
+                        >
+                          {formatDayLabel(section.day, locale, {
+                            today: t("today"),
+                            yesterday: t("yesterday"),
+                          })}
                         </span>
-                        <div className={`relative px-5 py-3.5 ${isMine ? "bg-[#eaf9f9] text-slate-800 rounded-2xl rounded-tr-sm" : "bg-[#f6f7f9] text-slate-800 rounded-2xl rounded-tl-sm"} text-[14px] leading-relaxed shadow-sm`}>
-                          {(msg.attachment || (msg.attachments && msg.attachments.length > 0)) && (
-                            <div className="w-64 h-40 bg-slate-100 rounded-xl mb-3 flex items-center justify-center border border-slate-200">
-                              <ImageIcon size={32} className="text-slate-400" />
-                            </div>
-                          )}
-                          <p>{msgText}</p>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[11px] text-slate-400 font-medium">
-                            {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Now"}
-                          </span>
-                        </div>
                       </div>
+
+                      {section.groups.map((group, groupIndex) => {
+                        const first = group.messages[0];
+                        const sender = getMessageSender(first);
+                        const senderName =
+                          sender?.name || (group.isMine ? user?.name : t("create.noUsers"));
+                        const senderImage = sender?.image;
+                        const showAvatar = isGroup && !group.isMine;
+
+                        return (
+                          <div
+                            key={`${section.day}-${groupIndex}`}
+                            className={`mb-3 flex gap-2.5 ${
+                              group.isMine ? "flex-row-reverse" : "flex-row"
+                            }`}
+                          >
+                            {showAvatar &&
+                              (senderImage ? (
+                                <img
+                                  src={senderImage}
+                                  alt=""
+                                  className="mt-auto h-7 w-7 shrink-0 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="mt-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-primary-200)] text-[10px] font-bold text-[var(--color-text-brand)]">
+                                  {getInitials(senderName ?? "")}
+                                </div>
+                              ))}
+
+                            <div
+                              className={`flex min-w-0 max-w-[85%] flex-col gap-1 sm:max-w-[70%] ${
+                                group.isMine ? "items-end" : "items-start"
+                              }`}
+                            >
+                              {showAvatar && (
+                                <span className="px-1 text-[12px] font-bold text-[var(--color-text-brand)]">
+                                  {senderName}
+                                </span>
+                              )}
+
+                              {group.messages.map((msg, msgIndex) => {
+                                const attachments = getMessageAttachments(msg);
+                                const text = getMessageText(msg);
+                                const isLastOfRun = msgIndex === group.messages.length - 1;
+
+                                return (
+                                  <div
+                                    key={msg.id}
+                                    className={`group/msg flex items-end gap-1.5 ${
+                                      group.isMine ? "flex-row-reverse" : "flex-row"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`relative px-3.5 py-2.5 text-[14px] leading-relaxed transition-opacity ${
+                                        msg._optimistic ? "opacity-60" : ""
+                                      }`}
+                                      style={{
+                                        background: group.isMine
+                                          ? "var(--color-bg-primary)"
+                                          : "var(--color-bg-form)",
+                                        color: group.isMine
+                                          ? "#ffffff"
+                                          : "var(--color-text-primary)",
+                                        border: group.isMine
+                                          ? "none"
+                                          : "1px solid var(--color-border-form)",
+                                        borderRadius: "16px",
+                                        // Tail on the last bubble of each run.
+                                        borderEndEndRadius:
+                                          group.isMine && isLastOfRun ? "4px" : "16px",
+                                        borderEndStartRadius:
+                                          !group.isMine && isLastOfRun ? "4px" : "16px",
+                                      }}
+                                    >
+                                      {attachments.length > 0 && (
+                                        <div
+                                          className={`space-y-1.5 ${text ? "mb-2" : ""}`}
+                                        >
+                                          {attachments.map((file) =>
+                                            file.isImage ? (
+                                              <a
+                                                key={file.url}
+                                                href={file.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="block overflow-hidden rounded-xl"
+                                              >
+                                                <img
+                                                  src={file.url}
+                                                  alt={file.name}
+                                                  className="max-h-60 w-full object-cover transition-transform hover:scale-[1.02]"
+                                                />
+                                              </a>
+                                            ) : (
+                                              <a
+                                                key={file.url}
+                                                href={file.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-opacity hover:opacity-80"
+                                                style={{
+                                                  background: group.isMine
+                                                    ? "rgba(255,255,255,0.18)"
+                                                    : "var(--color-bg)",
+                                                }}
+                                              >
+                                                <FileText size={15} className="shrink-0" />
+                                                <span className="truncate">{file.name}</span>
+                                              </a>
+                                            )
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {text && (
+                                        <p className="whitespace-pre-wrap break-words">{text}</p>
+                                      )}
+                                    </div>
+
+                                    {/* Timestamp reveals on hover to keep the thread clean */}
+                                    <span className="ds-text-gray-200 shrink-0 pb-1 text-[10px] font-medium opacity-0 transition-opacity group-hover/msg:opacity-100">
+                                      {formatClock(msg.created_at, locale)}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+
+                              {/* Delivery state on the newest own message only */}
+                              {group.isMine && (
+                                <span className="ds-text-gray-200 flex items-center gap-1 px-1 text-[10px] font-medium">
+                                  {formatClock(
+                                    group.messages[group.messages.length - 1]?.created_at,
+                                    locale
+                                  )}
+                                  {group.messages[group.messages.length - 1]?._optimistic ? (
+                                    <Check size={11} />
+                                  ) : (
+                                    <CheckCheck size={11} className="text-[var(--color-text-brand)]" />
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })
+                  ))}
+                </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-12">
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3 text-[#00d0d4]">
-                    <Send size={24} />
+                <div className="flex h-full flex-col items-center justify-center text-center">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-bg-primary-200)] text-[var(--color-text-brand)]">
+                    <MessagesSquare size={26} />
                   </div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">لا توجد رسائل في هذه المحادثة بعد.</p>
-                  <p className="text-xs text-slate-400 mt-1">ابدأ بكتابة رسالتك الأولى أدناه لبدء التواصل الحقيقي مع الموظف!</p>
+                  <p className="ds-text-primary text-sm font-semibold">{t("noMessages")}</p>
+                  <p className="ds-text-gray-200 mt-1 max-w-xs text-xs">{t("noMessagesHint")}</p>
                 </div>
               )}
             </div>
 
-            {/* Input Area */}
-            <div className="px-8 pb-8 pt-2 bg-white">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-3">
-                <div className="flex-1 bg-[#f6f7f9] rounded-full h-14 flex items-center px-5 shadow-sm border border-slate-100 focus-within:ring-1 focus-within:ring-[#00d0d4] focus-within:border-[#00d0d4] transition-all">
-                  <input
-                    type="text"
-                    value={messageBody}
-                    onChange={(e) => setMessageBody(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-slate-800 placeholder:text-slate-400"
-                    disabled={isSendingMessage}
-                  />
-                  <div className="flex items-center gap-4 text-slate-400 ml-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button type="button" className="hover:text-slate-600 transition-colors" title="إدراج رمز تعبيري">
-                          <Smile size={20} strokeWidth={2} />
+            {/* Composer */}
+            <div
+              className="shrink-0 px-4 py-3 md:px-6 ds-bg-form"
+              style={{ borderTop: "1px solid var(--color-border-form)" }}
+            >
+              {pendingFiles.length > 0 && (
+                <div className="mx-auto mb-2.5 flex max-w-3xl flex-wrap gap-2">
+                  {pendingFiles.map((file, index) => {
+                    const isImage = file.type.startsWith("image/");
+                    return (
+                      <span
+                        key={`${file.name}-${index}`}
+                        className="flex max-w-[220px] items-center gap-2 rounded-lg bg-[var(--color-bg)] py-1.5 pe-1.5 ps-2.5 text-[12px] font-medium"
+                        style={{ border: "1px solid var(--color-border-form)" }}
+                      >
+                        {isImage ? (
+                          <ImageIcon size={13} className="shrink-0 text-[var(--color-text-brand)]" />
+                        ) : (
+                          <FileText size={13} className="shrink-0 text-[var(--color-text-brand)]" />
+                        )}
+                        <span className="ds-text-gray truncate">{file.name}</span>
+                        <button
+                          type="button"
+                          aria-label={t("removeAttachment")}
+                          onClick={() =>
+                            setPendingFiles((prev) => prev.filter((_, i) => i !== index))
+                          }
+                          className="ds-text-gray-200 flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:text-rose-500"
+                        >
+                          <X size={11} />
                         </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-2 bg-white rounded-xl shadow-lg border border-slate-100" align="end" sideOffset={12}>
-                        <div className="grid grid-cols-6 gap-2">
-                          {COMMON_EMOJIS.map(emoji => (
-                            <button 
-                              key={emoji}
-                              type="button"
-                              onClick={() => setMessageBody(prev => prev + emoji)}
-                              className="w-8 h-8 flex items-center justify-center hover:bg-slate-50 rounded-lg text-lg transition-colors"
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-2 text-center border-t border-slate-50 pt-2">
-                          تلميح: يمكنك استخدام <kbd className="bg-slate-100 px-1 rounded">Win + .</kbd> أو <kbd className="bg-slate-100 px-1 rounded">Cmd + Ctrl + Space</kbd> للوحة الجهاز.
-                        </p>
-                      </PopoverContent>
-                    </Popover>
-
-                    <button type="button" onClick={() => document.getElementById('file-upload-input')?.click()} className="hover:text-slate-600 transition-colors" title="إرفاق ملف">
-                      <Paperclip size={20} strokeWidth={2} />
-                    </button>
-                    <button type="button" onClick={() => document.getElementById('image-upload-input')?.click()} className="hover:text-slate-600 transition-colors" title="إرفاق صورة">
-                      <ImageIcon size={20} strokeWidth={2} />
-                    </button>
-                    
-                    <input type="file" id="file-upload-input" className="hidden" />
-                    <input type="file" id="image-upload-input" accept="image/*" className="hidden" />
-                  </div>
+                      </span>
+                    );
+                  })}
                 </div>
-                
-                <button 
-                  type="submit" 
-                  disabled={!messageBody.trim() || isSendingMessage}
-                  className="w-14 h-14 rounded-full bg-[#00d0d4] hover:bg-[#00b0b4] flex items-center justify-center text-white shrink-0 transition-colors shadow-[0_4px_14px_0_rgba(0,208,212,0.39)] disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+
+              <div className="mx-auto flex max-w-3xl items-end gap-2">
+                <div
+                  className="flex flex-1 items-end gap-1 rounded-2xl bg-[var(--color-bg)] px-2 py-1.5 transition-colors focus-within:border-[var(--color-border-inputs-focus)]"
+                  style={{ border: "1px solid var(--color-border-form)" }}
                 >
-                  <Send size={22} className="ml-1" strokeWidth={2.5} />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="ds-text-gray-200 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--color-bg-form)] hover:text-[var(--color-text-brand)]"
+                        title={t("insertEmoji")}
+                      >
+                        <Smile size={19} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-64 rounded-xl p-2 ds-bg-form"
+                      align="start"
+                      sideOffset={12}
+                      style={{ border: "1px solid var(--color-border-form)" }}
+                    >
+                      <div className="grid grid-cols-6 gap-1">
+                        {COMMON_EMOJIS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => setMessageBody((prev) => prev + emoji)}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-lg transition-colors hover:bg-[var(--color-bg)]"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <textarea
+                    ref={composerRef}
+                    rows={1}
+                    value={messageBody}
+                    onChange={(event) => setMessageBody(event.target.value)}
+                    onKeyDown={handleComposerKeyDown}
+                    placeholder={t("typeMessage")}
+                    className="ds-text-primary max-h-[132px] flex-1 resize-none bg-transparent py-2 text-[14px] leading-relaxed outline-none placeholder:text-[var(--color-text-gray-200)]"
+                  />
+
+                  <div className="flex shrink-0 items-center">
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      className="ds-text-gray-200 flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--color-bg-form)] hover:text-[var(--color-text-brand)]"
+                      title={t("attachImage")}
+                    >
+                      <ImageIcon size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="ds-text-gray-200 flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--color-bg-form)] hover:text-[var(--color-text-brand)]"
+                      title={t("attachFile")}
+                    >
+                      <Paperclip size={18} />
+                    </button>
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFilesPicked}
+                  />
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFilesPicked}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void submitMessage()}
+                  aria-label={t("send")}
+                  disabled={!canSend || isSendingMessage}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-primary)] text-white transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                  style={{
+                    boxShadow: canSend
+                      ? "0 4px 14px 0 color-mix(in srgb, var(--color-bg-primary) 40%, transparent)"
+                      : "none",
+                  }}
+                >
+                  <Send size={19} strokeWidth={2.5} className="rtl:rotate-180" />
                 </button>
-              </form>
+              </div>
             </div>
           </>
-        );
-        })()
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-50/30">
-            <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-[#00d0d4]">
-              <Send size={40} />
+          <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--color-bg-primary-200)] text-[var(--color-text-brand)]">
+              <MessagesSquare size={34} />
             </div>
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">Your Conversations</h3>
-            <p className="text-[15px] text-slate-500 max-w-sm text-center">
-              Select a chat from the sidebar to view your messages or start a new conversation.
-            </p>
+            <h3 className="ds-text-primary mb-2 text-xl font-bold">{t("emptyStateTitle")}</h3>
+            <p className="ds-text-gray-100 max-w-sm text-sm">{t("emptyStateHint")}</p>
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="mt-5 h-10 gap-2 rounded-full bg-[var(--color-bg-primary)] px-5 font-bold text-white hover:opacity-90"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              {t("create.title")}
+            </Button>
           </div>
         )}
-      </div>
+      </section>
 
-      <CreateConversationModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
+      <CreateConversationModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onStartChat={handleStartNewChat}
         isCreating={isCreating}
       />
-      
-      {/* Group Modals */}
-      {isGroupMembersModalOpen && activeConversation && (
+
+      {isGroupMembersModalOpen && currentConversation && (
         <GroupMembersModal
           isOpen={isGroupMembersModalOpen}
           onClose={() => setIsGroupMembersModalOpen(false)}
-          conversation={activeConversation}
+          conversation={currentConversation}
         />
       )}
-      
-      {isEditGroupModalOpen && activeConversation && (
+
+      {isEditGroupModalOpen && currentConversation && (
         <EditGroupModal
           isOpen={isEditGroupModalOpen}
           onClose={() => setIsEditGroupModalOpen(false)}
-          conversation={activeConversation}
+          conversation={currentConversation}
         />
       )}
     </div>

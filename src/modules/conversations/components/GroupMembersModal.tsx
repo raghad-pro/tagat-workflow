@@ -1,103 +1,345 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, UserPlus, UserMinus, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader2, Search, UserMinus, UserPlus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import toast from "react-hot-toast";
+
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/providers/AuthProvider";
+
+import { useConversations } from "../hooks/useConversations";
+import { useParticipants } from "../hooks/useParticipants";
+import type { Conversation } from "../types/conversations.types";
+import {
+  getInitials,
+  getMemberImage,
+  getMemberName,
+  getMemberRole,
+  getMemberUserId,
+  getMembers,
+} from "../utils/conversation.helpers";
 
 interface GroupMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  conversation: any;
+  conversation: Conversation;
 }
 
-export default function GroupMembersModal({ isOpen, onClose, conversation }: GroupMembersModalProps) {
+/** Roles the API accepts on PUT /conversations/{id}/members/{user}/role. */
+const ASSIGNABLE_ROLES = ["admin", "member"] as const;
+
+const AVATAR_COLORS = ["bg-orange-400", "bg-blue-400", "bg-purple-500"];
+
+/**
+ * Tinted from the role's hue with color-mix so the badges stay legible on both
+ * the light and dark surfaces instead of being pinned to light-mode swatches.
+ */
+function roleBadgeStyle(role: string): React.CSSProperties {
+  const hue =
+    role === "owner"
+      ? "#f97316"
+      : role === "admin"
+        ? "#6366f1"
+        : role === "moderator"
+          ? "#0ea5e9"
+          : "#10b981";
+  return {
+    backgroundColor: `color-mix(in srgb, ${hue} 16%, transparent)`,
+    color: hue,
+  };
+}
+
+export default function GroupMembersModal({
+  isOpen,
+  onClose,
+  conversation,
+}: GroupMembersModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [busyUserId, setBusyUserId] = useState<string | null>(null);
+
+  const { user } = useAuth();
+  const role = user?.role || "company";
+  const t = useTranslations("conversations");
+
+  const { removeMember, addMember, changeMemberRole } = useConversations(role);
+
+  const { participants, isLoading: isParticipantsLoading } = useParticipants(role, {
+    enabled: isOpen && isPickerOpen,
+    isSuperAdmin: role === "super_admin",
+    noCompanyLabel: t("create.noCompany"),
+  });
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!isOpen) {
+      setIsPickerOpen(false);
+      setPickerSearch("");
+    }
+  }, [isOpen]);
 
-  if (!isOpen || !mounted) return null;
+  const members = useMemo(() => getMembers(conversation), [conversation]);
 
-  const members = conversation?.users || conversation?.members || [];
+  const memberUserIds = useMemo(
+    () => new Set(members.map((m) => String(getMemberUserId(m)))),
+    [members]
+  );
 
-  const getRoleBadge = (pivotRole: string) => {
-    switch (pivotRole) {
-      case 'owner':
-      case 'admin':
-        return <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold">Owner</span>;
-      case 'moderator':
-        return <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold">Moderator</span>;
-      default:
-        return <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full text-[10px] font-bold">Member</span>;
+  const addable = useMemo(() => {
+    const term = pickerSearch.trim().toLowerCase();
+    return participants
+      .filter((p) => !memberUserIds.has(String(p.userId)))
+      .filter((p) => !term || p.name.toLowerCase().includes(term));
+  }, [participants, memberUserIds, pickerSearch]);
+
+  const translateRole = (value: string) => {
+    const known = ["owner", "admin", "moderator", "member"];
+    return known.includes(value)
+      ? t(`membersModal.roles.${value}` as `membersModal.roles.member`)
+      : value;
+  };
+
+  const runMemberAction = async (
+    userId: number | string,
+    action: () => Promise<unknown>,
+    onSuccessMessage: string,
+    fallbackError: string
+  ) => {
+    setBusyUserId(String(userId));
+    try {
+      await action();
+      toast.success(onSuccessMessage);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data
+          ?.message ??
+        (err as { message?: string })?.message ??
+        fallbackError;
+      toast.error(message);
+    } finally {
+      setBusyUserId(null);
     }
   };
 
+  const handleRemove = (userId: number | string | undefined, name: string) => {
+    if (!conversation?.id || userId == null) return;
+    if (!window.confirm(t("membersModal.confirmRemove", { name }))) return;
+    void runMemberAction(
+      userId,
+      () => removeMember({ id: conversation.id, userId }),
+      t("membersModal.removed", { name }),
+      t("membersModal.removeFailed")
+    );
+  };
+
+  const handleRoleChange = (
+    userId: number | string | undefined,
+    name: string,
+    nextRole: string
+  ) => {
+    if (!conversation?.id || userId == null) return;
+    void runMemberAction(
+      userId,
+      () => changeMemberRole({ id: conversation.id, userId, memberRole: nextRole }),
+      t("membersModal.roleChanged", { name, role: translateRole(nextRole) }),
+      t("membersModal.roleChangeFailed")
+    );
+  };
+
+  const handleAdd = (userId: number | string, name: string) => {
+    if (!conversation?.id) return;
+    void runMemberAction(
+      userId,
+      () => addMember({ id: conversation.id, user_id: userId }),
+      t("membersModal.roleChanged", { name, role: translateRole("member") }),
+      t("membersModal.removeFailed")
+    );
+  };
+
+  if (!isOpen || !mounted) return null;
+
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl ds-bg-form shadow-xl"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         {/* Header */}
-        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-900 z-10">
-          <div className="flex items-center gap-4">
-            <button 
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[var(--color-border-form)] ds-bg-form px-6 py-6 sm:px-8">
+          <div className="flex min-w-0 items-center gap-4">
+            <button
+              type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 transition-colors"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ds-text-gray transition-colors hover:bg-[var(--color-bg)] rtl:rotate-180"
             >
               <ArrowLeft size={20} strokeWidth={2.5} />
             </button>
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Group Members</h2>
-              <p className="text-sm text-slate-500 font-medium mt-1">{members.length} Members</p>
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-bold ds-text-primary sm:text-2xl">
+                {t("membersModal.title")}
+              </h2>
+              <p className="mt-1 text-sm font-medium ds-text-gray-100">
+                {t("membersModal.count", { count: members.length })}
+              </p>
             </div>
           </div>
-          
-          <Button className="bg-[#eaf9f9] text-[#00d0d4] hover:bg-[#00d0d4] hover:text-white border-none shadow-none font-bold rounded-full h-10 px-6 transition-colors flex items-center gap-2">
-            <UserPlus size={16} strokeWidth={2.5} />
-            Add Member
+
+          <Button
+            onClick={() => setIsPickerOpen((open) => !open)}
+            className="flex h-10 shrink-0 items-center gap-2 rounded-full border-none bg-[var(--color-bg-primary-200)] px-4 font-bold text-[var(--color-text-brand)] shadow-none transition-colors hover:bg-[var(--color-bg-primary)] hover:text-white sm:px-6"
+          >
+            {isPickerOpen ? <X size={16} strokeWidth={2.5} /> : <UserPlus size={16} strokeWidth={2.5} />}
+            <span className="hidden sm:inline">{t("membersModal.addMember")}</span>
           </Button>
         </div>
 
-        {/* Member List */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <div className="space-y-4">
-            {members.map((member: any, idx: number) => {
-              const name = member.name || member.first_name || "User";
-              const pivotRole = member.pivot?.role || "member";
-              const bgColor = idx % 3 === 0 ? 'bg-orange-400' : idx % 3 === 1 ? 'bg-blue-400' : 'bg-purple-500';
+        {/* Add-member picker */}
+        {isPickerOpen && (
+          <div className="border-b border-[var(--color-border-form)] bg-[var(--color-bg)] px-6 py-4 sm:px-8">
+            <div className="relative mb-3">
+              <Search
+                className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 ds-text-gray-200"
+                size={15}
+              />
+              <input
+                type="text"
+                value={pickerSearch}
+                onChange={(event) => setPickerSearch(event.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className="h-10 w-full rounded-lg border border-[var(--color-border-inputs)] ds-bg-form ps-9 pe-3 text-sm ds-text-gray focus:border-[var(--color-border-inputs-focus)] focus:outline-none"
+              />
+            </div>
 
-              return (
-                <div key={member.id} className="flex items-center justify-between py-2 group">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className={`w-[46px] h-[46px] rounded-full text-white font-bold flex items-center justify-center text-sm ${bgColor}`}>
-                        {name.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+            <div className="custom-scrollbar max-h-48 space-y-1 overflow-y-auto">
+              {isParticipantsLoading ? (
+                <p className="py-3 text-center text-sm ds-text-gray-100">
+                  {t("create.loadingParticipants")}
+                </p>
+              ) : addable.length === 0 ? (
+                <p className="py-3 text-center text-sm ds-text-gray-100">{t("create.noUsers")}</p>
+              ) : (
+                addable.map((person) => (
+                  <button
+                    key={person.key}
+                    type="button"
+                    disabled={busyUserId === String(person.userId)}
+                    onClick={() => handleAdd(person.userId, person.name)}
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-start transition-colors hover:ds-bg-form disabled:opacity-50"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-primary)] text-[11px] font-bold text-white">
+                      {getInitials(person.name)}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-slate-800 dark:text-white text-[15px]">{name}</span>
-                      {getRoleBadge(pivotRole)}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-1.5 px-4 h-9 rounded-full border border-slate-200 text-slate-600 text-[13px] font-bold hover:bg-slate-50 transition-colors">
-                      Member
-                      <ChevronDown size={14} className="text-slate-400" />
-                    </button>
-                    <button className="flex items-center gap-1.5 px-4 h-9 rounded-full border border-rose-100 text-rose-500 bg-rose-50/50 hover:bg-rose-50 text-[13px] font-bold transition-colors">
-                      <UserMinus size={14} />
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium ds-text-gray">
+                      {person.name}
+                    </span>
+                    {busyUserId === String(person.userId) ? (
+                      <Loader2 size={15} className="shrink-0 animate-spin ds-text-gray-200" />
+                    ) : (
+                      <UserPlus size={15} className="shrink-0 text-[var(--color-text-brand)]" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
+        {/* Members */}
+        <div className="custom-scrollbar flex-1 overflow-y-auto p-6 sm:p-8">
+          {members.length === 0 ? (
+            <div className="py-8 text-center text-sm font-medium ds-text-gray-200">
+              {t("membersModal.empty")}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {members.map((member, index) => {
+                const userId = getMemberUserId(member);
+                const name = getMemberName(member);
+                const image = getMemberImage(member);
+                const memberRole = getMemberRole(member);
+                const isBusy = busyUserId === String(userId);
+                const isSelf = String(userId) === String(user?.id);
+                const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
+
+                return (
+                  <div
+                    key={String(userId ?? member.id ?? index)}
+                    className="flex flex-wrap items-center justify-between gap-3 py-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-4">
+                      {image ? (
+                        <img
+                          src={image}
+                          alt=""
+                          className="h-[46px] w-[46px] shrink-0 rounded-full object-cover shadow-sm"
+                        />
+                      ) : (
+                        <div
+                          className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${color}`}
+                        >
+                          {getInitials(name)}
+                        </div>
+                      )}
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="truncate text-[15px] font-bold ds-text-primary">
+                          {name}
+                        </span>
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                          style={roleBadgeStyle(memberRole)}
+                        >
+                          {translateRole(memberRole)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-3">
+                      <select
+                        value={ASSIGNABLE_ROLES.includes(memberRole as "admin") ? memberRole : "member"}
+                        disabled={isBusy || memberRole === "owner"}
+                        onChange={(event) =>
+                          handleRoleChange(userId, name, event.target.value)
+                        }
+                        className="h-9 rounded-full border border-[var(--color-border-inputs)] ds-bg-form px-3 text-[13px] font-bold ds-text-gray transition-colors hover:bg-[var(--color-bg)] disabled:opacity-50"
+                      >
+                        {ASSIGNABLE_ROLES.map((value) => (
+                          <option key={value} value={value}>
+                            {translateRole(value)}
+                          </option>
+                        ))}
+                      </select>
+
+                      {!isSelf && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(userId, name)}
+                          disabled={isBusy}
+                          className="flex h-9 items-center gap-1.5 rounded-full border border-rose-100 bg-rose-50/50 px-4 text-[13px] font-bold text-rose-500 transition-colors hover:bg-rose-50 disabled:opacity-50"
+                        >
+                          {isBusy ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <UserMinus size={14} />
+                          )}
+                          <span className="hidden sm:inline">{t("membersModal.remove")}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>,
     document.body

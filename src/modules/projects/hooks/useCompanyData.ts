@@ -42,13 +42,48 @@ export const useCompanyDataInfo = (companyId: string | number | undefined | null
 
 /**
  * Returns clients that belong to the selected company.
+ *
+ * Sourced from `/{role}/clients` rather than `/{role}/company-data/{id}`: that
+ * endpoint is unusable on the server — it 500s for super_admin
+ * ("Cannot redeclare InvoiceController::clientProjects()") and does not exist
+ * at all for the company role — which left the Client dropdown permanently
+ * showing "No clients" and blocked project creation entirely.
+ *
+ * For super_admin the list is narrowed to the chosen company via each client's
+ * `companies[]` relation; a company admin already receives a scoped list.
  */
 export const useCompanyClients = (companyId: string | number | undefined | null) => {
-  const query = useCompanyDataInfo(companyId);
-  return { 
-    ...query, 
-    data: query.data?.data?.clients || query.data?.clients || [] 
-  };
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+  const isCompanyAdmin = role === "company";
+
+  const query = useQuery<CompanyClient[]>({
+    queryKey: ["company-clients", role, companyId],
+    queryFn: async () => {
+      const response = (await apiClient.get(
+        `${getRolePrefix(role)}/clients`,
+        { per_page: 200 }
+      )) as any;
+
+      const payload = response?.data ?? response;
+      const list: any[] = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+
+      if (isCompanyAdmin || !companyId) return list;
+
+      return list.filter((c: any) =>
+        Array.isArray(c?.companies)
+          ? c.companies.some((co: any) => String(co?.id) === String(companyId))
+          : String(c?.company_id ?? "") === String(companyId)
+      );
+    },
+    enabled: isCompanyAdmin || !!companyId,
+  });
+
+  return { ...query, data: query.data ?? [] };
 };
 
 /**

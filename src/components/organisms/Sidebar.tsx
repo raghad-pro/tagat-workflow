@@ -85,7 +85,9 @@ const NAV_GROUPS: NavGroup[] = [
     roles: ["super_admin", "company", "employee", "client"],
     items: [
       { key: "employees", href: "/employees", icon: UserRoundPlus, roles: ["super_admin", "company"] },
-      { key: "conversations", href: "/conversations", icon: MessageSquare, roles: ["company"] },
+      // The conversations API is exposed under every role prefix, and chats are
+      // inherently cross-role (an admin messaging an employee or client).
+      { key: "conversations", href: "/conversations", icon: MessageSquare, roles: ["super_admin", "company", "employee", "client"] },
       { key: "projects", href: "/projects", icon: FileText, roles: ["super_admin", "company", "employee", "client"] },
       { key: "tasks", href: "/tasks", icon: SquareCheck, roles: ["super_admin", "company", "employee"] },
       { key: "timesheets", href: "/timesheets", icon: Clock, roles: ["super_admin", "company", "employee"] },
