@@ -423,7 +423,14 @@ export function MultiSelectField<T extends FieldValues>({
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0 border-none rounded-xl shadow-lg ds-bg-form" align="start" style={{ border: "1px solid var(--color-border-form)", borderRadius: "8px" }}>
+            {/*
+              PopoverContent renders through a portal on <body> at z-50, so
+              inside ActionModal (fixed, z-[100]) the list opened *behind* the
+              dialog and could never be clicked. Sibling SelectFields avoid this
+              by rendering inline (usePortal={false}); this one needs to sit
+              above the dialog instead.
+            */}
+            <PopoverContent className="z-[200] w-[300px] p-0 border-none rounded-xl shadow-lg ds-bg-form" align="start" style={{ border: "1px solid var(--color-border-form)", borderRadius: "8px" }}>
               <div className="max-h-60 overflow-y-auto p-2 flex flex-col gap-1 rounded-xl">
                 {options.map((option) => (
                   <div
