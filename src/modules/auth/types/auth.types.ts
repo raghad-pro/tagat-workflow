@@ -1,5 +1,15 @@
 export type Role = "super_admin" | "company" | "employee" | "client";
 
+/**
+ * The four seeded roles. One of them is always a user's base role and decides
+ * which dashboard they land on; anything else is a custom role that only adds
+ * permissions.
+ *
+ * Duplicated from `@/modules/roles/types/roles.types` on purpose — auth is
+ * bootstrapped before any feature module and must not depend on one.
+ */
+const BASE_ROLE_IDS = [1, 2, 3, 4];
+
 // role_id → Role mapping (من الـ API بييجي رقم)
 export const ROLE_MAP: Record<number, Role> = {
   1: "super_admin",
@@ -15,8 +25,20 @@ export type User = {
   role: Role;
   role_id: number;
   company_id: number | null;
-  is_active: number;  
+  is_active: number;
   image: string | null;
+  /**
+   * Every role attached to the account: the base one plus any custom role
+   * granted through the access screen. Needed to look their permissions up,
+   * since the login response carries roles but not permissions.
+   */
+  role_ids: number[];
+  /**
+   * Flattened permission names (`"invoices.create"`) across all of those
+   * roles. `undefined` means "not resolved yet" — which is not the same as
+   * "none", and `usePermission` treats it as unrestricted. See AuthProvider.
+   */
+  permissions?: string[];
 };
 
 /**
@@ -29,12 +51,24 @@ export type User = {
 function extractRoleSource(roleInput: any): { name?: string; id?: number } {
   if (roleInput === null || roleInput === undefined) return {};
 
-  // `roles: [...]` / `role: [...]` — prefer the most privileged (lowest id).
+  // `roles: [...]` / `role: [...]` — a user may now hold several roles: the
+  // seeded one that decides which dashboard they get, plus a custom role that
+  // only adds permissions. Pick the seeded one explicitly.
+  //
+  // This used to take the lowest id, which happened to work only because
+  // custom roles are numbered above 4. Matching the known base ids instead
+  // keeps it correct no matter how the ids are handed out.
   if (Array.isArray(roleInput)) {
     const entries = roleInput
       .map((entry) => extractRoleSource(entry))
       .filter((entry) => entry.name || entry.id !== undefined);
     if (entries.length === 0) return {};
+
+    const base = entries.find(
+      (entry) => entry.id !== undefined && BASE_ROLE_IDS.includes(entry.id)
+    );
+    if (base) return base;
+
     return entries.reduce((best, entry) =>
       (entry.id ?? Number.MAX_SAFE_INTEGER) < (best.id ?? Number.MAX_SAFE_INTEGER) ? entry : best
     );
@@ -90,6 +124,34 @@ export function resolveUserRole(u: any, rawPayload?: any): Role {
   return normalizeRole(roleSource, roleId);
 }
 
+/**
+ * Every role id on the account, base and custom alike.
+ *
+ * These are the ids whose permissions get fetched and merged after login —
+ * the login response itself carries no permissions at all.
+ */
+export function resolveRoleIds(u: any, rawPayload?: any): number[] {
+  const sources = [u?.roles, u?.role, rawPayload?.roles, rawPayload?.role];
+  const ids = new Set<number>();
+
+  for (const source of sources) {
+    if (!source) continue;
+    for (const entry of Array.isArray(source) ? source : [source]) {
+      const raw =
+        typeof entry === "object" && entry !== null
+          ? (entry.id ?? entry.role_id ?? entry.pivot?.role_id)
+          : entry;
+      const id = Number(raw);
+      if (Number.isFinite(id) && id > 0) ids.add(id);
+    }
+  }
+
+  const scalar = Number(u?.role_id ?? rawPayload?.role_id);
+  if (Number.isFinite(scalar) && scalar > 0) ids.add(scalar);
+
+  return Array.from(ids);
+}
+
 export function normalizeUser(rawUser: any, rawPayload?: any): User | null {
   if (!rawUser && !rawPayload) return null;
 
@@ -117,6 +179,10 @@ export function normalizeUser(rawUser: any, rawPayload?: any): User | null {
     company_id: u.company_id ?? rawPayload?.company_id ?? (role === "company" ? Number(id) : null),
     is_active: u.is_active ?? rawPayload?.is_active ?? 1,
     image: u.image ?? u.logo ?? u.avatar ?? null,
+    role_ids: resolveRoleIds(u, rawPayload),
+    // Preserved when re-normalizing an already-resolved user (e.g. reading it
+    // back from localStorage) so the resolution is not thrown away.
+    permissions: Array.isArray(u.permissions) ? u.permissions : undefined,
   };
 }
 

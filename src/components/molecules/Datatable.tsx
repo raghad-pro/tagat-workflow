@@ -4,6 +4,7 @@ import React from "react";
 import { Inbox } from "lucide-react";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/atoms/Button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { Pagination } from "./Pagination";
@@ -31,6 +32,17 @@ export interface TableAction<T = Record<string, unknown>> {
   hoverBg?:string;
 }
 
+/**
+ * Opt-in row selection. Omit it and the table renders exactly as before —
+ * no checkbox column, no extra header cell.
+ */
+export interface TableSelection<T> {
+  selectedIds: (number | string)[];
+  onChange: (ids: (number | string)[]) => void;
+  /** Rows that cannot be picked, e.g. ones the current user may not touch. */
+  isSelectable?: (row: T) => boolean;
+}
+
 interface DataTableProps<T extends { id: number | string }> {
   columns: TableColumn<T>[];
   data: T[];
@@ -38,6 +50,7 @@ interface DataTableProps<T extends { id: number | string }> {
   actionsHeader?: string;
   emptyMessage?: string;
   isLoading?: boolean;
+  selection?: TableSelection<T>;
   pagination?: {
     currentPage: number;
     pageSize: number;
@@ -87,6 +100,48 @@ function ActionIconBtn<T>({
   );
 }
 
+// ─── Selection helpers ────────────────────────────────────────────────────────
+/**
+ * Shared by the desktop table and the mobile cards so both stay in sync with
+ * the same `selection` prop.
+ */
+function useSelectionState<T extends { id: number | string }>(
+  data: T[],
+  selection?: TableSelection<T>
+) {
+  const selectedSet = React.useMemo(
+    () => new Set((selection?.selectedIds ?? []).map(String)),
+    [selection?.selectedIds]
+  );
+
+  const selectableRows = React.useMemo(
+    () => data.filter((row) => selection?.isSelectable?.(row) ?? true),
+    [data, selection]
+  );
+
+  const isSelected = (row: T) => selectedSet.has(String(row.id));
+
+  const toggleRow = (row: T, checked: boolean) => {
+    if (!selection) return;
+    const next = new Set(selection.selectedIds.map(String));
+    if (checked) next.add(String(row.id));
+    else next.delete(String(row.id));
+    // Map back to the original id values so callers keep their number type.
+    const byKey = new Map(data.map((r) => [String(r.id), r.id]));
+    selection.onChange(Array.from(next).map((key) => byKey.get(key) ?? key));
+  };
+
+  const allSelected =
+    selectableRows.length > 0 && selectableRows.every((row) => isSelected(row));
+
+  const toggleAll = (checked: boolean) => {
+    if (!selection) return;
+    selection.onChange(checked ? selectableRows.map((row) => row.id) : []);
+  };
+
+  return { isSelected, toggleRow, allSelected, toggleAll, selectableRows };
+}
+
 // ─── Loading Skeleton ──────────────────────────────────────────────────────────
 function SkeletonRow({ cols }: { cols: number }) {
   return (
@@ -111,6 +166,7 @@ function DesktopTable<T extends { id: number | string }>({
   actionsHeader = "Actions",
   isLoading,
   emptyMessage,
+  selection,
 }: DataTableProps<T>) {
   const t = useTranslations("common");
   const defaultActionsHeader = t("actions");
@@ -119,7 +175,8 @@ function DesktopTable<T extends { id: number | string }>({
   const finalEmptyMessage = emptyMessage ?? defaultEmptyMessage;
 
   const hasActions = !!actions?.length;
-  const totalCols = columns.length + (hasActions ? 1 : 0);
+  const { isSelected, toggleRow, allSelected, toggleAll } = useSelectionState(data, selection);
+  const totalCols = columns.length + (hasActions ? 1 : 0) + (selection ? 1 : 0);
 
   return (
     <div className="hidden md:block overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -128,6 +185,15 @@ function DesktopTable<T extends { id: number | string }>({
         {/* ── Head ── */}
         <thead>
           <tr style={{ borderBottom: "1px solid var(--color-border-form)" }}>
+            {selection && (
+              <th className="px-4 py-3 w-[44px]">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={(c) => toggleAll(Boolean(c))}
+                  aria-label={t("selectAll")}
+                />
+              </th>
+            )}
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -169,6 +235,17 @@ function DesktopTable<T extends { id: number | string }>({
                 className="transition-colors hover:ds-bg-primary-200"
                 style={{ borderBottom: "1px solid var(--color-border-form)" }}
               >
+                {selection && (
+                  <td className="px-4 py-3">
+                    <Checkbox
+                      checked={isSelected(row)}
+                      disabled={!(selection.isSelectable?.(row) ?? true)}
+                      onCheckedChange={(c) => toggleRow(row, Boolean(c))}
+                      aria-label={String(row.id)}
+                    />
+                  </td>
+                )}
+
                 {/* Data cells */}
                 {columns.map((col) => (
                   <td key={col.key} className="px-4 py-3 ds-text-sm ds-text-primary">
@@ -203,11 +280,13 @@ function MobileCards<T extends { id: number | string }>({
   data,
   actions,
   emptyMessage,
+  selection,
 }: DataTableProps<T>) {
   const t = useTranslations("common");
   const defaultEmptyMessage = t("noDataFound");
   const finalEmptyMessage = emptyMessage ?? defaultEmptyMessage;
 
+  const { isSelected, toggleRow } = useSelectionState(data, selection);
   const primaryCol = columns.find((c) => c.isPrimary) ?? columns[0];
   const restCols = columns.filter(
     (c) => c.key !== primaryCol.key && !c.hideOnMobile
@@ -232,11 +311,21 @@ function MobileCards<T extends { id: number | string }>({
           key={row.id}
           className="rounded-xl ds-bg-form ds-border-form p-4 ds-shadow-sm"
         >
-          {/* Primary field */}
-          <div className="mb-3 ds-text-sm ds-text-primary font-semibold">
-            {primaryCol.render
-              ? primaryCol.render(row)
-              : String((row as Record<string, unknown>)[primaryCol.key] ?? "—")}
+          {/* Primary field — with the row checkbox alongside it when selectable */}
+          <div className="mb-3 flex items-center gap-3">
+            {selection && (
+              <Checkbox
+                checked={isSelected(row)}
+                disabled={!(selection.isSelectable?.(row) ?? true)}
+                onCheckedChange={(c) => toggleRow(row, Boolean(c))}
+                aria-label={String(row.id)}
+              />
+            )}
+            <div className="ds-text-sm ds-text-primary font-semibold min-w-0">
+              {primaryCol.render
+                ? primaryCol.render(row)
+                : String((row as Record<string, unknown>)[primaryCol.key] ?? "—")}
+            </div>
           </div>
 
           {/* Label : Value rows — label on start, value on end (auto-flips RTL/LTR) */}

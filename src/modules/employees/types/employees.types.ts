@@ -22,7 +22,32 @@ export interface EmployeeUser {
   email:      string;
   first_name?: string;
   last_name?:  string;
+  /** 1 / 0 — the only activity signal the API returns for an employee. */
+  is_active?: number | boolean;
+  image?:     string | null;
+  roles?:     { id: number; name: string }[];
 }
+
+/**
+ * Reads an employee's email. The API only ever nests it under `user`, so the
+ * top-level `email` fallback exists purely for locally-built rows.
+ */
+export const getEmployeeEmail = (row: any): string =>
+  row?.user?.email ?? row?.email ?? "";
+
+/**
+ * Derives a status from `user.is_active`.
+ *
+ * The employee record has no `status` column — reading `row.status` yields
+ * `undefined` for every row the API returns, so any filter or badge based on
+ * it is comparing against nothing.
+ */
+export const getEmployeeStatus = (row: any): EmployeeStatus => {
+  if (row?.status) return String(row.status).toLowerCase() as EmployeeStatus;
+  const active = row?.user?.is_active ?? row?.is_active;
+  if (active === undefined || active === null) return "active";
+  return Number(active) === 1 ? "active" : "inactive";
+};
 
 // ─── Employee ──────────────────────────────────────────────────────────────────
 export interface Employee {
@@ -52,9 +77,14 @@ export interface Employee {
 
 // ─── Stats ─────────────────────────────────────────────────────────────────────
 export interface EmployeeStats {
-  total:      number;
-  active:     number;
-  onboarding: number;
+  total:    number;
+  active:   number;
+  /**
+   * Derived from `user.is_active` — the only activity signal the record
+   * carries. The card used to be labelled "On Leave", which the data has never
+   * been able to tell apart from any other kind of inactive.
+   */
+  inactive: number;
 }
 
 // ─── Query Params ──────────────────────────────────────────────────────────────

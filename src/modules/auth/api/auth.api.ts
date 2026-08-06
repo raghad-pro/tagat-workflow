@@ -1,4 +1,5 @@
 import apiClient from "@/services/apiClient";
+import { getRolePrefix } from "@/utils/rolePrefix";
 import type {
   ApiAuthResponse,
   LoginRequest,
@@ -15,6 +16,22 @@ export const authApi = {
   login: async (data: LoginRequest) => {
     const response = await apiClient.post<ApiAuthResponse>("/login", data);
     return response.data;
+  },
+
+  /**
+   * The signed-in user as the server sees them *right now*, including
+   * `roles[]` with each role's `permissions[]` embedded.
+   *
+   * The login response carries roles but no permissions, and is a snapshot
+   * taken when the session began — so an account granted a new role mid-session
+   * would keep its old access until it logged out. This is the endpoint that
+   * lets a reload pick the change up.
+   */
+  me: async (role: string) => {
+    const response = await apiClient.get<{ data: any }>(
+      `${getRolePrefix(role)}/account`
+    );
+    return (response as any)?.data ?? null;
   },
 
   register: async (data: RegisterRequest) => {

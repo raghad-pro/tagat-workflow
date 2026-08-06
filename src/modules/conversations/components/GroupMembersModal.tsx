@@ -71,6 +71,8 @@ export default function GroupMembersModal({
     enabled: isOpen && isPickerOpen,
     isSuperAdmin: role === "super_admin",
     noCompanyLabel: t("create.noCompany"),
+    // Same scope as starting a chat: an employee may only add colleagues.
+    companyId: user?.company_id ?? null,
   });
 
   useEffect(() => setMounted(true), []);

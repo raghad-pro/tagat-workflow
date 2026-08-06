@@ -4,9 +4,11 @@ import type { Project, ProjectStats, ProjectsQueryParams } from "../types/projec
 
 export const projectApi = {
   getAll: async (role: string, params?: ProjectsQueryParams) => {
+    // `apiClient.get` wraps its second argument as axios `{ params }` itself —
+    // passing `{ params }` produced `?params[search]=…`, which the server ignores.
     const response = await apiClient.get(
       `${getRolePrefix(role)}/projects`,
-      { params }
+      params as Record<string, unknown>
     ) as any;
     const payload = response.data;
 

@@ -87,7 +87,8 @@
     "otp_invalid": "Invalid or expired verification code",
     "otp_required": "Please enter the complete verification code",
     "password_reset_success": "Password changed successfully",
-    "generic_error": "Something went wrong, please try again"
+    "generic_error": "Something went wrong, please try again",
+    "loading": "Loading..."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -219,7 +220,15 @@
       "passwordNumber": "Must contain a number",
       "passwordSpecial": "Must contain a special character",
       "passwordsMatch": "Passwords do not match"
-    }
+    },
+    "selectAll": "Select all",
+    "all": "All Statuses",
+    "active": "Active",
+    "onboarding": "Onboarding",
+    "inactive": "Inactive",
+    "loadFailedTitle": "Could not load this page",
+    "retry": "Try again",
+    "selectEmployee": "Select employee"
   },
   "development": {
     "title": "Developments Management",
@@ -342,7 +351,8 @@
     "stats": {
       "total": "Total Employees",
       "active": "Active",
-      "onLeave": "On Leave"
+      "onLeave": "On Leave",
+      "inactive": "Inactive"
     },
     "columns": {
       "name": "Employee Name",
@@ -356,7 +366,8 @@
       "department": "Department",
       "email": "Email",
       "status": "Status",
-      "joinDate": "Join Date"
+      "joinDate": "Join Date",
+      "extraRole": "Extra role"
     },
     "filter": {
       "all": "All",
@@ -383,7 +394,9 @@
       "company": "Company",
       "status": "Status",
       "date": "Date"
-    }
+    },
+    "deleteTitle": "Delete Contract",
+    "editContractTitle": "Edit Contract"
   },
   "task": {
     "title": "Tasks Management",
@@ -432,7 +445,10 @@
       "in_progress": "In Progress",
       "completed": "Completed",
       "on_hold": "On Hold"
-    }
+    },
+    "selectCompany": "Select company",
+    "selectProject": "Select project",
+    "selectEmployee": "Select employee"
   },
   "company": {
     "title": "Companies Management",
@@ -579,19 +595,48 @@
   },
   "role": {
     "title": "Roles Management",
-    "subtitle": "Manage system roles and permissions",
+    "subtitle": "Define roles and choose exactly what each one can access",
     "add": "Add Role",
+    "addRole": "Add Role",
+    "editRole": "Edit Role",
+    "viewRole": "Role Details",
+    "deleteRole": "Delete Role",
     "searchPlaceholder": "Search roles...",
+    "allCompanies": "All companies",
+    "noPermissions": "This role grants no permissions",
+    "companyHint": "A role must belong to a company before it can be given to that company's employees.",
+    "baseRoleHint": "This is a built-in role shared by every account, so it cannot be changed.",
     "stats": {
       "total": "Total Roles",
       "custom": "Custom Roles",
       "system": "System Roles"
     },
+    "types": {
+      "system": "Built-in",
+      "custom": "Custom"
+    },
     "columns": {
       "roleName": "Role Name",
-      "usersCount": "Users Count",
+      "name": "Role Name",
+      "usersCount": "Users",
       "description": "Description",
-      "status": "Status"
+      "status": "Status",
+      "company": "Company",
+      "permissions": "Permissions",
+      "permissionsCount": "Permissions"
+    },
+    "placeholders": {
+      "name": "Enter role name",
+      "description": "What is this role for?",
+      "company": "Select a company"
+    },
+    "toast": {
+      "created": "Role created",
+      "updated": "Role updated",
+      "deleted": "Role deleted",
+      "createFailed": "Could not create the role",
+      "updateFailed": "Could not update the role",
+      "deleteFailed": "Could not delete the role"
     }
   },
   "companyRequest": {
@@ -710,7 +755,8 @@
     "developments": "Developments",
     "contracts": "Contracts",
     "systemSettings": "System Settings",
-    "conversations": "Conversations"
+    "conversations": "Conversations",
+    "access": "Access Management"
   },
   "currencies": {
     "title": "Currencies",
@@ -917,8 +963,15 @@
       "company": "Company"
     },
     "messages": {
-      "deleteSuccess": "Transaction deleted successfully"
-    }
+      "deleteSuccess": "Transaction deleted successfully",
+      "createSuccess": "Transaction added successfully",
+      "updateSuccess": "Transaction updated successfully"
+    },
+    "relatedWallet": "Related Wallet (Transfer To)",
+    "relatedWalletAfter": "Related Wallet After",
+    "toWalletBalance": "To Wallet Balance",
+    "exchangeRate": "Exchange Rate",
+    "commission": "Commission"
   },
   "payments": {
     "title": "Payments Management",
@@ -949,7 +1002,10 @@
     },
     "messages": {
       "deleteSuccess": "Payment deleted successfully",
-      "deleteError": "Failed to delete payment"
+      "deleteError": "Failed to delete payment",
+      "createSuccess": "Payment added successfully",
+      "updateSuccess": "Payment updated successfully",
+      "noData": "No data available to export"
     },
     "form": {
       "company": "Company",
@@ -1114,5 +1170,96 @@
     "orphanedTitle": "This conversation was deleted on the server",
     "orphanedHint": "You can read its history, but it will not appear in your conversations list and new messages may be lost. Ask the backend team to restore it.",
     "orphanedToast": "That conversation was deleted on the server and cannot be reopened from the list."
+  },
+  "permission": {
+    "title": "Permissions",
+    "granted": "{count} of {total}",
+    "selectAll": "Select all",
+    "clearAll": "Clear all",
+    "searchPlaceholder": "Filter permissions...",
+    "noMatches": "No permission matches that",
+    "empty": "No permissions available",
+    "groups": {
+      "account": "Account",
+      "clients": "Clients",
+      "companies": "Companies",
+      "company_requests": "Company Requests",
+      "contracts": "Contracts",
+      "conversations": "Conversations",
+      "currencies": "Currencies",
+      "dashboard": "Dashboard",
+      "developments": "Developments",
+      "employees": "Employees",
+      "invoices": "Invoices",
+      "kanban": "Kanban Board",
+      "payments": "Payments",
+      "permissions": "Permissions",
+      "projects": "Projects",
+      "roles": "Roles",
+      "settings": "Settings",
+      "sprints": "Sprints",
+      "system": "System",
+      "task_work_logs": "Work Logs",
+      "tasks": "Tasks",
+      "timesheets": "Timesheets",
+      "wallet_transactions": "Wallet Transactions",
+      "wallets": "Wallets"
+    },
+    "actions": {
+      "view": "View",
+      "create": "Create",
+      "update": "Edit",
+      "delete": "Delete",
+      "assign": "Assign",
+      "approve": "Approve",
+      "reject": "Reject",
+      "join": "Join",
+      "manage": "Manage",
+      "manage_status": "Change status"
+    }
+  },
+  "access": {
+    "title": "Access Management",
+    "subtitle": "Give an employee an extra role on top of their base one",
+    "searchPlaceholder": "Search by name, email or role...",
+    "manageAccess": "Manage access",
+    "assignTitle": "Manage access",
+    "assignSelected": "Assign role",
+    "apply": "Apply",
+    "chooseRole": "Choose a role",
+    "noRole": "No extra role",
+    "noRoleHint": "Keeps only the base role and its default permissions",
+    "noRolesForCompany": "This company has no custom roles yet. Create one on the Roles page first.",
+    "currentRole": "Currently: {role}",
+    "grants": "This role grants",
+    "grantsNone": "This role grants no permissions yet",
+    "selectedCount": "{count} selected",
+    "bulkTarget": "{count} employees",
+    "bulkWarning": "This replaces the extra role on all {count} selected employees.",
+    "bulkBlocked": "Pick employees from one company — roles cannot cross companies.",
+    "stats": {
+      "withRole": "With extra role",
+      "withoutRole": "Base role only",
+      "total": "Employees"
+    },
+    "columns": {
+      "employee": "Employee",
+      "baseRole": "Base role",
+      "extraRole": "Extra role",
+      "company": "Company"
+    },
+    "filters": {
+      "allCompanies": "All companies",
+      "allEmployees": "All employees",
+      "withRole": "With extra role",
+      "withoutRole": "Base role only"
+    },
+    "toast": {
+      "assigned": "Access updated",
+      "cleared": "Extra role removed",
+      "failed": "Could not update access",
+      "bulkDone": "Access updated for {count} employees",
+      "bulkPartial": "{done} updated, {failed} failed"
+    }
   }
 }

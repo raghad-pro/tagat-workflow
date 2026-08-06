@@ -20,7 +20,9 @@ export const taskApi = {
   getAll: async (role: string, params?: TasksQueryParams) => {
     const response = await apiClient.get<ApiResponse<PaginatedData<Task> | Task[]>>(
       `${getRolePrefix(role)}/tasks`,
-      { params } as any
+      // `apiClient.get` wraps its second argument as axios `{ params }` itself —
+      // passing `{ params }` produced `?params[search]=…`, which the server ignores.
+      params as Record<string, unknown>
     );
     const responseData = response.data;
 

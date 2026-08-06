@@ -78,7 +78,7 @@ export default function JoinRequestsPage() {
   const role = user?.role ?? "super_admin";
   const isSuperAdmin = role === "super_admin";
 
-  const { data, isLoading } = useJoinRequests({
+  const { data, isLoading, isError, error, refetch } = useJoinRequests({
     search: search || undefined,
     page: 1,
     per_page: 1000, 
@@ -217,8 +217,18 @@ export default function JoinRequestsPage() {
     return cols;
   }, [isSuperAdmin, approve, reject, role]);
 
+  // `GET /{role}/requests` currently 500s server-side ("Call to undefined
+  // relationship [role] on model [App\Models\User]"). Surfacing that beats an
+  // empty table implying there are no pending requests.
   return (
-    <PageContainer isLoading={isLoading} skeletonVariant="table" skeletonRows={PAGE_SIZE}>
+    <PageContainer
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      onRetry={() => refetch()}
+      skeletonVariant="table"
+      skeletonRows={PAGE_SIZE}
+    >
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
       <div className="mt-6">
