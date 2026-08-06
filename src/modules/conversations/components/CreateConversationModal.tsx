@@ -67,6 +67,7 @@ export default function CreateConversationModal({
     enabled: isOpen,
     isSuperAdmin,
     noCompanyLabel: t("create.noCompany"),
+    companyId: user?.company_id ?? null,
   });
 
   useEffect(() => setMounted(true), []);

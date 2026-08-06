@@ -16,6 +16,24 @@ export const useEmployees = (params?: EmployeesQueryParams) => {
   });
 };
 
+/**
+ * Every employee, across all server pages.
+ *
+ * The list endpoint hard-caps a page at 10 rows and ignores `per_page`, so
+ * asking for a big page silently returns the first ten. Screens that filter,
+ * count or paginate locally need the whole set or their numbers are wrong.
+ */
+export const useAllEmployees = () => {
+  const { user } = useAuth();
+  const role = user?.role || "super_admin";
+
+  return useQuery({
+    queryKey: ["employees", role, "all"],
+    queryFn: () => employeeApi.getAllPages(role),
+    placeholderData: keepPreviousData,
+  });
+};
+
 export const useEmployeeStats = () => {
   const { user } = useAuth();
   const role = user?.role || "super_admin";

@@ -87,7 +87,8 @@
     "otp_invalid": "رمز التحقق غير صحيح أو منتهي الصلاحية",
     "otp_required": "يرجى إدخال رمز التحقق كاملاً",
     "password_reset_success": "تم تغيير كلمة المرور بنجاح",
-    "generic_error": "حدث خطأ، يرجى المحاولة مرة أخرى"
+    "generic_error": "حدث خطأ، يرجى المحاولة مرة أخرى",
+    "loading": "جارٍ التحميل..."
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -219,7 +220,15 @@
       "passwordNumber": "يجب أن يحتوي على رقم",
       "passwordSpecial": "يجب أن يحتوي على حرف خاص",
       "passwordsMatch": "كلمات المرور غير متطابقة"
-    }
+    },
+    "selectAll": "تحديد الكل",
+    "all": "كل الحالات",
+    "active": "نشط",
+    "onboarding": "قيد التهيئة",
+    "inactive": "غير نشط",
+    "loadFailedTitle": "تعذّر تحميل الصفحة",
+    "retry": "إعادة المحاولة",
+    "selectEmployee": "اختر الموظف"
   },
   "development": {
     "title": "إدارة التطويرات",
@@ -238,6 +247,13 @@
       "budget": "الميزانية",
       "cost": "التكلفة",
       "status": "الحالة"
+    },
+    "form": {
+      "title": "العنوان",
+      "description": "الوصف",
+      "cost": "التكلفة",
+      "client": "العميل",
+      "currency": "العملة"
     }
   },
   "project": {
@@ -335,7 +351,8 @@
     "stats": {
       "total": "إجمالي الموظفين",
       "active": "نشط",
-      "onLeave": "في إجازة"
+      "onLeave": "في إجازة",
+      "inactive": "غير نشط"
     },
     "columns": {
       "name": "اسم الموظف",
@@ -349,7 +366,8 @@
       "department": "القسم",
       "email": "البريد الإلكتروني",
       "status": "الحالة",
-      "joinDate": "تاريخ الانضمام"
+      "joinDate": "تاريخ الانضمام",
+      "extraRole": "الدور الإضافي"
     },
     "filter": {
       "all": "الكل",
@@ -376,7 +394,9 @@
       "company": "الشركة",
       "status": "الحالة",
       "date": "التاريخ"
-    }
+    },
+    "deleteTitle": "حذف العقد",
+    "editContractTitle": "تعديل العقد"
   },
   "task": {
     "title": "إدارة المهام",
@@ -425,7 +445,10 @@
       "in_progress": "قيد التنفيذ",
       "completed": "مكتملة",
       "on_hold": "معلقة"
-    }
+    },
+    "selectCompany": "اختر الشركة",
+    "selectProject": "اختر المشروع",
+    "selectEmployee": "اختر الموظف"
   },
   "company": {
     "title": "إدارة الشركات",
@@ -571,20 +594,49 @@
     }
   },
   "role": {
-    "title": "إدارة الصلاحيات",
-    "subtitle": "إدارة صلاحيات وأدوار النظام",
-    "add": "إضافة صلاحية",
-    "searchPlaceholder": "ابحث في الصلاحيات...",
+    "title": "إدارة الأدوار",
+    "subtitle": "عرّف الأدوار واختر بالضبط ما يستطيع كل دور الوصول إليه",
+    "add": "إضافة دور",
+    "addRole": "إضافة دور",
+    "editRole": "تعديل الدور",
+    "viewRole": "تفاصيل الدور",
+    "deleteRole": "حذف الدور",
+    "searchPlaceholder": "ابحث في الأدوار...",
+    "allCompanies": "كل الشركات",
+    "noPermissions": "هذا الدور لا يمنح أي صلاحية",
+    "companyHint": "لا بد أن ينتمي الدور إلى شركة قبل أن يُمنح لموظفي تلك الشركة.",
+    "baseRoleHint": "هذا دور أساسي مشترك بين جميع الحسابات، لذلك لا يمكن تعديله.",
     "stats": {
       "total": "إجمالي الأدوار",
       "custom": "أدوار مخصصة",
       "system": "أدوار النظام"
     },
+    "types": {
+      "system": "أساسي",
+      "custom": "مخصص"
+    },
     "columns": {
       "roleName": "اسم الدور",
+      "name": "اسم الدور",
       "usersCount": "عدد المستخدمين",
       "description": "الوصف",
-      "status": "الحالة"
+      "status": "الحالة",
+      "company": "الشركة",
+      "permissions": "الصلاحيات",
+      "permissionsCount": "عدد الصلاحيات"
+    },
+    "placeholders": {
+      "name": "أدخل اسم الدور",
+      "description": "ما الغرض من هذا الدور؟",
+      "company": "اختر الشركة"
+    },
+    "toast": {
+      "created": "تم إنشاء الدور",
+      "updated": "تم تحديث الدور",
+      "deleted": "تم حذف الدور",
+      "createFailed": "تعذّر إنشاء الدور",
+      "updateFailed": "تعذّر تحديث الدور",
+      "deleteFailed": "تعذّر حذف الدور"
     }
   },
   "companyRequest": {
@@ -695,7 +747,7 @@
     "walletTransactions": "معاملات المحافظ",
     "currencies": "العملات",
     "internalOperations": "العمليات الداخلية",
-    "roles": "الصلاحيات",
+    "roles": "الأدوار",
     "employees": "الموظفون",
     "projects": "المشاريع",
     "tasks": "المهام",
@@ -703,7 +755,8 @@
     "developments": "التطويرات",
     "contracts": "العقود",
     "systemSettings": "إعدادات النظام",
-    "conversations": "المحادثات"
+    "conversations": "المحادثات",
+    "access": "إدارة الصلاحيات"
   },
   "currencies": {
     "title": "العملات",
@@ -910,8 +963,15 @@
       "company": "الشركة"
     },
     "messages": {
-      "deleteSuccess": "تم حذف الحركة بنجاح"
-    }
+      "deleteSuccess": "تم حذف الحركة بنجاح",
+      "createSuccess": "تمت إضافة الحركة",
+      "updateSuccess": "تم تحديث الحركة"
+    },
+    "relatedWallet": "المحفظة المرتبطة (التحويل إلى)",
+    "relatedWalletAfter": "رصيد المحفظة المرتبطة بعد العملية",
+    "toWalletBalance": "رصيد المحفظة المستلِمة",
+    "exchangeRate": "سعر الصرف",
+    "commission": "العمولة"
   },
   "payments": {
     "title": "إدارة المدفوعات",
@@ -942,7 +1002,10 @@
     },
     "messages": {
       "deleteSuccess": "تم حذف الدفعة بنجاح",
-      "deleteError": "فشل في حذف الدفعة"
+      "deleteError": "فشل في حذف الدفعة",
+      "createSuccess": "تمت إضافة الدفعة",
+      "updateSuccess": "تم تحديث الدفعة",
+      "noData": "لا توجد بيانات للتصدير"
     },
     "form": {
       "company": "الشركة",
@@ -1107,5 +1170,96 @@
     "orphanedTitle": "هذه المحادثة محذوفة على السيرفر",
     "orphanedHint": "يمكنك قراءة سجلها، لكنها لن تظهر في قائمة محادثاتك وقد تضيع الرسائل الجديدة. اطلب من فريق الباك-إند استعادتها.",
     "orphanedToast": "هذه المحادثة محذوفة على السيرفر ولا يمكن إظهارها في القائمة."
+  },
+  "permission": {
+    "title": "الصلاحيات",
+    "granted": "{count} من {total}",
+    "selectAll": "تحديد الكل",
+    "clearAll": "إلغاء الكل",
+    "searchPlaceholder": "تصفية الصلاحيات...",
+    "noMatches": "لا توجد صلاحية مطابقة",
+    "empty": "لا توجد صلاحيات متاحة",
+    "groups": {
+      "account": "الحساب",
+      "clients": "العملاء",
+      "companies": "الشركات",
+      "company_requests": "طلبات الشركات",
+      "contracts": "العقود",
+      "conversations": "المحادثات",
+      "currencies": "العملات",
+      "dashboard": "لوحة التحكم",
+      "developments": "التطويرات",
+      "employees": "الموظفون",
+      "invoices": "الفواتير",
+      "kanban": "لوحة المهام",
+      "payments": "المدفوعات",
+      "permissions": "الصلاحيات",
+      "projects": "المشاريع",
+      "roles": "الأدوار",
+      "settings": "الإعدادات",
+      "sprints": "السبرنتات",
+      "system": "النظام",
+      "task_work_logs": "سجلات العمل",
+      "tasks": "المهام",
+      "timesheets": "سجلات الدوام",
+      "wallet_transactions": "حركات المحفظة",
+      "wallets": "المحافظ"
+    },
+    "actions": {
+      "view": "عرض",
+      "create": "إضافة",
+      "update": "تعديل",
+      "delete": "حذف",
+      "assign": "إسناد",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "join": "انضمام",
+      "manage": "إدارة",
+      "manage_status": "تغيير الحالة"
+    }
+  },
+  "access": {
+    "title": "إدارة الصلاحيات",
+    "subtitle": "امنح الموظف دورًا إضافيًا إلى جانب دوره الأساسي",
+    "searchPlaceholder": "ابحث بالاسم أو البريد أو الدور...",
+    "manageAccess": "إدارة الصلاحيات",
+    "assignTitle": "إدارة الصلاحيات",
+    "assignSelected": "إسناد دور",
+    "apply": "تطبيق",
+    "chooseRole": "اختر الدور",
+    "noRole": "بدون دور إضافي",
+    "noRoleHint": "يُبقي الدور الأساسي وصلاحياته الافتراضية فقط",
+    "noRolesForCompany": "لا توجد أدوار مخصصة لهذه الشركة بعد. أنشئ دورًا من صفحة الأدوار أولًا.",
+    "currentRole": "الحالي: {role}",
+    "grants": "هذا الدور يمنح",
+    "grantsNone": "هذا الدور لا يمنح أي صلاحية بعد",
+    "selectedCount": "{count} محدَّد",
+    "bulkTarget": "{count} موظفين",
+    "bulkWarning": "سيستبدل هذا الدور الإضافي لجميع الموظفين المحددين ({count}).",
+    "bulkBlocked": "اختر موظفين من شركة واحدة — الأدوار لا تنتقل بين الشركات.",
+    "stats": {
+      "withRole": "لديهم دور إضافي",
+      "withoutRole": "الدور الأساسي فقط",
+      "total": "الموظفون"
+    },
+    "columns": {
+      "employee": "الموظف",
+      "baseRole": "الدور الأساسي",
+      "extraRole": "الدور الإضافي",
+      "company": "الشركة"
+    },
+    "filters": {
+      "allCompanies": "كل الشركات",
+      "allEmployees": "كل الموظفين",
+      "withRole": "لديهم دور إضافي",
+      "withoutRole": "الدور الأساسي فقط"
+    },
+    "toast": {
+      "assigned": "تم تحديث الصلاحيات",
+      "cleared": "تمت إزالة الدور الإضافي",
+      "failed": "تعذّر تحديث الصلاحيات",
+      "bulkDone": "تم تحديث صلاحيات {count} موظفين",
+      "bulkPartial": "تم تحديث {done} وفشل {failed}"
+    }
   }
 }

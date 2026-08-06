@@ -4,9 +4,11 @@ import type { Employee, EmployeeStats, EmployeesQueryParams } from "../types/emp
 
 export const employeeApi = {
   getAll: async (role: string, params?: EmployeesQueryParams) => {
+    // `apiClient.get` wraps its second argument as axios `{ params }` itself;
+    // passing `{ params }` produced `?params[page]=…`, which the server ignores.
     const response = await apiClient.get(
       `${getRolePrefix(role)}/employees`,
-      { params }
+      params as Record<string, unknown>
     );
     const payload = (response as any).data;
 
@@ -20,13 +22,58 @@ export const employeeApi = {
     };
   },
 
+  /**
+   * Every employee, across all pages.
+   *
+   * The list endpoint caps its page size at 10 and ignores `per_page`, so a
+   * single request cannot return the whole roster. Screens that must reason
+   * about all employees at once — the access screen filters and counts by role
+   * — have to walk the paginator instead of asking for a big page.
+   */
+  getAllPages: async (role: string, params?: EmployeesQueryParams) => {
+    const url = `${getRolePrefix(role)}/employees`;
+
+    const fetchPage = async (page: number) => {
+      const response = await apiClient.get(url, {
+        ...(params as Record<string, unknown>),
+        page,
+      });
+      return (response as any).data;
+    };
+
+    const first = await fetchPage(1);
+    if (Array.isArray(first)) return { data: first, meta: { total: first.length } };
+
+    const rows: any[] = Array.isArray(first?.data) ? [...first.data] : [];
+    const lastPage = Number(first?.last_page ?? 1);
+
+    // Bounded so a server that always reports more pages cannot spin forever.
+    const maxPages = Math.min(lastPage, 50);
+    for (let page = 2; page <= maxPages; page++) {
+      const next = await fetchPage(page);
+      const nextRows = Array.isArray(next?.data) ? next.data : [];
+      if (nextRows.length === 0) break;
+      rows.push(...nextRows);
+    }
+
+    return { data: rows, meta: { total: Number(first?.total ?? rows.length) } };
+  },
+
+  /**
+   * Counted over every page, and off `user.is_active` rather than a `status`
+   * column that does not exist on the record — reading `e.status` gave
+   * `undefined` for every row, so "active" fell through to the total and
+   * "onboarding" was always zero.
+   */
   getStats: async (role: string): Promise<EmployeeStats> => {
-    const res = await employeeApi.getAll(role);
+    const res = await employeeApi.getAllPages(role);
     const employees = res.data;
+    const isActive = (e: any) => Number(e?.user?.is_active ?? e?.is_active ?? 1) === 1;
+
     return {
-      total:      employees.length,
-      active:     employees.filter((e: any) => e.status === "active").length || employees.length,
-      onboarding: employees.filter((e: any) => e.status === "onboarding").length || 0,
+      total:    res.meta.total || employees.length,
+      active:   employees.filter(isActive).length,
+      inactive: employees.filter((e: any) => !isActive(e)).length,
     };
   },
 

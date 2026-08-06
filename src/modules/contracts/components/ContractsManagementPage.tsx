@@ -74,7 +74,7 @@ export function ContractsManagementPage() {
     { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
   ], [tCommon, openView, openEdit, openDelete]);
 
-  const { data: res, isLoading }  = useContracts(role, { search, page: currentPage, per_page: PAGE_SIZE });
+  const { data: res, isLoading, isError, error, refetch } = useContracts(role, { search, page: currentPage, per_page: PAGE_SIZE });
   const { data: statsData }       = useContractStats(role);
   const createContract            = useCreateContract(role);
   const updateContract            = useUpdateContract(role);
@@ -90,7 +90,20 @@ export function ContractsManagementPage() {
 
   return (
     <>
-      <PageContainer isLoading={isLoading} skeletonVariant="dashboard" skeletonRows={PAGE_SIZE}>
+      {/*
+        The contracts controller is missing server-side (`Target class
+        [ContractController] does not exist` → 500). Without this the page
+        rendered an empty table, telling the user they have no contracts when
+        the request never actually ran.
+      */}
+      <PageContainer
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        skeletonVariant="dashboard"
+        skeletonRows={PAGE_SIZE}
+      >
         <PageHeader
           title={t("title")}
           subtitle={t("subtitle")}

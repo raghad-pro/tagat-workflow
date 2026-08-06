@@ -16,7 +16,7 @@ import {
   PageCardFooter,
 } from "@/components/molecules/Pagecard";
 import {
-  useEmployees,
+  useAllEmployees,
   useEmployeeStats,
   useCreateEmployee,
   useUpdateEmployee,
@@ -31,10 +31,13 @@ import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmati
 import { ViewEmployeeModal } from "./ViewEmployeeModal";
 import EditEmployeeModal from "./EditEmployeeModal";
 import type { Employee, EmployeeStatus } from "../types/employees.types";
+import { getEmployeeEmail, getEmployeeStatus } from "../types/employees.types";
 import type { AddEmployeeFormValues } from "./AddEmployeeModal";
 import type { EditEmployeeFormValues } from "./EditEmployeeModal";
 import { UseFormSetError } from "react-hook-form";
 import { StatusBadge } from "@/components/atoms/Statusbadge";
+import { getExtraRole } from "@/modules/access/hooks/useAccess";
+import { usePermission } from "@/hooks/usePermission";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 4;
@@ -152,6 +155,7 @@ export default function EmployeesManagementPage() {
   const tCommon = useTranslations("common");
 
   const { user } = useAuth();
+  const { can } = usePermission();
   const isSuperAdmin = user?.role === "super_admin";
 
   const [search, setSearch] = useState("");
@@ -160,7 +164,10 @@ export default function EmployeesManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: statsData }                        = useEmployeeStats();
-  const { data: empData, isLoading, isFetching }   = useEmployees({ per_page: 1000 } as any);
+  // Every page, not `per_page: 1000` — the endpoint caps a page at 10 rows and
+  // ignores `per_page`, so the old call silently showed only the first ten
+  // while the search, filter and pager all worked off that truncated set.
+  const { data: empData, isLoading, isFetching }   = useAllEmployees();
   const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } =
     useActionModals<Employee>();
 
@@ -168,11 +175,12 @@ export default function EmployeesManagementPage() {
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
 
+  // Only two states are derivable: `user.is_active` is 1 or 0. "Onboarding"
+  // was never populated by anything, so offering it filtered to an empty table.
   const STATUS_OPTIONS = useMemo(() => [
-    { value: "all",        label: tCommon("all") || "All Statuses" },
-    { value: "active",     label: tCommon("active") || "Active" },
-    { value: "onboarding", label: tCommon("onboarding") || "Onboarding" },
-    { value: "inactive",   label: tCommon("inactive") || "Inactive" },
+    { value: "all",      label: tCommon("all") },
+    { value: "active",   label: tCommon("active") },
+    { value: "inactive", label: tCommon("inactive") },
   ], [tCommon]);
 
   const allEmployees = useMemo(() => {
@@ -183,15 +191,20 @@ export default function EmployeesManagementPage() {
     list = [...list].sort((a, b) => (b.id || 0) - (a.id || 0));
 
     return list.filter((emp: Employee) => {
-      if (statusFilter !== "all") {
-        const empStatus = (emp.status || "active").toLowerCase();
-        if (empStatus !== statusFilter.toLowerCase()) return false;
+      // `emp.status` does not exist on the API record, so the old comparison
+      // ran against `undefined` for every row: "active" matched everyone via
+      // the `|| "active"` default and the other two matched no one.
+      if (statusFilter !== "all" && getEmployeeStatus(emp) !== statusFilter.toLowerCase()) {
+        return false;
       }
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         const name = getEmployeeName(emp).toLowerCase();
-        const email = (emp.email || "").toLowerCase();
-        if (!name.includes(q) && !email.includes(q)) return false;
+        // The email is nested under `user`; `emp.email` was always undefined,
+        // so searching by email never matched anything.
+        const email = getEmployeeEmail(emp).toLowerCase();
+        const job = (emp.job_title ?? emp.jobTitle ?? "").toLowerCase();
+        if (!name.includes(q) && !email.includes(q) && !job.includes(q)) return false;
       }
       return true;
     });
@@ -218,8 +231,10 @@ export default function EmployeesManagementPage() {
     },
     {
       icon:      Sun,
-      value:     statsData?.onboarding ?? 0,
-      label:     t("stats.onLeave") || "Onboarding",
+      value:     statsData?.inactive ?? 0,
+      // Was "On Leave" — nothing in the data distinguishes leave from any
+      // other reason an account is switched off.
+      label:     t("stats.inactive"),
       iconColor: "#f59e0b",
       iconBg:    "rgba(245,158,11,0.12)",
     },
@@ -253,6 +268,24 @@ export default function EmployeesManagementPage() {
         ),
       },
       {
+        // Surfaced here as well as on the access screen: this is where people
+        // already come to look someone up, and a granted role is not obvious
+        // from anything else on the row.
+        key:          "extraRole",
+        header:       t("columns.extraRole"),
+        hideOnMobile: true,
+        render: (row) => {
+          const extra = getExtraRole(row);
+          return extra ? (
+            <span className="text-xs px-2 py-0.5 rounded-full ds-bg-primary-200 ds-text-brand">
+              {extra.name}
+            </span>
+          ) : (
+            <Text size="sm" tag="span" className="ds-text-gray-200">—</Text>
+          );
+        },
+      },
+      {
         key:          "currency",
         header:       t("columns.currency"),
         hideOnMobile: true,
@@ -276,7 +309,7 @@ export default function EmployeesManagementPage() {
         key:    "status",
         header: tCommon("status") || "Status",
         render: (row) => (
-          <StatusBadge status={row.status || "active"} />
+          <StatusBadge status={getEmployeeStatus(row)} />
         ),
       },
     ];
@@ -297,9 +330,9 @@ export default function EmployeesManagementPage() {
   // ── Actions ──────────────────────────────────────────────────────────────────
   const actions = useMemo<TableAction<Employee>[]>(() => [
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView   },
-    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: openEdit   },
-    { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
-  ], [tCommon, openView, openEdit, openDelete]);
+    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: openEdit,   hidden: () => !can("employees.update") },
+    { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete, hidden: () => !can("employees.delete") },
+  ], [tCommon, openView, openEdit, openDelete, can]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleCreate = useCallback((
@@ -354,6 +387,13 @@ export default function EmployeesManagementPage() {
     if (v.password) payload.password    = v.password;
     if (v.company)  payload.company_id  = Number(v.company);
 
+    // `PUT /employees/{id}` treats an absent `role_id` exactly like `null` and
+    // detaches whatever extra role the employee has. This form does not edit
+    // roles — that lives on the access screen — so it has to carry the current
+    // one through, or saving an unrelated field here would revoke their access.
+    const currentExtraRole = getExtraRole(selectedRow);
+    payload.role_id = currentExtraRole?.id ?? null;
+
     updateEmployee.mutate({ id, data: payload as Partial<Employee> }, {
       onSuccess: () => {
         toast.success("Employee updated successfully");
@@ -371,7 +411,7 @@ export default function EmployeesManagementPage() {
         toast.error(msg);
       },
     });
-  }, [updateEmployee, closeModal]);
+  }, [updateEmployee, closeModal, selectedRow]);
 
   const handleDelete = useCallback(() => {
     if (!selectedRow?.id) return;
@@ -397,7 +437,11 @@ export default function EmployeesManagementPage() {
         <PageHeader
           title={t("title")}
           subtitle={t("subtitle")}
-          actions={[{ label: t("add"), onClick: () => setIsModalOpen(true) }]}
+          actions={
+            can("employees.create")
+              ? [{ label: t("add"), onClick: () => setIsModalOpen(true) }]
+              : []
+          }
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

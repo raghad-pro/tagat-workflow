@@ -4,9 +4,11 @@ import type { Contract, ContractStats, ContractsQueryParams } from "../types/con
 
 export const contractApi = {
   getAll: async (role: string, params?: ContractsQueryParams) => {
+    // `apiClient.get` wraps its second argument as axios `{ params }` itself —
+    // passing `{ params }` produced `?params[search]=…`, which the server ignores.
     const response = await apiClient.get(
       `${getRolePrefix(role)}/contracts`,
-      { params }
+      params as Record<string, unknown>
     );
     const payload = (response as any).data;
 
