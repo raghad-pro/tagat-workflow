@@ -38,6 +38,7 @@ export {
   BookOpen,          // Contracts
   ScrollText,        // Contracts new icon
   SquareCheck,       // Tasks new icon
+  KanbanSquare,      // Sprints
   ChevronLeft,
   ChevronRight,
   ChevronDown,

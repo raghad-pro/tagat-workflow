@@ -171,6 +171,21 @@ export function TasksManagementPage() {
         ),
       },
       {
+        key:          "sprint",
+        header:       t("columns.sprint"),
+        hideOnMobile: true,
+        render: (row) => {
+          const name = row.sprint?.name;
+          return name ? (
+            <span className="inline-flex items-center rounded-md bg-[var(--color-bg-primary-200)] px-2 py-0.5 text-[11px] font-bold text-[var(--color-text-brand)]">
+              {name}
+            </span>
+          ) : (
+            <Text size="sm" color="gray-200">{t("noSprint")}</Text>
+          );
+        },
+      },
+      {
         key:          "start",
         header:       t("columns.start"),
         hideOnMobile: true,
@@ -264,12 +279,25 @@ export function TasksManagementPage() {
       assigned_to: v.employee,
       title:       v.title,
       description: v.notes,
-      status:      v.status ?? "pending",
+      // "todo", not "pending": the kanban's status validator accepts only
+      // todo/in_progress/in_review/completed, so a task created as "pending"
+      // renders in the board's first column but does not match its value.
+      status:      v.status ?? "todo",
       task_date:   taskDate ?? new Date().toISOString().split("T")[0],
       start_time:  v.start,
       end_time:    v.end,
     };
     if (v.company) payload.company_id = v.company;
+    if (v.priority) payload.priority = v.priority;
+    if (v.storyPoints !== undefined && v.storyPoints !== "") {
+      payload.story_points = Number(v.storyPoints);
+    }
+    // Always sent, including the empty case — `sprint_id: null` is how a task is
+    // put in the backlog, so an omitted key could not express "remove it from
+    // its sprint". (Unlike `role_id` on `PUT /employees/{id}`, omitting this one
+    // does *not* clear it server-side; verified. Sending it is about being able
+    // to clear it on purpose, not about guarding against silent loss.)
+    payload.sprint_id = v.sprint ? Number(v.sprint) : null;
     return payload;
   }, []);
 

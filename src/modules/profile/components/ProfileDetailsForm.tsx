@@ -53,7 +53,7 @@ export const ProfileDetailsForm = () => {
   if (isLoading) return <div>Loading profile...</div>;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex gap-8">
+    <div className="ds-bg-form p-6 rounded-lg shadow-sm border ds-border-form flex flex-col md:flex-row gap-6 md:gap-8">
       {/* Profile Image Section */}
       <div className="flex flex-col items-center gap-4 w-1/4 min-w-[200px]">
         <div className="w-32 h-32 rounded-lg bg-gray-200 overflow-hidden flex items-center justify-center relative">
@@ -87,7 +87,7 @@ export const ProfileDetailsForm = () => {
         <h2 className="text-xl font-bold mb-6">Personal information</h2>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="name"

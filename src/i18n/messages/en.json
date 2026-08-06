@@ -228,7 +228,10 @@
     "inactive": "Inactive",
     "loadFailedTitle": "Could not load this page",
     "retry": "Try again",
-    "selectEmployee": "Select employee"
+    "selectEmployee": "Select employee",
+    "sprints": "Sprints",
+    "accessDeniedTitle": "Access denied",
+    "accessDeniedBody": "You do not have permission to view this page."
   },
   "development": {
     "title": "Developments Management",
@@ -424,7 +427,8 @@
       "end": "End",
       "duration": "Duration",
       "budget": "Budget",
-      "company": "Company"
+      "company": "Company",
+      "sprint": "Sprint"
     },
     "labels": {
       "project": "Project",
@@ -448,7 +452,10 @@
     },
     "selectCompany": "Select company",
     "selectProject": "Select project",
-    "selectEmployee": "Select employee"
+    "selectEmployee": "Select employee",
+    "sprint": "Sprint",
+    "storyPoints": "Story points",
+    "noSprint": "Backlog"
   },
   "company": {
     "title": "Companies Management",
@@ -756,7 +763,8 @@
     "contracts": "Contracts",
     "systemSettings": "System Settings",
     "conversations": "Conversations",
-    "access": "Access Management"
+    "access": "Access Management",
+    "sprints": "Sprints"
   },
   "currencies": {
     "title": "Currencies",
@@ -1260,6 +1268,106 @@
       "failed": "Could not update access",
       "bulkDone": "Access updated for {count} employees",
       "bulkPartial": "{done} updated, {failed} failed"
+    }
+  },
+  "sprint": {
+    "title": "Sprints",
+    "subtitle": "Plan the backlog, run the sprint, track the board.",
+    "backlog": "Backlog",
+    "sprints": "Sprints",
+    "noSprints": "No sprints yet",
+    "noSprintsHint": "Create a sprint, then drag tasks into it from the backlog.",
+    "emptyBacklog": "The backlog is empty",
+    "dropHere": "Drop tasks here",
+    "emptyClosedSprint": "This sprint finished with no tasks",
+    "createSprint": "Create Sprint",
+    "startSprint": "Start",
+    "completeSprint": "Complete",
+    "alreadyActive": "Another sprint is already running in this project",
+    "storyPoints": "Story points",
+    "pointsCount": "{points} points",
+    "daysLeft": "{days} days left",
+    "overdueBy": "{days} days overdue",
+    "dragHandle": "Drag task",
+    "noProjects": "No projects",
+    "noProjectsHint": "Sprints belong to a project — create one first.",
+    "view": {
+      "planning": "Planning",
+      "board": "Board"
+    },
+    "status": {
+      "todo": "To do",
+      "in_progress": "In progress",
+      "in_review": "In review",
+      "completed": "Done"
+    },
+    "sprintStatus": {
+      "planned": "Planned",
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "fields": {
+      "name": "Sprint name",
+      "goal": "Sprint goal",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "project": "Project",
+      "priority": "Priority"
+    },
+    "placeholders": {
+      "name": "Sprint 1 — Authentication",
+      "goal": "What should be true when this sprint ends?",
+      "project": "Select project"
+    },
+    "validation": {
+      "endBeforeStart": "The end date must come after the start date"
+    },
+    "board": {
+      "noActiveSprint": "No sprint is running",
+      "noActiveSprintHint": "Start a sprint from the planning tab to fill the board.",
+      "emptyColumn": "Nothing here"
+    },
+    "complete": {
+      "title": "Complete {name}",
+      "confirm": "Complete sprint",
+      "unfinished": "{count} tasks are not done. Choose where they go.",
+      "allDone": "Every task in this sprint is done.",
+      "toBacklog": "Move to the backlog",
+      "toBacklogHint": "Unfinished work returns to the backlog to be planned again.",
+      "toSprint": "Move to another sprint",
+      "toSprintHint": "Carry unfinished work straight into the next sprint.",
+      "noOtherSprint": "There is no other open sprint to move them to.",
+      "pickSprint": "Destination sprint"
+    },
+    "toast": {
+      "created": "Sprint created",
+      "started": "{name} is now running",
+      "completed": "{name} completed"
+    },
+    "pageTitle": "Sprint & Backlog",
+    "pageSubtitle": "Manage your product backlog",
+    "kanbanBoard": "kanban Board",
+    "backlogView": "Backlog",
+    "addTasks": "Add Tasks",
+    "addBacklogTask": "Add Backlog Task",
+    "productBacklog": "Product Backlog",
+    "selectSprint": "--Select Sprint--",
+    "unassigned": "Unassigned",
+    "pts": "{points} pts",
+    "taskCount": "{count} tasks",
+    "table": {
+      "title": "title",
+      "assignee": "assignee",
+      "storyPoints": "story points",
+      "priority": "priority",
+      "status": "status",
+      "moveToSprint": "move to sprint"
     }
   }
 }

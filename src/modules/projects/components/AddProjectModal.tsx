@@ -223,7 +223,18 @@ export default function AddProjectModal({
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleFormSubmit = (data: FormValues) => {
-    onSubmit?.(data, form.setError);
+    // A company admin never sees the company select — it is their own company —
+    // so `company` stays empty and `buildProjectPayload` skipped `company_id`
+    // entirely, which the API rejects with "The company id field is required."
+    // The server does not infer it from the token, so it is attached here.
+    //
+    // `companyIdForQuery` is the same id that just fetched this form's clients
+    // and currencies; if it were the wrong company those lists would have come
+    // back empty.
+    onSubmit?.(
+      isCompanyAdmin ? { ...data, company: companyIdForQuery ?? "" } : data,
+      form.setError
+    );
   };
 
   if (!isOpen) return null;

@@ -20,7 +20,8 @@ import {
   Building2, MessageSquare, MessageCircleMore, Users, UsersRound, UserRoundPlus,
   FileText, CustomCardIcon, Wallet, ArrowLeftRight, DollarSign,
   ShieldCheck, UserCog, FolderKanban, CheckSquare, SquareCheck, Clock,
-  Wrench, FileSignature, ScrollText, ArrowUpDown, BadgePercent, KeyRound
+  Wrench, FileSignature, ScrollText, ArrowUpDown, BadgePercent, KeyRound,
+  KanbanSquare
 } from "@/assets/icons/icons";
 import { usePermission } from "@/hooks/usePermission";
 import type { LucideIcon } from "lucide-react";
@@ -103,6 +104,10 @@ const NAV_GROUPS: NavGroup[] = [
       { key: "conversations", href: "/conversations", icon: MessageSquare, roles: ["super_admin", "company", "employee", "client"], permission: "conversations.view" },
       { key: "projects", href: "/projects", icon: FileText, roles: ["super_admin", "company", "employee", "client"], permission: "projects.view" },
       { key: "tasks", href: "/tasks", icon: SquareCheck, roles: ["super_admin", "company", "employee"], permission: "tasks.view" },
+      // The sprint routes are registered under the same three prefixes as tasks
+      // — there is no `/client/sprints` — and a sprint is a view over tasks, so
+      // it rides on the same permission.
+      { key: "sprints", href: "/sprints", icon: KanbanSquare, roles: ["super_admin", "company", "employee"], permission: "tasks.view" },
       { key: "timesheets", href: "/timesheets", icon: Clock, roles: ["super_admin", "company", "employee"], permission: "timesheets.view" },
       { key: "developments", href: "/developments", icon: Wrench, roles: ["super_admin", "company"], permission: "developments.view" },
       { key: "contracts", href: "/contracts", icon: ScrollText, roles: ["super_admin", "company"], permission: "contracts.view" },

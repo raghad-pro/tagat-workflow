@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import ThemeButton from "@/components/atoms/ThemeButton";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLogout } from "@/modules/auth/hooks/useLogout";
-import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check, MessageSquare } from "lucide-react";
+import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check, MessageSquare, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,42 @@ import apiClient from "@/services/apiClient";
 import { getRolePrefix } from "@/utils/rolePrefix";
 import LanguageSwitcher from "@/components/atoms/languageSwitcher";
 import { useConversations } from "@/modules/conversations/hooks/useConversations";
+import type { Conversation } from "@/modules/conversations/types/conversations.types";
+import {
+  getConversationImage,
+  getConversationTitle,
+  getInitials,
+  getLastActivityAt,
+  getLastMessage,
+  getMessageText,
+  isGroupConversation,
+  toTimestamp,
+} from "@/modules/conversations/utils/conversation.helpers";
+import { formatListStamp } from "@/modules/conversations/utils/message.format";
+
+/**
+ * One trigger style for every icon in the bar.
+ *
+ * They had drifted apart — 32px, 35px and 36px sitting side by side, and the
+ * conversations one alone painted a filled box on hover. `size-10` on phones
+ * also brings them up to a usable touch target; below ~40px they are easy to
+ * miss with a thumb.
+ */
+const ICON_TRIGGER =
+  "size-10 sm:size-9 flex items-center justify-center rounded-xl bg-transparent " +
+  "transition-colors relative cursor-pointer text-slate-600 dark:text-slate-300 " +
+  "hover:text-[var(--color-btn-brand)] dark:hover:text-[var(--color-btn-brand)]";
+
+/**
+ * Dropdown panels are anchored to their trigger, which on a phone puts a 320px
+ * panel partly off-screen — the conversations one started at x=-115. Below `sm`
+ * they become a sheet pinned to both edges of the viewport instead.
+ */
+const DROPDOWN_PANEL =
+  "fixed inset-x-3 top-[calc(var(--navbar-height)+8px)] z-50 w-auto " +
+  "sm:absolute sm:inset-x-auto sm:end-0 sm:top-full sm:mt-2 sm:w-96 " +
+  "rounded-2xl overflow-hidden border shadow-2xl " +
+  "animate-in fade-in slide-in-from-top-2 duration-150";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTimeAgo(dateStr?: string, isAr?: boolean) {
@@ -187,18 +223,18 @@ function NotificationsDropdown() {
           if (!open) fetchLiveNotifications();
           setOpen((prev) => !prev);
         }}
-        className="w-9 h-9 flex items-center justify-center rounded-xl bg-transparent transition-colors relative cursor-pointer text-slate-600 dark:text-slate-300 hover:text-[var(--color-btn-brand)] dark:hover:text-[var(--color-btn-brand)]"
+        className={ICON_TRIGGER}
         title={isAr ? "الإشعارات" : "Notifications"}
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-[#0b1118]" />
+          <span className="absolute top-2 end-2 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-[#0b1118]" />
         )}
       </button>
 
       {open && (
         <div
-          className="absolute end-0 top-full mt-2 z-50 rounded-2xl overflow-hidden w-80 sm:w-96 border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
+          className={DROPDOWN_PANEL}
           style={{
             background: "var(--color-bg-form)",
             borderColor: "var(--color-border-inputs)",
@@ -410,13 +446,24 @@ function ConversationsDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const { data: conversationsRes, isLoading } = useConversations(role);
-  const conversations = conversationsRes?.data || [];
+  // Same query key as the conversations page (no params), so the two share one
+  // cache entry instead of polling the endpoint twice.
+  const { conversations: unsorted, isLoading } = useConversations(role);
 
-  const unreadTotal = useMemo(() => {
-    if (!Array.isArray(conversations)) return 0;
-    return conversations.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
-  }, [conversations]);
+  // Newest activity first — the endpoint returns no explicit ordering, and the
+  // preview only shows the top few, so an unsorted list shows arbitrary ones.
+  const conversations = useMemo(
+    () =>
+      [...unsorted]
+        .sort((a, b) => toTimestamp(getLastActivityAt(b)) - toTimestamp(getLastActivityAt(a)))
+        .slice(0, 5),
+    [unsorted]
+  );
+
+  const unreadTotal = useMemo(
+    () => unsorted.reduce((acc: number, c: Conversation) => acc + Number(c.unread_count ?? 0), 0),
+    [unsorted]
+  );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -433,21 +480,19 @@ function ConversationsDropdown() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={cn(
-          "relative p-2 rounded-xl text-slate-500 hover:text-[var(--color-primary)] hover:bg-slate-100 dark:hover:bg-[#1e293b] transition-colors cursor-pointer flex items-center justify-center",
-          open && "bg-slate-100 dark:bg-[#1e293b] text-[var(--color-primary)]"
-        )}
-        aria-label="Conversations"
+        className={cn(ICON_TRIGGER, open && "text-[var(--color-btn-brand)]")}
+        aria-label={isAr ? "المحادثات" : "Conversations"}
+        title={isAr ? "المحادثات" : "Conversations"}
       >
-        <MessageSquare size={19} />
+        <MessageSquare size={20} />
         {unreadTotal > 0 && (
-          <span className="absolute top-1.5 end-1.5 w-2.5 h-2.5 rounded-full bg-[#00d0d4] ring-2 ring-white dark:ring-[#0f172a]" />
+          <span className="absolute top-2 end-2 w-2.5 h-2.5 rounded-full bg-[#00d0d4] ring-2 ring-white dark:ring-[#0b1118]" />
         )}
       </button>
 
       {open && (
         <div
-          className="absolute end-0 top-full mt-2 z-50 rounded-2xl overflow-hidden w-80 sm:w-96 border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
+          className={DROPDOWN_PANEL}
           style={{
             background: "var(--color-bg-form)",
             borderColor: "var(--color-border-inputs)",
@@ -479,40 +524,85 @@ function ConversationsDropdown() {
               <div className="p-6 text-center text-xs text-slate-400">
                 {isAr ? "جاري التحميل..." : "Loading..."}
               </div>
-            ) : !Array.isArray(conversations) || conversations.length === 0 ? (
+            ) : conversations.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400">
                 {isAr ? "لا توجد محادثات" : "No conversations found."}
               </div>
             ) : (
-              conversations.slice(0, 5).map((conv: any) => (
-                <div
-                  key={conv.id}
-                  onClick={() => {
-                    setOpen(false);
-                    router.push(`/conversations`);
-                  }}
-                  className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
-                >
-                  <img
-                    src={conv.image || `https://ui-avatars.com/api/?name=${conv.name || 'C'}&background=random`}
-                    alt={conv.name || "Conversation"}
-                    className="w-10 h-10 rounded-full object-cover shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                        {conv.name || "Conversation"}
-                      </h5>
-                      <span className="text-[10px] text-slate-400">
-                        {conv.last_message_time || "Recent"}
-                      </span>
+              conversations.map((conv: Conversation) => {
+                // Derived exactly like the conversations page: a 1-on-1 chat has
+                // no stored title, so its name comes from the other participant.
+                const title = getConversationTitle(
+                  conv,
+                  user?.id,
+                  isAr ? "محادثة" : "Conversation"
+                );
+                const image = getConversationImage(conv, user?.id);
+                const lastMessage = getLastMessage(conv);
+                const preview = lastMessage
+                  ? getMessageText(lastMessage) ||
+                    (isAr ? "مرفق" : "Attachment")
+                  : isAr
+                  ? "لا توجد رسائل بعد"
+                  : "No messages yet";
+                const unread = Number(conv.unread_count ?? 0);
+
+                return (
+                  <button
+                    type="button"
+                    key={conv.id}
+                    onClick={() => {
+                      setOpen(false);
+                      router.push(`/conversations?c=${conv.id}`);
+                    }}
+                    className="flex w-full items-center gap-3 p-3 text-start hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                  >
+                    {image ? (
+                      <img
+                        src={image}
+                        alt=""
+                        className="w-10 h-10 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-[#00d0d4]/10 text-[11px] font-bold text-[#00d0d4]">
+                        {isGroupConversation(conv) ? <Users size={16} /> : getInitials(title)}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center gap-2 mb-0.5">
+                        <h5
+                          className={cn(
+                            "text-xs truncate text-slate-800 dark:text-slate-200",
+                            unread > 0 ? "font-extrabold" : "font-bold"
+                          )}
+                        >
+                          {title}
+                        </h5>
+                        <span className="text-[10px] text-slate-400 shrink-0">
+                          {formatListStamp(getLastActivityAt(conv), locale)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <p
+                          className={cn(
+                            "text-[11px] truncate",
+                            unread > 0
+                              ? "font-semibold text-slate-600 dark:text-slate-300"
+                              : "text-slate-500"
+                          )}
+                        >
+                          {preview}
+                        </p>
+                        {unread > 0 && (
+                          <span className="flex h-[17px] min-w-[17px] shrink-0 items-center justify-center rounded-full bg-[#00d0d4] px-1 text-[10px] font-bold text-white">
+                            {unread > 99 ? "99+" : unread}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      {conv.last_message?.body || "No messages yet"}
-                    </p>
-                  </div>
-                </div>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
 

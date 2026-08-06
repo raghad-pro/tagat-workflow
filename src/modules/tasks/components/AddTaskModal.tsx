@@ -12,6 +12,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useProjectEmployees } from "../hooks/useTasks";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
+import { useSprintsByProject } from "@/modules/sprints/hooks/useSprints";
 import { useTranslations } from "next-intl";
 
 const getTaskSchema = (t: any, tCommon: any, isSuperAdmin: boolean, isEmployee: boolean) =>
@@ -31,6 +32,11 @@ const getTaskSchema = (t: any, tCommon: any, isSuperAdmin: boolean, isEmployee: 
           .min(1, tCommon("validation.required"))
           .refine((val) => val !== "no-data", tCommon("validation.required")),
       title: z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+      // Optional: a task with no sprint is a backlog item, which is the normal
+      // starting state.
+      sprint: z.string().optional(),
+      storyPoints: z.string().optional(),
+      priority: z.string().optional(),
       start: z.string().min(1, tCommon("validation.required")),
       end: z.string().min(1, tCommon("validation.required")),
       duration: z.string().optional(),
@@ -87,6 +93,7 @@ export default function AddTaskModal({
   isLoading,
 }: AddTaskModalProps) {
   const t = useTranslations("task");
+  const tSprint = useTranslations("sprint");
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
   const isEmployee = user?.role === "employee";
@@ -101,6 +108,9 @@ export default function AddTaskModal({
       project: "",
       employee: "",
       title: "",
+      sprint: "",
+      storyPoints: "",
+      priority: "medium",
       start: "",
       end: "",
       duration: "",
@@ -198,15 +208,34 @@ export default function AddTaskModal({
     employeeOptions = [{ value: "no-data", label: t("noEmployees") || "No employees" }];
   }
 
+  // ── Sprints of the chosen project ────────────────────────────────────────────
+  // A sprint belongs to a project, so the list only means anything once one is
+  // picked. Leaving it empty puts the task in the backlog.
+  const { data: sprintsOfProject } = useSprintsByProject(user?.role ?? "company", projectIdForQuery);
+  const sprintOptions = [
+    { value: "", label: t("noSprint") },
+    ...(sprintsOfProject ?? [])
+      .filter((sprint) => String(sprint.status) !== "completed")
+      .map((sprint) => ({ value: String(sprint.id), label: sprint.name })),
+  ];
+
+  const priorityOptions = (["low", "medium", "high", "urgent"] as const).map((value) => ({
+    value,
+    label: tSprint(`priority.${value}`),
+  }));
+
   // ── Reset project & employee when company changes ────────────────────────────
   useEffect(() => {
     form.setValue("project", "");
     form.setValue("employee", "");
   }, [selectedCompanyId, form]);
 
-  // ── Reset employee when project changes ──────────────────────────────────────
+  // ── Reset employee and sprint when project changes ───────────────────────────
+  // Sprints are project-scoped, so a sprint carried over from the previous
+  // project would be assigned across project boundaries.
   useEffect(() => {
     form.setValue("employee", "");
+    form.setValue("sprint", "");
   }, [selectedProjectId, form]);
 
   // ── Auto-select if only "no-data" option ────────────────────────────────────
@@ -327,6 +356,30 @@ export default function AddTaskModal({
                     required
                     icon={Briefcase}
                   />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <SelectField
+                  control={form.control}
+                  name="sprint"
+                  label={t("columns.sprint")}
+                  options={sprintOptions}
+                  disabled={!projectIdForQuery}
+                  placeholder={t("noSprint")}
+                />
+                <SelectField
+                  control={form.control}
+                  name="priority"
+                  label={tSprint("fields.priority")}
+                  options={priorityOptions}
+                />
+                <TextField
+                  control={form.control}
+                  name="storyPoints"
+                  label={t("storyPoints")}
+                  type="number"
+                  placeholder="0"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

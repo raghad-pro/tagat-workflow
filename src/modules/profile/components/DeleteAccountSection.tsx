@@ -15,7 +15,7 @@ export const DeleteAccountSection = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-red-100 mt-6">
+    <div className="ds-bg-form p-6 rounded-lg shadow-sm border border-red-100 dark:border-red-500/25 mt-6">
       <h2 className="text-xl font-bold mb-2">Delete Account</h2>
       <p className="text-sm text-gray-500 mb-6">Permanently remove your account and all associated data.</p>
       

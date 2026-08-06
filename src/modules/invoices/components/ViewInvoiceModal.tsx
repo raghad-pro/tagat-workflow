@@ -114,10 +114,10 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
       
       {data.payments && Array.isArray(data.payments) && data.payments.length > 0 && (
         <div className="mt-6 flex flex-col gap-3">
-          <Text size="sm" weight="medium" className="text-gray-900">Payments</Text>
+          <Text size="sm" weight="medium" className="ds-text-primary">Payments</Text>
           <div className="border rounded-xl divide-y overflow-hidden">
             {data.payments.map((payment: any, index: number) => (
-              <div key={index} className="p-3 flex justify-between items-center bg-gray-50/50">
+              <div key={index} className="p-3 flex justify-between items-center bg-[var(--color-bg)]">
                 <div className="flex flex-col">
                   <Text size="sm" weight="medium">{payment.date || '—'}</Text>
                   <Text size="sm" className="text-gray-500">{payment.payment_method || '—'}</Text>

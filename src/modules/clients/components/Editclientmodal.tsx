@@ -157,7 +157,7 @@ export function EditClientModal({
         {/* Status selector */}
         <div className="flex flex-col gap-2">
           <Text size="sm" weight="bold" tag="p">{t("newStatus")}</Text>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {STATUS_OPTIONS.map((opt) => {
               const isSelected = selectedStatus === opt.value;
               return (

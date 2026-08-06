@@ -228,7 +228,10 @@
     "inactive": "غير نشط",
     "loadFailedTitle": "تعذّر تحميل الصفحة",
     "retry": "إعادة المحاولة",
-    "selectEmployee": "اختر الموظف"
+    "selectEmployee": "اختر الموظف",
+    "sprints": "السبرنتات",
+    "accessDeniedTitle": "لا تملك صلاحية",
+    "accessDeniedBody": "ليس لديك إذن لعرض هذه الصفحة."
   },
   "development": {
     "title": "إدارة التطويرات",
@@ -424,7 +427,8 @@
       "end": "النهاية",
       "duration": "المدة",
       "budget": "الميزانية",
-      "company": "الشركة"
+      "company": "الشركة",
+      "sprint": "السبرنت"
     },
     "labels": {
       "project": "المشروع",
@@ -448,7 +452,10 @@
     },
     "selectCompany": "اختر الشركة",
     "selectProject": "اختر المشروع",
-    "selectEmployee": "اختر الموظف"
+    "selectEmployee": "اختر الموظف",
+    "sprint": "السبرنت",
+    "storyPoints": "نقاط القصة",
+    "noSprint": "الباكلوج"
   },
   "company": {
     "title": "إدارة الشركات",
@@ -756,7 +763,8 @@
     "contracts": "العقود",
     "systemSettings": "إعدادات النظام",
     "conversations": "المحادثات",
-    "access": "إدارة الصلاحيات"
+    "access": "إدارة الصلاحيات",
+    "sprints": "السبرنتات"
   },
   "currencies": {
     "title": "العملات",
@@ -1260,6 +1268,106 @@
       "failed": "تعذّر تحديث الصلاحيات",
       "bulkDone": "تم تحديث صلاحيات {count} موظفين",
       "bulkPartial": "تم تحديث {done} وفشل {failed}"
+    }
+  },
+  "sprint": {
+    "title": "السبرنتات",
+    "subtitle": "خطّط الباكلوج، شغّل السبرنت، وتابع البورد.",
+    "backlog": "الباكلوج",
+    "sprints": "السبرنتات",
+    "noSprints": "لا توجد سبرنتات بعد",
+    "noSprintsHint": "أنشئ سبرنت، ثم اسحب إليه المهام من الباكلوج.",
+    "emptyBacklog": "الباكلوج فارغ",
+    "dropHere": "أفلت المهام هنا",
+    "emptyClosedSprint": "انتهى هذا السبرنت بلا مهام",
+    "createSprint": "إنشاء سبرنت",
+    "startSprint": "ابدأ",
+    "completeSprint": "إنهاء",
+    "alreadyActive": "يوجد سبرنت نشط بالفعل في هذا المشروع",
+    "storyPoints": "نقاط القصة",
+    "pointsCount": "{points} نقطة",
+    "daysLeft": "بقي {days} يوم",
+    "overdueBy": "تأخّر {days} يوم",
+    "dragHandle": "اسحب المهمة",
+    "noProjects": "لا توجد مشاريع",
+    "noProjectsHint": "السبرنت يتبع مشروعًا — أنشئ مشروعًا أولًا.",
+    "view": {
+      "planning": "التخطيط",
+      "board": "البورد"
+    },
+    "status": {
+      "todo": "قيد الانتظار",
+      "in_progress": "قيد التنفيذ",
+      "in_review": "قيد المراجعة",
+      "completed": "منجزة"
+    },
+    "sprintStatus": {
+      "planned": "مخطّط",
+      "active": "نشط",
+      "completed": "مكتمل"
+    },
+    "priority": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية",
+      "urgent": "عاجلة"
+    },
+    "fields": {
+      "name": "اسم السبرنت",
+      "goal": "هدف السبرنت",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "project": "المشروع",
+      "priority": "الأولوية"
+    },
+    "placeholders": {
+      "name": "سبرنت ١ — تسجيل الدخول",
+      "goal": "ما الذي يجب أن يكون منجزًا عند انتهاء هذا السبرنت؟",
+      "project": "اختر المشروع"
+    },
+    "validation": {
+      "endBeforeStart": "تاريخ النهاية يجب أن يكون بعد تاريخ البداية"
+    },
+    "board": {
+      "noActiveSprint": "لا يوجد سبرنت نشط",
+      "noActiveSprintHint": "ابدأ سبرنت من تبويب التخطيط ليمتلئ البورد.",
+      "emptyColumn": "لا شيء هنا"
+    },
+    "complete": {
+      "title": "إنهاء {name}",
+      "confirm": "إنهاء السبرنت",
+      "unfinished": "{count} مهمة لم تُنجز. اختر إلى أين تذهب.",
+      "allDone": "كل مهام هذا السبرنت منجزة.",
+      "toBacklog": "نقلها إلى الباكلوج",
+      "toBacklogHint": "يعود العمل غير المنجز إلى الباكلوج ليُخطَّط من جديد.",
+      "toSprint": "نقلها إلى سبرنت آخر",
+      "toSprintHint": "ينتقل العمل غير المنجز مباشرة إلى السبرنت التالي.",
+      "noOtherSprint": "لا يوجد سبرنت آخر مفتوح لنقلها إليه.",
+      "pickSprint": "السبرنت الوجهة"
+    },
+    "toast": {
+      "created": "تم إنشاء السبرنت",
+      "started": "{name} يعمل الآن",
+      "completed": "تم إنهاء {name}"
+    },
+    "pageTitle": "السبرنت والباكلوج",
+    "pageSubtitle": "أدر باكلوج المنتج",
+    "kanbanBoard": "بورد كانبان",
+    "backlogView": "الباكلوج",
+    "addTasks": "إضافة مهام",
+    "addBacklogTask": "إضافة مهمة للباكلوج",
+    "productBacklog": "باكلوج المنتج",
+    "selectSprint": "-- اختر سبرنت --",
+    "unassigned": "غير مُسند",
+    "pts": "{points} نقطة",
+    "taskCount": "{count} مهمة",
+    "table": {
+      "title": "العنوان",
+      "assignee": "المُسند إليه",
+      "storyPoints": "نقاط القصة",
+      "priority": "الأولوية",
+      "status": "الحالة",
+      "moveToSprint": "نقل إلى سبرنت"
     }
   }
 }

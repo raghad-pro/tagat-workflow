@@ -156,7 +156,7 @@ export function AddPaymentModal({
     >
       <Form {...form}>
         <form id="add-payment-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {!isCompanyAdmin && (
               <SelectField 
                 control={form.control}
@@ -175,7 +175,7 @@ export function AddPaymentModal({
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField 
               control={form.control}
               name="wallet_id"
@@ -194,7 +194,7 @@ export function AddPaymentModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField 
               control={form.control}
               name="amount"

@@ -33,7 +33,7 @@ export function EmptyState({
         {animationData ? (
           <Lottie animationData={animationData} loop={true} />
         ) : (
-          <div className="w-full h-full bg-gray-100 animate-pulse rounded-full" />
+          <div className="w-full h-full bg-gray-100 dark:bg-slate-800 animate-pulse rounded-full" />
         )}
       </div>
       <Text size="lg" className="font-bold mb-2 ds-text-primary">

@@ -1,5 +1,11 @@
 @layer theme {
   :root {
+    /* Tells the browser which way to paint the things CSS cannot reach:
+       scrollbars, date/time pickers, select popups, autofill highlights and
+       the default form-control chrome. Without it those stay light on a dark
+       page — a white date picker over a near-black form. */
+    color-scheme: light;
+
     /* ─── Brand ───────────────────────────────────────────────────────── */
     --color-primary: #12c2e9;
     --color-primary-hover: #0fb1d5;
@@ -26,6 +32,10 @@
     --color-status-active-bg: #EDF7EE;
     --color-status-pending: #E8D636;
     --color-status-pending-bg: #FFFDEB;
+    /* "approved" reads better than "active" for a finished/running state and is
+       referenced by the sprints UI. Same green, one name each way. */
+    --color-status-approved: var(--color-status-active);
+    --color-status-approved-bg: var(--color-status-active-bg);
 
     /* ─── Action Button Palette ───────────────────────────────────────── */
     --color-action-send: var(--color-status-pending);
@@ -87,7 +97,10 @@
 
     /* ─── Backgrounds ─────────────────────────────────────────────────── */
     --color-bg-primary: #12c2e9;
+    --color-bg-primary-100: #f5feff;
     --color-bg-primary-200: #e9f9fb;
+    /* Referenced by the avatar chips on companies/currencies/wallets. */
+    --color-primary-400: #7fdff0;
     --color-bg-form: #ffffff;
     --color-bg: #fbfbfb;
     --background: #ffffff;
@@ -101,6 +114,8 @@
     --sidebar-width-collapsed: 64px;
     --sidebar-border: #f0f0f0;
     --sidebar-item-hover: #f5feff;
+    /* Used by the shadcn sidebar primitives' hover/active states. */
+    --sidebar-accent: #f5feff;
     --sidebar-item-active-bg: #25c6da;
     --sidebar-item-active-text: #ffffff;
     --sidebar-item-text: #424242;
@@ -115,6 +130,8 @@
     /* ─── Text ────────────────────────────────────────────────────────── */
     --color-text-brand: #25c6da;
     --color-text-primary: #000000;
+    /* Alias used by the toast provider. */
+    --color-text-main: var(--color-text-primary);
     --color-text-gray: #424242;
     --color-text-gray-100: #707070;
     --color-text-gray-200: #909090;
@@ -123,6 +140,19 @@
     /* ─── Borders ─────────────────────────────────────────────────────── */
     --color-border-inputs: #e1e1e1;
     --color-border-form: #f5f5f5;
+
+    /* ─── Radii ───────────────────────────────────────────────────────── */
+    /* The shadcn primitives size their corners from these; without them
+       `rounded-[min(var(--radius-md),10px)]` resolved to nothing and those
+       buttons rendered square. */
+    --radius: 0.75rem;
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+
+    /* ─── Charts ──────────────────────────────────────────────────────── */
+    --color-hours: #12c2e9;
 
     /* ─── Shadows ─────────────────────────────────────────────────────── */
     --shadow-sm: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
@@ -194,9 +224,15 @@
   html.dark,
   [data-theme="dark"],
   html[data-theme="dark"] {
+    color-scheme: dark;
+
     /* ─── Core Colors ────────────────────────────────────────────────── */
     --color-bg-primary: #22c8e0;
+    --color-bg-primary-100: rgba(34, 200, 224, 0.08);
     --color-bg-primary-200: rgba(34, 200, 224, 0.15);
+    /* A light tint would be an eye-searing outline on a near-black card. */
+    --color-primary-400: rgba(34, 200, 224, 0.35);
+    --color-hours: #22c8e0;
     --color-bg-form: #0d141d;
     --color-bg: #090d14;
     --background: #090d14;
@@ -216,6 +252,7 @@
     --sidebar-bg: #0b1118;
     --sidebar-border: rgba(34, 200, 224, 0.12);
     --sidebar-item-hover: rgba(34, 200, 224, 0.1);
+    --sidebar-accent: rgba(34, 200, 224, 0.1);
     --sidebar-item-active-bg: linear-gradient(92deg, #22c8e0, #0ea5e9);
     --sidebar-item-text: #94a3b8;
     --sidebar-item-active-text: #ffffff;
@@ -263,6 +300,8 @@
     /* ─── Status Badge Colors ─────────────────────────────────────────── */
     --color-status-active-bg: rgba(76, 175, 80, 0.18);
     --color-status-pending-bg: rgba(232, 214, 54, 0.18);
+    /* The aliases point at `--color-status-active*`, which is redefined above,
+       so they follow automatically — listed here only as a reminder. */
 
     /* ─── Action Buttons ──────────────────────────────────────────────── */
     --color-action-send-bg: var(--color-status-pending-bg);

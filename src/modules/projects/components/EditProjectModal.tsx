@@ -241,7 +241,13 @@ export default function EditProjectModal({
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleFormSubmit = (formData: FormValues) => {
     if (!data) return;
-    onUpdate(data.id, formData, form.setError);
+    // Same gap as the add dialog: a company admin has no company select, so
+    // `company_id` would be missing from the update payload too.
+    onUpdate(
+      data.id,
+      isCompanyAdmin ? { ...formData, company: companyIdForQuery ?? "" } : formData,
+      form.setError
+    );
   };
 
   if (!isOpen || !data) return null;

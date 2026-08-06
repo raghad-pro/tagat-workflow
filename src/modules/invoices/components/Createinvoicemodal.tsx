@@ -193,7 +193,7 @@ export function CreateInvoiceModal({
               </div>
 
               {projectData && (
-                <div className="grid grid-cols-3 gap-4 p-4 ds-bg-form rounded-xl border ds-border-form mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 ds-bg-form rounded-xl border ds-border-form mt-2">
                   <div className="flex flex-col gap-1">
                     <span className="text-sm font-medium ds-text-sub">{tCommon("budget") || "Budget"}</span>
                     <span className="text-sm font-bold ds-text-main">{projectData.budget}</span>

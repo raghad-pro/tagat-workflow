@@ -37,7 +37,7 @@ export const ChangePasswordForm = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mt-6">
+    <div className="ds-bg-form p-6 rounded-lg shadow-sm border ds-border-form mt-6">
       <h2 className="text-xl font-bold mb-2">Change Password</h2>
       <p className="text-sm text-gray-500 mb-6">Update your account password to maintain security.</p>
       

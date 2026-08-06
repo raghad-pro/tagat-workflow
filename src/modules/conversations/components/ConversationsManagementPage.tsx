@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   ArrowLeft,
@@ -72,6 +73,8 @@ export default function ConversationsManagementPage() {
   const role = user?.role || "company";
   const t = useTranslations("conversations");
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const deepLinkId = searchParams.get("c");
 
   const [activeConversationId, setActiveConversationId] = useState<number | string | null>(null);
   const [messageBody, setMessageBody] = useState("");
@@ -88,6 +91,20 @@ export default function ConversationsManagementPage() {
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const readSentRef = useRef<Set<string>>(new Set());
   const stickToBottomRef = useRef(true);
+  const appliedDeepLinkRef = useRef<string | null>(null);
+
+  /**
+   * Open the conversation named in the URL (`?c=<id>`) — this is how the navbar
+   * dropdown hands one over. Applied once per id: without the guard, picking a
+   * different chat inside the page would be undone on the next render by the
+   * query string that is still sitting in the URL.
+   */
+  useEffect(() => {
+    if (!deepLinkId || appliedDeepLinkRef.current === deepLinkId) return;
+    appliedDeepLinkRef.current = deepLinkId;
+    setActiveConversationId(deepLinkId);
+    stickToBottomRef.current = true;
+  }, [deepLinkId]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), SEARCH_DEBOUNCE_MS);

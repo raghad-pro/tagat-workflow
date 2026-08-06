@@ -81,7 +81,7 @@ export default function VerifyAccountPage() {
                     isInvalid ? "ds-text-error" : "",
                   ].join(" ")}
                   style={{
-                    background: isInvalid ? "rgba(239,68,68,0.06)" : "var(--ds-bg-form)",
+                    background: isInvalid ? "rgba(239,68,68,0.06)" : "var(--color-bg-form)",
                     boxShadow: isInvalid ? "0 2px 8px rgba(239,68,68,0.18)" : "0 2px 8px rgba(0,0,0,0.08)",
                   }}
                 />

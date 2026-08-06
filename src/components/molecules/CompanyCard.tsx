@@ -40,7 +40,7 @@ export function CompanyCard({ id, name, domain, logo, status, onJoin, isLoading 
       {/* Top Section */}
       <div className="flex justify-between items-start mb-4">
         <div 
-          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-white shadow-sm border border-slate-100 overflow-hidden" 
+          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ds-bg-form shadow-sm border ds-border-form overflow-hidden" 
           style={!logo ? { background: bg, color: color, borderColor: 'transparent' } : {}}
         >
           {logo ? (

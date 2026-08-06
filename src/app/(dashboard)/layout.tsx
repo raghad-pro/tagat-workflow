@@ -26,7 +26,11 @@ export default function DashboardLayout({
           <AppSidebar />
           <SidebarInset className="relative circle overflow-x-hidden ds-bg-background">
             <DashboardNavbar />
-            <main className="flex-1 overflow-y-auto p-6 relative z-10">
+            {/* `p-6` here stacked on top of each page's own `p-4 sm:p-6`, so a
+                375px phone lost 80px — over a fifth of the screen — to nested
+                gutters. Kept small rather than removed: /tasks and /projects
+                set `p-0` on mobile and would otherwise sit flush to the edge. */}
+            <main className="flex-1 overflow-y-auto p-2 sm:p-6 relative z-10">
               <RouteGuard>{children}</RouteGuard>
             </main>
           </SidebarInset>

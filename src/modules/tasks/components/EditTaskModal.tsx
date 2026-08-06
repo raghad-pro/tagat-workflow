@@ -13,6 +13,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useProjectEmployees } from "../hooks/useTasks";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
+import { useSprintsByProject } from "@/modules/sprints/hooks/useSprints";
 import { useTranslations } from "next-intl";
 
 const getTaskSchema = (t: any, tCommon: any, isSuperAdmin: boolean, isEmployee: boolean) =>
@@ -32,6 +33,9 @@ const getTaskSchema = (t: any, tCommon: any, isSuperAdmin: boolean, isEmployee: 
           .min(1, tCommon("validation.required"))
           .refine((val) => val !== "no-data", tCommon("validation.required")),
       title: z.string().min(2, tCommon("validation.minLength", { min: 2 })),
+      sprint: z.string().optional(),
+      storyPoints: z.string().optional(),
+      priority: z.string().optional(),
       start: z.string().min(1, tCommon("validation.required")),
       end: z.string().min(1, tCommon("validation.required")),
       duration: z.string().optional(),
@@ -78,6 +82,7 @@ export default function EditTaskModal({
   isLoading,
 }: EditTaskModalProps) {
   const t = useTranslations("task");
+  const tSprint = useTranslations("sprint");
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
   const isEmployee = user?.role === "employee";
@@ -92,6 +97,9 @@ export default function EditTaskModal({
       project: "",
       employee: "",
       title: "",
+      sprint: "",
+      storyPoints: "",
+      priority: "medium",
       start: "",
       end: "",
       duration: "",
@@ -190,6 +198,25 @@ export default function EditTaskModal({
     employeeOptions = [{ value: "no-data", label: t("noEmployees") || "No employees" }];
   }
 
+  // ── Sprints of the chosen project ────────────────────────────────────────────
+  const { data: sprintsOfProject } = useSprintsByProject(user?.role ?? "company", projectIdForQuery);
+  const sprintOptions = [
+    { value: "", label: t("noSprint") },
+    ...(sprintsOfProject ?? [])
+      // A closed sprint is kept in the list only when the task is already in it,
+      // so editing an old task does not silently pull it out of its sprint.
+      .filter(
+        (sprint) =>
+          String(sprint.status) !== "completed" || sprint.id === data?.sprint_id
+      )
+      .map((sprint) => ({ value: String(sprint.id), label: sprint.name })),
+  ];
+
+  const priorityOptions = (["low", "medium", "high", "urgent"] as const).map((value) => ({
+    value,
+    label: tSprint(`priority.${value}`),
+  }));
+
   // ── Populate form when task data loads ──────────────────────────────────────
   useEffect(() => {
     if (!data || !isOpen) return;
@@ -236,6 +263,15 @@ export default function EditTaskModal({
       project: projectVal,
       employee: empVal,
       title: data.title ?? "",
+      // Seeded from the row so an edit that ignores these fields round-trips
+      // them unchanged — the payload always sends `sprint_id`, and a blank here
+      // would read as "move it to the backlog".
+      sprint: data.sprint_id ? String(data.sprint_id) : "",
+      storyPoints:
+        data.story_points === null || data.story_points === undefined
+          ? ""
+          : String(data.story_points),
+      priority: String(data.priority ?? "medium"),
       start: formatTime(data.start_time ?? data.start),
       end: formatTime(data.end_time ?? data.end),
       duration: data.duration ?? "0",
@@ -362,6 +398,30 @@ export default function EditTaskModal({
                   placeholder={t("columns.title") || "Enter task title"}
                   required
                   icon={Briefcase}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <SelectField
+                  control={form.control}
+                  name="sprint"
+                  label={t("columns.sprint")}
+                  options={sprintOptions}
+                  disabled={!projectIdForQuery}
+                  placeholder={t("noSprint")}
+                />
+                <SelectField
+                  control={form.control}
+                  name="priority"
+                  label={tSprint("fields.priority")}
+                  options={priorityOptions}
+                />
+                <TextField
+                  control={form.control}
+                  name="storyPoints"
+                  label={t("storyPoints")}
+                  type="number"
+                  placeholder="0"
                 />
               </div>
 

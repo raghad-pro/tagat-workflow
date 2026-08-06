@@ -51,6 +51,11 @@ export interface Task {
   duration?:   string;
   // Financial
   budget?:     string;
+  // Sprint — the list endpoint returns both the id and the embedded record.
+  sprint_id?:   number | null;
+  sprint?:      { id: number; name: string; status?: string } | null;
+  story_points?: number | null;
+  priority?:    "low" | "medium" | "high" | "urgent" | string;
   // Status
   status?:     GenericStatus | "pending" | "in_progress" | "completed";
   description?: string;

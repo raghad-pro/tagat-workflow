@@ -26,6 +26,7 @@ const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/employees": ["super_admin", "company"],
   "/projects": ["super_admin", "company", "employee", "client"],
   "/tasks": ["super_admin", "company", "employee"],
+  "/sprints": ["super_admin", "company", "employee"],
   "/timesheets": ["super_admin", "company", "employee"],
   "/developments": ["super_admin", "company"],
   "/contracts": ["super_admin", "company"],
@@ -56,6 +57,7 @@ const ROUTE_GRANTED_BY_PERMISSION: Record<string, string> = {
   "/employees": "employees.view",
   "/projects": "projects.view",
   "/tasks": "tasks.view",
+  "/sprints": "tasks.view",
   "/timesheets": "timesheets.view",
   "/developments": "developments.view",
   "/contracts": "contracts.view",
@@ -64,7 +66,7 @@ const ROUTE_GRANTED_BY_PERMISSION: Record<string, string> = {
 
 export default function RouteGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout } = useAuth();
-  const { hasPermission } = usePermission();
+  const { hasPermission, isResolved } = usePermission();
   const pathname = usePathname();
 
   const baseRoute = Object.keys(ROUTE_PERMISSIONS).find(
@@ -83,7 +85,16 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
   const permissionAllowed =
     !!grantRoute && hasPermission(ROUTE_GRANTED_BY_PERMISSION[grantRoute]);
 
-  const allowed = roleAllowed || permissionAllowed;
+  /**
+   * Permissions arrive from `GET /{role}/account` a moment after the user does.
+   * Until they land, `hasPermission` answers `false` for everything — so an
+   * account that reaches a route *through* a permission would be judged, and
+   * logged out, before the answer had arrived. Waiting is the only correct
+   * reading of "not known yet".
+   */
+  const undecided = !!grantRoute && !roleAllowed && !isResolved;
+
+  const allowed = roleAllowed || permissionAllowed || undecided;
 
   useEffect(() => {
     if (isLoading || !user) return;
@@ -92,6 +103,9 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
 
   if (isLoading || !user) return null;
   if (!allowed) return null;
+  // Hold the page back rather than flashing it, since the verdict may still
+  // come back "no".
+  if (undecided) return null;
 
   return <>{children}</>;
 }

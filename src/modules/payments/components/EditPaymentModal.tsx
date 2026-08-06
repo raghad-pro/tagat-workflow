@@ -161,7 +161,7 @@ export function EditPaymentModal({
     >
       <Form {...form}>
         <form id="edit-payment-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {!isCompanyAdmin && (
               <SelectField 
                 control={form.control}
@@ -180,7 +180,7 @@ export function EditPaymentModal({
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField 
               control={form.control}
               name="wallet_id"
@@ -199,7 +199,7 @@ export function EditPaymentModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField 
               control={form.control}
               name="amount"
