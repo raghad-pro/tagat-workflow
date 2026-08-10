@@ -325,10 +325,10 @@ export default function ConversationsManagementPage() {
 
   return (
     <div
-      className="flex h-[calc(100vh-120px)] min-h-[520px] w-full overflow-hidden rounded-2xl ds-bg-form"
+      className="flex h-[calc(100vh-120px)] min-h-[520px] w-full overflow-hidden rounded-[24px] ds-bg-form transition-all duration-300"
       style={{
         border: "1px solid var(--color-border-form)",
-        boxShadow: "var(--shadow-sm)",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.04)",
       }}
     >
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
@@ -351,10 +351,10 @@ export default function ConversationsManagementPage() {
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
             aria-label={t("create.title")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-bg-primary)] text-white transition-transform hover:scale-105 active:scale-95"
-            style={{ boxShadow: "0 4px 12px 0 color-mix(in srgb, var(--color-bg-primary) 35%, transparent)" }}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-bg-primary)] text-white transition-all duration-300 hover:scale-110 hover:shadow-lg active:scale-95"
+            style={{ boxShadow: "0 4px 14px 0 color-mix(in srgb, var(--color-bg-primary) 40%, transparent)" }}
           >
-            <Plus size={18} strokeWidth={2.5} />
+            <Plus size={20} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -368,7 +368,7 @@ export default function ConversationsManagementPage() {
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="ds-text-primary h-11 w-full rounded-xl bg-[var(--color-bg)] ps-10 pe-9 text-[13px] outline-none transition-colors placeholder:text-[var(--color-text-gray-200)] focus:bg-[var(--color-bg-form)]"
+              className="ds-text-primary h-12 w-full rounded-full bg-[var(--color-bg)] ps-11 pe-9 text-[13px] outline-none transition-all duration-300 placeholder:text-[var(--color-text-gray-200)] focus:bg-[var(--color-bg-form)] focus:shadow-sm"
               style={{ border: "1px solid var(--color-border-form)" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-border-inputs-focus)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border-form)")}
@@ -420,14 +420,14 @@ export default function ConversationsManagementPage() {
                   type="button"
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv.id)}
-                  className="relative flex w-full items-center gap-3 rounded-xl p-3 text-start transition-colors"
+                  className="group relative flex w-full items-center gap-3 rounded-[16px] p-3 text-start transition-all duration-200 hover:scale-[1.01]"
                   style={{
                     backgroundColor: isActive
                       ? "var(--color-bg-primary-200)"
                       : "transparent",
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = "var(--color-bg)";
+                    if (!isActive) e.currentTarget.style.backgroundColor = "var(--color-bg-form)";
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
@@ -616,7 +616,7 @@ export default function ConversationsManagementPage() {
                   </Button>
                 </div>
               ) : daySections.length > 0 ? (
-                <div className="mx-auto flex max-w-3xl flex-col gap-1">
+                <div className="flex w-full flex-col gap-1">
                   {daySections.map((section) => (
                     <div key={section.day} className="flex flex-col gap-1">
                       {/* Date separator */}
@@ -684,8 +684,8 @@ export default function ConversationsManagementPage() {
                                     }`}
                                   >
                                     <div
-                                      className={`relative px-3.5 py-2.5 text-[14px] leading-relaxed transition-opacity ${
-                                        msg._optimistic ? "opacity-60" : ""
+                                      className={`relative px-4 py-2.5 text-[14px] leading-relaxed transition-all shadow-sm ${
+                                        msg._optimistic ? "opacity-60 scale-[0.98]" : "scale-100"
                                       }`}
                                       style={{
                                         background: group.isMine
@@ -697,12 +697,12 @@ export default function ConversationsManagementPage() {
                                         border: group.isMine
                                           ? "none"
                                           : "1px solid var(--color-border-form)",
-                                        borderRadius: "16px",
+                                        borderRadius: "20px",
                                         // Tail on the last bubble of each run.
                                         borderEndEndRadius:
-                                          group.isMine && isLastOfRun ? "4px" : "16px",
+                                          group.isMine && isLastOfRun ? "4px" : "20px",
                                         borderEndStartRadius:
-                                          !group.isMine && isLastOfRun ? "4px" : "16px",
+                                          !group.isMine && isLastOfRun ? "4px" : "20px",
                                       }}
                                     >
                                       {attachments.length > 0 && (
@@ -796,7 +796,7 @@ export default function ConversationsManagementPage() {
               style={{ borderTop: "1px solid var(--color-border-form)" }}
             >
               {pendingFiles.length > 0 && (
-                <div className="mx-auto mb-2.5 flex max-w-3xl flex-wrap gap-2">
+                <div className="mb-2.5 flex w-full flex-wrap gap-2">
                   {pendingFiles.map((file, index) => {
                     const isImage = file.type.startsWith("image/");
                     return (
@@ -827,9 +827,9 @@ export default function ConversationsManagementPage() {
                 </div>
               )}
 
-              <div className="mx-auto flex max-w-3xl items-end gap-2">
+              <div className="flex w-full items-end gap-2">
                 <div
-                  className="flex flex-1 items-end gap-1 rounded-2xl bg-[var(--color-bg)] px-2 py-1.5 transition-colors focus-within:border-[var(--color-border-inputs-focus)]"
+                  className="flex flex-1 items-end gap-1 rounded-[24px] bg-[var(--color-bg)] px-3 py-2 transition-all duration-300 focus-within:border-[var(--color-border-inputs-focus)] focus-within:shadow-sm"
                   style={{ border: "1px solid var(--color-border-form)" }}
                 >
                   <Popover>
@@ -914,14 +914,14 @@ export default function ConversationsManagementPage() {
                   onClick={() => void submitMessage()}
                   aria-label={t("send")}
                   disabled={!canSend || isSendingMessage}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-primary)] text-white transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-primary)] text-white transition-all duration-300 hover:scale-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
                   style={{
                     boxShadow: canSend
-                      ? "0 4px 14px 0 color-mix(in srgb, var(--color-bg-primary) 40%, transparent)"
+                      ? "0 6px 16px 0 color-mix(in srgb, var(--color-bg-primary) 40%, transparent)"
                       : "none",
                   }}
                 >
-                  <Send size={19} strokeWidth={2.5} className="rtl:rotate-180" />
+                  <Send size={20} strokeWidth={2.5} className="rtl:rotate-180" />
                 </button>
               </div>
             </div>

@@ -14,6 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   LayoutGrid,
@@ -124,6 +125,7 @@ export function AppSidebar() {
   const { user } = useAuth();
   const role = user?.role as Role | undefined;
   const { hasPermission } = usePermission();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   // An item shows when the account's base role covers it, **or** when a custom
   // role explicitly grants its permission. Additive on purpose: permissions can
@@ -213,7 +215,12 @@ export function AppSidebar() {
                         ]
                       )}
                     >
-                      <Link href={item.href}>
+                      <Link 
+                        href={item.href}
+                        onClick={() => {
+                          if (isMobile) setOpenMobile(false);
+                        }}
+                      >
                         <Icon
                           size={18}
                           className={cn(

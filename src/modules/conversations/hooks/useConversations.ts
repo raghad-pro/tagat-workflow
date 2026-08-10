@@ -98,12 +98,21 @@ export function useConversations(role: string, params?: ConversationsQueryParams
       const previous = queryClient.getQueryData<Conversation>(key);
 
       if (previous) {
+        const optimisticAttachments = variables.files?.map((file) => ({
+          id: `optimistic-file-${Date.now()}-${file.name}`,
+          url: URL.createObjectURL(file),
+          name: file.name,
+          mime_type: file.type,
+          size: file.size,
+        })) || [];
+
         const optimistic: Message = {
           id: `optimistic-${Date.now()}`,
           conversation_id: variables.id,
           user_id: variables.currentUser?.id,
           message: variables.message,
           created_at: new Date().toISOString(),
+          attachments: optimisticAttachments,
           user: variables.currentUser
             ? {
                 id: variables.currentUser.id,

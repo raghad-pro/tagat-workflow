@@ -169,10 +169,22 @@ export const conversationsApi = {
   ) => {
     const formData = new FormData();
     formData.append("message", data.message ?? "");
+    // Legacy fallback for older API endpoints
+    if (data.message) {
+      formData.append("body", data.message);
+    }
 
     const files = data.files ?? [];
     formData.append("type", files.length > 0 ? "file" : "text");
-    files.forEach((file) => formData.append("files[]", file));
+    
+    files.forEach((file) => {
+      formData.append("files[]", file);
+    });
+
+    if (files.length > 0) {
+      // Legacy fallback for file uploads
+      formData.append("attachment", files[0]);
+    }
 
     const body = await apiClient.post(`${base(role)}/${id}/messages`, formData);
     return unwrapOne(body);

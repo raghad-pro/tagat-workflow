@@ -172,12 +172,12 @@ export default function GroupMembersModal({
       }}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl ds-bg-form shadow-xl"
+        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-[24px] ds-bg-form shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[var(--color-border-form)] ds-bg-form px-6 py-6 sm:px-8">
-          <div className="flex min-w-0 items-center gap-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-[var(--color-border-form)] bg-[var(--color-bg)] px-6 py-5">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -197,7 +197,7 @@ export default function GroupMembersModal({
 
           <Button
             onClick={() => setIsPickerOpen((open) => !open)}
-            className="flex h-10 shrink-0 items-center gap-2 rounded-full border-none bg-[var(--color-bg-primary-200)] px-4 font-bold text-[var(--color-text-brand)] shadow-none transition-colors hover:bg-[var(--color-bg-primary)] hover:text-white sm:px-6"
+            className="flex h-10 shrink-0 items-center gap-2 rounded-full border-none bg-[var(--color-bg-primary)] px-5 font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95"
           >
             {isPickerOpen ? <X size={16} strokeWidth={2.5} /> : <UserPlus size={16} strokeWidth={2.5} />}
             <span className="hidden sm:inline">{t("membersModal.addMember")}</span>
@@ -275,7 +275,7 @@ export default function GroupMembersModal({
                 return (
                   <div
                     key={String(userId ?? member.id ?? index)}
-                    className="flex flex-wrap items-center justify-between gap-3 py-2"
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-[var(--color-border-form)] bg-[var(--color-bg)] p-3 transition-colors hover:border-[var(--color-border-inputs-focus)]"
                   >
                     <div className="flex min-w-0 items-center gap-4">
                       {image ? (
@@ -311,7 +311,7 @@ export default function GroupMembersModal({
                         onChange={(event) =>
                           handleRoleChange(userId, name, event.target.value)
                         }
-                        className="h-9 rounded-full border border-[var(--color-border-inputs)] ds-bg-form px-3 text-[13px] font-bold ds-text-gray transition-colors hover:bg-[var(--color-bg)] disabled:opacity-50"
+                        className="h-9 rounded-[12px] border border-[var(--color-border-inputs)] ds-bg-form px-3 text-[13px] font-bold ds-text-gray transition-colors hover:bg-[var(--color-bg)] focus:border-[var(--color-border-inputs-focus)] focus:outline-none disabled:opacity-50"
                       >
                         {ASSIGNABLE_ROLES.map((value) => (
                           <option key={value} value={value}>
@@ -325,7 +325,7 @@ export default function GroupMembersModal({
                           type="button"
                           onClick={() => handleRemove(userId, name)}
                           disabled={isBusy}
-                          className="flex h-9 items-center gap-1.5 rounded-full border border-rose-100 bg-rose-50/50 px-4 text-[13px] font-bold text-rose-500 transition-colors hover:bg-rose-50 disabled:opacity-50"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-500 transition-colors hover:bg-rose-100 disabled:opacity-50 sm:w-auto sm:px-4 sm:gap-1.5"
                         >
                           {isBusy ? (
                             <Loader2 size={14} className="animate-spin" />
