@@ -231,7 +231,8 @@
     "selectEmployee": "اختر الموظف",
     "sprints": "السبرنتات",
     "accessDeniedTitle": "لا تملك صلاحية",
-    "accessDeniedBody": "ليس لديك إذن لعرض هذه الصفحة."
+    "accessDeniedBody": "ليس لديك إذن لعرض هذه الصفحة.",
+    "meetings": "الاجتماعات"
   },
   "development": {
     "title": "إدارة التطويرات",
@@ -764,7 +765,8 @@
     "systemSettings": "إعدادات النظام",
     "conversations": "المحادثات",
     "access": "إدارة الصلاحيات",
-    "sprints": "السبرنتات"
+    "sprints": "السبرنتات",
+    "meetings": "الاجتماعات"
   },
   "currencies": {
     "title": "العملات",
@@ -1368,6 +1370,186 @@
       "priority": "الأولوية",
       "status": "الحالة",
       "moveToSprint": "نقل إلى سبرنت"
+    }
+  },
+  "meetings": {
+    "title": "إدارة الاجتماعات",
+    "subtitle": "جدولة وعقد ومتابعة الاجتماعات وفرق العمل",
+    "createMeeting": "إنشاء اجتماع جديد",
+    "joinByCode": "انضمام عبر الكود",
+    "editMeeting": "تعديل الاجتماع",
+    "deleteMeeting": "حذف الاجتماع",
+    "startMeeting": "بدء الاجتماع",
+    "endMeeting": "إنهاء الاجتماع",
+    "joinMeeting": "دخول الاجتماع",
+    "leaveMeeting": "مغادرة الاجتماع",
+    "room": "غرفة الاجتماع",
+    "meetingCode": "كود الاجتماع",
+    "copyCode": "نسخ الكود",
+    "copyLink": "نسخ الرابط",
+    "codeCopied": "تم نسخ كود الاجتماع",
+    "linkCopied": "تم نسخ رابط الاجتماع",
+    "enterMeetingCode": "أدخل كود الاجتماع (مثال: ABC-123-XYZ)",
+    "meetingCodePlaceholder": "XXX-XXX-XXX",
+    "searchPlaceholder": "ابحث في الاجتماعات بالاسم أو الكود...",
+    "emptyTitle": "لا توجد اجتماعات",
+    "emptyDesc": "لم يتم العثور على اجتماعات مطابقة للبحث أو لم يتم إنشاء اجتماعات بعد.",
+    "stats": {
+      "total": "إجمالي الاجتماعات",
+      "upcoming": "الاجتماعات القادمة",
+      "inProgress": "الاجتماعات الجارية",
+      "ended": "الاجتماعات المنتهية"
+    },
+    "status": {
+      "all": "جميع الحالات",
+      "waiting": "في الانتظار",
+      "in_progress": "جارٍ الآن",
+      "ended": "منتهي",
+      "cancelled": "ملغي"
+    },
+    "type": {
+      "all": "جميع الأنواع",
+      "instant": "فوري",
+      "scheduled": "مجدول",
+      "recurring": "متكرر"
+    },
+    "columns": {
+      "title": "عنوان الاجتماع",
+      "code": "الكود",
+      "organizer": "المنظم",
+      "project": "المشروع",
+      "type": "النوع",
+      "status": "الحالة",
+      "scheduledAt": "الموعد",
+      "duration": "المدة",
+      "participants": "المشاركون",
+      "actions": "الإجراءات"
+    },
+    "form": {
+      "title": "عنوان الاجتماع",
+      "titlePlaceholder": "مثال: اجتماع التخطيط للسبرنت 6",
+      "description": "الوصف / جدول الأعمال",
+      "descriptionPlaceholder": "اكتب وصفاً موجزاً لأهداف الاجتماع ومواضيعه...",
+      "type": "نوع الاجتماع",
+      "scheduledAt": "موعد وتاريخ الاجتماع",
+      "maxParticipants": "الحد الأقصى للمشاركين",
+      "project": "المشروع المرتبط (اختياري)",
+      "isPrivate": "اجتماع خاص محمي بكلمة مرور",
+      "password": "كلمة مرور الدخول",
+      "passwordPlaceholder": "أدخل كلمة مرور الغرفة",
+      "permissions": "صلاحيات الغرفة",
+      "allowChat": "تفعيل المحادثة النصية (Chat)",
+      "allowRecording": "السماح بالتسجيل",
+      "allowScreenShare": "السماح بمشاركة الشاشة",
+      "allowWhiteboard": "تفعيل السبورة التفاعلية",
+      "allowFileShare": "السماح بمشاركة الملفات",
+      "createBtn": "إنشاء وجدولة الاجتماع",
+      "updateBtn": "حفظ التعديلات"
+    },
+    "roomTabs": {
+      "media": "الوسائط والفيديو",
+      "whiteboard": "السبورة التفاعلية",
+      "chat": "المحادثة",
+      "polls": "استطلاعات الرأي",
+      "notes": "الملاحظات ومحضر الاجتماع",
+      "decisions": "القرارات المعتمدة",
+      "actionItems": "بنود العمل والتوصيات",
+      "participants": "المشاركون والدعوات"
+    },
+    "whiteboard": {
+      "pencil": "قلم حر",
+      "rectangle": "مستطيل",
+      "circle": "دائرة",
+      "line": "خط مستقيم",
+      "arrow": "سهم",
+      "text": "نص",
+      "sticky": "ملاحظة لاصقة",
+      "undo": "تراجع",
+      "redo": "إعادة",
+      "clear": "مسح الكل",
+      "lock": "قفل السبورة",
+      "unlock": "إلغاء قفل السبورة",
+      "color": "اللون",
+      "strokeWidth": "سماكة الخط",
+      "save": "حفظ التغييرات"
+    },
+    "chat": {
+      "placeholder": "اكتب رسالة للمشاركين...",
+      "send": "إرسال",
+      "attachFile": "إرفاق ملف",
+      "convertToTask": "تحويل إلى مهمة"
+    },
+    "polls": {
+      "createPoll": "إنشاء استطلاع جديد",
+      "question": "السؤال",
+      "questionPlaceholder": "مثال: ما هو موعد الإطلاق المفضل؟",
+      "options": "خيارات الإجابة",
+      "addOption": "إضافة خيار",
+      "optionPlaceholder": "الخيار {index}",
+      "multipleChoice": "السماح باختيار أكثر من إجابة",
+      "anonymous": "تصويت مجهول الهوية",
+      "allowChangeVote": "السماح بتغيير التصويت",
+      "showResults": "إظهار النتائج للمشاركين مباشرة",
+      "vote": "تصويت",
+      "closePoll": "إغلاق التصويت",
+      "totalVotes": "{count} صوت",
+      "closed": "مغلق"
+    },
+    "notes": {
+      "createNote": "إضافة ملاحظة / محضر",
+      "title": "عنوان الملاحظة",
+      "titlePlaceholder": "عنوان الملاحظة...",
+      "content": "محتوى الملاحظة",
+      "contentPlaceholder": "اكتب تفاصيل ومحضر الاجتماع هنا...",
+      "statusDraft": "مسودة",
+      "statusPublished": "منشور",
+      "isShared": "مشاركة مع جميع الحضور",
+      "private": "خاصة بي فقط"
+    },
+    "decisions": {
+      "createDecision": "تسجيل قرار جديد",
+      "title": "عنوان القرار",
+      "titlePlaceholder": "مثال: اعتماد الخطة التقنية للربع الثالث",
+      "description": "تفاصيل القرار وأسبابه",
+      "assignedTo": "المسؤول عن المتابعة",
+      "approve": "اعتماد القرار",
+      "approved": "معتمد",
+      "pending": "قيد المراجعة",
+      "convertToTask": "تحويل القرار لمهمة عمل"
+    },
+    "actionItems": {
+      "createActionItem": "إضافة بند عمل",
+      "title": "موضوع المهمة / التوصية",
+      "titlePlaceholder": "مثال: تجهيز دليل النشر والإطلاق",
+      "assignedTo": "المُسند إليه",
+      "dueDate": "تاريخ الاستحقاق",
+      "priority": "الأولوية",
+      "complete": "تعليم كمكتمل",
+      "completed": "مكتمل",
+      "pending": "قيد الإنجاز",
+      "convertToTask": "تحويل إلى مهمة رسمية"
+    },
+    "conversion": {
+      "modalTitle": "تحويل مخرجات الاجتماع إلى مهمة رسمية",
+      "selectProject": "اختر المشروع التابع",
+      "selectAssignee": "تعيين إلى موظف",
+      "selectPriority": "درجة الأهمية والأولوية",
+      "dueDate": "تاريخ التسليم",
+      "convertBtn": "تحويل وإنشاء المهمة"
+    },
+    "participants": {
+      "inviteUser": "دعوة عضو للاجتماع",
+      "selectUser": "اختر العضو أو الموظف",
+      "host": "المضيف (Host)",
+      "coHost": "مساعد مضيف (Co-host)",
+      "presenter": "مُقدّم (Presenter)",
+      "participant": "مشارك (Participant)",
+      "changeRole": "تغيير الدور",
+      "remove": "إزالة من الغرفة",
+      "invitedUsers": "المدعوون",
+      "statusAccepted": "مقبولة",
+      "statusDeclined": "مرفوضة",
+      "statusPending": "قيد الانتظار"
     }
   }
 }

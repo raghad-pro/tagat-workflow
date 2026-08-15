@@ -119,7 +119,10 @@ export function useParticipants(
 
   const employeesQuery = useQuery({
     queryKey: ["employees", role],
-    queryFn: () => employeeApi.getAll(role),
+    queryFn: () => 
+      role === "employee" 
+        ? employeeApi.getAvailableUsers(role) 
+        : employeeApi.getAll(role),
     enabled,
   });
 
@@ -167,6 +170,12 @@ export function useParticipants(
     pickList(clientsQuery.data)
       .filter((c) => isSuperAdmin || clientIsActive(c))
       .forEach((c) => push(c, "client", "Client"));
+
+    // For the employee role, the `availbale-user` API already scopes the users to their company.
+    // There is no need to filter by `companyId` on the frontend (and doing so fails if the payload lacks it).
+    if (role === "employee") {
+      return out.filter((p) => p.kind === "employee");
+    }
 
     // Only the employee role is narrowed. A company admin's `company_id` is
     // not dependable — `normalizeUser` falls back to their *user* id when the

@@ -22,7 +22,7 @@ import {
   FileText, CustomCardIcon, Wallet, ArrowLeftRight, DollarSign,
   ShieldCheck, UserCog, FolderKanban, CheckSquare, SquareCheck, Clock,
   Wrench, FileSignature, ScrollText, ArrowUpDown, BadgePercent, KeyRound,
-  KanbanSquare
+  KanbanSquare, Video
 } from "@/assets/icons/icons";
 import { usePermission } from "@/hooks/usePermission";
 import type { LucideIcon } from "lucide-react";
@@ -103,6 +103,7 @@ const NAV_GROUPS: NavGroup[] = [
       // The conversations API is exposed under every role prefix, and chats are
       // inherently cross-role (an admin messaging an employee or client).
       { key: "conversations", href: "/conversations", icon: MessageSquare, roles: ["super_admin", "company", "employee", "client"], permission: "conversations.view" },
+      { key: "meetings", href: "/meetings", icon: Video, roles: ["super_admin", "company", "employee", "client"], permission: "meetings.view" },
       { key: "projects", href: "/projects", icon: FileText, roles: ["super_admin", "company", "employee", "client"], permission: "projects.view" },
       { key: "tasks", href: "/tasks", icon: SquareCheck, roles: ["super_admin", "company", "employee"], permission: "tasks.view" },
       // The sprint routes are registered under the same three prefixes as tasks
