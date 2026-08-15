@@ -86,26 +86,29 @@ function EmpStatCard({
   iconColor,
   iconBg,
 }: {
-  icon:      React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>;
-  value:     number;
-  label:     string;
+  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>;
+  value: number;
+  label: string;
   iconColor: string;
-  iconBg:    string;
+  iconBg: string;
 }) {
   return (
-    <div
-      className="flex items-center gap-4 px-6 py-5 rounded-2xl ds-bg-form"
-      style={{ boxShadow: "var(--shadow-sm)" }}
-    >
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ background: iconBg }}
-      >
-        <Icon size={20} style={{ color: iconColor }} />
-      </div>
-      <div>
-        <p className="text-2xl font-bold ds-text-primary leading-none">{value}</p>
-        <p className="text-sm ds-text-gray-200 mt-0.5">{label}</p>
+    <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all min-w-0">
+      <div className="flex items-center gap-4 min-w-0 w-full">
+        <div
+          className="w-[48px] h-[48px] rounded-[8px] flex items-center justify-center shrink-0"
+          style={{ backgroundColor: iconBg }}
+        >
+          <Icon size={24} style={{ color: iconColor }} />
+        </div>
+        <div className="flex flex-col min-w-0 justify-center">
+          <span className="text-[13px] font-medium text-[#000000] dark:text-gray-300 truncate leading-[20px]">
+            {label}
+          </span>
+          <span className="text-[30px] font-bold text-[#000000] dark:text-white leading-[36px] truncate tracking-tight">
+            {value}
+          </span>
+        </div>
       </div>
     </div>
   );

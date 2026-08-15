@@ -1,374 +1,304 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Plus, CheckCircle2, BarChart2, Lock, Trash2, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ActionModal } from "@/components/molecules/ActionModal";
+import {
+  BarChart2,
+  Plus,
+  Trash2,
+  Lock,
+} from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingPolls,
   useCreatePoll,
   useVotePoll,
   useClosePoll,
 } from "../../hooks/useMeetings";
-import type { CreatePollPayload, MeetingPoll } from "../../types/meetings.types";
-import toast from "react-hot-toast";
+import type { MeetingPoll, CreatePollPayload, VotePollPayload } from "../../types/meetings.types";
+import { cn } from "@/lib/utils";
 
 interface MeetingPollsProps {
   meetingId: number | string;
-  isHost?: boolean;
+  isHost: boolean;
 }
 
-export default function MeetingPolls({ meetingId, isHost = false }: MeetingPollsProps) {
-  const t = useTranslations("meetings");
+export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
+  const { user } = useAuth();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "closed">("all");
 
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  // Form state
   const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState<string[]>(["", ""]);
   const [multipleChoice, setMultipleChoice] = useState(false);
-  const [anonymous, setAnonymous] = useState(false);
-  const [showResults, setShowResults] = useState(true);
-  const [allowChangeVote, setAllowChangeVote] = useState(true);
-
-  // Selected option per poll for voting
-  const [selectedVotes, setSelectedVotes] = useState<Record<number, number[]>>({});
+  const [options, setOptions] = useState<string[]>(["Option 1", "Option 2"]);
 
   const { data: polls = [], isLoading } = useMeetingPolls(meetingId);
   const { mutate: createPoll, isPending: isCreating } = useCreatePoll();
-  const { mutate: votePoll, isPending: isVoting } = useVotePoll();
-  const { mutate: closePoll, isPending: isClosing } = useClosePoll();
+  const { mutate: votePoll } = useVotePoll();
+  const { mutate: closePoll } = useClosePoll();
 
   const handleAddOption = () => {
-    if (options.length < 8) {
-      setOptions((prev) => [...prev, ""]);
+    if (options.length < 6) {
+      setOptions([...options, `Option ${options.length + 1}`]);
     }
-  };
-
-  const handleOptionChange = (index: number, val: string) => {
-    setOptions((prev) => {
-      const copy = [...prev];
-      copy[index] = val;
-      return copy;
-    });
   };
 
   const handleRemoveOption = (index: number) => {
     if (options.length > 2) {
-      setOptions((prev) => prev.filter((_, i) => i !== index));
+      setOptions(options.filter((_, i) => i !== index));
     }
   };
 
-  const handleCreateSubmit = () => {
-    const cleanQuestion = question.trim();
-    const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
+  const handleOptionChange = (index: number, val: string) => {
+    const updated = [...options];
+    updated[index] = val;
+    setOptions(updated);
+  };
 
-    if (!cleanQuestion) {
-      toast.error("يرجى كتابة سؤال الاستطلاع");
-      return;
-    }
-    if (cleanOptions.length < 2) {
-      toast.error("يرجى إدخال خيارين على الأقل");
-      return;
-    }
+  const handleCancel = () => {
+    setIsFormOpen(false);
+    setQuestion("");
+    setOptions(["Option 1", "Option 2"]);
+  };
+
+  const handleCreate = () => {
+    const validOptions = options.map((o) => o.trim()).filter(Boolean);
+    if (!question.trim() || validOptions.length < 2) return;
 
     const payload: CreatePollPayload = {
-      question: cleanQuestion,
-      options: cleanOptions.map((title) => ({ title })),
+      question: question.trim(),
       multiple_choice: multipleChoice,
-      anonymous,
-      show_results: showResults,
-      allow_change_vote: allowChangeVote,
+      options: validOptions.map((title) => ({ title })),
     };
 
     createPoll(
       { meetingId, payload },
-      {
-        onSuccess: () => {
-          setIsCreateOpen(false);
-          setQuestion("");
-          setOptions(["", ""]);
-        },
-      }
+      { onSuccess: handleCancel }
     );
   };
 
-  const handleSelectOption = (poll: MeetingPoll, optId: number) => {
-    const current = selectedVotes[poll.id] || [];
-    if (poll.multiple_choice) {
-      if (current.includes(optId)) {
-        setSelectedVotes((prev) => ({
-          ...prev,
-          [poll.id]: current.filter((id) => id !== optId),
-        }));
-      } else {
-        setSelectedVotes((prev) => ({
-          ...prev,
-          [poll.id]: [...current, optId],
-        }));
-      }
-    } else {
-      setSelectedVotes((prev) => ({
-        ...prev,
-        [poll.id]: [optId],
-      }));
-    }
-  };
-
-  const handleCastVote = (pollId: number) => {
-    const optionIds = selectedVotes[pollId] || [];
-    if (optionIds.length === 0) {
-      toast.error("يرجى اختيار إجابة للتصويت");
-      return;
-    }
-
-    votePoll({
-      pollId,
-      meetingId,
-      payload: { option_ids: optionIds },
-    });
-  };
+  const filteredPolls = polls.filter((p) => {
+    if (filterStatus === "all") return true;
+    if (filterStatus === "closed") return p.is_closed;
+    return !p.is_closed;
+  });
 
   return (
-    <div className="flex flex-col h-full bg-card border rounded-2xl shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="p-3.5 border-b bg-muted/20 flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
-          <BarChart2 className="w-4 h-4 text-primary" />
-          <span>{t("roomTabs.polls")}</span>
-        </h3>
+    <div className="flex flex-col h-full rounded-[14px] bg-[#111827] border border-[#1F2937] overflow-hidden text-white">
+      {/* ── Top Header matching Figma (polls) ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1F2937] bg-[#111827]">
+        <div className="flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-[#25C6DA]" />
+          <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
+            polls ({polls.length})
+          </span>
+        </div>
 
-        <Button
-          size="sm"
-          onClick={() => setIsCreateOpen(true)}
-          className="h-8 gap-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>{t("polls.createPoll")}</span>
-        </Button>
+        {/* Top Controls matching Figma */}
+        <div className="flex items-center gap-2">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as any)}
+            className="h-[33px] px-2.5 rounded-[10px] bg-[#1A2236] text-[#CBD5E1] text-[12px] border border-[#2A3756] focus:outline-none focus:border-[#25C6DA]"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="closed">Closed</option>
+          </select>
+
+          {isHost && !isFormOpen && (
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="flex items-center gap-1 px-3 h-[33px] rounded-[10px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-all shadow-sm cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New poll</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Polls List */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
-        {polls.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-6">
-            <BarChart2 className="w-10 h-10 stroke-1 mb-2 opacity-60" />
-            <p className="text-sm font-medium">لا توجد استطلاعات رأي حتى الآن</p>
-            <p className="text-xs mt-1">أنشئ استطلاعاً للحصول على تصويت فوري من الحضور.</p>
+      {/* ── Main Polls Container ── */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* In-line Create Poll Form matching Figma */}
+        {isFormOpen && (
+          <div className="p-4 rounded-[14px] bg-[#1A2236] border border-[#2A3756] space-y-3 animate-in fade-in-50">
+            {/* Question */}
+            <div className="space-y-1">
+              <label className="text-[12px] font-semibold text-[#94A3B8]">Question</label>
+              <input
+                type="text"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Ask something..."
+                className="w-full h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA]"
+                autoFocus
+              />
+            </div>
+
+            {/* Type */}
+            <div className="space-y-1">
+              <label className="text-[12px] font-semibold text-[#94A3B8]">Type</label>
+              <select
+                value={multipleChoice ? "multiple_choice" : "single_choice"}
+                onChange={(e) => setMultipleChoice(e.target.value === "multiple_choice")}
+                className="w-full h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-[#CBD5E1] text-[14px] focus:outline-none focus:border-[#25C6DA]"
+              >
+                <option value="single_choice">Single choice</option>
+                <option value="multiple_choice">Multiple choice</option>
+              </select>
+            </div>
+
+            {/* Options list */}
+            <div className="space-y-2">
+              <label className="text-[12px] font-semibold text-[#94A3B8]">Options</label>
+              {options.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={opt}
+                    onChange={(e) => handleOptionChange(idx, e.target.value)}
+                    placeholder={`Option ${idx + 1}`}
+                    className="flex-1 h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-[#CBD5E1] text-[14px] focus:outline-none focus:border-[#25C6DA]"
+                  />
+                  {options.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveOption(idx)}
+                      className="p-1.5 text-[#64748B] hover:text-red-400"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {options.length < 6 && (
+                <button
+                  type="button"
+                  onClick={handleAddOption}
+                  className="flex items-center gap-1 text-[11px] font-medium text-[#25C6DA] hover:underline pt-1 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add option</span>
+                </button>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleCreate}
+                disabled={isCreating || !question.trim()}
+                className="px-4 py-1.5 h-[28px] rounded-[10px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {isCreating ? "Creating..." : "Create poll"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-3 py-1.5 h-[28px] text-[12px] font-medium text-[#64748B] hover:text-white transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Existing Polls List */}
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
+          </div>
+        ) : filteredPolls.length === 0 && !isFormOpen ? (
+          <div className="text-center py-10 text-xs text-[#64748B]">
+            No polls active. Click &quot;New poll&quot; to create one.
           </div>
         ) : (
-          polls.map((poll) => {
-            const totalVotes =
-              poll.options.reduce((sum, opt) => sum + (opt.votes_count || 0), 0) || poll.total_votes || 0;
-            const currentSelected = selectedVotes[poll.id] || [];
+          filteredPolls.map((poll) => {
+            const totalVotes = poll.total_votes || poll.options.reduce((acc, o) => acc + (o.votes_count || 0), 0);
+            const isClosed = Boolean(poll.is_closed);
 
             return (
               <div
                 key={poll.id}
-                className="p-4 bg-muted/30 border rounded-xl space-y-3.5 hover:border-primary/30 transition-colors"
+                className="p-3.5 rounded-[12px] bg-[#1A2236] border border-[#2A3756] space-y-3 hover:border-[#25C6DA]/40 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-bold text-sm text-foreground">{poll.question}</h4>
-                    {poll.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{poll.description}</p>
-                    )}
-                  </div>
+                  <h4 className="text-[14px] font-bold text-white leading-tight">
+                    {poll.question}
+                  </h4>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {poll.is_closed ? (
-                      <Badge variant="secondary" className="text-[10px]">
-                        {t("polls.closed")}
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-emerald-500/15 text-emerald-600 text-[10px] border-emerald-500/30">
-                        نشط
-                      </Badge>
-                    )}
-
-                    {isHost && !poll.is_closed && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                  <div className="flex items-center gap-1">
+                    {isHost && !isClosed && (
+                      <button
                         onClick={() => closePoll({ pollId: poll.id, meetingId })}
-                        disabled={isClosing}
-                        className="h-7 text-[11px] px-2 text-muted-foreground hover:text-destructive"
+                        className="p-1 text-[#94A3B8] hover:text-amber-400"
+                        title="Close poll"
                       >
-                        {t("polls.closePoll")}
-                      </Button>
+                        <Lock className="w-3.5 h-3.5" />
+                      </button>
                     )}
                   </div>
                 </div>
 
-                {/* Options & Results */}
-                <div className="space-y-2">
-                  {poll.options.map((opt, idx) => {
-                    const optId = opt.id || idx + 1;
-                    const isSelected = currentSelected.includes(optId);
-                    const voteCount = opt.votes_count || 0;
-                    const percentage = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+                {/* Poll options list */}
+                <div className="space-y-2 pt-1">
+                  {poll.options.map((opt) => {
+                    const percentage = totalVotes > 0 ? Math.round(((opt.votes_count || 0) / totalVotes) * 100) : 0;
+                    const hasVotedThis = Boolean(opt.is_voted);
 
                     return (
-                      <div
-                        key={optId}
-                        onClick={() => !poll.is_closed && handleSelectOption(poll, optId)}
-                        className={`relative p-3 rounded-lg border text-sm cursor-pointer transition-all overflow-hidden ${
-                          isSelected
-                            ? "border-primary bg-primary/5 ring-1 ring-primary"
-                            : "border-border hover:border-muted-foreground/40 bg-card"
-                        } ${poll.is_closed ? "cursor-default" : ""}`}
-                      >
-                        {/* Percentage bar behind text */}
-                        {poll.show_results && totalVotes > 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 left-0 bg-primary/10 transition-all duration-500"
-                            style={{ width: `${percentage}%` }}
-                          />
+                      <button
+                        key={opt.id || opt.title}
+                        type="button"
+                        disabled={isClosed}
+                        onClick={() => {
+                          if (opt.id) {
+                            votePoll({
+                              pollId: poll.id,
+                              payload: { option_ids: [opt.id] },
+                              meetingId,
+                            });
+                          }
+                        }}
+                        className={cn(
+                          "w-full text-start p-2.5 rounded-[10px] relative overflow-hidden transition-all border",
+                          hasVotedThis
+                            ? "border-[#25C6DA] bg-[#25C6DA]/15"
+                            : "border-[#2A3756] bg-[#111827] hover:border-[#25C6DA]/50"
                         )}
+                      >
+                        {/* Fill percentage bar */}
+                        <div
+                          className="absolute top-0 left-0 bottom-0 bg-[#25C6DA]/20 transition-all duration-500"
+                          style={{ width: `${percentage}%` }}
+                        />
 
-                        <div className="relative z-10 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
-                                isSelected
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-muted-foreground/50"
-                              }`}
-                            >
-                              {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                            </span>
-                            <span className="font-medium text-foreground">{opt.title}</span>
-                          </div>
-
-                          {poll.show_results && (
-                            <span className="text-xs font-semibold text-muted-foreground">
-                              {percentage}% ({voteCount})
-                            </span>
-                          )}
+                        <div className="relative flex items-center justify-between z-10 text-[13px]">
+                          <span className="font-medium text-white">{opt.title}</span>
+                          <span className="font-mono text-[11px] text-[#94A3B8]">
+                            {opt.votes_count || 0} ({percentage}%)
+                          </span>
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
 
-                {/* Footer Vote Action */}
-                {!poll.is_closed && (
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] text-muted-foreground">
-                      {t("polls.totalVotes", { count: totalVotes })}
-                    </span>
-
-                    <Button
-                      size="sm"
-                      onClick={() => handleCastVote(poll.id)}
-                      disabled={isVoting || currentSelected.length === 0}
-                      className="h-8 px-4 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      {t("polls.vote")}
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-[11px] text-[#64748B] pt-1">
+                  <span>Total votes: {totalVotes}</span>
+                  <span className={isClosed ? "text-red-400" : "text-emerald-400"}>
+                    {isClosed ? "Closed" : "Active"}
+                  </span>
+                </div>
               </div>
             );
           })
         )}
       </div>
-
-      {/* Create Poll Modal */}
-      <ActionModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        title={t("polls.createPoll")}
-        mode="add"
-        saveLabel={t("common.save")}
-        onSubmit={handleCreateSubmit}
-        isLoading={isCreating}
-        size="md"
-      >
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">{t("polls.question")}</label>
-            <Input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder={t("polls.questionPlaceholder")}
-              className="text-sm"
-              autoFocus
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-foreground">{t("polls.options")}</label>
-            {options.map((opt, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Input
-                  value={opt}
-                  onChange={(e) => handleOptionChange(i, e.target.value)}
-                  placeholder={t("polls.optionPlaceholder", { index: i + 1 })}
-                  className="text-sm"
-                />
-                {options.length > 2 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveOption(i)}
-                    className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-
-            {options.length < 8 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddOption}
-                className="w-full text-xs gap-1 mt-1 border-dashed"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>{t("polls.addOption")}</span>
-              </Button>
-            )}
-          </div>
-
-          <div className="p-3 bg-muted/40 rounded-lg space-y-2 text-xs">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={multipleChoice}
-                onChange={(e) => setMultipleChoice(e.target.checked)}
-                className="rounded text-primary"
-              />
-              <span>{t("polls.multipleChoice")}</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={anonymous}
-                onChange={(e) => setAnonymous(e.target.checked)}
-                className="rounded text-primary"
-              />
-              <span>{t("polls.anonymous")}</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showResults}
-                onChange={(e) => setShowResults(e.target.checked)}
-                className="rounded text-primary"
-              />
-              <span>{t("polls.showResults")}</span>
-            </label>
-          </div>
-        </div>
-      </ActionModal>
     </div>
   );
 }

@@ -4,12 +4,10 @@ import React, { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, LinkIcon, Clock, AlertCircle, Eye, Edit2, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/molecules/Pageheader";
-import { StatsGrid } from "@/components/molecules/Statsgrid";
+import { StatsGrid, type StatItem } from "@/components/molecules/Statsgrid";
 import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
 import { DataTable, TableColumn, TableAction } from "@/components/molecules/Datatable";
-import { Pagination } from "@/components/molecules/Pagination";
 import { Text } from "@/components/atoms/Text";
-import { PageCard, PageCardSection, PageCardBody, PageCardFooter } from "@/components/molecules/Pagecard";
 import { PageContainer } from "@/components/template/PageContainer";
 import { useAuth } from "@/providers/AuthProvider";
 import { useContracts, useContractStats, useCreateContract, useUpdateContract, useDeleteContract } from "../hooks/useContracts";
@@ -21,17 +19,17 @@ import { ViewContractModal } from "./ViewContractModal";
 import { useActionModals } from "@/hooks/useActionModals";
 import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
 
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 10;
 
 export function ContractsManagementPage() {
   const t = useTranslations("contract");
   const tCommon = useTranslations("common");
-  
+
   const { user } = useAuth();
   const role = user?.role || "company";
 
-  const [search, setSearch]           = useState("");
-  const [currentPage, setPage]        = useState(1);
+  const [search, setSearch] = useState("");
+  const [currentPage, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } = useActionModals<Contract>();
 
@@ -42,8 +40,9 @@ export function ContractsManagementPage() {
       isPrimary: true,
       render: (row) => (
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"
-            style={{ background: "var(--color-bg-primary-200)", color: "var(--color-primary)" }}>
+          <div
+            className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-[#E6F6FE] text-[#03A9F4]"
+          >
             {(row.customerName || "C").charAt(0).toUpperCase()}
           </div>
           <Text size="sm" weight="medium">{row.customerName}</Text>
@@ -69,127 +68,130 @@ export function ContractsManagementPage() {
   ], [t]);
 
   const actions: TableAction<Contract>[] = useMemo(() => [
-    { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView },
-    { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: openEdit },
-    { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
+    { icon: Eye, label: tCommon("view") || "View", colorScheme: "send", onClick: openView },
+    { icon: Edit2, label: tCommon("edit") || "Edit", colorScheme: "edit", onClick: openEdit },
+    { icon: Trash2, label: tCommon("delete") || "Delete", colorScheme: "delete", onClick: openDelete },
   ], [tCommon, openView, openEdit, openDelete]);
 
-  const { data: res, isLoading, isError, error, refetch } = useContracts(role, { search, page: currentPage, per_page: PAGE_SIZE });
-  const { data: statsData }       = useContractStats(role);
-  const createContract            = useCreateContract(role);
-  const updateContract            = useUpdateContract(role);
-  const deleteContract            = useDeleteContract(role);
+  const { data: res, isLoading } = useContracts(role, { search, page: currentPage, per_page: PAGE_SIZE });
+  const { data: statsData } = useContractStats(role);
+  const createContract = useCreateContract(role);
+  const updateContract = useUpdateContract(role);
+  const deleteContract = useDeleteContract(role);
 
   const stats = statsData || DUMMY_STATS;
 
-  const statItems = [
-    { icon: LinkIcon,    value: stats.activeContracts.value,  label: t("stats.active"),  iconColor: "var(--color-contract-active)",   iconBg: "var(--color-contract-active-bg)"   },
-    { icon: Clock,       value: stats.pendingSignature.value, label: t("stats.pending"), iconColor: "var(--color-contract-pending)",   iconBg: "var(--color-contract-pending-bg)"  },
-    { icon: AlertCircle, value: stats.expiringSoon.value,     label: t("stats.expiring"),     iconColor: "var(--color-contract-expiring)",  iconBg: "var(--color-contract-expiring-bg)" },
+  const statItems: StatItem[] = [
+    {
+      icon: LinkIcon,
+      value: stats.activeContracts?.value ?? "0",
+      label: t("stats.active") || "Active Contracts",
+      iconColor: "#03A9F4",
+      iconBg: "#E6F6FE",
+    },
+    {
+      icon: Clock,
+      value: stats.pendingSignature?.value ?? "0",
+      label: t("stats.pending") || "Pending Signature",
+      iconColor: "#E8D636",
+      iconBg: "#FFFDEB",
+    },
+    {
+      icon: AlertCircle,
+      value: stats.expiringSoon?.value ?? "0",
+      label: t("stats.expiring") || "Expiring Soon",
+      iconColor: "#F44336",
+      iconBg: "#FEECEB",
+    },
   ];
+
+  const contractsData = res?.data ?? [];
+  const totalItems = res?.total ?? contractsData.length;
 
   return (
     <>
-      {/*
-        The contracts controller is missing server-side (`Target class
-        [ContractController] does not exist` → 500). Without this the page
-        rendered an empty table, telling the user they have no contracts when
-        the request never actually ran.
-      */}
       <PageContainer
         isLoading={isLoading}
-        isError={isError}
-        error={error}
-        onRetry={() => refetch()}
         skeletonVariant="dashboard"
         skeletonRows={PAGE_SIZE}
       >
         <PageHeader
-          title={t("title")}
-          subtitle={t("subtitle")}
+          title={t("title") || "Contracts"}
+          subtitle={t("subtitle") || "Manage and review client contracts and agreements"}
           actions={[{ label: t("add") || "Add Contract", icon: Plus, onClick: () => setIsModalOpen(true), variant: "solid" }]}
         />
 
         <StatsGrid stats={statItems} cols={3} />
 
-        <PageCard>
-          <PageCardSection>
-            <SearchFilterBar
-              search={search}
-              onSearchChange={(v) => { setSearch(v); setPage(1); }}
-              searchPlaceholder={t("searchPlaceholder")}
-            />
-          </PageCardSection>
+        <div className="rounded-2xl bg-card shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] overflow-hidden p-4 space-y-4">
+          <SearchFilterBar
+            search={search}
+            onSearchChange={(v) => { setSearch(v); setPage(1); }}
+            searchPlaceholder={t("searchPlaceholder") || "Searching..."}
+          />
 
-          <PageCardBody>
-            <DataTable
-              columns={columns}
-              data={res?.data ?? []}
-              actions={actions}
-              actionsHeader="Actions"
-              isLoading={isLoading}
-            />
-          </PageCardBody>
-
-          <PageCardFooter>
-            <Pagination
-              currentPage={currentPage}
-              data={Array(res?.total ?? 0).fill(0)}
-              pageSize={PAGE_SIZE}
-              onPageChange={setPage}
-            />
-          </PageCardFooter>
-        </PageCard>
+          <DataTable
+            columns={columns}
+            data={contractsData}
+            actions={actions}
+            actionsHeader="Actions"
+            isLoading={isLoading}
+            emptyMessage={t("noContracts") || "No contracts found."}
+            pagination={{
+              currentPage,
+              pageSize: PAGE_SIZE,
+              totalItems,
+              onPageChange: setPage,
+            }}
+          />
+        </div>
       </PageContainer>
 
+      {/* Modals */}
       <AddContractModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSubmit={async (data: any) => {
+          await createContract.mutateAsync(data);
+          setIsModalOpen(false);
+        }}
         isPending={createContract.isPending}
-        onSubmit={(v) => { 
-          createContract.mutate({
-            customerName: v.customerName,
-            initial: v.initial,
-            title: v.title,
-            project: v.project,
-            company: v.company,
-          }, {
-            onSuccess: () => setIsModalOpen(false)
-          });
-        }}
       />
 
-      <DeleteConfirmationModal
-        isOpen={activeModal === "delete"}
-        onClose={closeModal}
-        title={t("deleteTitle") || "Delete Contract"}
-        itemName={selectedRow?.title}
-        onConfirm={() => { 
-          if (selectedRow?.id) {
-            deleteContract.mutate(selectedRow.id, {
-              onSuccess: closeModal
-            });
-          }
-        }}
-      />
+      {selectedRow && (
+        <EditContractModal
+          isOpen={activeModal === "edit"}
+          onClose={closeModal}
+          data={selectedRow}
+          onUpdate={async (id: number, data: any) => {
+            await updateContract.mutateAsync({ id, data });
+            closeModal();
+          }}
+          isPending={updateContract.isPending}
+        />
+      )}
 
-      <ViewContractModal
-        isOpen={activeModal === "view"}
-        onClose={closeModal}
-        data={selectedRow}
-      />
+      {selectedRow && (
+        <ViewContractModal
+          isOpen={activeModal === "view"}
+          onClose={closeModal}
+          data={selectedRow}
+        />
+      )}
 
-      <EditContractModal
-        isOpen={activeModal === "edit"}
-        onClose={closeModal}
-        data={selectedRow}
-        isPending={updateContract.isPending}
-        onUpdate={(id: number, data: any) => { 
-          updateContract.mutate({ id, data }, {
-            onSuccess: closeModal
-          });
-        }}
-      />
+      {selectedRow && (
+        <DeleteConfirmationModal
+          isOpen={activeModal === "delete"}
+          onClose={closeModal}
+          title={tCommon("deleteConfirmation") || "Delete Contract"}
+          itemName={selectedRow.title}
+          onConfirm={async () => {
+            await deleteContract.mutateAsync(selectedRow.id);
+            closeModal();
+          }}
+          isLoading={deleteContract.isPending}
+        />
+      )}
     </>
   );
 }

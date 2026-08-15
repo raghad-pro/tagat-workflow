@@ -11,18 +11,20 @@ import type {
 
 // ─── Flatten helper ────────────────────────────────────────────────────────────
 function flattenRequests(clients: JoinRequestClient[]): JoinRequest[] {
-  return clients.flatMap((client) =>
-    client.companies.map((company) => ({
+  if (!Array.isArray(clients)) return [];
+  return clients.flatMap((client) => {
+    if (!client || !Array.isArray(client.companies)) return [];
+    return client.companies.map((company) => ({
       id: `${client.id}-${company.id}`,
       clientId: client.id,
       companyId: company.id,
-      clientName: client.name,
-      companyName: company.name,
-      companyEmail: company.email,
-      status: company.pivot.status,
-      createdAt: company.pivot.created_at,
-    }))
-  );
+      clientName: client.name || "",
+      companyName: company.name || "",
+      companyEmail: company.email || "",
+      status: company.pivot?.status || "pending",
+      createdAt: company.pivot?.created_at || "",
+    }));
+  });
 }
 
 // ─── Hook ──────────────────────────────────────────────────────────────────────
@@ -33,13 +35,24 @@ export const useJoinRequests = (params: JoinRequestsQueryParams) => {
   return useQuery({
     queryKey: ["join-requests", role, params],
     queryFn: async () => {
-      const res = await joinRequestApi.getAll(role, params);
-      return {
-        role: res.role,                   
-        rows: flattenRequests(res.data), 
-        raw:  res.data,               
-      };
+      try {
+        const res: any = await joinRequestApi.getAll(role, params);
+        const dataArray = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        return {
+          role: res?.role || role,
+          rows: flattenRequests(dataArray),
+          raw: dataArray,
+        };
+      } catch (err) {
+        console.error("Failed to fetch join requests:", err);
+        return {
+          role,
+          rows: [],
+          raw: [],
+        };
+      }
     },
     placeholderData: keepPreviousData,
+    retry: 1,
   });
 };

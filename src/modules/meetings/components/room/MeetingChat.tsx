@@ -1,29 +1,29 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { Send, Paperclip, FileText, Download, CheckSquare, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  MessageSquare,
+  Send,
+  Paperclip,
+  CheckSquare,
+  FileText,
+  Download,
+} from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMeetingMessages, useSendMessage } from "../../hooks/useMeetings";
-import { meetingsApi } from "../../api/meetings.api";
 import ConvertToTaskModal from "./ConvertToTaskModal";
 import type { MeetingMessage } from "../../types/meetings.types";
+import { cn } from "@/lib/utils";
 
 interface MeetingChatProps {
   meetingId: number | string;
 }
 
 export default function MeetingChat({ meetingId }: MeetingChatProps) {
-  const t = useTranslations("meetings");
   const { user } = useAuth();
-  const role = user?.role || "employee";
-
-  const [messageText, setMessageText] = useState("");
-  const [attachment, setAttachment] = useState<File | null>(null);
-  const [convertingMessage, setConvertingMessage] = useState<MeetingMessage | null>(null);
+  const [inputText, setInputText] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [convertTaskMessage, setConvertTaskMessage] = useState<MeetingMessage | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -31,124 +31,147 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
   const { data: messages = [], isLoading } = useMeetingMessages(meetingId);
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanText = messageText.trim();
-    if (!cleanText && !attachment) return;
+    if (!inputText.trim() && !selectedFile) return;
 
     sendMessage(
       {
         meetingId,
         payload: {
-          message: cleanText,
-          attachment: attachment || undefined,
+          message: inputText.trim() || "",
+          attachment: selectedFile || undefined,
         },
       },
       {
         onSuccess: () => {
-          setMessageText("");
-          setAttachment(null);
+          setInputText("");
+          setSelectedFile(null);
+          if (fileInputRef.current) fileInputRef.current.value = "";
         },
       }
     );
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return "SA";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
-    <div className="flex flex-col h-full bg-card border rounded-2xl shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="p-3.5 border-b bg-muted/20 flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
-          <span>{t("roomTabs.chat")}</span>
-          <span className="text-xs text-muted-foreground font-normal">
-            ({messages.length} رسالة)
+    <div className="flex flex-col h-full rounded-[14px] bg-[#111827] border border-[#1F2937] overflow-hidden text-white">
+      {/* ── Top Header matching Figma (chat) ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1F2937] bg-[#111827]">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-[#25C6DA]" />
+          <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
+            chat
           </span>
-        </h3>
+        </div>
       </div>
 
-      {/* Messages Stream */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-6">
-            <p className="text-sm">لا توجد رسائل حتى الآن.</p>
-            <p className="text-xs mt-1">ابدأ المحادثة بمشاركة أول رسالة في الاجتماع!</p>
+      {/* ── Messages Stream ── */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center py-10 text-xs text-[#64748B] space-y-1">
+            <MessageSquare className="w-8 h-8 opacity-40 mb-1" />
+            <p className="text-[12px] font-medium text-[#475569]">No messages yet.</p>
           </div>
         ) : (
           messages.map((msg) => {
             const isMe = msg.user_id === user?.id;
+            const senderName = msg.user?.name || "Participant";
+            const initials = getInitials(senderName);
+
             return (
               <div
                 key={msg.id}
-                className={`flex gap-2.5 group ${isMe ? "flex-row-reverse" : "flex-row"}`}
+                className={cn(
+                  "flex items-start gap-2.5 group",
+                  isMe ? "flex-row-reverse" : "flex-row"
+                )}
               >
-                <Avatar className="w-8 h-8 shrink-0 mt-0.5 border">
-                  <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
-                    {(msg.user?.name || "ع").charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full bg-[#1A2236] border border-[#2A3756] text-[#25C6DA] flex items-center justify-center text-[11px] font-bold shrink-0">
+                  {initials}
+                </div>
 
+                {/* Message Bubble */}
                 <div
-                  className={`flex flex-col max-w-[80%] ${
-                    isMe ? "items-end" : "items-start"
-                  }`}
+                  className={cn(
+                    "flex flex-col max-w-[78%] rounded-[14px] p-3 text-[13px] shadow-sm",
+                    isMe
+                      ? "bg-[#25C6DA] text-white rounded-tr-none"
+                      : "bg-[#1A2236] text-white border border-[#2A3756] rounded-tl-none"
+                  )}
                 >
-                  <div className="flex items-center gap-1.5 mb-1 text-[11px] text-muted-foreground">
-                    <span className="font-medium text-foreground">{msg.user?.name || "مشارك"}</span>
-                    <span>
-                      {msg.created_at
-                        ? new Date(msg.created_at).toLocaleTimeString("ar-EG", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : ""}
+                  {!isMe && (
+                    <span className="text-[11px] font-bold text-[#25C6DA] mb-0.5">
+                      {senderName}
                     </span>
-                  </div>
+                  )}
 
+                  {msg.message && (
+                    <p className="whitespace-pre-wrap leading-relaxed">
+                      {msg.message}
+                    </p>
+                  )}
+
+                  {/* Attachments if present */}
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="space-y-1 mt-2">
+                      {msg.attachments.map((att) => (
+                        <a
+                          key={att.id}
+                          href={att.file_url || att.download_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={cn(
+                            "flex items-center gap-2 p-2 rounded-[8px] border text-xs transition-colors",
+                            isMe
+                              ? "bg-white/10 border-white/20 hover:bg-white/20"
+                              : "bg-[#111827] border-[#2A3756] hover:border-[#25C6DA]"
+                          )}
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span className="truncate flex-1">{att.file_name}</span>
+                          <Download className="w-3.5 h-3.5 opacity-80" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Message Footer */}
                   <div
-                    className={`relative p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                      isMe
-                        ? "bg-primary text-primary-foreground rounded-tr-none"
-                        : "bg-muted text-foreground rounded-tl-none"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-
-                    {/* Attachments */}
-                    {msg.attachments && msg.attachments.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-current/20 space-y-1">
-                        {msg.attachments.map((att) => (
-                          <a
-                            key={att.id}
-                            href={meetingsApi.getAttachmentDownloadUrl(role, att.id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-1.5 rounded bg-black/10 hover:bg-black/20 text-xs transition-colors"
-                          >
-                            <FileText className="w-4 h-4 shrink-0" />
-                            <span className="truncate flex-1">{att.file_name}</span>
-                            <Download className="w-3.5 h-3.5 shrink-0" />
-                          </a>
-                        ))}
-                      </div>
+                    className={cn(
+                      "flex items-center justify-between gap-2 mt-1.5 text-[10px]",
+                      isMe ? "text-white/80" : "text-[#64748B]"
                     )}
-                  </div>
-
-                  {/* Convert Message to Task Action */}
-                  <button
-                    onClick={() => setConvertingMessage(msg)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary cursor-pointer"
-                    title="تحويل لمهمة"
                   >
-                    <CheckSquare className="w-3 h-3" />
-                    <span>{t("chat.convertToTask")}</span>
-                  </button>
+                    <span>
+                      {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+
+                    {/* Convert to Task Button */}
+                    <button
+                      onClick={() => setConvertTaskMessage(msg)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:underline inline-flex items-center gap-1"
+                      title="Convert to task"
+                    >
+                      <CheckSquare className="w-2.5 h-2.5" />
+                      <span>Task</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -157,71 +180,70 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Selected Attachment Badge */}
-      {attachment && (
-        <div className="px-3 py-1.5 bg-muted/60 border-t flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 truncate">
-            <Paperclip className="w-3.5 h-3.5 text-primary" />
-            <span className="truncate">{attachment.name}</span>
+      {/* ── Input Bar matching Figma exact styles ── */}
+      <form onSubmit={handleSend} className="p-3 border-t border-[#1F2937] bg-[#111827]">
+        {selectedFile && (
+          <div className="flex items-center justify-between p-2 mb-2 rounded-[8px] bg-[#1A2236] border border-[#2A3756] text-xs text-white">
+            <span className="truncate">{selectedFile.name}</span>
+            <button
+              type="button"
+              onClick={() => setSelectedFile(null)}
+              className="text-red-400 font-bold hover:underline"
+            >
+              Remove
+            </button>
           </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={(e) => {
+              if (e.target.files?.[0]) setSelectedFile(e.target.files[0]);
+            }}
+            className="hidden"
+          />
+
           <button
-            onClick={() => setAttachment(null)}
-            className="text-muted-foreground hover:text-destructive text-xs font-bold px-1"
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-[37px] h-[37px] rounded-[10px] bg-[#1A2236] border border-[#2A3756] text-[#94A3B8] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            title="Attach file"
           >
-            ✕
+            <Paperclip className="w-4 h-4" />
+          </button>
+
+          {/* Text Input matching Figma */}
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Message..."
+            className="flex-1 h-[37px] px-3.5 rounded-[10px] bg-[#1A2236] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA] transition-colors"
+          />
+
+          {/* Send Button */}
+          <button
+            type="submit"
+            disabled={isSending || (!inputText.trim() && !selectedFile)}
+            className="w-[37px] h-[37px] rounded-[10px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white flex items-center justify-center transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
+          >
+            <Send className="w-4 h-4" />
           </button>
         </div>
-      )}
-
-      {/* Input Bar */}
-      <form onSubmit={handleSend} className="p-2.5 border-t bg-background flex items-center gap-2">
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={(e) => {
-            if (e.target.files?.[0]) setAttachment(e.target.files[0]);
-          }}
-          className="hidden"
-        />
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => fileInputRef.current?.click()}
-          className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
-          title={t("chat.attachFile")}
-        >
-          <Paperclip className="w-4 h-4" />
-        </Button>
-
-        <Input
-          value={messageText}
-          onChange={(e) => setMessageText(e.target.value)}
-          placeholder={t("chat.placeholder")}
-          className="h-9 text-sm rounded-xl focus-visible:ring-primary/20"
-        />
-
-        <Button
-          type="submit"
-          size="icon"
-          disabled={(!messageText.trim() && !attachment) || isSending}
-          className="h-9 w-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
-        >
-          <Send className="w-4 h-4 rtl:rotate-180" />
-        </Button>
       </form>
 
-      {/* Convert Message to Task Modal */}
-      {convertingMessage && (
+      {/* Convert message to task modal */}
+      {convertTaskMessage && (
         <ConvertToTaskModal
-          isOpen={Boolean(convertingMessage)}
-          onClose={() => setConvertingMessage(null)}
+          isOpen={Boolean(convertTaskMessage)}
+          onClose={() => setConvertTaskMessage(null)}
           meetingId={meetingId}
           sourceType="message"
-          sourceId={convertingMessage.id}
-          defaultTitle={`مهمة من رسالة في الاجتماع`}
-          defaultDescription={convertingMessage.message}
+          sourceId={convertTaskMessage.id}
+          defaultTitle={convertTaskMessage.message ? convertTaskMessage.message.slice(0, 50) : "مهمة من الشات"}
+          defaultDescription={convertTaskMessage.message || ""}
         />
       )}
     </div>

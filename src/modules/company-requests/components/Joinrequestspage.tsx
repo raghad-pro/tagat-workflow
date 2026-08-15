@@ -2,25 +2,19 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { PageHeader }     from "@/components/molecules/Pageheader";
-import { PageContainer }  from "@/components/template/PageContainer";
-import {
-  PageCard,
-  PageCardSection,
-  PageCardBody,
-  PageCardFooter,
-} from "@/components/molecules/Pagecard";
+import { PageHeader } from "@/components/molecules/Pageheader";
+import { PageContainer } from "@/components/template/PageContainer";
+import { StatsGrid, type StatItem } from "@/components/molecules/Statsgrid";
 import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
-import { Pagination }      from "@/components/molecules/Pagination";
 import { DataTable, type TableColumn } from "@/components/molecules/Datatable";
-import { Text }            from "@/components/atoms/Text";
-import { StatusBadge }     from "@/components/atoms/Statusbadge";
-import { ClientAvatar }    from "@/components/atoms/Clientavatar";
-import { CheckCircle2, X } from "lucide-react";
-import { useJoinRequests }       from "../hooks/useJoinrequests";
+import { Text } from "@/components/atoms/Text";
+import { StatusBadge } from "@/components/atoms/Statusbadge";
+import { ClientAvatar } from "@/components/atoms/Clientavatar";
+import { CheckCircle2, X, Users, Building2, Clock, Check } from "lucide-react";
+import { useJoinRequests } from "../hooks/useJoinrequests";
 import { useApproveJoinRequest } from "../hooks/useApprovejoinrequest";
-import { useRejectJoinRequest }  from "../hooks/useRejectjoinrequest";
-import { useAuth }               from "@/providers/AuthProvider";
+import { useRejectJoinRequest } from "../hooks/useRejectjoinrequest";
+import { useAuth } from "@/providers/AuthProvider";
 import { JOIN_REQUEST_STATUS_MAP } from "../types/company-requests.types";
 import type {
   JoinRequestClient,
@@ -55,7 +49,7 @@ function ActionBtn({
       type="button"
       title={title}
       onClick={onClick}
-      className="w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
+      className="w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:opacity-80 cursor-pointer"
       style={{
         background: bg,
         color: color,
@@ -68,10 +62,10 @@ function ActionBtn({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function JoinRequestsPage() {
-  const t       = useTranslations("companyRequest");
+  const t = useTranslations("companyRequest");
   const tCommon = useTranslations("common");
 
-  const [search, setSearch]       = useState("");
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const { user } = useAuth();
@@ -81,23 +75,25 @@ export default function JoinRequestsPage() {
   const { data, isLoading, isError, error, refetch } = useJoinRequests({
     search: search || undefined,
     page: 1,
-    per_page: 1000, 
+    per_page: 1000,
   });
 
   const { mutate: approve } = useApproveJoinRequest();
-  const { mutate: reject }  = useRejectJoinRequest();
+  const { mutate: reject } = useRejectJoinRequest();
 
   // Flatten and filter data
   const flatRequests = useMemo(() => {
     const raw = data?.raw ?? [];
     const flat: FlatJoinRequest[] = [];
-    raw.forEach((client) => {
-      client.companies.forEach((company) => {
+    raw.forEach((client: JoinRequestClient) => {
+      if (!client || !Array.isArray(client.companies)) return;
+      client.companies.forEach((company: JoinRequestCompany) => {
+        if (!company) return;
         // Hide other companies' requests from the current company admin
         if (!isSuperAdmin && company.id !== user?.company_id && company.email !== user?.email) {
           return;
         }
-        
+
         flat.push({
           id: `${client.id}-${company.id}`,
           client,
@@ -114,7 +110,7 @@ export default function JoinRequestsPage() {
         r.company.name.toLowerCase().includes(q) ||
         r.company.email.toLowerCase().includes(q)
     );
-  }, [data?.raw, search]);
+  }, [data?.raw, search, isSuperAdmin, user?.company_id, user?.email]);
 
   const pagedRequests = flatRequests.slice(
     (currentPage - 1) * PAGE_SIZE,
@@ -126,12 +122,51 @@ export default function JoinRequestsPage() {
     setCurrentPage(1);
   };
 
+  // Stats
+  const stats: StatItem[] = useMemo(() => {
+    const total = flatRequests.length;
+    const pending = flatRequests.filter((r) => r.company.pivot?.status === "pending").length;
+    const approved = flatRequests.filter((r) => r.company.pivot?.status === "approved").length;
+    const rejected = flatRequests.filter((r) => r.company.pivot?.status === "rejected").length;
+
+    return [
+      {
+        label: t("stats.total") || "Total Requests",
+        value: total,
+        icon: Users,
+        iconBg: "#E6F6FE",
+        iconColor: "#03A9F4",
+      },
+      {
+        label: t("stats.pending") || "Pending",
+        value: pending,
+        icon: Clock,
+        iconBg: "#FFFDEB",
+        iconColor: "#E8D636",
+      },
+      {
+        label: t("stats.approved") || "Approved",
+        value: approved,
+        icon: Check,
+        iconBg: "#EDF7EE",
+        iconColor: "#4CAF50",
+      },
+      {
+        label: t("stats.rejected") || "Rejected",
+        value: rejected,
+        icon: X,
+        iconBg: "#FEECEB",
+        iconColor: "#F44336",
+      },
+    ];
+  }, [flatRequests, t]);
+
   // ─── Table Columns ──────────────────────────────────────────────────────────
   const columns = useMemo<TableColumn<FlatJoinRequest>[]>(() => {
     const cols: TableColumn<FlatJoinRequest>[] = [
       {
         key: "clientName",
-        header: t("columns.clientName"),
+        header: t("columns.clientName") || "Client Name",
         isPrimary: true,
         render: (row) => (
           <div className="flex items-center gap-3">
@@ -147,7 +182,7 @@ export default function JoinRequestsPage() {
     if (isSuperAdmin) {
       cols.push({
         key: "company",
-        header: t("columns.company"),
+        header: t("columns.company") || "Company",
         render: (row) => (
           <Text size="sm" tag="p">
             {row.company.name}
@@ -158,7 +193,7 @@ export default function JoinRequestsPage() {
 
     cols.push({
       key: "email",
-      header: t("columns.email"),
+      header: t("columns.email") || "Email",
       render: (row) => (
         <Text size="sm" color="gray-200" tag="p">
           {row.company.email}
@@ -168,13 +203,14 @@ export default function JoinRequestsPage() {
 
     cols.push({
       key: "status",
-      header: t("columns.status"),
+      header: t("columns.status") || "Status",
       render: (row) => {
-        const mappedStatus = JOIN_REQUEST_STATUS_MAP[row.company.pivot.status as JoinRequestStatus];
+        const rawStatus = (row.company.pivot?.status as JoinRequestStatus) || "pending";
+        const mappedStatus = JOIN_REQUEST_STATUS_MAP[rawStatus] || "pending";
         return (
           <StatusBadge
             status={mappedStatus}
-            label={t(`statusOptions.${mappedStatus}`)}
+            label={t(`statusOptions.${mappedStatus}`) || mappedStatus}
           />
         );
       },
@@ -182,17 +218,17 @@ export default function JoinRequestsPage() {
 
     cols.push({
       key: "actions",
-      header: t("columns.actions"),
+      header: t("columns.actions") || "Actions",
       render: (row) => {
-        const isPending = row.company.pivot.status === "pending";
-        if (!isPending) return null;
-        
+        const isPending = row.company.pivot?.status === "pending";
+        if (!isPending) return <span className="text-xs text-muted-foreground">-</span>;
+
         return (
-          <div className="flex items-center justify-start gap-1">
+          <div className="flex items-center justify-start gap-1.5">
             <ActionBtn
               title="Approve"
-              bg="rgba(34,197,94,0.15)"
-              color="#22c55e"
+              bg="#EDF7EE"
+              color="#4CAF50"
               onClick={() =>
                 approve({ role, clientId: row.client.id, companyId: row.company.id })
               }
@@ -201,8 +237,8 @@ export default function JoinRequestsPage() {
             </ActionBtn>
             <ActionBtn
               title="Reject"
-              bg="rgba(239,68,68,0.15)"
-              color="#ef4444"
+              bg="#FEECEB"
+              color="#F44336"
               onClick={() =>
                 reject({ role, clientId: row.client.id, companyId: row.company.id })
               }
@@ -215,51 +251,40 @@ export default function JoinRequestsPage() {
     });
 
     return cols;
-  }, [isSuperAdmin, approve, reject, role]);
+  }, [isSuperAdmin, approve, reject, role, t]);
 
-  // `GET /{role}/requests` currently 500s server-side ("Call to undefined
-  // relationship [role] on model [App\Models\User]"). Surfacing that beats an
-  // empty table implying there are no pending requests.
   return (
-    <PageContainer
-      isLoading={isLoading}
-      isError={isError}
-      error={error}
-      onRetry={() => refetch()}
-      skeletonVariant="table"
-      skeletonRows={PAGE_SIZE}
-    >
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+    <PageContainer isLoading={isLoading} skeletonVariant="table" skeletonRows={PAGE_SIZE}>
+      <PageHeader
+        title={t("title") || "Company Requests"}
+        subtitle={t("subtitle") || "Manage and review client join requests to companies"}
+      />
 
-      <div className="mt-6">
-        <PageCard>
-          <PageCardSection>
-            <div className="max-w-md">
-              <SearchFilterBar
-                search={search}
-                onSearchChange={handleSearch}
-                searchPlaceholder={t("searchPlaceholder")}
-              />
-            </div>
-          </PageCardSection>
+      {/* Stats Cards */}
+      <StatsGrid stats={stats} cols={4} />
 
-          <PageCardBody className="!p-0">
-            <DataTable
-              columns={columns}
-              data={pagedRequests}
-              emptyMessage={t("noRequests")}
-            />
-          </PageCardBody>
+      {/* Search Bar */}
+      <div className="mb-4">
+        <SearchFilterBar
+          search={search}
+          onSearchChange={handleSearch}
+          searchPlaceholder={t("searchPlaceholder") || "Searching..."}
+        />
+      </div>
 
-          <PageCardFooter>
-            <Pagination
-              currentPage={currentPage}
-              data={Array(flatRequests.length).fill(0)}
-              pageSize={PAGE_SIZE}
-              onPageChange={(p) => setCurrentPage(p)}
-            />
-          </PageCardFooter>
-        </PageCard>
+      {/* Data Table */}
+      <div className="rounded-2xl bg-card shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={pagedRequests}
+          emptyMessage={t("noRequests") || "No join requests found."}
+          pagination={{
+            currentPage,
+            pageSize: PAGE_SIZE,
+            totalItems: flatRequests.length,
+            onPageChange: setCurrentPage,
+          }}
+        />
       </div>
     </PageContainer>
   );

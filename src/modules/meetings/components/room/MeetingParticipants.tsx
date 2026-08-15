@@ -1,66 +1,46 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTranslations } from "next-intl";
 import {
   Users,
-  UserPlus,
-  Shield,
-  UserCheck,
-  UserX,
-  Mail,
   Mic,
-  MicOff,
-  Video as VideoIcon,
-  VideoOff,
-  MoreVertical,
+  Video,
+  UserPlus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ActionModal } from "@/components/molecules/ActionModal";
-import { useEmployees } from "@/modules/employees/hooks/useEmployees";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingParticipants,
-  useMeetingInvitations,
-  useSendInvitation,
   useUpdateParticipantRole,
+  useSendInvitation,
   useLeaveMeeting,
 } from "../../hooks/useMeetings";
-import type {
-  MeetingParticipant,
-  ParticipantRole,
-  MeetingInvitation,
-} from "../../types/meetings.types";
-import toast from "react-hot-toast";
+import { useEmployees } from "@/modules/employees/hooks/useEmployees";
+import { ActionModal } from "@/components/molecules/ActionModal";
+import type { ParticipantRole } from "../../types/meetings.types";
 
 interface MeetingParticipantsProps {
   meetingId: number | string;
-  isHost?: boolean;
+  isHost: boolean;
 }
 
-export default function MeetingParticipants({ meetingId, isHost = false }: MeetingParticipantsProps) {
-  const t = useTranslations("meetings");
-  const { data: employeesData } = useEmployees({ per_page: 100 });
-
-  const [activeTab, setActiveTab] = useState<"participants" | "invitations">("participants");
+export default function MeetingParticipants({ meetingId, isHost }: MeetingParticipantsProps) {
+  const { user } = useAuth();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<ParticipantRole>("participant");
 
-  const { data: participants = [] } = useMeetingParticipants(meetingId);
-  const { data: invitations = [] } = useMeetingInvitations(meetingId);
+  const { data: participants = [], isLoading } = useMeetingParticipants(meetingId);
+  const { data: employeesData } = useEmployees({ per_page: 100 });
 
-  const { mutate: sendInvite, isPending: isSendingInvite } = useSendInvitation();
   const { mutate: updateRole } = useUpdateParticipantRole();
-  const { mutate: leaveMeeting } = useLeaveMeeting();
+  const { mutate: sendInvite, isPending: isSendingInvite } = useSendInvitation();
+
+  const handleRoleChange = (participantId: number | string, newRole: ParticipantRole) => {
+    updateRole({ participantId, participantRole: newRole, meetingId });
+  };
 
   const handleSendInvite = () => {
-    if (!selectedUserId) {
-      toast.error("يرجى اختيار العضو أو الموظف للدعوة");
-      return;
-    }
-
+    if (!selectedUserId) return;
     sendInvite(
       {
         meetingId,
@@ -78,210 +58,115 @@ export default function MeetingParticipants({ meetingId, isHost = false }: Meeti
     );
   };
 
-  const getRoleLabel = (role: ParticipantRole) => {
-    switch (role) {
-      case "host":
-        return t("participants.host");
-      case "co_host":
-        return t("participants.coHost");
-      case "presenter":
-        return t("participants.presenter");
-      case "participant":
-        return t("participants.participant");
-      default:
-        return role;
-    }
-  };
-
-  const getRoleBadgeVariant = (role: ParticipantRole) => {
-    switch (role) {
-      case "host":
-        return "default";
-      case "co_host":
-        return "secondary";
-      case "presenter":
-        return "outline";
-      default:
-        return "outline";
-    }
-  };
-
   const employees = employeesData?.data || [];
 
+  const getInitials = (name: string) => {
+    if (!name) return "SA";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
-    <div className="flex flex-col h-full bg-card border rounded-2xl shadow-sm overflow-hidden">
-      {/* Header with Switcher Tabs */}
-      <div className="p-3 border-b bg-muted/20 flex items-center justify-between">
-        <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border">
-          <button
-            onClick={() => setActiveTab("participants")}
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-              activeTab === "participants"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            المشاركون ({participants.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("invitations")}
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-              activeTab === "invitations"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            الدعوات ({invitations.length})
-          </button>
+    <div className="flex flex-col h-full rounded-[14px] bg-[#111827] border border-[#1F2937] overflow-hidden text-white">
+      {/* ── Top Header matching Figma (people) ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1F2937] bg-[#111827]">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-[#25C6DA]" />
+          <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
+            people ({participants.length})
+          </span>
         </div>
 
         {isHost && (
-          <Button
-            size="sm"
+          <button
             onClick={() => setIsInviteOpen(true)}
-            className="h-7 gap-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-all shadow-sm cursor-pointer"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>دعوة</span>
-          </Button>
+            <span>Invite</span>
+          </button>
         )}
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-3.5 overflow-y-auto space-y-2.5">
-        {activeTab === "participants" ? (
-          participants.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-6">
-              <Users className="w-10 h-10 stroke-1 mb-2 opacity-60" />
-              <p className="text-sm font-medium">لا يوجد مشاركون متصلون حالياً</p>
-            </div>
-          ) : (
-            participants.map((p) => (
+      {/* ── Participants List ── */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
+          </div>
+        ) : participants.length === 0 ? (
+          <div className="text-center py-10 text-xs text-[#64748B]">
+            No participants yet.
+          </div>
+        ) : (
+          participants.map((p) => {
+            const isMe = p.user_id === user?.id;
+            const displayName = p.user?.name || "Participant";
+            const initials = getInitials(displayName);
+            const isParticipantHost = p.role === "host" || p.role === "co_host";
+
+            return (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-2.5 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
+                className="flex items-center justify-between p-2.5 rounded-[10px] bg-[#1A2236] border border-[#2A3756]/50 hover:border-[#25C6DA]/40 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <Avatar className="w-8 h-8 border">
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
-                      {(p.user?.name || "م").charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                {/* Left info */}
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#25C6DA]/20 text-[#25C6DA] flex items-center justify-center font-bold text-xs shrink-0 border border-[#25C6DA]/40">
+                    {initials}
+                  </div>
 
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-foreground">
-                        {p.user?.name || `مشارك #${p.user_id}`}
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[13px] font-bold text-white leading-tight">
+                        {displayName}
                       </span>
-                      <Badge variant={getRoleBadgeVariant(p.role)} className="text-[10px] py-0">
-                        {getRoleLabel(p.role)}
-                      </Badge>
+                      {isMe && (
+                        <span className="px-1.5 py-0.2 rounded bg-[#25C6DA]/20 text-[#25C6DA] text-[9px] font-extrabold">
+                          YOU
+                        </span>
+                      )}
+                      {isParticipantHost && (
+                        <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[9px] font-extrabold">
+                          host
+                        </span>
+                      )}
                     </div>
-
-                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-                      <span
-                        className={`inline-flex items-center gap-1 ${
-                          p.connection_status === "connected"
-                            ? "text-emerald-600"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            p.connection_status === "connected"
-                              ? "bg-emerald-500"
-                              : "bg-muted-foreground"
-                          }`}
-                        />
-                        {p.connection_status === "connected" ? "متصل" : "غير متصل"}
-                      </span>
-                    </div>
+                    <span className="text-[11px] text-[#94A3B8] font-medium">
+                      {p.role}
+                    </span>
                   </div>
                 </div>
 
+                {/* Right controls */}
                 <div className="flex items-center gap-2">
-                  {/* Mic & Cam status indicators */}
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    {p.microphone_enabled ? (
-                      <Mic className="w-3.5 h-3.5 text-emerald-500" />
-                    ) : (
-                      <MicOff className="w-3.5 h-3.5" />
-                    )}
-                    {p.camera_enabled ? (
-                      <VideoIcon className="w-3.5 h-3.5 text-emerald-500" />
-                    ) : (
-                      <VideoOff className="w-3.5 h-3.5" />
-                    )}
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-6 rounded-full bg-black/40 text-emerald-400 flex items-center justify-center text-[10px]">
+                      <Mic className="w-3 h-3" />
+                    </div>
+                    <div className="w-6 h-6 rounded-full bg-black/40 text-emerald-400 flex items-center justify-center text-[10px]">
+                      <Video className="w-3 h-3" />
+                    </div>
                   </div>
 
-                  {/* Role updater for Host */}
-                  {isHost && (
+                  {isHost && !isMe && (
                     <select
                       value={p.role}
-                      onChange={(e) =>
-                        updateRole({
-                          participantId: p.id,
-                          participantRole: e.target.value as ParticipantRole,
-                          meetingId,
-                        })
-                      }
-                      className="text-[11px] h-7 bg-background border rounded px-1.5 text-foreground cursor-pointer"
+                      onChange={(e) => handleRoleChange(p.id, e.target.value as ParticipantRole)}
+                      className="bg-[#111827] text-white border border-[#2A3756] text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-[#25C6DA]"
                     >
-                      <option value="host">مضيف</option>
-                      <option value="co_host">مساعد مضيف</option>
-                      <option value="presenter">مُقدّم</option>
-                      <option value="participant">مشارك</option>
+                      <option value="participant">Participant</option>
+                      <option value="presenter">Presenter</option>
+                      <option value="co_host">Co-Host</option>
                     </select>
                   )}
                 </div>
               </div>
-            ))
-          )
-        ) : invitations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-6">
-            <Mail className="w-10 h-10 stroke-1 mb-2 opacity-60" />
-            <p className="text-sm font-medium">لم يتم إرسال دعوات بعد</p>
-          </div>
-        ) : (
-          invitations.map((inv) => (
-            <div
-              key={inv.id}
-              className="flex items-center justify-between p-2.5 rounded-xl border bg-muted/20"
-            >
-              <div className="flex items-center gap-2.5">
-                <Avatar className="w-8 h-8 border">
-                  <AvatarFallback className="text-xs bg-muted text-muted-foreground">
-                    {(inv.user?.name || "ع").charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div>
-                  <span className="text-xs font-semibold text-foreground">
-                    {inv.user?.name || `مستخدم #${inv.user_id}`}
-                  </span>
-                  <p className="text-[10px] text-muted-foreground">
-                    {inv.user?.email || "دعوة بريدية"}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                {inv.status === "accepted" ? (
-                  <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-[10px] py-0">
-                    {t("participants.statusAccepted")}
-                  </Badge>
-                ) : inv.status === "declined" ? (
-                  <Badge variant="destructive" className="text-[10px] py-0">
-                    {t("participants.statusDeclined")}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-amber-600 border-amber-500/30 text-[10px] py-0">
-                    {t("participants.statusPending")}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -289,42 +174,40 @@ export default function MeetingParticipants({ meetingId, isHost = false }: Meeti
       <ActionModal
         isOpen={isInviteOpen}
         onClose={() => setIsInviteOpen(false)}
-        title={t("participants.inviteUser")}
+        title="Invite Member"
         mode="add"
-        saveLabel="إرسال الدعوة"
+        saveLabel="Send Invite"
         onSubmit={handleSendInvite}
         isLoading={isSendingInvite}
         size="sm"
       >
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">
-              {t("participants.selectUser")}
-            </label>
+            <label className="text-xs font-medium text-foreground">Select Member</label>
             <select
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:ring-1 focus:ring-primary"
+              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
             >
-              <option value="">-- اختر العضو --</option>
+              <option value="">Choose employee/user...</option>
               {employees.map((emp: any) => (
                 <option key={emp.id} value={emp.user_id || emp.id}>
-                  {emp.name || emp.user?.name} ({emp.email || emp.user?.email || "موظف"})
+                  {emp.name || emp.user?.name || `User #${emp.id}`}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">الدور المقترح</label>
+            <label className="text-xs font-medium text-foreground">Room Role</label>
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as ParticipantRole)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:ring-1 focus:ring-primary"
+              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
             >
-              <option value="participant">مشارك (Participant)</option>
-              <option value="presenter">مُقدّم (Presenter)</option>
-              <option value="co_host">مساعد مضيف (Co-host)</option>
+              <option value="participant">Participant</option>
+              <option value="presenter">Presenter</option>
+              <option value="co_host">Co-Host</option>
             </select>
           </div>
         </div>

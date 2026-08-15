@@ -1,264 +1,234 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Plus, Edit2, Trash2, BookOpen, Share2, Lock, Save, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { ActionModal } from "@/components/molecules/ActionModal";
+import {
+  BookOpen,
+  Plus,
+  Edit2,
+  Trash2,
+} from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingNotes,
   useCreateNote,
   useUpdateNote,
   useDeleteNote,
 } from "../../hooks/useMeetings";
-import type { MeetingNote, CreateNotePayload, NoteStatus } from "../../types/meetings.types";
-import toast from "react-hot-toast";
+import type { MeetingNote, CreateNotePayload, UpdateNotePayload } from "../../types/meetings.types";
 
 interface MeetingNotesProps {
   meetingId: number | string;
 }
 
 export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
-  const t = useTranslations("meetings");
-
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { user } = useAuth();
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<MeetingNote | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [status, setStatus] = useState<NoteStatus>("published");
   const [isShared, setIsShared] = useState(true);
 
   const { data: notes = [], isLoading } = useMeetingNotes(meetingId);
   const { mutate: createNote, isPending: isCreating } = useCreateNote();
   const { mutate: updateNote, isPending: isUpdating } = useUpdateNote();
-  const { mutate: deleteNote, isPending: isDeleting } = useDeleteNote();
+  const { mutate: deleteNote } = useDeleteNote();
 
   const handleOpenCreate = () => {
+    setEditingNote(null);
     setTitle("");
     setContent("");
-    setStatus("published");
     setIsShared(true);
-    setEditingNote(null);
-    setIsCreateOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleOpenEdit = (note: MeetingNote) => {
     setEditingNote(note);
     setTitle(note.title);
     setContent(note.content);
-    setStatus(note.status || "published");
-    setIsShared(note.is_shared ?? true);
-    setIsCreateOpen(true);
+    setIsShared(note.is_shared);
+    setIsFormOpen(true);
   };
 
-  const handleSubmit = () => {
-    const cleanTitle = title.trim();
-    const cleanContent = content.trim();
-    if (!cleanTitle || !cleanContent) {
-      toast.error("يرجى إدخال عنوان ومحتوى الملاحظة");
-      return;
-    }
+  const handleCancel = () => {
+    setIsFormOpen(false);
+    setEditingNote(null);
+    setTitle("");
+    setContent("");
+  };
+
+  const handleSave = () => {
+    if (!title.trim() || !content.trim()) return;
 
     if (editingNote) {
+      const payload: UpdateNotePayload = {
+        title: title.trim(),
+        content: content.trim(),
+        is_shared: isShared,
+      };
       updateNote(
-        {
-          noteId: editingNote.id,
-          meetingId,
-          payload: {
-            title: cleanTitle,
-            content: cleanContent,
-            status,
-            is_shared: isShared,
-          },
-        },
-        {
-          onSuccess: () => {
-            setIsCreateOpen(false);
-            setEditingNote(null);
-          },
-        }
+        { noteId: editingNote.id, payload, meetingId },
+        { onSuccess: handleCancel }
       );
     } else {
+      const payload: CreateNotePayload = {
+        title: title.trim(),
+        content: content.trim(),
+        is_shared: isShared,
+      };
       createNote(
-        {
-          meetingId,
-          payload: {
-            title: cleanTitle,
-            content: cleanContent,
-            status,
-            is_shared: isShared,
-          },
-        },
-        {
-          onSuccess: () => {
-            setIsCreateOpen(false);
-          },
-        }
+        { meetingId, payload },
+        { onSuccess: handleCancel }
       );
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-card border rounded-2xl shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="p-3.5 border-b bg-muted/20 flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-primary" />
-          <span>{t("roomTabs.notes")}</span>
-        </h3>
+    <div className="flex flex-col h-full rounded-[14px] bg-[#111827] border border-[#1F2937] overflow-hidden text-white">
+      {/* ── Top Header matching Figma (notes) ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1F2937] bg-[#111827]">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-[#25C6DA]" />
+          <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
+            notes ({notes.length})
+          </span>
+        </div>
 
-        <Button
-          size="sm"
-          onClick={handleOpenCreate}
-          className="h-8 gap-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>{t("notes.createNote")}</span>
-        </Button>
+        {!isFormOpen && (
+          <button
+            onClick={handleOpenCreate}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-all shadow-sm cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New note</span>
+          </button>
+        )}
       </div>
 
-      {/* Notes List */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
-        {notes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-6">
-            <BookOpen className="w-10 h-10 stroke-1 mb-2 opacity-60" />
-            <p className="text-sm font-medium">لا توجد ملاحظات أو محاضر حتى الآن</p>
-            <p className="text-xs mt-1">سجل النقاط الرئيسية ومحضر الاجتماع لتوثيق المناقشات.</p>
+      {/* ── Main Container ── */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* In-line Create / Edit Form matching Figma exactly */}
+        {isFormOpen && (
+          <div className="p-3.5 rounded-[14px] bg-[#1A2236] border border-[#2A3756] space-y-3 animate-in fade-in-50">
+            {/* Title */}
+            <div className="space-y-1">
+              <label className="text-[12px] font-semibold text-[#94A3B8]">Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Note title..."
+                className="w-full h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA]"
+                autoFocus
+              />
+            </div>
+
+            {/* Note Textarea */}
+            <div className="space-y-1">
+              <label className="text-[12px] font-semibold text-[#94A3B8]">Note</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Write note contents..."
+                rows={4}
+                className="w-full p-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA] resize-none"
+              />
+            </div>
+
+            {/* Checkboxes from Figma */}
+            <div className="space-y-2 pt-1">
+              <label className="flex items-center gap-2 cursor-pointer text-[12px] font-medium text-[#94A3B8]">
+                <input
+                  type="checkbox"
+                  checked={isShared}
+                  onChange={(e) => setIsShared(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-gray-600 text-[#25C6DA] focus:ring-[#25C6DA] bg-[#111827]"
+                />
+                <span>Shared with meeting</span>
+              </label>
+            </div>
+
+            {/* Info hint text from Figma */}
+            <p className="text-[10px] text-[#64748B] leading-tight pt-1">
+              Others see a note only when it is shared with the meeting room.
+            </p>
+
+            {/* Action buttons from Figma */}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isCreating || isUpdating || !title.trim() || !content.trim()}
+                className="px-4 py-1.5 h-[28px] rounded-[10px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {isCreating || isUpdating ? "Saving..." : "Save note"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-3 py-1.5 h-[28px] text-[12px] font-medium text-[#64748B] hover:text-white transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Existing Notes List */}
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
+          </div>
+        ) : notes.length === 0 && !isFormOpen ? (
+          <div className="text-center py-10 text-xs text-[#64748B]">
+            No notes added yet. Click &quot;New note&quot; to begin.
           </div>
         ) : (
           notes.map((note) => (
             <div
               key={note.id}
-              className="p-4 bg-muted/30 border rounded-xl space-y-2.5 hover:border-primary/30 transition-colors group"
+              className="p-3.5 rounded-[12px] bg-[#1A2236] border border-[#2A3756] space-y-2 hover:border-[#25C6DA]/40 transition-colors"
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-bold text-sm text-foreground">{note.title}</h4>
-                  <Badge
-                    variant={note.status === "published" ? "default" : "secondary"}
-                    className="text-[10px] py-0"
-                  >
-                    {note.status === "published" ? t("notes.statusPublished") : t("notes.statusDraft")}
-                  </Badge>
-                  {note.is_shared ? (
-                    <Badge variant="outline" className="text-[10px] py-0 gap-1 text-sky-600 border-sky-500/30">
-                      <Share2 className="w-2.5 h-2.5" />
-                      <span>{t("notes.isShared")}</span>
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-[10px] py-0 gap-1 text-muted-foreground">
-                      <Lock className="w-2.5 h-2.5" />
-                      <span>{t("notes.private")}</span>
-                    </Badge>
-                  )}
-                </div>
+                <h4 className="text-[14px] font-bold text-white leading-tight">
+                  {note.title}
+                </h4>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                <div className="flex items-center gap-1">
+                  <button
                     onClick={() => handleOpenEdit(note)}
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                    title="تعديل"
+                    className="p-1 rounded text-[#94A3B8] hover:text-[#25C6DA]"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  </button>
+                  <button
                     onClick={() => deleteNote({ noteId: note.id, meetingId })}
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    title="حذف"
+                    className="p-1 rounded text-[#94A3B8] hover:text-red-400"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              <p className="text-[13px] text-[#CBD5E1] whitespace-pre-wrap">
                 {note.content}
               </p>
 
-              {note.creator && (
-                <div className="pt-2 border-t text-[11px] text-muted-foreground flex items-center justify-between">
-                  <span>كتب بواسطة: {note.creator.name}</span>
-                  {note.created_at && (
-                    <span>
-                      {new Date(note.created_at).toLocaleDateString("ar-EG")}
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="flex items-center gap-2 pt-1 border-t border-[#2A3756]/60 text-[10px] text-[#64748B]">
+                <span>{note.is_shared ? "Shared" : "Private"}</span>
+                {note.creator && (
+                  <>
+                    <span>•</span>
+                    <span>By {note.creator.name}</span>
+                  </>
+                )}
+              </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Create / Edit Note Modal */}
-      <ActionModal
-        isOpen={isCreateOpen}
-        onClose={() => {
-          setIsCreateOpen(false);
-          setEditingNote(null);
-        }}
-        title={editingNote ? "تعديل الملاحظة" : t("notes.createNote")}
-        mode={editingNote ? "edit" : "add"}
-        saveLabel={t("common.save")}
-        onSubmit={handleSubmit}
-        isLoading={isCreating || isUpdating}
-        size="lg"
-      >
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">{t("notes.title")}</label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t("notes.titlePlaceholder")}
-              className="text-sm"
-              autoFocus
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">{t("notes.content")}</label>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={t("notes.contentPlaceholder")}
-              rows={6}
-              className="text-sm resize-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-muted/40 rounded-lg text-xs">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={status === "published"}
-                onChange={(e) => setStatus(e.target.checked ? "published" : "draft")}
-                className="rounded text-primary"
-              />
-              <span>نشر الملاحظة مباشرة</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isShared}
-                onChange={(e) => setIsShared(e.target.checked)}
-                className="rounded text-primary"
-              />
-              <span>{t("notes.isShared")}</span>
-            </label>
-          </div>
-        </div>
-      </ActionModal>
     </div>
   );
 }

@@ -1,55 +1,60 @@
 "use client";
 
+import React from "react";
 import { LucideIcon } from "lucide-react";
-import { Text } from "@/components/atoms/Text";
+import { cn } from "@/lib/utils";
 
-interface StatCardProps {
-  icon: LucideIcon;
+export interface StatCardProps {
+  icon: LucideIcon | React.ElementType;
   value: string | number;
   label: string;
   iconColor?: string;
   iconBg?: string;
   /** optional prefix shown before value, e.g. "$" or "+" */
   prefix?: string;
+  className?: string;
 }
 
 export function StatCard({
   icon: Icon,
   value,
   label,
-  iconColor = "var(--color-primary)",
-  iconBg = "var(--color-bg-primary-200)",
+  iconColor = "#25C6DA",
+  iconBg = "rgba(37, 198, 218, 0.12)",
   prefix,
+  className,
 }: StatCardProps) {
   const displayValue =
-    typeof value === "number" ? value.toLocaleString('en-US') : value;
+    typeof value === "number" ? value.toLocaleString("en-US") : value;
+
+  const IconEl = Icon as any;
 
   return (
     <div
-      className="flex items-center gap-3 sm:gap-4 rounded-2xl px-3 sm:px-5 py-3 sm:py-4 ds-bg-form ds-border-form flex-1 min-w-0"
-      style={{ boxShadow: "var(--shadow-sm)" }}
+      className={cn(
+        "bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all min-w-0",
+        className
+      )}
     >
-      {/* Icon */}
-      <div
-        className="flex-shrink-0 w-8 h-8 sm:w-11 sm:h-11 rounded-full flex items-center justify-center"
-        style={{ background: iconBg }}
-      >
-        <Icon size={18} className="sm:w-5 sm:h-5" style={{ color: iconColor }} />
-      </div>
+      <div className="flex items-center gap-4 min-w-0 w-full">
+        {/* Icon 48x48 rounded 8px matching Figma */}
+        <div
+          className="w-[48px] h-[48px] rounded-[8px] flex items-center justify-center shrink-0"
+          style={{ backgroundColor: iconBg }}
+        >
+          <IconEl size={24} style={{ color: iconColor }} />
+        </div>
 
-      {/* Text */}
-      <div className="flex flex-col min-w-0">
-        <Text size="lg" weight="bold" tag="p" className="leading-none truncate text-[16px] sm:text-[18px]">
-          {prefix && (
-            <span style={{ color: iconColor }} className="me-0.5">
-              {prefix}
-            </span>
-          )}
-          {displayValue}
-        </Text>
-        <Text size="sm" color="gray-200" tag="p" className="mt-0.5 truncate text-[11px] sm:text-[13px]">
-          {label}
-        </Text>
+        {/* Text Container matching Figma typography */}
+        <div className="flex flex-col min-w-0 justify-center">
+          <span className="text-[13px] font-medium text-[#000000] dark:text-gray-300 truncate leading-[20px]">
+            {label}
+          </span>
+          <span className="text-[30px] font-bold text-[#000000] dark:text-white leading-[36px] truncate tracking-tight">
+            {prefix && <span className="text-[24px] me-1 font-semibold">{prefix}</span>}
+            {displayValue}
+          </span>
+        </div>
       </div>
     </div>
   );
