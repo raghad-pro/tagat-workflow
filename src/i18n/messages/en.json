@@ -231,7 +231,8 @@
     "selectEmployee": "Select employee",
     "sprints": "Sprints",
     "accessDeniedTitle": "Access denied",
-    "accessDeniedBody": "You do not have permission to view this page."
+    "accessDeniedBody": "You do not have permission to view this page.",
+    "meetings": "Meetings"
   },
   "development": {
     "title": "Developments Management",
@@ -764,7 +765,8 @@
     "systemSettings": "System Settings",
     "conversations": "Conversations",
     "access": "Access Management",
-    "sprints": "Sprints"
+    "sprints": "Sprints",
+    "meetings": "Meetings"
   },
   "currencies": {
     "title": "Currencies",
@@ -1368,6 +1370,186 @@
       "priority": "priority",
       "status": "status",
       "moveToSprint": "move to sprint"
+    }
+  },
+  "meetings": {
+    "title": "Meetings Management",
+    "subtitle": "Schedule, host, and track team meetings and collaborations",
+    "createMeeting": "Create New Meeting",
+    "joinByCode": "Join by Code",
+    "editMeeting": "Edit Meeting",
+    "deleteMeeting": "Delete Meeting",
+    "startMeeting": "Start Meeting",
+    "endMeeting": "End Meeting",
+    "joinMeeting": "Join Meeting",
+    "leaveMeeting": "Leave Meeting",
+    "room": "Meeting Room",
+    "meetingCode": "Meeting Code",
+    "copyCode": "Copy Code",
+    "copyLink": "Copy Link",
+    "codeCopied": "Meeting code copied",
+    "linkCopied": "Meeting link copied",
+    "enterMeetingCode": "Enter meeting code (e.g., ABC-123-XYZ)",
+    "meetingCodePlaceholder": "XXX-XXX-XXX",
+    "searchPlaceholder": "Search meetings by title or code...",
+    "emptyTitle": "No meetings found",
+    "emptyDesc": "No meetings matched your query or no meetings created yet.",
+    "stats": {
+      "total": "Total Meetings",
+      "upcoming": "Upcoming",
+      "inProgress": "In Progress",
+      "ended": "Completed"
+    },
+    "status": {
+      "all": "All Statuses",
+      "waiting": "Waiting",
+      "in_progress": "In Progress",
+      "ended": "Ended",
+      "cancelled": "Cancelled"
+    },
+    "type": {
+      "all": "All Types",
+      "instant": "Instant",
+      "scheduled": "Scheduled",
+      "recurring": "Recurring"
+    },
+    "columns": {
+      "title": "Meeting Title",
+      "code": "Code",
+      "organizer": "Organizer",
+      "project": "Project",
+      "type": "Type",
+      "status": "Status",
+      "scheduledAt": "Scheduled At",
+      "duration": "Duration",
+      "participants": "Participants",
+      "actions": "Actions"
+    },
+    "form": {
+      "title": "Meeting Title",
+      "titlePlaceholder": "e.g., Sprint 6 Kick-off Planning",
+      "description": "Description / Agenda",
+      "descriptionPlaceholder": "Brief description of meeting goals and agenda...",
+      "type": "Meeting Type",
+      "scheduledAt": "Scheduled Date & Time",
+      "maxParticipants": "Max Participants",
+      "project": "Linked Project (Optional)",
+      "isPrivate": "Private Meeting (Password Protected)",
+      "password": "Room Password",
+      "passwordPlaceholder": "Enter room password",
+      "permissions": "Room Permissions",
+      "allowChat": "Enable Chat",
+      "allowRecording": "Allow Recording",
+      "allowScreenShare": "Allow Screen Sharing",
+      "allowWhiteboard": "Enable Interactive Whiteboard",
+      "allowFileShare": "Allow File Sharing",
+      "createBtn": "Create & Schedule Meeting",
+      "updateBtn": "Save Changes"
+    },
+    "roomTabs": {
+      "media": "Audio / Video",
+      "whiteboard": "Whiteboard",
+      "chat": "Chat",
+      "polls": "Polls",
+      "notes": "Meeting Notes",
+      "decisions": "Decisions",
+      "actionItems": "Action Items",
+      "participants": "Participants & Invites"
+    },
+    "whiteboard": {
+      "pencil": "Pencil",
+      "rectangle": "Rectangle",
+      "circle": "Circle",
+      "line": "Line",
+      "arrow": "Arrow",
+      "text": "Text",
+      "sticky": "Sticky Note",
+      "undo": "Undo",
+      "redo": "Redo",
+      "clear": "Clear All",
+      "lock": "Lock Board",
+      "unlock": "Unlock Board",
+      "color": "Color",
+      "strokeWidth": "Stroke Width",
+      "save": "Save Changes"
+    },
+    "chat": {
+      "placeholder": "Type a message...",
+      "send": "Send",
+      "attachFile": "Attach File",
+      "convertToTask": "Convert to Task"
+    },
+    "polls": {
+      "createPoll": "Create New Poll",
+      "question": "Question",
+      "questionPlaceholder": "e.g., Which launch date works best?",
+      "options": "Answer Options",
+      "addOption": "Add Option",
+      "optionPlaceholder": "Option {index}",
+      "multipleChoice": "Allow multiple selections",
+      "anonymous": "Anonymous voting",
+      "allowChangeVote": "Allow changing vote",
+      "showResults": "Show live results to participants",
+      "vote": "Vote",
+      "closePoll": "Close Poll",
+      "totalVotes": "{count} votes",
+      "closed": "Closed"
+    },
+    "notes": {
+      "createNote": "Add Note / Minutes",
+      "title": "Note Title",
+      "titlePlaceholder": "Note title...",
+      "content": "Content",
+      "contentPlaceholder": "Write meeting notes or minutes here...",
+      "statusDraft": "Draft",
+      "statusPublished": "Published",
+      "isShared": "Share with all participants",
+      "private": "Private to me"
+    },
+    "decisions": {
+      "createDecision": "Log New Decision",
+      "title": "Decision Title",
+      "titlePlaceholder": "e.g., Approve Q3 Technical Architecture",
+      "description": "Details & rationale",
+      "assignedTo": "Follow-up Assignee",
+      "approve": "Approve Decision",
+      "approved": "Approved",
+      "pending": "Pending Review",
+      "convertToTask": "Convert Decision to Task"
+    },
+    "actionItems": {
+      "createActionItem": "Add Action Item",
+      "title": "Action Item Title",
+      "titlePlaceholder": "e.g., Prepare deployment runbook",
+      "assignedTo": "Assigned To",
+      "dueDate": "Due Date",
+      "priority": "Priority",
+      "complete": "Mark as Complete",
+      "completed": "Completed",
+      "pending": "In Progress",
+      "convertToTask": "Convert to Task"
+    },
+    "conversion": {
+      "modalTitle": "Convert Meeting Output to Task",
+      "selectProject": "Select Project",
+      "selectAssignee": "Assignee",
+      "selectPriority": "Priority",
+      "dueDate": "Due Date",
+      "convertBtn": "Convert & Create Task"
+    },
+    "participants": {
+      "inviteUser": "Invite Member",
+      "selectUser": "Select Member or Employee",
+      "host": "Host",
+      "coHost": "Co-host",
+      "presenter": "Presenter",
+      "participant": "Participant",
+      "changeRole": "Change Role",
+      "remove": "Remove from room",
+      "invitedUsers": "Invited Users",
+      "statusAccepted": "Accepted",
+      "statusDeclined": "Declined",
+      "statusPending": "Pending"
     }
   }
 }

@@ -104,4 +104,4 @@ export {
 } from "lucide-react";
 
 // ─── Extra Added ─────────────────────────────────────────────────────────────
-export { Link as LinkIcon, Edit2, Folder } from 'lucide-react';
+export { Link as LinkIcon, Edit2, Folder, Video } from 'lucide-react';
