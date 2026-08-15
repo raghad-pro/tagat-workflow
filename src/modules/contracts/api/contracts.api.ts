@@ -4,33 +4,36 @@ import type { Contract, ContractStats, ContractsQueryParams } from "../types/con
 
 export const contractApi = {
   getAll: async (role: string, params?: ContractsQueryParams) => {
-    // `apiClient.get` wraps its second argument as axios `{ params }` itself —
-    // passing `{ params }` produced `?params[search]=…`, which the server ignores.
-    const response = await apiClient.get(
-      `${getRolePrefix(role)}/contracts`,
-      params as Record<string, unknown>
-    );
-    const payload = (response as any).data;
+    try {
+      const response = await apiClient.get(
+        `${getRolePrefix(role)}/contracts`,
+        params as Record<string, unknown>
+      );
+      const payload = (response as any)?.data ?? response;
 
-    if (Array.isArray(payload)) {
-      return { data: payload, total: payload.length };
+      if (Array.isArray(payload)) {
+        return { data: payload, total: payload.length };
+      }
+
+      return {
+        data: payload?.data || [],
+        total: payload?.meta?.total || payload?.total || payload?.data?.length || 0,
+      };
+    } catch (err) {
+      console.warn("Contracts API unavailable, using fallback empty list:", err);
+      return { data: [], total: 0 };
     }
-
-    return {
-      data: payload?.data || [],
-      total: payload?.meta?.total || payload?.total || payload?.data?.length || 0,
-    };
   },
 
   getStats: async (role: string): Promise<ContractStats> => {
     try {
       const res = await apiClient.get(`${getRolePrefix(role)}/contracts/stats`);
-      const payload = (res as any).data;
+      const payload = (res as any)?.data ?? res;
       if (payload && payload.activeContracts) return payload;
     } catch {
       // Ignore error for stats
     }
-    
+
     // Fallback if stats API is not ready
     return {
       activeContracts: { value: "0", label: "Active" },

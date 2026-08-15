@@ -219,7 +219,7 @@ export function MeetingsManagementPage() {
       {/* ── 4 Stats Cards (Figma Exact Match) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total */}
-        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#E6F6FE] flex items-center justify-center shrink-0">
               <Video className="w-6 h-6 text-[#03A9F4]" />
@@ -236,7 +236,7 @@ export function MeetingsManagementPage() {
         </div>
 
         {/* Card 2: Live */}
-        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#EDF7EE] flex items-center justify-center shrink-0">
               <Radio className="w-6 h-6 text-[#4CAF50]" />
@@ -253,7 +253,7 @@ export function MeetingsManagementPage() {
         </div>
 
         {/* Card 3: Scheduled */}
-        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#FFFDEB] flex items-center justify-center shrink-0">
               <Clock className="w-6 h-6 text-[#E8D636]" />
@@ -270,7 +270,7 @@ export function MeetingsManagementPage() {
         </div>
 
         {/* Card 4: Ended */}
-        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#FEECEB] flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-6 h-6 text-[#F44336]" />
@@ -288,7 +288,7 @@ export function MeetingsManagementPage() {
       </div>
 
       {/* ── Table & Filter Area (Figma Exact Match) ── */}
-      <div className="bg-white dark:bg-card rounded-[8px] border border-[#E2E8F0] dark:border-border p-4 flex flex-col gap-4 shadow-sm">
+      <div className="bg-white dark:bg-card rounded-[8px] p-4 flex flex-col gap-4 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)]">
         {/* Filter Bar */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Search Box */}
