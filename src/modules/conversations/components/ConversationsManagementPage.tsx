@@ -21,6 +21,10 @@ import {
   Users,
   X,
   Edit2,
+  MoreVertical,
+  Trash2,
+  EyeOff,
+  Eye,
 } from "lucide-react";
 
 import { useAuth } from "@/providers/AuthProvider";
@@ -35,6 +39,7 @@ import { useConversation, useConversations } from "../hooks/useConversations";
 import CreateConversationModal from "./CreateConversationModal";
 import GroupMembersModal from "./GroupMembersModal";
 import EditGroupModal from "./EditGroupModal";
+import DeleteConversationModal from "./DeleteConversationModal";
 import { ConversationListSkeleton, MessagesSkeleton } from "./ConversationSkeleton";
 import type {
   Conversation,
@@ -84,6 +89,9 @@ export default function ConversationsManagementPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isGroupMembersModalOpen, setIsGroupMembersModalOpen] = useState(false);
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<"all" | "hidden">("all");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -92,6 +100,18 @@ export default function ConversationsManagementPage() {
   const readSentRef = useRef<Set<string>>(new Set());
   const stickToBottomRef = useRef(true);
   const appliedDeepLinkRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const stored = localStorage.getItem(`hidden_chats_${user.id}`);
+      if (stored) {
+        setHiddenIds(JSON.parse(stored));
+      }
+    } catch {
+      // ignore
+    }
+  }, [user?.id]);
 
   /**
    * Open the conversation named in the URL (`?c=<id>`) — this is how the navbar
@@ -125,6 +145,8 @@ export default function ConversationsManagementPage() {
     isSendingMessage,
     createConversation,
     isCreating,
+    deleteConversation,
+    isDeleting,
     markAsRead,
   } = useConversations(role, listParams);
 
@@ -136,6 +158,62 @@ export default function ConversationsManagementPage() {
     refetch: refetchThread,
   } = useConversation(role, activeConversationId);
 
+  const handleHideConversation = useCallback(
+    (conv: Conversation) => {
+      const strId = String(conv.id);
+      setHiddenIds((prev) => {
+        if (prev.includes(strId)) return prev;
+        const next = [...prev, strId];
+        if (user?.id) {
+          localStorage.setItem(`hidden_chats_${user.id}`, JSON.stringify(next));
+        }
+        return next;
+      });
+      if (String(activeConversationId) === strId) {
+        setActiveConversationId(null);
+      }
+      toast.success(t("hidden"));
+    },
+    [activeConversationId, user?.id, t]
+  );
+
+  const handleUnhideConversation = useCallback(
+    (conv: Conversation) => {
+      const strId = String(conv.id);
+      setHiddenIds((prev) => {
+        const next = prev.filter((id) => id !== strId);
+        if (user?.id) {
+          localStorage.setItem(`hidden_chats_${user.id}`, JSON.stringify(next));
+        }
+        return next;
+      });
+      toast.success(t("unhidden"));
+    },
+    [user?.id, t]
+  );
+
+  const handleDeleteConversation = useCallback(async () => {
+    if (!conversationToDelete) return;
+    try {
+      await deleteConversation(conversationToDelete.id);
+      const strId = String(conversationToDelete.id);
+      if (String(activeConversationId) === strId) {
+        setActiveConversationId(null);
+      }
+      setHiddenIds((prev) => {
+        const next = prev.filter((id) => id !== strId);
+        if (user?.id) {
+          localStorage.setItem(`hidden_chats_${user.id}`, JSON.stringify(next));
+        }
+        return next;
+      });
+      toast.success(t("deleted"));
+      setConversationToDelete(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || t("deleteFailed"));
+    }
+  }, [conversationToDelete, deleteConversation, activeConversationId, user?.id, t]);
+
   // Most recently active first — the endpoint returns no explicit ordering.
   // Compared as parsed instants, since the API mixes two timestamp formats.
   const conversations = useMemo(
@@ -145,6 +223,13 @@ export default function ConversationsManagementPage() {
       ),
     [unsortedConversations]
   );
+
+  const visibleConversations = useMemo(() => {
+    if (viewMode === "hidden") {
+      return conversations.filter((c: Conversation) => hiddenIds.includes(String(c.id)));
+    }
+    return conversations.filter((c: Conversation) => !hiddenIds.includes(String(c.id)));
+  }, [conversations, hiddenIds, viewMode]);
 
   const listConversation = useMemo(
     () => conversations.find((c: Conversation) => String(c.id) === String(activeConversationId)),
@@ -358,7 +443,7 @@ export default function ConversationsManagementPage() {
           </button>
         </div>
 
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-3">
           <div className="relative">
             <Search
               className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 ds-text-gray-200"
@@ -386,6 +471,35 @@ export default function ConversationsManagementPage() {
           </div>
         </div>
 
+        {/* ── View Mode Filter (All vs Hidden) ── */}
+        {hiddenIds.length > 0 && (
+          <div className="flex items-center gap-1.5 px-5 pb-3">
+            <button
+              type="button"
+              onClick={() => setViewMode("all")}
+              className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
+                viewMode === "all"
+                  ? "bg-[var(--color-bg-primary)] text-white shadow-sm"
+                  : "ds-text-gray-200 hover:ds-text-primary bg-[var(--color-bg)]"
+              }`}
+            >
+              {t("showAll")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("hidden")}
+              className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                viewMode === "hidden"
+                  ? "bg-[var(--color-bg-primary)] text-white shadow-sm"
+                  : "ds-text-gray-200 hover:ds-text-primary bg-[var(--color-bg)]"
+              }`}
+            >
+              <EyeOff size={12} />
+              <span>{t("showHidden")} ({hiddenIds.length})</span>
+            </button>
+          </div>
+        )}
+
         <div className="custom-scrollbar flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
           {isConversationsLoading ? (
             <ConversationListSkeleton />
@@ -396,15 +510,15 @@ export default function ConversationsManagementPage() {
                 {t("retry")}
               </Button>
             </div>
-          ) : conversations.length === 0 ? (
+          ) : visibleConversations.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
               <MessagesSquare size={28} className="ds-text-gray-200" />
               <p className="ds-text-gray-100 text-sm">
-                {debouncedSearch ? t("create.noUsers") : t("noConversations")}
+                {debouncedSearch ? t("create.noUsers") : viewMode === "hidden" ? t("noConversations") : t("noConversations")}
               </p>
             </div>
           ) : (
-            conversations.map((conv: Conversation) => {
+            visibleConversations.map((conv: Conversation) => {
               const isActive = String(activeConversationId) === String(conv.id);
               const convTitle = getConversationTitle(conv, user?.id, t("title"));
               const convImage = getConversationImage(conv, user?.id);
@@ -416,11 +530,10 @@ export default function ConversationsManagementPage() {
               const convIsGroup = isGroupConversation(conv);
 
               return (
-                <button
-                  type="button"
+                <div
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv.id)}
-                  className="group relative flex w-full items-center gap-3 rounded-[16px] p-3 text-start transition-all duration-200 hover:scale-[1.01]"
+                  className="group relative flex w-full items-center gap-3 rounded-[16px] p-3 text-start transition-all duration-200 hover:scale-[1.01] cursor-pointer"
                   style={{
                     backgroundColor: isActive
                       ? "var(--color-bg-primary-200)"
@@ -484,7 +597,69 @@ export default function ConversationsManagementPage() {
                       )}
                     </div>
                   </div>
-                </button>
+
+                  {/* Action 3-dots popover */}
+                  <div className="shrink-0 ms-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <span
+                          role="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="flex h-7 w-7 items-center justify-center rounded-full ds-text-gray hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                          title={t("moreOptions")}
+                        >
+                          <MoreVertical size={14} />
+                        </span>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="end"
+                        className="w-44 p-1.5 rounded-[12px] shadow-xl ds-bg-form border border-[var(--color-border-form)] z-50"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex flex-col gap-0.5 text-xs">
+                          {hiddenIds.includes(String(conv.id)) ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUnhideConversation(conv);
+                              }}
+                              className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-start hover:bg-[var(--color-bg)] ds-text-primary font-medium cursor-pointer"
+                            >
+                              <Eye size={14} className="text-[#25C6DA]" />
+                              <span>{t("unhideConversation")}</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleHideConversation(conv);
+                              }}
+                              className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-start hover:bg-[var(--color-bg)] ds-text-primary font-medium cursor-pointer"
+                            >
+                              <EyeOff size={14} className="ds-text-gray" />
+                              <span>{t("hideConversation")}</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConversationToDelete(conv);
+                            }}
+                            className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-start hover:bg-[#FEECEB] text-[#F44336] font-medium cursor-pointer"
+                          >
+                            <Trash2 size={14} />
+                            <span>{t("deleteConversation")}</span>
+                          </button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               );
             })
           )}
@@ -559,26 +734,75 @@ export default function ConversationsManagementPage() {
                 </div>
               </div>
 
-              {isGroup && (
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setIsGroupMembersModalOpen(true)}
-                    className="h-9 gap-2 rounded-full border-none bg-[var(--color-bg-primary-200)] px-3.5 text-[13px] font-bold text-[var(--color-text-brand)] hover:opacity-80 sm:px-4"
+              <div className="flex shrink-0 items-center gap-1.5">
+                {isGroup && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setIsGroupMembersModalOpen(true)}
+                      className="h-9 gap-2 rounded-full border-none bg-[var(--color-bg-primary-200)] px-3.5 text-[13px] font-bold text-[var(--color-text-brand)] hover:opacity-80 sm:px-4"
+                    >
+                      <Users size={15} strokeWidth={2.5} />
+                      <span className="hidden sm:inline">{t("members")}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setIsEditGroupModalOpen(true)}
+                      className="ds-text-gray h-9 w-9 rounded-full border-none p-0 hover:bg-[var(--color-bg)]"
+                      aria-label={t("edit")}
+                    >
+                      <Edit2 size={15} strokeWidth={2.5} />
+                    </Button>
+                  </>
+                )}
+
+                {/* More options menu in chat header */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="ds-text-gray h-9 w-9 rounded-full border-none p-0 hover:bg-[var(--color-bg)]"
+                      aria-label={t("moreOptions")}
+                    >
+                      <MoreVertical size={16} />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    className="w-48 p-1.5 rounded-[12px] shadow-xl ds-bg-form border border-[var(--color-border-form)] z-50"
                   >
-                    <Users size={15} strokeWidth={2.5} />
-                    <span className="hidden sm:inline">{t("members")}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setIsEditGroupModalOpen(true)}
-                    className="ds-text-gray h-9 w-9 rounded-full border-none p-0 hover:bg-[var(--color-bg)]"
-                    aria-label={t("edit")}
-                  >
-                    <Edit2 size={15} strokeWidth={2.5} />
-                  </Button>
-                </div>
-              )}
+                    <div className="flex flex-col gap-0.5 text-xs">
+                      {hiddenIds.includes(String(currentConversation.id)) ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUnhideConversation(currentConversation)}
+                          className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-start hover:bg-[var(--color-bg)] ds-text-primary font-medium cursor-pointer"
+                        >
+                          <Eye size={14} className="text-[#25C6DA]" />
+                          <span>{t("unhideConversation")}</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleHideConversation(currentConversation)}
+                          className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-start hover:bg-[var(--color-bg)] ds-text-primary font-medium cursor-pointer"
+                        >
+                          <EyeOff size={14} className="ds-text-gray" />
+                          <span>{t("hideConversation")}</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setConversationToDelete(currentConversation)}
+                        className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-start hover:bg-[#FEECEB] text-[#F44336] font-medium cursor-pointer"
+                      >
+                        <Trash2 size={14} />
+                        <span>{t("deleteConversation")}</span>
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </header>
 
             {isOrphaned && (
@@ -966,6 +1190,15 @@ export default function ConversationsManagementPage() {
           conversation={currentConversation}
         />
       )}
+
+      <DeleteConversationModal
+        isOpen={Boolean(conversationToDelete)}
+        onClose={() => setConversationToDelete(null)}
+        onConfirm={handleDeleteConversation}
+        isDeleting={isDeleting}
+        conversation={conversationToDelete}
+        currentUserId={user?.id}
+      />
     </div>
   );
 }

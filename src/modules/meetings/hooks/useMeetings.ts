@@ -206,7 +206,7 @@ export function useMeetingParticipants(meetingId: number | string) {
     queryKey: MEETINGS_QUERY_KEYS.participants(role, meetingId),
     queryFn: () => meetingsApi.getParticipants(role, meetingId),
     enabled: Boolean(meetingId),
-    refetchInterval: 10000,
+    refetchInterval: 1500,
   });
 }
 
@@ -272,7 +272,7 @@ export function useMeetingMessages(meetingId: number | string) {
     queryKey: MEETINGS_QUERY_KEYS.messages(role, meetingId),
     queryFn: () => meetingsApi.getMessages(role, meetingId),
     enabled: Boolean(meetingId),
-    refetchInterval: 3000,
+    refetchInterval: 1500,
   });
 }
 

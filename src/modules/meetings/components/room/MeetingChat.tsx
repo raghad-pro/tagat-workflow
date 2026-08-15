@@ -14,6 +14,7 @@ import { useMeetingMessages, useSendMessage } from "../../hooks/useMeetings";
 import ConvertToTaskModal from "./ConvertToTaskModal";
 import type { MeetingMessage } from "../../types/meetings.types";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 interface MeetingChatProps {
   meetingId: number | string;
@@ -28,30 +29,65 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages = [], isLoading } = useMeetingMessages(meetingId);
+  const [localOptimisticMessages, setLocalOptimisticMessages] = useState<MeetingMessage[]>([]);
+
+  const { data: serverMessages = [], isLoading } = useMeetingMessages(meetingId);
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+
+  const allMessages = React.useMemo(() => {
+    const serverIds = new Set(serverMessages.map((m: any) => m.id));
+    const pending = localOptimisticMessages.filter((m) => !serverIds.has(m.id));
+    return [...serverMessages, ...pending];
+  }, [serverMessages, localOptimisticMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [allMessages]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() && !selectedFile) return;
+    const text = inputText.trim();
+    if (!text && !selectedFile) return;
+
+    const tempMsg: MeetingMessage = {
+      id: Date.now(),
+      meeting_id: Number(meetingId),
+      user_id: user?.id || 0,
+      user: {
+        id: user?.id || 0,
+        name: user?.name || "Super Admin",
+        avatar: user?.image || null,
+      },
+      message: text,
+      created_at: new Date().toISOString(),
+      attachments: selectedFile
+        ? [
+            {
+              id: Date.now(),
+              file_name: selectedFile.name,
+              file_url: URL.createObjectURL(selectedFile),
+            },
+          ]
+        : [],
+    };
+
+    setLocalOptimisticMessages((prev) => [...prev, tempMsg]);
+    setInputText("");
+    const fileToSend = selectedFile;
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
 
     sendMessage(
       {
         meetingId,
         payload: {
-          message: inputText.trim() || "",
-          attachment: selectedFile || undefined,
+          message: text,
+          attachment: fileToSend || undefined,
         },
       },
       {
-        onSuccess: () => {
-          setInputText("");
-          setSelectedFile(null);
-          if (fileInputRef.current) fileInputRef.current.value = "";
+        onError: (err: any) => {
+          toast.error("Failed to send message: " + (err?.message || "Server error"));
         },
       }
     );
@@ -82,13 +118,13 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
           <div className="flex justify-center py-8">
             <div className="w-6 h-6 border-2 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
           </div>
-        ) : messages.length === 0 ? (
+        ) : allMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-10 text-xs text-[#64748B] space-y-1">
             <MessageSquare className="w-8 h-8 opacity-40 mb-1" />
             <p className="text-[12px] font-medium text-[#475569]">No messages yet.</p>
           </div>
         ) : (
-          messages.map((msg) => {
+          allMessages.map((msg) => {
             const isMe = msg.user_id === user?.id;
             const senderName = msg.user?.name || "Participant";
             const initials = getInitials(senderName);
