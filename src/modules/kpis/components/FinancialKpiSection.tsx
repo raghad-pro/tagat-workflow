@@ -15,9 +15,11 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <DollarSign className="w-5 h-5 text-[#25C6DA]" />
-        <h2 className="text-[20px] font-bold text-foreground tracking-tight">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-[8px] bg-[#E6F6FE] flex items-center justify-center text-[#03A9F4]">
+          <DollarSign className="w-5 h-5" />
+        </div>
+        <h2 className="text-[20px] sm:text-[22px] font-bold text-[#000000] dark:text-white tracking-tight leading-[32px]">
           Financial & Revenue KPIs
         </h2>
       </div>
@@ -86,7 +88,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
             label="Employee Payouts"
             metric={financial?.employee_payouts}
             icon={Wallet}
-            iconBg="#E6F6FE"
+            iconBg="rgba(37, 198, 218, 0.12)"
             iconColor="#25C6DA"
             prefix="$"
           />
@@ -95,23 +97,41 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
 
       {/* Multi-Currency Breakdown if present */}
       {financial?.by_currency && financial.by_currency.length > 0 && (
-        <div className="bg-white dark:bg-card rounded-2xl p-5 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-3">
-          <h4 className="text-sm font-bold text-foreground">Currency Breakdown</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-[15px] font-bold text-[#000000] dark:text-white">Multi-Currency Portfolio</h4>
+            <span className="text-xs text-[#707070] dark:text-gray-400">
+              {financial.by_currency.length} currencies tracked
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {financial.by_currency.map((curr) => (
               <div
                 key={curr.currency_id}
-                className="p-3.5 rounded-xl bg-muted/40 border border-border/40 flex flex-col gap-1.5"
+                className="p-4 rounded-[8px] bg-[#FAF5FF] dark:bg-muted/40 flex flex-col gap-2"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-foreground">{curr.code} ({curr.symbol})</span>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#25C6DA]/15 text-[#25C6DA]">
-                    Invoiced: {curr.symbol}{curr.invoiced.toLocaleString("en-US")}
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-[#9810FA]/15 text-[#9810FA] flex items-center justify-center font-bold text-xs">
+                      {curr.symbol}
+                    </div>
+                    <span className="font-bold text-[14px] text-[#000000] dark:text-white">
+                      {curr.code}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E6F6FE] text-[#03A9F4]">
+                    {curr.symbol}{curr.invoiced.toLocaleString("en-US")}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-                  <span>Collected: <strong className="text-emerald-500">{curr.symbol}{curr.collected.toLocaleString("en-US")}</strong></span>
-                  <span>Outstanding: <strong className="text-amber-500">{curr.symbol}{curr.outstanding.toLocaleString("en-US")}</strong></span>
+
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-black/5 dark:border-white/5">
+                  <span className="text-[#707070] dark:text-gray-400">
+                    Collected: <strong className="text-[#4CAF50]">{curr.symbol}{curr.collected.toLocaleString("en-US")}</strong>
+                  </span>
+                  <span className="text-[#707070] dark:text-gray-400">
+                    Due: <strong className="text-[#F44336]">{curr.symbol}{curr.outstanding.toLocaleString("en-US")}</strong>
+                  </span>
                 </div>
               </div>
             ))}

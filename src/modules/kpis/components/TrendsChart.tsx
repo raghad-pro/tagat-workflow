@@ -62,21 +62,23 @@ export function TrendsChart({ trends }: TrendsChartProps) {
   const avgForMetric = chartData.length > 0 ? (totalForMetric / chartData.length).toFixed(1) : "0";
 
   return (
-    <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-6">
+    <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-6">
       {/* Header & Tabs */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#25C6DA]" />
-            <h3 className="text-[18px] font-bold text-foreground">Annual Trends ({trends?.year || 2026})</h3>
+            <div className="w-8 h-8 rounded-[8px] bg-[rgba(37,198,218,0.12)] flex items-center justify-center text-[#25C6DA]">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">Annual Trends ({trends?.year || 2026})</h3>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-[#707070] dark:text-gray-400 mt-1">
             Track month-by-month trajectory and growth dynamics
           </p>
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex items-center gap-1.5 flex-wrap bg-gray-100 dark:bg-muted p-1 rounded-xl">
+        <div className="flex items-center gap-1.5 flex-wrap bg-[#F3F4F6] dark:bg-muted p-1 rounded-[8px]">
           {METRIC_TABS.map((tab) => {
             const IconEl = tab.icon as any;
             const isActive = tab.key === activeMetric;
@@ -86,13 +88,13 @@ export function TrendsChart({ trends }: TrendsChartProps) {
                 type="button"
                 onClick={() => setActiveMetric(tab.key)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all cursor-pointer",
                   isActive
-                    ? "bg-white dark:bg-card text-foreground shadow-sm font-bold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+                    ? "bg-[#25C6DA] text-white shadow-sm font-bold"
+                    : "text-[#707070] dark:text-gray-300 hover:text-foreground hover:bg-white/50"
                 )}
               >
-                <IconEl className="w-3.5 h-3.5" style={{ color: tab.color }} />
+                <IconEl className="w-3.5 h-3.5" style={{ color: isActive ? "#ffffff" : tab.color }} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -101,24 +103,24 @@ export function TrendsChart({ trends }: TrendsChartProps) {
       </div>
 
       {/* Summary Chips */}
-      <div className="flex items-center gap-4 flex-wrap text-xs text-muted-foreground border-b border-border/40 pb-4">
+      <div className="flex items-center gap-4 flex-wrap text-xs text-[#707070] dark:text-gray-400 border-b border-border/40 pb-4">
         <div className="flex items-center gap-2">
           <span>Active Metric:</span>
-          <span className="font-bold text-foreground">{currentTab.label}</span>
+          <span className="font-bold text-[#000000] dark:text-white">{currentTab.label}</span>
         </div>
-        <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+        <div className="w-1 h-1 rounded-full bg-[#707070]" />
         <div className="flex items-center gap-2">
           <span>Annual Total:</span>
-          <span className="font-bold text-foreground">
+          <span className="font-bold text-[#000000] dark:text-white">
             {currentTab.prefix}
             {totalForMetric.toLocaleString("en-US")}
             {currentTab.suffix}
           </span>
         </div>
-        <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+        <div className="w-1 h-1 rounded-full bg-[#707070]" />
         <div className="flex items-center gap-2">
           <span>Monthly Average:</span>
-          <span className="font-bold text-foreground">
+          <span className="font-bold text-[#000000] dark:text-white">
             {currentTab.prefix}
             {avgForMetric}
             {currentTab.suffix}
@@ -132,7 +134,7 @@ export function TrendsChart({ trends }: TrendsChartProps) {
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="kpiGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={currentTab.color} stopOpacity={0.4} />
+                <stop offset="5%" stopColor={currentTab.color} stopOpacity={0.35} />
                 <stop offset="95%" stopColor={currentTab.color} stopOpacity={0.0} />
               </linearGradient>
             </defs>
@@ -142,13 +144,13 @@ export function TrendsChart({ trends }: TrendsChartProps) {
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 12, fill: "currentColor" }}
-              className="text-muted-foreground"
+              className="text-[#707070]"
             />
             <YAxis
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 12, fill: "currentColor" }}
-              className="text-muted-foreground"
+              className="text-[#707070]"
               tickFormatter={(v) => `${currentTab.prefix || ""}${v}${currentTab.suffix || ""}`}
             />
             <Tooltip
@@ -156,8 +158,8 @@ export function TrendsChart({ trends }: TrendsChartProps) {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload as TrendDataPoint;
                   return (
-                    <div className="bg-popover border border-border px-3.5 py-2.5 rounded-xl shadow-xl text-xs">
-                      <p className="font-bold text-foreground mb-1">{data.label}</p>
+                    <div className="bg-white dark:bg-card border border-border px-3.5 py-2.5 rounded-[8px] shadow-xl text-xs">
+                      <p className="font-bold text-[#000000] dark:text-white mb-1">{data.label}</p>
                       <p className="flex items-center gap-1.5" style={{ color: currentTab.color }}>
                         <span className="font-semibold">{currentTab.label}:</span>
                         <span className="font-mono font-bold">

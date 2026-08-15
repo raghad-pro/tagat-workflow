@@ -12,7 +12,6 @@ import {
   Users,
   Layers,
 } from "lucide-react";
-import { PageHeader } from "@/components/molecules/Pageheader";
 import { PageContainer } from "@/components/template/PageContainer";
 import { useKpiDashboard, useKpiFilters, useKpiTrends } from "../hooks/useKpis";
 import { FinancialKpiSection } from "./FinancialKpiSection";
@@ -69,37 +68,32 @@ export function KpisDashboardPage() {
   return (
     <PageContainer isLoading={isLoading} skeletonVariant="dashboard">
       <div className="flex flex-col gap-8 pb-12">
-        {/* ── Background Glow Overlay ── */}
+        {/* ── Background Glow Overlay matching Meetings page ── */}
         <div
           className="pointer-events-none fixed top-0 right-0 w-[820px] h-[688px] rounded-full blur-[96px] -z-10"
-          style={{ backgroundColor: "rgba(81, 209, 225, 0.12)" }}
+          style={{ backgroundColor: "rgba(81, 209, 225, 0.15)" }}
         />
 
-        {/* ── Page Header ── */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#25C6DA]/15 text-[#25C6DA] flex items-center justify-center font-bold">
-                <BarChart3 className="w-5 h-5" />
-              </div>
-              <h1 className="text-[28px] sm:text-[31px] font-bold tracking-tight text-foreground leading-[40px]">
-                KPI & Performance Dashboard
-              </h1>
-            </div>
-            <p className="text-[14px] sm:text-[16px] text-muted-foreground mt-1">
-              Executive business metrics, financial health, and operational key performance indicators
+        {/* ── Page Header (Exact Figma match) ── */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-[31px] font-bold tracking-tight text-[#000000] dark:text-white leading-[47px]">
+              KPIs & Performance Dashboard
+            </h1>
+            <p className="text-[16px] text-[#424242] dark:text-gray-300 font-normal leading-[24px]">
+              Executive business metrics, financial health, and operational performance
             </p>
           </div>
 
           {/* ── Date Filters & Actions ── */}
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             {/* Year Selector */}
-            <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-border/60 rounded-xl px-3 py-1.5 shadow-sm">
+            <div className="flex items-center gap-2 bg-white dark:bg-card rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
               <Calendar className="w-4 h-4 text-[#25C6DA]" />
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-transparent text-xs font-bold text-foreground focus:outline-none cursor-pointer"
+                className="bg-transparent text-[14px] font-medium text-[#000000] dark:text-white focus:outline-none cursor-pointer"
               >
                 {availableYears.map((yr) => (
                   <option key={yr} value={yr} className="bg-popover text-foreground">
@@ -110,14 +104,14 @@ export function KpisDashboardPage() {
             </div>
 
             {/* Month Selector */}
-            <div className="flex items-center gap-1.5 bg-white dark:bg-card border border-border/60 rounded-xl px-3 py-1.5 shadow-sm">
+            <div className="flex items-center gap-2 bg-white dark:bg-card rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
               <select
                 value={selectedMonth ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   setSelectedMonth(val ? Number(val) : undefined);
                 }}
-                className="bg-transparent text-xs font-bold text-foreground focus:outline-none cursor-pointer"
+                className="bg-transparent text-[14px] font-medium text-[#000000] dark:text-white focus:outline-none cursor-pointer"
               >
                 <option value="" className="bg-popover text-foreground">All Months (Annual)</option>
                 {availableMonths.map((m) => (
@@ -132,24 +126,24 @@ export function KpisDashboardPage() {
             <button
               onClick={() => refetch()}
               disabled={isRefetching}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-card border border-border/60 text-foreground text-xs font-bold hover:bg-muted transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] bg-white dark:bg-card text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)] disabled:opacity-50"
               title="Refresh KPI Metrics"
             >
-              <RotateCw className={cn("w-3.5 h-3.5 text-[#25C6DA]", isRefetching && "animate-spin")} />
+              <RotateCw className={cn("w-4 h-4 text-[#25C6DA]", isRefetching && "animate-spin")} />
               <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
 
         {/* ── Navigation Tabs ── */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-border/40">
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab("all")}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
+              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "all"
-                ? "bg-[#25C6DA] text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
+                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <Layers className="w-4 h-4" />
@@ -159,10 +153,10 @@ export function KpisDashboardPage() {
           <button
             onClick={() => setActiveTab("financial")}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
+              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "financial"
-                ? "bg-[#25C6DA] text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
+                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <DollarSign className="w-4 h-4" />
@@ -172,10 +166,10 @@ export function KpisDashboardPage() {
           <button
             onClick={() => setActiveTab("operations")}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
+              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "operations"
-                ? "bg-[#25C6DA] text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
+                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <FolderKanban className="w-4 h-4" />
@@ -185,10 +179,10 @@ export function KpisDashboardPage() {
           <button
             onClick={() => setActiveTab("people")}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
+              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "people"
-                ? "bg-[#25C6DA] text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
+                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <Users className="w-4 h-4" />
@@ -198,10 +192,10 @@ export function KpisDashboardPage() {
           <button
             onClick={() => setActiveTab("trends")}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
+              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "trends"
-                ? "bg-[#25C6DA] text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
+                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <TrendingUp className="w-4 h-4" />

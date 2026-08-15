@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { FolderKanban, CheckSquare, Clock, CheckCircle2, AlertCircle, PlayCircle } from "lucide-react";
+import { FolderKanban, CheckSquare, Clock } from "lucide-react";
 import { KpiMetricCard } from "./KpiMetricCard";
 import type { ProjectsKpis, TasksKpis, TimesheetsKpis } from "../types/kpis.types";
 
@@ -16,9 +16,11 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <FolderKanban className="w-5 h-5 text-[#25C6DA]" />
-        <h2 className="text-[20px] font-bold text-foreground tracking-tight">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-[8px] bg-[#FAF5FF] flex items-center justify-center text-[#9810FA]">
+          <FolderKanban className="w-5 h-5" />
+        </div>
+        <h2 className="text-[20px] sm:text-[22px] font-bold text-[#000000] dark:text-white tracking-tight leading-[32px]">
           Operations & Project Delivery KPIs
         </h2>
       </div>
@@ -67,19 +69,21 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Projects Status Breakdown Card */}
         {projects && (
-          <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+          <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FolderKanban className="w-4 h-4 text-[#9810FA]" />
-                <h4 className="text-sm font-bold text-foreground">Projects Status Distribution</h4>
+                <div className="w-6 h-6 rounded-[6px] bg-[#FAF5FF] flex items-center justify-center text-[#9810FA]">
+                  <FolderKanban className="w-3.5 h-3.5" />
+                </div>
+                <h4 className="text-[15px] font-bold text-[#000000] dark:text-white">Projects Status Distribution</h4>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9810FA]/15 text-[#9810FA]">
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF5FF] text-[#9810FA]">
                 {projects.completion_rate}% Completed
               </span>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full bg-muted rounded-full h-3 overflow-hidden flex">
+            <div className="w-full bg-[#F3F4F6] dark:bg-muted rounded-full h-2.5 overflow-hidden flex">
               <div
                 className="bg-[#4CAF50] transition-all"
                 style={{ width: `${((projects.completed || 0) / (projects.total?.value || 1)) * 100}%` }}
@@ -98,18 +102,18 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
             </div>
 
             {/* Breakdown Badges */}
-            <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
-              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <span className="text-muted-foreground block text-[11px]">Pending</span>
-                <strong className="text-amber-500 text-sm font-bold">{projects.pending}</strong>
+            <div className="grid grid-cols-3 gap-3 pt-1 text-center text-xs">
+              <div className="p-3 rounded-[8px] bg-[#FFFDEB] flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">Pending</span>
+                <strong className="text-[#D97706] text-[18px] font-bold">{projects.pending}</strong>
               </div>
-              <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20">
-                <span className="text-muted-foreground block text-[11px]">In Progress</span>
-                <strong className="text-sky-500 text-sm font-bold">{projects.in_progress}</strong>
+              <div className="p-3 rounded-[8px] bg-[#E6F6FE] flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">In Progress</span>
+                <strong className="text-[#03A9F4] text-[18px] font-bold">{projects.in_progress}</strong>
               </div>
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-muted-foreground block text-[11px]">Completed</span>
-                <strong className="text-emerald-500 text-sm font-bold">{projects.completed}</strong>
+              <div className="p-3 rounded-[8px] bg-[#EDF7EE] flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">Completed</span>
+                <strong className="text-[#4CAF50] text-[18px] font-bold">{projects.completed}</strong>
               </div>
             </div>
           </div>
@@ -117,41 +121,43 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
 
         {/* Tasks Status Breakdown Card */}
         {tasks && (
-          <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+          <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckSquare className="w-4 h-4 text-[#4CAF50]" />
-                <h4 className="text-sm font-bold text-foreground">Tasks Pipeline Breakdown</h4>
+                <div className="w-6 h-6 rounded-[6px] bg-[#EDF7EE] flex items-center justify-center text-[#4CAF50]">
+                  <CheckSquare className="w-3.5 h-3.5" />
+                </div>
+                <h4 className="text-[15px] font-bold text-[#000000] dark:text-white">Tasks Pipeline Breakdown</h4>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#4CAF50]/15 text-[#4CAF50]">
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#EDF7EE] text-[#4CAF50]">
                 {tasks.completion_rate}% Resolved
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-muted/50 border border-border/40">
-                <span className="text-muted-foreground block text-[11px]">Backlog</span>
-                <strong className="text-foreground text-sm font-bold">{tasks.by_status?.backlog || 0}</strong>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-[8px] bg-[#F8FAFC] dark:bg-muted/40 flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">Backlog</span>
+                <strong className="text-[#000000] dark:text-white text-[16px] font-bold">{tasks.by_status?.backlog || 0}</strong>
               </div>
-              <div className="p-2.5 rounded-xl bg-muted/50 border border-border/40">
-                <span className="text-muted-foreground block text-[11px]">To Do</span>
-                <strong className="text-foreground text-sm font-bold">{tasks.by_status?.todo || 0}</strong>
+              <div className="p-3 rounded-[8px] bg-[#F8FAFC] dark:bg-muted/40 flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">To Do</span>
+                <strong className="text-[#000000] dark:text-white text-[16px] font-bold">{tasks.by_status?.todo || 0}</strong>
               </div>
-              <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20">
-                <span className="text-muted-foreground block text-[11px]">In Progress</span>
-                <strong className="text-sky-500 text-sm font-bold">{tasks.by_status?.in_progress || 0}</strong>
+              <div className="p-3 rounded-[8px] bg-[#E6F6FE] flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">In Progress</span>
+                <strong className="text-[#03A9F4] text-[16px] font-bold">{tasks.by_status?.in_progress || 0}</strong>
               </div>
-              <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                <span className="text-muted-foreground block text-[11px]">In Review</span>
-                <strong className="text-purple-500 text-sm font-bold">{tasks.by_status?.in_review || 0}</strong>
+              <div className="p-3 rounded-[8px] bg-[#FAF5FF] flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">In Review</span>
+                <strong className="text-[#9810FA] text-[16px] font-bold">{tasks.by_status?.in_review || 0}</strong>
               </div>
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-muted-foreground block text-[11px]">Completed</span>
-                <strong className="text-emerald-500 text-sm font-bold">{tasks.by_status?.completed || 0}</strong>
+              <div className="p-3 rounded-[8px] bg-[#EDF7EE] flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">Completed</span>
+                <strong className="text-[#4CAF50] text-[16px] font-bold">{tasks.by_status?.completed || 0}</strong>
               </div>
-              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <span className="text-muted-foreground block text-[11px]">Pending</span>
-                <strong className="text-amber-500 text-sm font-bold">{tasks.by_status?.pending || 0}</strong>
+              <div className="p-3 rounded-[8px] bg-[#FFFDEB] flex flex-col gap-0.5">
+                <span className="text-[#707070] text-[11px] font-medium">Pending</span>
+                <strong className="text-[#D97706] text-[16px] font-bold">{tasks.by_status?.pending || 0}</strong>
               </div>
             </div>
           </div>
