@@ -22,6 +22,21 @@ export const employeeApi = {
     };
   },
 
+  getAvailableUsers: async (role: string) => {
+    const response = await apiClient.get(`${getRolePrefix(role)}/availbale-user`);
+    const payload = (response as any).data;
+
+    if (Array.isArray(payload)) {
+      return { data: payload, meta: { total: payload.length } };
+    }
+
+    return {
+      data: payload?.data || [],
+      meta: payload?.meta || { total: payload?.data?.length || payload?.total || 0 },
+    };
+  },
+
+
   /**
    * Every employee, across all pages.
    *

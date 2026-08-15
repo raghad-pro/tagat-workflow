@@ -1,5 +1,8 @@
 import apiClient from "@/services/apiClient";
+import axiosInstance from "@/services/axiosConfig";
+import { ENV } from "@/config/env";
 import { getRolePrefix } from "@/utils/rolePrefix";
+import Cookies from "js-cookie";
 import type {
   ApiAuthResponse,
   LoginRequest,
@@ -14,8 +17,59 @@ import type {
 export const authApi = {
   // ─── Auth ────────────────────────────────────────────────────────────────────
   login: async (data: LoginRequest) => {
-    const response = await apiClient.post<ApiAuthResponse>("/login", data);
-    return response.data;
+    // جلب CSRF Cookie من مسار Sanctum قبل تسجيل الدخول
+    const baseUrlWithoutApi = ENV.API_URL.replace(/\/api\/?$/, '');
+
+    const fetchCsrf = async () => {
+      await axiosInstance.get('/sanctum/csrf-cookie', {
+        baseURL: baseUrlWithoutApi,
+        withCredentials: true,
+        headers: { Accept: 'application/json' },
+      });
+    };
+
+    try {
+      await fetchCsrf();
+    } catch (e) {
+      console.warn("Could not fetch CSRF cookie", e);
+    }
+
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    const xsrfToken = Cookies.get('XSRF-TOKEN');
+    if (xsrfToken) headers['X-XSRF-TOKEN'] = xsrfToken;
+
+    const doLogin = () =>
+      axiosInstance.post<ApiAuthResponse>("/login", data, {
+        withCredentials: true,
+        headers,
+      });
+
+    try {
+      const response = await doLogin();
+      return response.data;
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const msg: string = error?.response?.data?.message ?? error?.message ?? '';
+      const isCsrfError = status === 419 || msg.toLowerCase().includes('csrf');
+
+      if (!isCsrfError) throw error;
+
+      // إعادة المحاولة مرة واحدة عند خطأ CSRF: تجديد التوكن ثم إعادة الإرسال
+      console.warn('CSRF mismatch detected, refreshing token and retrying...');
+      try {
+        await fetchCsrf();
+      } catch (e) {
+        console.warn("Could not re-fetch CSRF cookie", e);
+      }
+      const retryToken = Cookies.get('XSRF-TOKEN');
+      const retryHeaders: Record<string, string> = { Accept: 'application/json' };
+      if (retryToken) retryHeaders['X-XSRF-TOKEN'] = retryToken;
+      const retry = await axiosInstance.post<ApiAuthResponse>("/login", data, {
+        withCredentials: true,
+        headers: retryHeaders,
+      });
+      return retry.data;
+    }
   },
 
   /**
@@ -41,7 +95,7 @@ export const authApi = {
     formData.append("password", data.password);
     formData.append("password_confirmation", data.password_confirmation);
     formData.append("account_type", data.account_type);
-    
+
     if (data.company_name) formData.append("company_name", data.company_name);
     if (data.domain) formData.append("domain", data.domain);
     if (data.logo) formData.append("logo", data.logo);
@@ -61,7 +115,7 @@ export const authApi = {
     return (response as any).data || response;
   },
 
-  
+
   resendVerificationCode: async (data: { email: string }) => {
     const response = await apiClient.post<{ status: number; message: string }>('/resend-verification-code', data);
     return (response as any).data || response;

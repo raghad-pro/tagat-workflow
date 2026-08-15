@@ -119,7 +119,10 @@ export function useParticipants(
 
   const employeesQuery = useQuery({
     queryKey: ["employees", role],
-    queryFn: () => employeeApi.getAll(role),
+    queryFn: () => 
+      role === "employee" 
+        ? employeeApi.getAvailableUsers(role) 
+        : employeeApi.getAll(role),
     enabled,
   });
 
