@@ -766,7 +766,8 @@
     "conversations": "Conversations",
     "access": "Access Management",
     "sprints": "Sprints",
-    "meetings": "Meetings"
+    "meetings": "Meetings",
+    "kpis": "KPIs & Analytics"
   },
   "currencies": {
     "title": "Currencies",

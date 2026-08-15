@@ -766,7 +766,8 @@
     "conversations": "المحادثات",
     "access": "إدارة الصلاحيات",
     "sprints": "السبرنتات",
-    "meetings": "الاجتماعات"
+    "meetings": "الاجتماعات",
+    "kpis": "مؤشرات الأداء (KPIs)"
   },
   "currencies": {
     "title": "العملات",

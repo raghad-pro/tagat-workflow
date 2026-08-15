@@ -22,7 +22,7 @@ import {
   FileText, CustomCardIcon, Wallet, ArrowLeftRight, DollarSign,
   ShieldCheck, UserCog, FolderKanban, CheckSquare, SquareCheck, Clock,
   Wrench, FileSignature, ScrollText, ArrowUpDown, BadgePercent, KeyRound,
-  KanbanSquare, Video
+  KanbanSquare, Video, BarChart3
 } from "@/assets/icons/icons";
 import { usePermission } from "@/hooks/usePermission";
 import type { LucideIcon } from "lucide-react";
@@ -65,6 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
     roles: ["super_admin", "company", "employee", "client"],
     items: [
       { key: "dashboard", href: "/dashboard", icon: LayoutGrid, roles: ["super_admin", "company", "employee", "client"] },
+      { key: "kpis", href: "/kpis", icon: BarChart3, roles: ["super_admin", "company"], permission: "kpis.view" },
     ],
   },
   {
