@@ -150,7 +150,7 @@ export function AppSidebar() {
     >
       {/* ── Logo ── */}
       <SidebarHeader
-        className="px-6 pt-2 pb-0 group-data-[collapsible=icon]:hidden"
+        className="px-4 pt-1.5 pb-0 group-data-[collapsible=icon]:hidden"
         style={{ justifyContent: "center" }}
       >
         <div className="w-full mb-0 flex justify-center">
@@ -161,21 +161,21 @@ export function AppSidebar() {
       {/* ── Nav ── */}
       <SidebarContent 
         className={cn(
-          "px-4 pt-0 pb-2",
-          "group-data-[collapsible=icon]:pt-3 group-data-[collapsible=icon]:px-0",
+          "px-3 pt-0 pb-1",
+          "group-data-[collapsible=icon]:pt-2 group-data-[collapsible=icon]:px-0",
           "overflow-y-auto overflow-x-hidden",
-          "scrollbar-hide", /* Hide scrollbar utility if exists */
-          "[&::-webkit-scrollbar]:hidden" /* Fallback to hide scrollbar */
+          "no-scrollbar scrollbar-hide",
+          "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         )}
       >
         {visibleGroups.map((group) => (
-          <SidebarGroup key={group.key} className="p-0 mb-1">
+          <SidebarGroup key={group.key} className="p-0 mb-0.5">
 
             {/* Group label — desktop فقط */}
             {group.label && (
               <SidebarGroupLabel
                 className={cn(
-                  "text-[12px] font-bold text-gray-500 px-3 mb-0 capitalize",
+                  "text-[10.5px] font-bold text-gray-400 dark:text-gray-500 px-2.5 py-0 mt-1 mb-0.5 capitalize h-auto select-none",
                   "flex"
                 )}
               >
@@ -183,9 +183,7 @@ export function AppSidebar() {
               </SidebarGroupLabel>
             )}
 
-            {/* Divider removed as per user request */}
-
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {group.items.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -199,12 +197,12 @@ export function AppSidebar() {
                       isActive={isActive}
                       tooltip={undefined}
                       className={cn(
-                        "rounded-xl gap-3 transition-all duration-200",
-                        "flex-row h-10 md:h-9 py-0",
+                        "rounded-lg gap-2.5 transition-all duration-150",
+                        "flex-row h-[32px] md:h-[33px] py-0",
                         "justify-start",
-                        "px-3",
+                        "px-2.5",
                         "group/nav-item",
-                        "font-medium text-[13px]",
+                        "font-medium text-[12.5px]",
                         !isActive && [
                           "text-slate-600 dark:text-slate-300",
                           "hover:bg-transparent dark:hover:bg-transparent",
@@ -224,15 +222,15 @@ export function AppSidebar() {
                         }}
                       >
                         <Icon
-                          size={18}
+                          size={16}
                           className={cn(
-                            "shrink-0 transition-colors duration-200",
+                            "shrink-0 transition-colors duration-150",
                             isActive
                               ? "text-white dark:text-black"
                               : "text-slate-500 dark:text-slate-400 group-hover/nav-item:text-[var(--color-btn-brand)] dark:group-hover/nav-item:text-[var(--color-btn-brand)]"
                           )}
                         />
-                        <span className="truncate mt-[2px] group-data-[collapsible=icon]:hidden">{t(item.key as Parameters<typeof t>[0])}</span>
+                        <span className="truncate group-data-[collapsible=icon]:hidden">{t(item.key as Parameters<typeof t>[0])}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
