@@ -134,30 +134,43 @@ export const meetingsApi = {
   // ─── 03 - Participants ──────────────────────────────────────────────────────
   getParticipants: async (role: string, meetingId: number | string) => {
     const prefix = getRolePrefix(role);
-    const response = await apiClient.get<ApiResponse<PaginatedData<MeetingParticipant> | MeetingParticipant[]>>(
+    const response = await apiClient.get<any>(
       `${prefix}/meetings/${meetingId}/participants`
     );
+    let list: MeetingParticipant[] = [];
     const res = response?.data;
-    if (Array.isArray(res)) return res;
-    if (res && "data" in res && Array.isArray(res.data)) return res.data;
-    return [];
+    if (Array.isArray(res)) {
+      list = res;
+    } else if (res && "data" in res && Array.isArray(res.data)) {
+      list = res.data;
+    } else if (Array.isArray(response)) {
+      list = response;
+    }
+
+    // Filter out participants who left or are disconnected
+    return list.filter(
+      (p: any) =>
+        (!p.left_at || p.left_at === null) &&
+        p.connection_status !== "disconnected" &&
+        p.connection_status !== "idle"
+    );
   },
 
   join: async (role: string, meetingId: number | string, payload?: JoinMeetingPayload) => {
     const prefix = getRolePrefix(role);
-    const response = await apiClient.post<ApiResponse<MeetingParticipant>>(
+    const response = await apiClient.post<any>(
       `${prefix}/meetings/${meetingId}/join`,
       payload
     );
-    return response.data;
+    return response?.data || response;
   },
 
   leave: async (role: string, participantId: number | string) => {
     const prefix = getRolePrefix(role);
-    const response = await apiClient.post<ApiResponse<MeetingParticipant>>(
+    const response = await apiClient.post<any>(
       `${prefix}/meeting-participants/${participantId}/leave`
     );
-    return response.data;
+    return response?.data || response;
   },
 
   updateParticipantRole: async (

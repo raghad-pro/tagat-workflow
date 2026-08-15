@@ -70,6 +70,8 @@ export interface CreateMeetingPayload {
   allow_whiteboard?: boolean;
   allow_file_share?: boolean;
   project_id?: number | null;
+  company_id?: number | null;
+  amount?: number | null;
   conversation_id?: number | null;
   participant_ids?: number[];
 }

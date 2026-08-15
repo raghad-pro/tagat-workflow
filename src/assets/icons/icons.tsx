@@ -48,7 +48,8 @@ export {
   PanelLeftClose,
   PanelLeftOpen,
   FileSignature,
-  Wrench
+  Wrench,
+  BarChart3
 } from "lucide-react";
 
 export { CustomCardIcon } from "./CustomCardIcon";
