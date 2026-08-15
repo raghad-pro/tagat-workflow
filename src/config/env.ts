@@ -1,6 +1,6 @@
 
 export const ENV = {
-  API_URL: process.env.NEXT_PUBLIC_API_URL || "https://workflow.aliservice.site/api/v1",
+  API_URL: process.env.NODE_ENV === "development" ? "/backend-api" : (process.env.NEXT_PUBLIC_API_URL || "https://workflow.aliservice.site/api/v1"),
   API_TIMEOUT: Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000,
   ACCESS_TOKEN_KEY: process.env.NEXT_PUBLIC_ACCESS_TOKEN_KEY || "accessToken",
   REFRESH_TOKEN_KEY: process.env.NEXT_PUBLIC_REFRESH_TOKEN_KEY || "refreshToken",

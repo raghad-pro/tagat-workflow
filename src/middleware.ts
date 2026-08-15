@@ -5,18 +5,33 @@ const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/verify"];
 const DEFAULT_REDIRECT = "/dashboard";
 
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Handle local proxy to bypass CORS and CSRF
+  if (pathname.startsWith("/backend-api")) {
+    const headers = new Headers(request.headers);
+    // Strip origin and referer so Laravel treats the request as stateless
+    headers.delete("origin");
+    headers.delete("referer");
+    
+    // Extract the actual path after /backend-api
+    const apiPath = pathname.replace(/^\/backend-api/, "");
+    const backendUrl = new URL(`/api/v1${apiPath}${request.nextUrl.search}`, "https://workflow.aliservice.site");
+    
+    return NextResponse.rewrite(backendUrl, {
+      request: {
+        headers,
+      },
+    });
+  }
+
   if (ENV.DISABLE_DASHBOARD_PROTECTION) return NextResponse.next();
 
   const token = request.cookies.get(ENV.ACCESS_TOKEN_KEY)?.value;
-  const { pathname } = request.nextUrl;
 
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   ) || pathname === "/";
-
-  // if (token && isPublicRoute && pathname !== "/") {
-  //   return NextResponse.redirect(new URL(DEFAULT_REDIRECT, request.url));
-  // }
 
   if (!token && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -26,5 +41,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|sanctum|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
