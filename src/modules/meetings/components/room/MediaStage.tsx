@@ -1,332 +1,223 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import React, { useState } from "react";
 import {
   Mic,
   MicOff,
   Video as VideoIcon,
   VideoOff,
-  ScreenShare,
+  Share2,
   Hand,
+  PenTool,
+  MessageSquare,
   Users,
-  Settings,
   Maximize2,
   Minimize2,
-  Volume2,
-  Sparkles,
-  Shield,
-  Radio,
+  Settings,
+  ShieldCheck,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/providers/AuthProvider";
 import type { Meeting, MeetingParticipant } from "../../types/meetings.types";
-import toast from "react-hot-toast";
+import { useAuth } from "@/providers/AuthProvider";
+import { cn } from "@/lib/utils";
 
 interface MediaStageProps {
   meeting: Meeting;
   participants: MeetingParticipant[];
   onOpenWhiteboard?: () => void;
   onOpenChat?: () => void;
+  onOpenParticipants?: () => void;
 }
 
 export default function MediaStage({
   meeting,
-  participants = [],
+  participants,
   onOpenWhiteboard,
   onOpenChat,
+  onOpenParticipants,
 }: MediaStageProps) {
-  const t = useTranslations("meetings");
   const { user } = useAuth();
 
-  // Local media states
-  const [isMicOn, setIsMicOn] = useState(false);
-  const [isCamOn, setIsCamOn] = useState(false);
+  const [isMicOn, setIsMicOn] = useState(true);
+  const [isCamOn, setIsCamOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  // Toggle Camera
-  const toggleCamera = async () => {
-    try {
-      if (isCamOn) {
-        if (streamRef.current) {
-          streamRef.current.getVideoTracks().forEach((track) => track.stop());
-        }
-        setIsCamOn(false);
-      } else {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: isMicOn,
-        });
-        streamRef.current = stream;
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-        setIsCamOn(true);
-      }
-    } catch (err: any) {
-      toast.error("تعذر تشغيل الكاميرا أو لم يتم منح الإذن");
-      setIsCamOn(false);
-    }
-  };
-
-  // Toggle Mic
-  const toggleMic = async () => {
-    try {
-      if (isMicOn) {
-        if (streamRef.current) {
-          streamRef.current.getAudioTracks().forEach((track) => track.stop());
-        }
-        setIsMicOn(false);
-      } else {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: isCamOn,
-        });
-        streamRef.current = stream;
-        setIsMicOn(true);
-      }
-    } catch (err: any) {
-      toast.error("تعذر تشغيل الميكروفون أو لم يتم منح الإذن");
-      setIsMicOn(false);
-    }
-  };
-
-  // Toggle Screen Share
-  const toggleScreenShare = async () => {
-    if (!meeting.allow_screen_share) {
-      toast.error("مشاركة الشاشة غير مسموحة في هذا الاجتماع");
-      return;
-    }
-
-    try {
-      if (isScreenSharing) {
-        setIsScreenSharing(false);
-      } else {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-        });
-        setIsScreenSharing(true);
-        screenStream.getVideoTracks()[0].onended = () => {
-          setIsScreenSharing(false);
-        };
-      }
-    } catch {
-      setIsScreenSharing(false);
-    }
-  };
-
-  const toggleHand = () => {
-    setIsHandRaised((prev) => !prev);
-    toast.success(isHandRaised ? "تم خفض اليد" : "تم رفع اليد ✋");
-  };
-
   const toggleFullscreen = () => {
-    if (!containerRef.current) return;
     if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true));
     } else {
-      document.exitFullscreen().catch(() => {});
-      setIsFullscreen(false);
+      document.exitFullscreen().then(() => setIsFullscreen(false));
     }
   };
 
-  // Cleanup media streams on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      }
-    };
-  }, []);
+  const getInitials = (name: string) => {
+    if (!name) return "SA";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
 
-  // Compute all participants including current user
-  const allUsers = [
-    {
-      id: user?.id || 0,
-      name: (user?.name || "أنت") + " (أنت)",
-      role: "host",
-      isLocal: true,
-      camera_enabled: isCamOn,
-      microphone_enabled: isMicOn,
-      hand_raised: isHandRaised,
-    },
-    ...participants.filter((p) => p.user_id !== user?.id).map((p) => ({
-      id: p.id,
-      name: p.user?.name || `مشارك #${p.user_id}`,
-      role: p.role,
-      isLocal: false,
-      camera_enabled: p.camera_enabled,
-      microphone_enabled: p.microphone_enabled,
-      hand_raised: p.hand_raised,
-    })),
-  ];
+  const activeSpeakerName = user?.name || "Super Admin";
+  const userInitials = getInitials(activeSpeakerName);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative flex flex-col h-[560px] w-full bg-slate-950 text-white rounded-2xl overflow-hidden shadow-xl border border-slate-800 select-none"
-    >
-      {/* Top Media Overlay Bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-slate-900/80 text-white border-slate-700 gap-1.5 backdrop-blur-md">
-            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>{meeting.room_name || `غرفة ${meeting.meeting_code}`}</span>
-          </Badge>
+    <div className="relative flex flex-col items-center justify-between w-full h-[620px] rounded-[16px] bg-[#111827] border border-[#1F2937] overflow-hidden shadow-2xl p-4">
+      {/* ── Main Video / Tile Stage (Figma Match) ── */}
+      <div className="relative flex-1 w-full flex items-center justify-center">
+        {/* Main Active Speaker Tile */}
+        <div className="relative w-full h-full max-h-[500px] rounded-[16px] bg-[#1A2236] border border-[#2A3756] flex flex-col items-center justify-center p-6 shadow-inner">
+          {/* Avatar Container */}
+          <div className="relative flex items-center justify-center mb-4">
+            <div className="w-28 h-28 rounded-full bg-[#25C6DA]/20 border-2 border-[#25C6DA] flex items-center justify-center text-[36px] font-bold text-[#25C6DA] shadow-[0_0_24px_rgba(37,198,218,0.3)] animate-in zoom-in-75">
+              {userInitials}
+            </div>
 
-          <Badge variant="outline" className="bg-slate-900/80 text-white border-slate-700 gap-1 backdrop-blur-md">
-            <Users className="w-3 h-3 text-sky-400" />
-            <span>{allUsers.length}</span>
-          </Badge>
-        </div>
+            {/* Hand Raised Icon Float */}
+            {isHandRaised && (
+              <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center animate-bounce shadow-md">
+                <Hand className="w-4 h-4" />
+              </div>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
+          {/* Name & Badges from Figma */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <span className="text-[16px] font-bold text-white tracking-wide">
+              {activeSpeakerName}
+            </span>
+
+            {/* YOU Badge */}
+            <span className="px-2 py-0.5 rounded-[6px] bg-[#25C6DA]/20 text-[#25C6DA] text-[10px] font-extrabold uppercase tracking-wider">
+              YOU
+            </span>
+
+            {/* HOST Badge */}
+            <span className="px-2 py-0.5 rounded-[6px] bg-amber-500/20 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider">
+              HOST
+            </span>
+          </div>
+
+          {/* Mic/Cam overlay indicator */}
+          <div className="absolute bottom-4 left-4 flex items-center gap-2">
+            <div className={cn(
+              "w-7 h-7 rounded-full flex items-center justify-center text-xs",
+              isMicOn ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
+            )}>
+              {isMicOn ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+            </div>
+            <div className={cn(
+              "w-7 h-7 rounded-full flex items-center justify-center text-xs",
+              isCamOn ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
+            )}>
+              {isCamOn ? <VideoIcon className="w-3.5 h-3.5" /> : <VideoOff className="w-3.5 h-3.5" />}
+            </div>
+          </div>
+
+          {/* Fullscreen Button in Stage Corner */}
+          <button
             onClick={toggleFullscreen}
-            className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
+            className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-black/40 text-white hover:bg-black/60 flex items-center justify-center transition-colors"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Main Video Stage Grid */}
-      <div className="flex-1 p-4 pt-16 pb-24 overflow-y-auto">
-        <div
-          className={`grid gap-4 h-full w-full ${
-            allUsers.length === 1
-              ? "grid-cols-1"
-              : allUsers.length <= 2
-              ? "grid-cols-1 md:grid-cols-2"
-              : allUsers.length <= 4
-              ? "grid-cols-2"
-              : "grid-cols-2 md:grid-cols-3"
-          }`}
-        >
-          {allUsers.map((item, idx) => (
-            <div
-              key={item.id || idx}
-              className="relative flex items-center justify-center bg-slate-900/90 rounded-xl border border-slate-800/80 overflow-hidden shadow-inner group transition-all"
-            >
-              {/* Local Video Stream or Placeholder */}
-              {item.isLocal && isCamOn ? (
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover -scale-x-100"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <Avatar className="w-20 h-20 border-2 border-slate-700 bg-slate-800 text-white text-xl font-bold shadow-lg">
-                    <AvatarFallback className="bg-gradient-to-tr from-primary to-primary/60 text-white">
-                      {item.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-slate-300">{item.name}</span>
-                </div>
-              )}
-
-              {/* Hand raised floating badge */}
-              {item.hand_raised && (
-                <div className="absolute top-3 right-3 z-10 px-2.5 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full shadow-lg flex items-center gap-1 animate-bounce">
-                  <span>✋</span>
-                  <span>مرفوعة</span>
-                </div>
-              )}
-
-              {/* Participant Bottom Tag */}
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-md text-xs font-medium text-white/90">
-                  <span>{item.name}</span>
-                  {item.role === "host" && (
-                    <span className="text-[10px] px-1 bg-primary/40 rounded text-primary-foreground">
-                      مضيف
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 p-1 bg-black/60 backdrop-blur-md rounded-md">
-                  {item.microphone_enabled ? (
-                    <Mic className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <MicOff className="w-3.5 h-3.5 text-red-400" />
-                  )}
-                  {item.camera_enabled ? (
-                    <VideoIcon className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <VideoOff className="w-3.5 h-3.5 text-red-400" />
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Floating Control Bar */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 p-2 bg-slate-900/90 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl">
-        {/* Mic toggle */}
-        <Button
-          variant={isMicOn ? "secondary" : "destructive"}
-          size="icon"
-          onClick={toggleMic}
-          className="h-11 w-11 rounded-xl shadow transition-transform hover:scale-105"
-          title={isMicOn ? "كتم الصوت" : "تشغيل الميكروفون"}
+      {/* ── Bottom Control Toolbar (Figma Exact Match) ── */}
+      <div className="flex items-center justify-center gap-3 pt-3 w-full flex-wrap z-10">
+        {/* Microphone */}
+        <button
+          onClick={() => setIsMicOn(!isMicOn)}
+          className={cn(
+            "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+            isMicOn
+              ? "bg-[#1A2236] hover:bg-[#25324E] text-white border border-[#2A3756]"
+              : "bg-red-600 hover:bg-red-700 text-white"
+          )}
+          title={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
         >
           {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-        </Button>
+        </button>
 
-        {/* Cam toggle */}
-        <Button
-          variant={isCamOn ? "secondary" : "destructive"}
-          size="icon"
-          onClick={toggleCamera}
-          className="h-11 w-11 rounded-xl shadow transition-transform hover:scale-105"
-          title={isCamOn ? "إيقاف الكاميرا" : "تشغيل الكاميرا"}
+        {/* Camera */}
+        <button
+          onClick={() => setIsCamOn(!isCamOn)}
+          className={cn(
+            "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+            isCamOn
+              ? "bg-[#1A2236] hover:bg-[#25324E] text-white border border-[#2A3756]"
+              : "bg-red-600 hover:bg-red-700 text-white"
+          )}
+          title={isCamOn ? "Turn off camera" : "Turn on camera"}
         >
           {isCamOn ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-        </Button>
+        </button>
 
-        {/* Screen share */}
+        {/* Screen Share */}
         {meeting.allow_screen_share && (
-          <Button
-            variant={isScreenSharing ? "default" : "outline"}
-            size="icon"
-            onClick={toggleScreenShare}
-            className={`h-11 w-11 rounded-xl border-slate-700 shadow transition-transform hover:scale-105 ${
-              isScreenSharing ? "bg-primary text-white" : "text-white bg-slate-800/80 hover:bg-slate-700"
-            }`}
-            title="مشاركة الشاشة"
+          <button
+            onClick={() => setIsScreenSharing(!isScreenSharing)}
+            className={cn(
+              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+              isScreenSharing
+                ? "bg-[#25C6DA] text-white"
+                : "bg-[#1A2236] hover:bg-[#25324E] text-white border border-[#2A3756]"
+            )}
+            title="Share Screen"
           >
-            <ScreenShare className="w-5 h-5" />
-          </Button>
+            <Share2 className="w-5 h-5" />
+          </button>
         )}
 
-        {/* Hand raise */}
-        <Button
-          variant={isHandRaised ? "default" : "outline"}
-          size="icon"
-          onClick={toggleHand}
-          className={`h-11 w-11 rounded-xl border-slate-700 shadow transition-transform hover:scale-105 ${
-            isHandRaised ? "bg-amber-500 text-white" : "text-white bg-slate-800/80 hover:bg-slate-700"
-          }`}
-          title="رفع اليد"
+        {/* Raise Hand */}
+        <button
+          onClick={() => setIsHandRaised(!isHandRaised)}
+          className={cn(
+            "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+            isHandRaised
+              ? "bg-amber-500 text-white"
+              : "bg-[#1A2236] hover:bg-[#25324E] text-white border border-[#2A3756]"
+          )}
+          title="Raise Hand"
         >
           <Hand className="w-5 h-5" />
-        </Button>
+        </button>
+
+        {/* Whiteboard trigger */}
+        {meeting.allow_whiteboard && onOpenWhiteboard && (
+          <button
+            onClick={onOpenWhiteboard}
+            className="w-11 h-11 rounded-full bg-[#1A2236] hover:bg-[#25324E] text-[#25C6DA] border border-[#2A3756] flex items-center justify-center transition-all cursor-pointer shadow-md"
+            title="Open Whiteboard"
+          >
+            <PenTool className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Chat trigger */}
+        {onOpenChat && (
+          <button
+            onClick={onOpenChat}
+            className="w-11 h-11 rounded-full bg-[#1A2236] hover:bg-[#25324E] text-white border border-[#2A3756] flex items-center justify-center transition-all cursor-pointer shadow-md"
+            title="Open Chat"
+          >
+            <MessageSquare className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Participants trigger */}
+        {onOpenParticipants && (
+          <button
+            onClick={onOpenParticipants}
+            className="w-11 h-11 rounded-full bg-[#1A2236] hover:bg-[#25324E] text-white border border-[#2A3756] flex items-center justify-center transition-all cursor-pointer shadow-md"
+            title="Participants"
+          >
+            <Users className="w-5 h-5" />
+          </button>
+        )}
       </div>
     </div>
   );

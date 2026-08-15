@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   CheckSquare,
   Users,
-  Layout,
 } from "lucide-react";
 
 import { useAuth } from "@/providers/AuthProvider";
@@ -25,20 +24,21 @@ import MeetingNotes from "./MeetingNotes";
 import MeetingDecisions from "./MeetingDecisions";
 import MeetingActionItems from "./MeetingActionItems";
 import MeetingParticipants from "./MeetingParticipants";
+import { cn } from "@/lib/utils";
 
 interface MeetingRoomPageProps {
   meetingId: number | string;
 }
 
 type MainViewMode = "media" | "whiteboard";
-type SideTabMode = "chat" | "polls" | "notes" | "decisions" | "action_items" | "participants";
+type SideTabMode = "people" | "chat" | "notes" | "polls" | "decisions" | "action_items";
 
 export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
   const t = useTranslations("meetings");
   const { user } = useAuth();
 
   const [mainView, setMainView] = useState<MainViewMode>("media");
-  const [activeSideTab, setActiveSideTab] = useState<SideTabMode>("chat");
+  const [activeSideTab, setActiveSideTab] = useState<SideTabMode>("people");
 
   const { data: meeting, isLoading, isError } = useMeetingDetails(meetingId);
   const { data: participants = [] } = useMeetingParticipants(meetingId);
@@ -46,7 +46,7 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] gap-3">
-        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
         <p className="text-sm text-muted-foreground font-medium">جاري تجهيز غرفة الاجتماع...</p>
       </div>
     );
@@ -75,34 +75,36 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
 
       {/* ── Main Workspace Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        {/* ── Center / Left Stage Area (Cols 1 to 7 or 8) ── */}
+        {/* ── Center / Left Stage Area (Cols 1 to 8) ── */}
         <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3">
           {/* Main Stage Mode Switcher */}
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl border">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-1.5 bg-[#111827] p-1 rounded-[12px] border border-[#1F2937]">
               <button
                 onClick={() => setMainView("media")}
-                className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer",
                   mainView === "media"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                    ? "bg-[#25C6DA] text-white shadow-sm"
+                    : "text-[#94A3B8] hover:text-white"
+                )}
               >
-                <VideoIcon className="w-4 h-4 text-primary" />
-                <span>{t("roomTabs.media")}</span>
+                <VideoIcon className="w-3.5 h-3.5" />
+                <span>Media Stage</span>
               </button>
 
               {meeting.allow_whiteboard && (
                 <button
                   onClick={() => setMainView("whiteboard")}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  className={cn(
+                    "flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-[8px] transition-all cursor-pointer",
                     mainView === "whiteboard"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                      ? "bg-[#25C6DA] text-white shadow-sm"
+                      : "text-[#94A3B8] hover:text-white"
+                  )}
                 >
-                  <PenTool className="w-4 h-4 text-amber-500" />
-                  <span>{t("roomTabs.whiteboard")}</span>
+                  <PenTool className="w-3.5 h-3.5" />
+                  <span>Whiteboard</span>
                 </button>
               )}
             </div>
@@ -115,110 +117,113 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
               participants={participants}
               onOpenWhiteboard={() => setMainView("whiteboard")}
               onOpenChat={() => setActiveSideTab("chat")}
+              onOpenParticipants={() => setActiveSideTab("people")}
             />
           ) : (
-            <WhiteboardCanvas meetingId={meeting.id} isHost={isHost} />
+            <div className="h-[620px]">
+              <WhiteboardCanvas meetingId={meeting.id} isHost={isHost} />
+            </div>
           )}
         </div>
 
         {/* ── Right Collaboration Panel (Cols 8 to 12) ── */}
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-2">
-          {/* Side Tabs Navigation Bar */}
-          <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border overflow-x-auto">
+          {/* Side Tabs Navigation Bar matching Figma */}
+          <div className="flex items-center gap-1 bg-[#111827] p-1 rounded-[12px] border border-[#1F2937] overflow-x-auto">
             <button
-              onClick={() => setActiveSideTab("chat")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg shrink-0 transition-all ${
-                activeSideTab === "chat"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("roomTabs.chat")}
+              onClick={() => setActiveSideTab("people")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase rounded-[8px] shrink-0 transition-all cursor-pointer",
+                activeSideTab === "people"
+                  ? "bg-[#25C6DA] text-white shadow-sm"
+                  : "text-[#64748B] hover:text-white"
+              )}
             >
-              <MessageSquare className="w-3.5 h-3.5 text-sky-500" />
-              <span>{t("roomTabs.chat")}</span>
+              <Users className="w-3.5 h-3.5" />
+              <span>people</span>
             </button>
 
             <button
-              onClick={() => setActiveSideTab("polls")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg shrink-0 transition-all ${
-                activeSideTab === "polls"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("roomTabs.polls")}
+              onClick={() => setActiveSideTab("chat")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase rounded-[8px] shrink-0 transition-all cursor-pointer",
+                activeSideTab === "chat"
+                  ? "bg-[#25C6DA] text-white shadow-sm"
+                  : "text-[#64748B] hover:text-white"
+              )}
             >
-              <BarChart2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span>{t("roomTabs.polls")}</span>
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>chat</span>
             </button>
 
             <button
               onClick={() => setActiveSideTab("notes")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg shrink-0 transition-all ${
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase rounded-[8px] shrink-0 transition-all cursor-pointer",
                 activeSideTab === "notes"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("roomTabs.notes")}
+                  ? "bg-[#25C6DA] text-white shadow-sm"
+                  : "text-[#64748B] hover:text-white"
+              )}
             >
-              <BookOpen className="w-3.5 h-3.5 text-purple-500" />
-              <span>{t("roomTabs.notes")}</span>
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>notes</span>
+            </button>
+
+            <button
+              onClick={() => setActiveSideTab("polls")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase rounded-[8px] shrink-0 transition-all cursor-pointer",
+                activeSideTab === "polls"
+                  ? "bg-[#25C6DA] text-white shadow-sm"
+                  : "text-[#64748B] hover:text-white"
+              )}
+            >
+              <BarChart2 className="w-3.5 h-3.5" />
+              <span>polls</span>
             </button>
 
             <button
               onClick={() => setActiveSideTab("decisions")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg shrink-0 transition-all ${
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase rounded-[8px] shrink-0 transition-all cursor-pointer",
                 activeSideTab === "decisions"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("roomTabs.decisions")}
+                  ? "bg-[#25C6DA] text-white shadow-sm"
+                  : "text-[#64748B] hover:text-white"
+              )}
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
-              <span>{t("roomTabs.decisions")}</span>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>decisions</span>
             </button>
 
             <button
               onClick={() => setActiveSideTab("action_items")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg shrink-0 transition-all ${
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase rounded-[8px] shrink-0 transition-all cursor-pointer",
                 activeSideTab === "action_items"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("roomTabs.actionItems")}
+                  ? "bg-[#25C6DA] text-white shadow-sm"
+                  : "text-[#64748B] hover:text-white"
+              )}
             >
-              <CheckSquare className="w-3.5 h-3.5 text-red-500" />
-              <span>{t("roomTabs.actionItems")}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSideTab("participants")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg shrink-0 transition-all ${
-                activeSideTab === "participants"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("roomTabs.participants")}
-            >
-              <Users className="w-3.5 h-3.5 text-indigo-500" />
-              <span>{participants.length}</span>
+              <CheckSquare className="w-3.5 h-3.5" />
+              <span>actions</span>
             </button>
           </div>
 
           {/* Active Collaboration Component Container */}
-          <div className="h-[600px]">
+          <div className="h-[620px]">
+            {activeSideTab === "people" && (
+              <MeetingParticipants meetingId={meeting.id} isHost={isHost} />
+            )}
             {activeSideTab === "chat" && <MeetingChat meetingId={meeting.id} />}
+            {activeSideTab === "notes" && <MeetingNotes meetingId={meeting.id} />}
             {activeSideTab === "polls" && (
               <MeetingPolls meetingId={meeting.id} isHost={isHost} />
             )}
-            {activeSideTab === "notes" && <MeetingNotes meetingId={meeting.id} />}
             {activeSideTab === "decisions" && (
               <MeetingDecisions meetingId={meeting.id} isHost={isHost} />
             )}
             {activeSideTab === "action_items" && (
               <MeetingActionItems meetingId={meeting.id} />
-            )}
-            {activeSideTab === "participants" && (
-              <MeetingParticipants meetingId={meeting.id} isHost={isHost} />
             )}
           </div>
         </div>

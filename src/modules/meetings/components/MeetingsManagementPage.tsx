@@ -6,35 +6,29 @@ import { useTranslations } from "next-intl";
 import {
   Video,
   Plus,
-  Calendar,
-  Clock,
-  Users,
-  Copy,
-  ExternalLink,
-  Edit2,
-  Trash2,
-  Lock,
   Radio,
-  Share2,
+  Clock,
+  CheckCircle2,
+  Search,
+  ChevronDown,
+  Edit,
+  Trash2,
+  ExternalLink,
+  Copy,
+  ChevronLeft,
+  ChevronRight,
+  ShieldAlert,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { PageHeader, type PageHeaderAction } from "@/components/molecules/Pageheader";
-import { StatsGrid, type StatItem } from "@/components/molecules/Statsgrid";
-import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
-import { DataTable, type TableColumn, type TableAction } from "@/components/molecules/Datatable";
-import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers/AuthProvider";
-
-import {
-  useMeetings,
-  useDeleteMeeting,
-} from "../hooks/useMeetings";
+import { useMeetings, useDeleteMeeting } from "../hooks/useMeetings";
 import type { Meeting, MeetingStatus, MeetingType } from "../types/meetings.types";
 import CreateMeetingModal from "./CreateMeetingModal";
 import EditMeetingModal from "./EditMeetingModal";
 import JoinByCodeModal from "./JoinByCodeModal";
+import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -44,19 +38,23 @@ export function MeetingsManagementPage() {
   const { user } = useAuth();
   const role = user?.role || "employee";
 
-  // Filter & pagination states
+  // Filter & Pagination States
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Modals states
+  // Modals States
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isJoinByCodeOpen, setIsJoinByCodeOpen] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [deletingMeeting, setDeletingMeeting] = useState<Meeting | null>(null);
 
-  // Queries & Mutations
+  // Status Filter Open Dropdown State
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+
+  // Query & Mutation
   const { data: meetingsResponse, isLoading } = useMeetings({
     search: search || undefined,
     status: selectedStatus !== "all" ? (selectedStatus as MeetingStatus) : undefined,
@@ -72,37 +70,22 @@ export function MeetingsManagementPage() {
   }, [meetingsResponse]);
 
   const totalItems = meetingsResponse?.total || meetings.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
 
-  // Stats calculation
-  const stats: StatItem[] = useMemo(() => {
+  // Compute live stats matching Figma design cards
+  const stats = useMemo(() => {
     const total = totalItems;
-    const upcoming = meetings.filter((m) => m.status === "waiting").length;
     const inProgress = meetings.filter((m) => m.status === "in_progress").length;
-    const ended = meetings.filter((m) => m.status === "ended").length;
+    const scheduled = meetings.filter((m) => m.status === "waiting" || m.type === "scheduled").length;
+    const ended = meetings.filter((m) => m.status === "ended" || m.status === "cancelled").length;
 
-    return [
-      {
-        label: t("stats.total"),
-        value: total,
-        icon: Video,
-      },
-      {
-        label: t("stats.inProgress"),
-        value: inProgress,
-        icon: Radio,
-      },
-      {
-        label: t("stats.upcoming"),
-        value: upcoming,
-        icon: Calendar,
-      },
-      {
-        label: t("stats.ended"),
-        value: ended,
-        icon: Clock,
-      },
-    ];
-  }, [meetings, totalItems, t]);
+    return {
+      total,
+      live: inProgress,
+      scheduled,
+      ended,
+    };
+  }, [meetings, totalItems]);
 
   const handleCopyCode = (code: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -110,243 +93,491 @@ export function MeetingsManagementPage() {
     toast.success(t("codeCopied"));
   };
 
-  const handleCopyLink = (meeting: Meeting) => {
-    const url = `${window.location.origin}/meetings/${meeting.id}`;
-    navigator.clipboard.writeText(url);
-    toast.success(t("linkCopied"));
-  };
-
   const handleEnterRoom = (meetingId: number | string) => {
     router.push(`/meetings/${meetingId}`);
   };
 
-  // Status Badge Helper
+  // Status options
+  const statusOptions = [
+    { label: "All Statuses", value: "all" },
+    { label: "Live", value: "in_progress" },
+    { label: "Waiting", value: "waiting" },
+    { label: "Ended", value: "ended" },
+    { label: "Cancelled", value: "cancelled" },
+  ];
+
+  // Type options
+  const typeOptions = [
+    { label: "All Types", value: "all" },
+    { label: "Scheduled", value: "scheduled" },
+    { label: "Instant", value: "instant" },
+    { label: "Recurring", value: "recurring" },
+  ];
+
+  // Status Badge Formatter matching Figma EXACT styles
   const renderStatusBadge = (status: MeetingStatus) => {
     switch (status) {
       case "in_progress":
         return (
-          <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/30 gap-1.5 animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            {t("status.in_progress")}
-          </Badge>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#EDF7EE] text-[#4CAF50] text-[13px] font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#4CAF50] animate-pulse" />
+            Live
+          </span>
         );
       case "waiting":
         return (
-          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 gap-1.5">
-            <Clock className="w-3 h-3" />
-            {t("status.waiting")}
-          </Badge>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#FFFDEB] text-[#D97706] text-[13px] font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#E8D636]" />
+            Waiting
+          </span>
         );
       case "ended":
         return (
-          <Badge variant="secondary" className="text-muted-foreground gap-1.5">
-            {t("status.ended")}
-          </Badge>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#FEECEB] text-[#F44336] text-[13px] font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#F44336]" />
+            Overdue
+          </span>
         );
       case "cancelled":
         return (
-          <Badge variant="destructive" className="gap-1.5">
-            {t("status.cancelled")}
-          </Badge>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#F3F4F6] text-[#6B7280] text-[13px] font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#9CA3AF]" />
+            Cancelled
+          </span>
         );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-muted text-foreground text-[13px] font-medium">
+            {status}
+          </span>
+        );
     }
   };
 
-  // Columns definition
-  const columns: TableColumn<Meeting>[] = [
-    {
-      key: "title",
-      header: t("columns.title"),
-      render: (meeting) => (
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
-            <span
-              className="font-semibold text-foreground hover:text-primary cursor-pointer transition-colors"
-              onClick={() => handleEnterRoom(meeting.id)}
-            >
-              {meeting.title}
-            </span>
-            {meeting.is_private && (
-              <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-            )}
-          </div>
-          {meeting.description && (
-            <span className="text-xs text-muted-foreground line-clamp-1 max-w-sm">
-              {meeting.description}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "meeting_code",
-      header: t("columns.code"),
-      render: (meeting) => (
-        <button
-          onClick={(e) => handleCopyCode(meeting.meeting_code, e)}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-muted/60 hover:bg-muted font-mono text-xs font-medium text-foreground transition-colors group cursor-pointer"
-        >
-          <span>{meeting.meeting_code}</span>
-          <Copy className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
-        </button>
-      ),
-    },
-    {
-      key: "type",
-      header: t("columns.type"),
-      render: (meeting) => (
-        <Badge variant="outline" className="text-xs capitalize">
-          {t(`type.${meeting.type || "scheduled"}`)}
-        </Badge>
-      ),
-    },
-    {
-      key: "status",
-      header: t("columns.status"),
-      render: (meeting) => renderStatusBadge(meeting.status),
-    },
-    {
-      key: "scheduled_at",
-      header: t("columns.scheduledAt"),
-      render: (meeting) => {
-        if (!meeting.scheduled_at) return <span className="text-muted-foreground text-xs">-</span>;
-        try {
-          const date = new Date(meeting.scheduled_at);
-          return (
-            <div className="text-xs text-muted-foreground flex flex-col">
-              <span className="font-medium text-foreground">{date.toLocaleDateString("ar-EG")}</span>
-              <span>{date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</span>
-            </div>
-          );
-        } catch {
-          return <span className="text-xs text-muted-foreground">{meeting.scheduled_at}</span>;
-        }
-      },
-    },
-    {
-      key: "participants",
-      header: t("columns.participants"),
-      render: (meeting) => (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Users className="w-3.5 h-3.5" />
-          <span>
-            {meeting.participants_count || meeting.participants?.length || 0} / {meeting.max_participants || 25}
-          </span>
-        </div>
-      ),
-    },
-  ];
-
-  // Actions
-  const actions: TableAction<Meeting>[] = [
-    {
-      label: t("joinMeeting"),
-      icon: ExternalLink,
-      onClick: (meeting) => handleEnterRoom(meeting.id),
-      colorScheme: "send",
-    },
-    {
-      label: t("copyLink"),
-      icon: Copy,
-      onClick: (meeting) => handleCopyLink(meeting),
-    },
-    {
-      label: t("editMeeting"),
-      icon: Edit2,
-      onClick: (meeting) => setEditingMeeting(meeting),
-      colorScheme: "edit",
-      hidden: () => role === "client",
-    },
-    {
-      label: t("deleteMeeting"),
-      icon: Trash2,
-      onClick: (meeting) => setDeletingMeeting(meeting),
-      colorScheme: "delete",
-      hidden: () => role === "client",
-    },
-  ];
-
-  // Header Actions
-  const headerActions: PageHeaderAction[] = [
-    {
-      label: t("joinByCode"),
-      onClick: () => setIsJoinByCodeOpen(true),
-      icon: Video,
-      variant: "outline",
-    },
-  ];
-
-  if (role !== "client") {
-    headerActions.push({
-      label: t("createMeeting"),
-      onClick: () => setIsCreateOpen(true),
-      icon: Plus,
-      variant: "solid",
-    });
-  }
+  // Type Badge Formatter matching Figma EXACT styles
+  const renderTypeBadge = (type: MeetingType) => {
+    if (type === "scheduled") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#E6F6FE] text-[#03A9F4] text-[11px] font-bold">
+          scheduled
+        </span>
+      );
+    }
+    if (type === "instant") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FAF5FF] text-[#9810FA] text-[11px] font-bold">
+          instant
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] text-[11px] font-bold">
+        {type}
+      </span>
+    );
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        actions={headerActions}
+    <div className="flex flex-col gap-8 pb-12">
+      {/* ── Background Glow Overlay from Figma ── */}
+      <div
+        className="pointer-events-none fixed top-0 right-0 w-[820px] h-[688px] rounded-full blur-[96px] -z-10"
+        style={{ backgroundColor: "rgba(81, 209, 225, 0.15)" }}
       />
 
-      {/* Stats Cards */}
-      <StatsGrid stats={stats} />
+      {/* ── Page Header (Figma Match) ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-[31px] font-bold tracking-tight text-[#000000] dark:text-white leading-[47px]">
+            Meetings Management
+          </h1>
+          <p className="text-[16px] text-[#424242] dark:text-gray-300 font-normal leading-[24px]">
+            Schedule and manage all meetings across companies
+          </p>
+        </div>
 
-      {/* Filter & Search Bar */}
-      <SearchFilterBar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder={t("searchPlaceholder")}
-        filters={[
-          {
-            value: selectedStatus,
-            onChange: setSelectedStatus,
-            options: [
-              { label: t("status.all"), value: "all" },
-              { label: t("status.waiting"), value: "waiting" },
-              { label: t("status.in_progress"), value: "in_progress" },
-              { label: t("status.ended"), value: "ended" },
-              { label: t("status.cancelled"), value: "cancelled" },
-            ],
-          },
-          {
-            value: selectedType,
-            onChange: setSelectedType,
-            options: [
-              { label: t("type.all"), value: "all" },
-              { label: t("type.scheduled"), value: "scheduled" },
-              { label: t("type.instant"), value: "instant" },
-              { label: t("type.recurring"), value: "recurring" },
-            ],
-          },
-        ]}
-      />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsJoinByCodeOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] border border-[#E2E8F0] bg-white dark:bg-card text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-sm"
+          >
+            <Video className="w-4 h-4 text-[#25C6DA]" />
+            <span>Join by Code</span>
+          </button>
 
-      {/* Table */}
-      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-        <DataTable
-          columns={columns}
-          data={meetings}
-          actions={actions}
-          isLoading={isLoading}
-          emptyMessage={t("emptyDesc")}
-          pagination={{
-            currentPage,
-            pageSize: PAGE_SIZE,
-            totalItems,
-            onPageChange: setCurrentPage,
-          }}
-        />
+          {role !== "client" && (
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="flex items-center justify-center gap-2 px-8 h-[40px] rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[16px] font-medium transition-all shadow-sm cursor-pointer whitespace-nowrap"
+            >
+              <span>+ Add Meeting</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Modals */}
+      {/* ── 4 Stats Cards (Figma Exact Match) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Total */}
+        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-[48px] h-[48px] rounded-[8px] bg-[#E6F6FE] flex items-center justify-center shrink-0">
+              <Video className="w-6 h-6 text-[#03A9F4]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] font-medium text-[#000000] dark:text-gray-300">
+                Total
+              </span>
+              <span className="text-[30px] font-bold text-[#000000] dark:text-white leading-[36px]">
+                {stats.total}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Live */}
+        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-[48px] h-[48px] rounded-[8px] bg-[#EDF7EE] flex items-center justify-center shrink-0">
+              <Radio className="w-6 h-6 text-[#4CAF50]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] font-medium text-[#000000] dark:text-gray-300">
+                Live
+              </span>
+              <span className="text-[30px] font-bold text-[#000000] dark:text-white leading-[36px]">
+                {stats.live}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Scheduled */}
+        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-[48px] h-[48px] rounded-[8px] bg-[#FFFDEB] flex items-center justify-center shrink-0">
+              <Clock className="w-6 h-6 text-[#E8D636]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] font-medium text-[#000000] dark:text-gray-300">
+                Scheduled
+              </span>
+              <span className="text-[30px] font-bold text-[#000000] dark:text-white leading-[36px]">
+                {stats.scheduled}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Ended */}
+        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-[8px] p-6 h-[145px] flex items-center shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-[48px] h-[48px] rounded-[8px] bg-[#FEECEB] flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-6 h-6 text-[#F44336]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] font-medium text-[#000000] dark:text-gray-300">
+                Ended
+              </span>
+              <span className="text-[30px] font-bold text-[#000000] dark:text-white leading-[36px]">
+                {stats.ended}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Table & Filter Area (Figma Exact Match) ── */}
+      <div className="bg-white dark:bg-card rounded-[8px] border border-[#E2E8F0] dark:border-border p-4 flex flex-col gap-4 shadow-sm">
+        {/* Filter Bar */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+          {/* Search Box */}
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#707070]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Searching...."
+              className="w-full h-[48px] pl-12 pr-4 rounded-[8px] border border-[#E1E1E1] dark:border-border bg-white dark:bg-background text-[#000000] dark:text-white text-[16px] placeholder:text-[#707070] focus:outline-none focus:border-[#25C6DA] transition-colors"
+            />
+          </div>
+
+          {/* Filters */}
+          <div className="flex items-center gap-3">
+            {/* Type Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setTypeDropdownOpen(!typeDropdownOpen);
+                  setStatusDropdownOpen(false);
+                }}
+                className="flex items-center justify-between gap-3 px-5 h-[44px] min-w-[170px] rounded-[12px] bg-white dark:bg-background border border-gray-100 dark:border-border shadow-[0px_4px_12px_rgba(0,0,0,0.08)] text-[15px] font-semibold text-[#424242] dark:text-gray-200 cursor-pointer"
+              >
+                <span>{typeOptions.find((o) => o.value === selectedType)?.label}</span>
+                <ChevronDown className={cn("w-4 h-4 text-[#707070] transition-transform", typeDropdownOpen && "rotate-180")} />
+              </button>
+
+              {typeDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-full min-w-[170px] rounded-[12px] bg-white dark:bg-card border border-border shadow-xl z-30 p-1.5 flex flex-col gap-0.5">
+                  {typeOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setSelectedType(opt.value);
+                        setTypeDropdownOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-start px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                        selectedType === opt.value
+                          ? "bg-[#25C6DA]/15 text-[#00838F] font-bold"
+                          : "text-foreground hover:bg-muted"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Status Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusDropdownOpen(!statusDropdownOpen);
+                  setTypeDropdownOpen(false);
+                }}
+                className="flex items-center justify-between gap-3 px-5 h-[44px] min-w-[170px] rounded-[12px] bg-white dark:bg-background border border-gray-100 dark:border-border shadow-[0px_4px_12px_rgba(0,0,0,0.08)] text-[15px] font-semibold text-[#424242] dark:text-gray-200 cursor-pointer"
+              >
+                <span>{statusOptions.find((o) => o.value === selectedStatus)?.label}</span>
+                <ChevronDown className={cn("w-4 h-4 text-[#707070] transition-transform", statusDropdownOpen && "rotate-180")} />
+              </button>
+
+              {statusDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-full min-w-[170px] rounded-[12px] bg-white dark:bg-card border border-border shadow-xl z-30 p-1.5 flex flex-col gap-0.5">
+                  {statusOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStatus(opt.value);
+                        setStatusDropdownOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-start px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                        selectedStatus === opt.value
+                          ? "bg-[#25C6DA]/15 text-[#00838F] font-bold"
+                          : "text-foreground hover:bg-muted"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Table Container ── */}
+        <div className="overflow-x-auto rounded-[8px] border border-[#E2E8F0] dark:border-border">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="h-[40px] bg-[#F1F5F9]/50 dark:bg-muted/40 border-b border-[#E2E8F0] dark:border-border">
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  TITLE
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  Company
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  SCHEDULED
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  CODE
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  TYPE
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  STATUS
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-[#E2E8F0] dark:divide-border bg-white dark:bg-card">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12">
+                    <div className="inline-block w-8 h-8 border-4 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
+                  </td>
+                </tr>
+              ) : meetings.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-[#707070]">
+                    No meetings found.
+                  </td>
+                </tr>
+              ) : (
+                meetings.map((meeting) => {
+                  const companyName =
+                    (meeting as any).company?.name ||
+                    (meeting as any).project?.company?.name ||
+                    (meeting as any).project?.title ||
+                    "Advanced Tech Company";
+
+                  let scheduledFormatted = "-";
+                  if (meeting.scheduled_at) {
+                    try {
+                      scheduledFormatted = new Date(meeting.scheduled_at).toISOString().replace("T", " ").slice(0, 16);
+                    } catch {
+                      scheduledFormatted = meeting.scheduled_at.slice(0, 16);
+                    }
+                  }
+
+                  return (
+                    <tr
+                      key={meeting.id}
+                      onClick={() => handleEnterRoom(meeting.id)}
+                      className="h-[76px] hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors cursor-pointer"
+                    >
+                      {/* Title */}
+                      <td className="px-6">
+                        <span className="text-[14px] font-semibold text-[#111827] dark:text-white hover:text-[#25C6DA] transition-colors">
+                          {meeting.title}
+                        </span>
+                      </td>
+
+                      {/* Company */}
+                      <td className="px-6 text-[13px] font-medium text-[#000000] dark:text-gray-300">
+                        {companyName}
+                      </td>
+
+                      {/* Scheduled */}
+                      <td className="px-6 text-[13px] font-medium text-[#424242] dark:text-gray-300">
+                        {scheduledFormatted}
+                      </td>
+
+                      {/* Code */}
+                      <td className="px-6">
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyCode(meeting.meeting_code, e)}
+                          className="inline-flex items-center gap-1.5 font-mono text-[13px] font-medium text-[#424242] dark:text-gray-300 hover:text-[#25C6DA] transition-colors group"
+                        >
+                          <span>{meeting.meeting_code}</span>
+                          <Copy className="w-3 h-3 text-muted-foreground group-hover:text-[#25C6DA] transition-colors" />
+                        </button>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-6">
+                        {renderTypeBadge(meeting.type || "scheduled")}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6">
+                        {renderStatusBadge(meeting.status)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Join Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleEnterRoom(meeting.id)}
+                            title="Join Meeting"
+                            className="w-8 h-8 rounded-[16px] bg-[#E6F6FE] text-[#03A9F4] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+
+                          {/* Edit Button */}
+                          {role !== "client" && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingMeeting(meeting)}
+                              title="Edit Meeting"
+                              className="w-8 h-8 rounded-[16px] bg-[#EDF7EE] text-[#4CAF50] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Delete Button */}
+                          {role !== "client" && (
+                            <button
+                              type="button"
+                              onClick={() => setDeletingMeeting(meeting)}
+                              title="Delete Meeting"
+                              className="w-8 h-8 rounded-[16px] bg-[#FEECEB] text-[#F44336] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── Pagination Matching Figma ── */}
+        <div className="flex items-center justify-end gap-2 pt-2">
+          {/* Previous Arrow */}
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            className="w-8 h-8 rounded-[8px] bg-[#F5F5F5]/60 dark:bg-muted flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 text-[#000000] dark:text-white" />
+          </button>
+
+          {/* Page numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+            const isActive = p === currentPage;
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setCurrentPage(p)}
+                className={cn(
+                  "w-8 h-8 rounded-[8px] text-[12px] font-semibold flex items-center justify-center transition-colors",
+                  isActive
+                    ? "bg-[#E9F9FB] text-[#000000] dark:text-white font-bold"
+                    : "bg-white dark:bg-card text-[#000000] dark:text-gray-300 hover:bg-gray-100"
+                )}
+              >
+                {p}
+              </button>
+            );
+          })}
+
+          {/* Next Arrow */}
+          <button
+            type="button"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            className="w-8 h-8 rounded-[8px] bg-[#F5F5F5]/60 dark:bg-muted flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4 text-[#000000] dark:text-white" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Modals ── */}
       <CreateMeetingModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}

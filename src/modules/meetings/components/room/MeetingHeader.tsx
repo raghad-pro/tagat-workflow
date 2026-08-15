@@ -1,193 +1,152 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Video,
   Copy,
-  Clock,
+  PhoneOff,
   Radio,
+  Clock,
+  Lock,
   Play,
   Square,
-  LogOut,
-  Lock,
   Users,
-  Folder,
 } from "lucide-react";
 import toast from "react-hot-toast";
-
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/providers/AuthProvider";
-import { useStartMeeting, useEndMeeting } from "../../hooks/useMeetings";
 import type { Meeting } from "../../types/meetings.types";
+import { useStartMeeting, useEndMeeting } from "../../hooks/useMeetings";
+import { cn } from "@/lib/utils";
 
 interface MeetingHeaderProps {
   meeting: Meeting;
-  isHost?: boolean;
+  isHost: boolean;
 }
 
-export default function MeetingHeader({ meeting, isHost = false }: MeetingHeaderProps) {
-  const t = useTranslations("meetings");
+export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  const role = user?.role || "employee";
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const { mutate: startMeeting, isPending: isStarting } = useStartMeeting();
   const { mutate: endMeeting, isPending: isEnding } = useEndMeeting();
 
-  // Elapsed timer for in_progress meetings
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const isLive = meeting.status === "in_progress";
 
   useEffect(() => {
-    if (meeting.status === "in_progress") {
-      const startTime = meeting.started_at
-        ? new Date(meeting.started_at).getTime()
-        : new Date(meeting.updated_at || Date.now()).getTime();
-
-      const updateElapsed = () => {
-        const now = Date.now();
-        const diffInSec = Math.max(0, Math.floor((now - startTime) / 1000));
-        setElapsedSeconds(diffInSec);
-      };
-
-      updateElapsed();
-      const interval = setInterval(updateElapsed, 1000);
-      return () => clearInterval(interval);
+    let interval: any;
+    if (isLive) {
+      interval = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setElapsedSeconds(0);
     }
-  }, [meeting.status, meeting.started_at, meeting.updated_at]);
+    return () => clearInterval(interval);
+  }, [isLive]);
 
   const formatTimer = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-
-    const pad = (n: number) => n.toString().padStart(2, "0");
     if (hours > 0) {
-      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
     }
-    return `${pad(minutes)}:${pad(seconds)}`;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(meeting.meeting_code);
-    toast.success(t("codeCopied"));
+    toast.success("تم نسخ كود الاجتماع!");
   };
 
-  const handleCopyLink = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    toast.success(t("linkCopied"));
+  const handleLeave = () => {
+    router.push("/meetings");
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-card border rounded-xl shadow-sm">
-      {/* Title & Metadata */}
-      <div className="flex items-center gap-3">
-        <Link href="/meetings">
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg">
-            <ArrowRight className="w-5 h-5 rtl:rotate-0 ltr:rotate-180" />
-          </Button>
-        </Link>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-[14px] bg-[#111827] text-white border border-[#1F2937] shadow-lg">
+      {/* Title & Live Status */}
+      <div className="flex items-center gap-3.5 flex-wrap">
+        <div className="w-10 h-10 rounded-[10px] bg-[#1A2236] flex items-center justify-center text-[#25C6DA] shrink-0 border border-[#1F2937]">
+          <Radio className={cn("w-5 h-5", isLive && "animate-pulse")} />
+        </div>
 
-        <div>
+        <div className="flex flex-col">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold text-foreground">{meeting.title}</h1>
+            <h1 className="text-[18px] font-bold tracking-tight text-white">
+              {meeting.title}
+            </h1>
             {meeting.is_private && (
-              <Badge variant="outline" className="text-xs gap-1 py-0 bg-muted/50">
-                <Lock className="w-3 h-3" />
-                <span>خاص</span>
-              </Badge>
-            )}
-            {meeting.project && (
-              <Badge variant="secondary" className="text-xs gap-1 py-0">
-                <Folder className="w-3 h-3" />
-                <span>{meeting.project.name || meeting.project.title}</span>
-              </Badge>
+              <span className="p-1 rounded bg-[#1A2236] text-[#94A3B8]">
+                <Lock className="w-3.5 h-3.5" />
+              </span>
             )}
           </div>
 
-          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-            {/* Meeting code */}
+          <div className="flex items-center gap-3 text-[12px] text-[#94A3B8] font-medium mt-0.5">
+            {/* Meeting Code button */}
             <button
               onClick={handleCopyCode}
-              className="inline-flex items-center gap-1 hover:text-primary font-mono font-medium transition-colors"
-              title={t("copyCode")}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1A2236] hover:bg-[#222F4C] text-[#25C6DA] font-mono transition-colors group cursor-pointer"
             >
               <span>{meeting.meeting_code}</span>
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3 h-3 text-[#94A3B8] group-hover:text-[#25C6DA]" />
             </button>
 
-            {/* Status & Timer */}
-            {meeting.status === "in_progress" ? (
-              <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span>{t("status.in_progress")}</span>
-                <span className="font-mono bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded text-emerald-700 dark:text-emerald-300">
-                  {formatTimer(elapsedSeconds)}
-                </span>
-              </div>
+            {/* Live Indicator */}
+            {isLive ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EDF7EE]/15 text-[#4CAF50] font-bold">
+                <span className="w-2 h-2 rounded-full bg-[#4CAF50] animate-ping" />
+                Live
+              </span>
             ) : (
-              <div className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{t(`status.${meeting.status}`)}</span>
-              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1A2236] text-[#D97706]">
+                <Clock className="w-3 h-3" />
+                {meeting.status}
+              </span>
+            )}
+
+            {/* Timer */}
+            {isLive && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1A2236] text-white font-mono">
+                {formatTimer(elapsedSeconds)}
+              </span>
             )}
           </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 self-end md:self-center">
-        <Button variant="outline" size="sm" onClick={handleCopyLink} className="gap-1.5">
-          <Copy className="w-3.5 h-3.5" />
-          <span>{t("copyLink")}</span>
-        </Button>
-
-        {/* Start button for host if waiting */}
-        {isHost && meeting.status === "waiting" && (
-          <Button
-            size="sm"
+      <div className="flex items-center gap-2.5 self-end sm:self-auto">
+        {isHost && !isLive && meeting.status !== "ended" && (
+          <button
             onClick={() => startMeeting(meeting.id)}
             disabled={isStarting}
-            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="flex items-center gap-1.5 px-4 h-[36px] rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[13px] font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
           >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{t("startMeeting")}</span>
-          </Button>
+            <Play className="w-4 h-4 fill-white" />
+            <span>Start Meeting</span>
+          </button>
         )}
 
-        {/* End button for host if in_progress */}
-        {isHost && meeting.status === "in_progress" && (
-          <Button
-            size="sm"
-            variant="destructive"
+        {isHost && isLive && (
+          <button
             onClick={() => endMeeting(meeting.id)}
             disabled={isEnding}
-            className="gap-1.5"
+            className="flex items-center gap-1.5 px-4 h-[36px] rounded-[8px] bg-red-600/90 hover:bg-red-700 text-white text-[13px] font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
           >
-            <Square className="w-3.5 h-3.5 fill-current" />
-            <span>{t("endMeeting")}</span>
-          </Button>
+            <Square className="w-3.5 h-3.5 fill-white" />
+            <span>End Meeting</span>
+          </button>
         )}
 
-        {/* Leave Room button */}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => router.push("/meetings")}
-          className="gap-1.5 text-muted-foreground hover:text-destructive"
+        {/* Leave Meeting matching Figma button */}
+        <button
+          onClick={handleLeave}
+          className="flex items-center gap-1.5 px-4 h-[36px] rounded-[8px] bg-[#FEECEB] hover:bg-red-100 text-[#F44336] text-[13px] font-bold transition-colors cursor-pointer"
         >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>{t("leaveMeeting")}</span>
-        </Button>
+          <PhoneOff className="w-4 h-4" />
+          <span>Leave Meeting</span>
+        </button>
       </div>
     </div>
   );
