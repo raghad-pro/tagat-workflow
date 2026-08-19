@@ -143,7 +143,7 @@ export const profileApi = {
   deleteAccount: async (role: Role) => {
     const prefix = getPrefix(role);
     const res = await apiClient.delete<ProfileApiResponse>(`${prefix}/account/delete`, {
-      data: { account_activation: true },
+      account_activation: true,
     });
     return res.data;
   },

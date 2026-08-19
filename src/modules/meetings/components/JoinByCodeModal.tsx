@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Video } from "lucide-react";
 import toast from "react-hot-toast";
+import { useAuth } from "@/providers/AuthProvider";
+import { meetingsApi } from "../api/meetings.api";
 
 interface JoinByCodeModalProps {
   isOpen: boolean;
@@ -17,28 +19,60 @@ interface JoinByCodeModalProps {
 export default function JoinByCodeModal({ isOpen, onClose }: JoinByCodeModalProps) {
   const t = useTranslations("meetings");
   const router = useRouter();
+  const { user } = useAuth();
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleJoin = () => {
-    const cleanCode = code.trim();
-    if (!cleanCode) {
-      toast.error("يرجى إدخال كود الاجتماع");
+  const handleJoin = async () => {
+    const cleanInput = code.trim();
+    if (!cleanInput) {
+      toast.error("يرجى إدخال كود الاجتماع أو رابط الدعوة");
       return;
     }
 
     setIsLoading(true);
-    let finalIdOrCode = cleanCode;
-    if (cleanCode.includes("/meetings/")) {
-      finalIdOrCode = cleanCode.split("/meetings/")[1].split("?")[0].replace("/", "");
-    }
+    try {
+      // Accept either a raw code, a numeric ID, or a copied room URL.
+      let requestedValue = cleanInput;
+      try {
+        const parsed = new URL(cleanInput);
+        const roomMatch = parsed.pathname.match(/\/meetings\/([^/]+)/i);
+        if (roomMatch?.[1]) requestedValue = decodeURIComponent(roomMatch[1]);
+      } catch {
+        const roomMatch = cleanInput.match(/(?:^|\/)meetings\/([^/?#]+)/i);
+        if (roomMatch?.[1]) requestedValue = decodeURIComponent(roomMatch[1]);
+      }
 
-    onClose();
-    setIsLoading(false);
-    setCode("");
-    setPassword("");
-    router.push(`/meetings/${encodeURIComponent(finalIdOrCode)}${password ? `?pwd=${encodeURIComponent(password)}` : ""}`);
+      let meetingId = /^\d+$/.test(requestedValue) ? requestedValue : "";
+      if (!meetingId) {
+        const role = user?.role || "employee";
+        const result = await meetingsApi.getAll(role, {
+          search: requestedValue,
+          page: 1,
+          per_page: 25,
+        });
+        const normalized = requestedValue.toLowerCase();
+        const meeting = result.data.find(
+          (item) => item.meeting_code?.toLowerCase() === normalized
+        );
+        meetingId = meeting ? String(meeting.id) : "";
+      }
+
+      if (!meetingId) {
+        toast.error("لم يتم العثور على اجتماع بهذا الكود");
+        return;
+      }
+
+      onClose();
+      setCode("");
+      setPassword("");
+      router.push(`/meetings/${encodeURIComponent(meetingId)}${password ? `?pwd=${encodeURIComponent(password)}` : ""}`);
+    } catch (error: any) {
+      toast.error(error?.message || "تعذر الوصول إلى الاجتماع");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

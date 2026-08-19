@@ -16,3 +16,4 @@ for (const file of files) {
 }
 console.log("Fixed imports in new components");
 console.log("this is test");
+console.log("this is test for me and for us and for you ")

@@ -954,6 +954,28 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
           {/* Vertical Divider (w:1px, h:24px, bg:#1E293B) */}
           <div className="w-[1px] h-6 bg-[#1E293B] mx-1" />
 
+          {/* End Meeting Button (only for host) */}
+          {isHost && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Are you sure you want to end the meeting for everyone?")) {
+                  endMeeting(meetingId, {
+                    onSuccess: () => {
+                      if (localStreamRef.current) localStreamRef.current.getTracks().forEach((t) => t.stop());
+                      if (screenStreamRef.current) screenStreamRef.current.getTracks().forEach((t) => t.stop());
+                      router.push("/meetings");
+                    }
+                  });
+                }
+              }}
+              className="h-10 px-5 rounded-[16px] bg-[#161B22] text-[#EF4444] border border-[#EF4444]/30 hover:bg-[#EF4444]/10 font-bold text-[14px] flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <PhoneOff size={15} />
+              <span>End Meeting</span>
+            </button>
+          )}
+
           {/* Leave Meeting Button (w:164px, h:40px, gradient red from Figma) */}
           <button
             type="button"

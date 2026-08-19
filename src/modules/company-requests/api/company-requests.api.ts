@@ -5,12 +5,14 @@ import type {
   JoinRequestStats,
 } from "../types/company-requests.types";
 
+import { getRolePrefix } from "@/utils/rolePrefix";
+
 // الـ backend بيعرف الـ role من الـ token تلقائياً
 // super_admin  → /super_admin/requests
 // company → /company/requests
 // بس بنحتاج الـ role لـ approve/reject بعد ما بيرجع من أول response
 const getBasePath = (role: string) =>
-  role === "super_admin" ? "/super_admin/requests" : "/company/requests";
+  `${getRolePrefix(role)}/requests`;
 
 export const joinRequestApi = {
   // ─── GET — بدون role، الـ backend بيختار الـ endpoint من الـ token ──────────
@@ -20,8 +22,28 @@ export const joinRequestApi = {
       params as Record<string, unknown>
     ),
 
-  getStats: (role = "super_admin") =>
-    apiClient.get<JoinRequestStats>(`${getBasePath(role)}/stats`),
+  getStats: async (role = "super_admin") => {
+    try {
+      return await apiClient.get<JoinRequestStats>(`${getBasePath(role)}/stats`);
+    } catch (error: any) {
+      // The backend currently returns 404 for /requests/stats. Derive the same
+      // counters from the working list endpoint until the backend route exists.
+      if (error?.response?.status !== 404) throw error;
+      const response = await joinRequestApi.getAll(role);
+      const clients = Array.isArray((response as any)?.data) ? (response as any).data : [];
+      const statuses = clients.flatMap((client: any) =>
+        Array.isArray(client.companies)
+          ? client.companies.map((company: any) => company?.pivot?.status)
+          : []
+      );
+      return {
+        total: statuses.length,
+        pending: statuses.filter((status: string) => status === "pending").length,
+        approved: statuses.filter((status: string) => status === "approved").length,
+        rejected: statuses.filter((status: string) => status === "rejected").length,
+      };
+    }
+  },
 
   // ─── POST — محتاجين الـ role هون عشان نختار الـ endpoint الصح ───────────────
   approve: (role: string, clientId: number, companyId: number) =>
