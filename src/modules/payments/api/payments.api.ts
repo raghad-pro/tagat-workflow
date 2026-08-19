@@ -93,7 +93,7 @@ export const paymentApi = {
 
   payInvoice: async (role: string, invoiceId: string | number, gateway: string) => {
     const response = await apiClient.post<ApiResponse<{ payment_url: string }>>(
-      `${getRolePrefix(role)}/${invoiceId}/pay`,
+      `${getRolePrefix(role)}/invoices/${invoiceId}/pay`,
       { payment_gateway: gateway }
     );
     return response.data;

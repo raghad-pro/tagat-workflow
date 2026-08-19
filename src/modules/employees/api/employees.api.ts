@@ -23,23 +23,17 @@ export const employeeApi = {
   },
 
   getAvailableUsers: async (role: string) => {
-    const response = await apiClient.get(`${getRolePrefix(role)}/availbale-user`);
-    const payload = (response as any).data;
-    
-    const items = Array.isArray(payload) ? payload : (payload?.data || []);
-    // Map bare User objects to ensure resolveUserId finds the user_id
-    const mapped = items.map((u: any) => ({
-      ...u,
-      user_id: u.user_id ?? u.id
+    // The former /availbale-user endpoint is not published by the backend.
+    // Use the working employees paginator and normalize its records for callers.
+    const result = await employeeApi.getAllPages(role);
+    const mapped = result.data.map((employee: any) => ({
+      ...employee,
+      user_id: employee.user_id ?? employee.user?.id ?? employee.id,
     }));
-
-    if (Array.isArray(payload)) {
-      return { data: mapped, meta: { total: mapped.length } };
-    }
 
     return {
       data: mapped,
-      meta: payload?.meta || { total: mapped.length || payload?.total || 0 },
+      meta: result.meta || { total: mapped.length },
     };
   },
 

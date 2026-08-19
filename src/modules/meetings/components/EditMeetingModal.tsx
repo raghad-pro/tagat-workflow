@@ -308,8 +308,29 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
           {/* ── Features & Checkboxes Container ── */}
           <div className="border border-dashed border-[#CBD5E0] dark:border-gray-700 rounded-[10px] p-3.5 flex flex-col gap-2.5">
             {/* Private Meeting pill */}
-            <div className="bg-[#F8FAFC] dark:bg-[#2D3748]/60 rounded-[6px] p-2.5 flex items-center gap-3">
+            <div className="bg-[#F8FAFC] dark:bg-[#2D3748]/60 rounded-[6px] p-2.5 flex flex-col gap-2">
               <CustomCheckbox name="is_private" label="Private meeting" />
+              {form.watch("is_private") && (
+                <div className="flex flex-col gap-1 ps-6">
+                  <label className="text-[12px] font-semibold text-[#1A202C] dark:text-gray-200" htmlFor="edit-meeting-password">
+                    Meeting password
+                  </label>
+                  <input
+                    id="edit-meeting-password"
+                    type="password"
+                    {...form.register("password", {
+                      validate: (value) => !form.getValues("is_private") || Boolean(value?.trim()) || "Password is required for private meetings",
+                    })}
+                    placeholder="Enter a password"
+                    className="w-full h-[36px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors"
+                  />
+                  {form.formState.errors.password && (
+                    <span className="text-[11px] text-red-500 font-medium">
+                      {String(form.formState.errors.password.message)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Features list */}

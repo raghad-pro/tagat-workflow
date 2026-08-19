@@ -16,9 +16,11 @@ function walk(dir) {
       content = content.replace(/setOverrides\(data: any\)/g, 'setOverrides(data)');
       
       fs.writeFileSync(filePath, content);
+    
     }
   }
 }
 
 walk('C:\\Users\\MahmoudSalem\\Documents\\tagat-workflow\\src\\modules\\landing');
 console.log('Fixed syntax errors');
+console.log("this is the first thing of you")

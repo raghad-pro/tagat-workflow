@@ -15,7 +15,7 @@ export const authApi = {
   // ─── Auth ────────────────────────────────────────────────────────────────────
   login: async (data: LoginRequest) => {
     const response = await apiClient.post<ApiAuthResponse>("/login", data);
-    return response.data;
+    return response;
   },
 
   /**
@@ -47,24 +47,24 @@ export const authApi = {
     if (data.logo) formData.append("logo", data.logo);
 
     const response = await apiClient.post<ApiAuthResponse>("/register", formData);
-    return response.data;
+    return response;
   },
 
   logout: async () => {
     const response = await apiClient.post<MessageResponse>("/logout");
-    return (response as any).data || response;
+    return response;
   },
 
   // ─── Forgot Password ─────────────────────────────────────────────────────────
   forgotPassword: async (data: ForgotPasswordRequest) => {
     const response = await apiClient.post<MessageResponse>("/forgot-password", data);
-    return (response as any).data || response;
+    return response;
   },
 
   
   resendVerificationCode: async (data: { email: string }) => {
     const response = await apiClient.post<{ status: number; message: string }>('/resend-verification-code', data);
-    return (response as any).data || response;
+    return response;
   },
 
   verifyEmailOtp: async (data: VerifyOtpRequest) => {
@@ -74,7 +74,7 @@ export const authApi = {
 
   verifyOtp: async (data: VerifyOtpRequest) => {
     const response = await apiClient.post<{ success: boolean; data: VerifyOtpResponse }>("/verify-otp", data);
-    return response.data;
+    return response;
   },
 
   verifyOtpForgotPassword: async (data: VerifyOtpRequest) => {
@@ -84,6 +84,6 @@ export const authApi = {
 
   resetPassword: async (data: ResetPasswordRequest) => {
     const response = await apiClient.post<MessageResponse>("/reset-password", data);
-    return (response as any).data || response;
+    return response;
   },
 };

@@ -1,5 +1,5 @@
 import { use } from "react";
-import { MeetingRoomPage } from "@/modules/meetings/components/room/MeetingRoomPage";
+import { MeetingDetailsContainer } from "@/modules/meetings/components/MeetingDetailsContainer";
 import RoleGuard from "@/guards/RoleGuard";
 
 interface MeetingDetailsPageProps {
@@ -14,7 +14,7 @@ export default function MeetingDetailsPage({ params }: MeetingDetailsPageProps) 
       allowedRoles={["super_admin", "company", "employee", "client"]}
       grantedByPermission="meetings.view"
     >
-      <MeetingRoomPage meetingId={id} />
+      <MeetingDetailsContainer meetingId={id} />
     </RoleGuard>
   );
 }
