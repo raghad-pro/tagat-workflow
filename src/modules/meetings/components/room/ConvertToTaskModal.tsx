@@ -11,6 +11,7 @@ import { Form } from "@/components/ui/form";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { useEmployees } from "@/modules/employees/hooks/useEmployees";
 import {
+  useMeetingDetails,
   useConvertDecisionToTask,
   useConvertActionItemToTask,
   useConvertMessageToTask,
@@ -51,6 +52,7 @@ export default function ConvertToTaskModal({
   defaultPriority = "medium",
 }: ConvertToTaskModalProps) {
   const t = useTranslations("meetings");
+  const { data: meeting } = useMeetingDetails(meetingId);
   const { data: projectsData } = useProjects({ per_page: 100 });
   const { data: employeesData } = useEmployees({ per_page: 100 });
 
@@ -83,15 +85,24 @@ export default function ConvertToTaskModal({
     }
   }, [isOpen, defaultTitle, defaultDescription, defaultAssigneeId, defaultPriority, form]);
 
-  const projectOptions = (projectsData?.data || []).map((p: any) => ({
-    value: String(p.id),
-    label: p.title || p.name || `Project #${p.id}`,
-  }));
+  // Conversion fails with "The project must belong to this meeting's company",
+  // so only offer projects (and assignees) from the meeting's own company.
+  const belongsToMeetingCompany = (row: any) =>
+    !meeting?.company_id || Number(row.company_id) === Number(meeting.company_id);
 
-  const employeeOptions = (employeesData?.data || []).map((e: any) => ({
-    value: String(e.id || e.user_id),
-    label: e.name || e.user?.name || `Employee #${e.id}`,
-  }));
+  const projectOptions = (projectsData?.data || [])
+    .filter(belongsToMeetingCompany)
+    .map((p: any) => ({
+      value: String(p.id),
+      label: p.title || p.name || `Project #${p.id}`,
+    }));
+
+  const employeeOptions = (employeesData?.data || [])
+    .filter(belongsToMeetingCompany)
+    .map((e: any) => ({
+      value: String(e.id || e.user_id),
+      label: e.name || e.user?.name || `Employee #${e.id}`,
+    }));
 
   const priorityOptions = [
     { value: "low", label: "منخفضة (Low)" },

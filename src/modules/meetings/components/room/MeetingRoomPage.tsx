@@ -20,22 +20,29 @@ import {
   VideoOff,
   ScreenShare,
   PhoneOff,
-  Hand,
-  Settings,
-  X,
+  LayoutGrid,
+  User,
   Volume2,
-  VolumeX,
+  Hand,
+  Settings2,
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { RoomContext, RoomAudioRenderer } from "@livekit/components-react";
+import { RoomEvent } from "livekit-client";
 
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingDetails,
   useMeetingParticipants,
-  useJoinMeeting,
   useLeaveMeeting,
   useEndMeeting,
 } from "../../hooks/useMeetings";
+import { useLiveKitRoom } from "../../hooks/useLiveKitRoom";
+import { useMeetingPermissions } from "../../hooks/useMeetingPermissions";
+import { useMediaPreferences } from "../../hooks/useMediaPreferences";
+import LiveParticipantGrid, { type MediaLayout } from "./LiveParticipantGrid";
+import MeetingSettingsPanel from "./MeetingSettingsPanel";
 import WhiteboardCanvas from "./WhiteboardCanvas";
 import MeetingChat from "./MeetingChat";
 import MeetingPolls from "./MeetingPolls";
@@ -47,6 +54,10 @@ import { cn } from "@/lib/utils";
 
 interface MeetingRoomPageProps {
   meetingId: number | string;
+  /** Password collected by the gate for private meetings. */
+  password?: string | null;
+  /** Called after the user leaves, so the caller can clear the stored session. */
+  onLeave?: () => void;
 }
 
 type SideDrawerTab =
@@ -57,341 +68,79 @@ type SideDrawerTab =
   | "polls"
   | "decisions"
   | "action_items"
+  | "settings"
   | null;
 
-interface PeerState {
-  userId: number;
-  name: string;
-  isMicOn: boolean;
-  isCamOn: boolean;
-  isHandRaised: boolean;
-  isScreenSharing: boolean;
-  lastSeen: number;
-}
-
-export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
+export function MeetingRoomPage({
+  meetingId,
+  password: passwordProp,
+  onLeave,
+}: MeetingRoomPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pwd = searchParams.get("pwd");
+  // The password can arrive either as a prop (pre-join password prompt) or as
+  // a `?pwd=` query param (the "join by code" deep link) — prefer the prop.
+  const pwd = passwordProp ?? searchParams.get("pwd");
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const screenVideoRef = useRef<HTMLVideoElement>(null);
+  // Owned here rather than handed in, so the in-room settings panel edits the
+  // same object the session is running on.
+  const { preferences, update: updatePreferences } = useMediaPreferences();
 
   // UI States
   const [activeSideDrawer, setActiveSideDrawer] = useState<SideDrawerTab>(null);
   const [isWhiteboardMain, setIsWhiteboardMain] = useState(false);
-  const [isMicOn, setIsMicOn] = useState(false);
-  const [isCamOn, setIsCamOn] = useState(false);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [isHandRaised, setIsHandRaised] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [peersState, setPeersState] = useState<Record<number, PeerState>>({});
-
-  // Media Streams refs
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const screenStreamRef = useRef<MediaStream | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+  const [layout, setLayout] = useState<MediaLayout>("grid");
+  const [pinnedIdentity, setPinnedIdentity] = useState<string | null>(null);
+  // Browsers block autoplay of remote audio until the page has been interacted
+  // with; LiveKit exposes that as `canPlaybackAudio`.
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
   // Queries & Mutations
   const { data: meeting, isLoading, isError } = useMeetingDetails(meetingId);
   const { data: participants = [] } = useMeetingParticipants(meetingId);
-  const { mutate: joinMeeting } = useJoinMeeting();
   const { mutate: leaveMeeting } = useLeaveMeeting();
   const { mutate: endMeeting } = useEndMeeting();
+  const permissions = useMeetingPermissions(meetingId);
+
+  // Real-time media session. `media/join` also registers us on the roster, so
+  // there is no separate join call to make here.
+  const {
+    room,
+    isConnected,
+    isConnecting,
+    error: mediaError,
+    canPublish,
+    canShareScreen,
+    isMicOn,
+    isCamOn,
+    isScreenSharing,
+    isHandRaised,
+    remoteHands,
+    controls,
+    disconnect,
+  } = useLiveKitRoom(meetingId, { password: pwd, preferences });
 
   // Find our participant record
-  const myParticipant = participants.find((p: any) => p.user_id === user?.id);
+  const myParticipant = participants.find(
+    (p: any) => Number(p.user_id) === Number(user?.id)
+  );
   const myParticipantId = myParticipant?.id;
 
-  // 1. Auto-Join Meeting on mount
+  // Deliberately no `beforeunload` leave beacon: a reload fires it too, which
+  // used to drop the user from the roster. `media/join` on mount re-registers
+  // the participant, and the server prunes stale rows on its own.
+
   useEffect(() => {
-    if (meetingId) {
-      joinMeeting({
-        meetingId,
-        payload: pwd ? { password: pwd } : undefined,
-      });
-    }
-  }, [meetingId, joinMeeting, pwd]);
-
-  // 2. Broadcast Channel for real-time peer state synchronization across tabs/windows
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const channelName = `tagat_meeting_${meetingId}`;
-      const channel = new BroadcastChannel(channelName);
-      broadcastChannelRef.current = channel;
-
-      channel.onmessage = (event) => {
-        const data = event.data;
-        if (!data || !data.userId || data.userId === user?.id) return;
-
-        if (data.type === "peer_update") {
-          setPeersState((prev) => ({
-            ...prev,
-            [data.userId]: {
-              userId: data.userId,
-              name: data.name || "Participant",
-              isMicOn: Boolean(data.isMicOn),
-              isCamOn: Boolean(data.isCamOn),
-              isHandRaised: Boolean(data.isHandRaised),
-              isScreenSharing: Boolean(data.isScreenSharing),
-              lastSeen: Date.now(),
-            },
-          }));
-        } else if (data.type === "peer_leave") {
-          setPeersState((prev) => {
-            const next = { ...prev };
-            delete next[data.userId];
-            return next;
-          });
-        }
-      };
-
-      // Announce arrival
-      channel.postMessage({
-        type: "peer_update",
-        userId: user?.id || 1,
-        name: user?.name || "Participant",
-        isMicOn,
-        isCamOn,
-        isHandRaised,
-        isScreenSharing,
-      });
-
-      return () => {
-        channel.postMessage({
-          type: "peer_leave",
-          userId: user?.id || 1,
-        });
-        channel.close();
-      };
-    } catch {
-      // BroadcastChannel not supported in some test envs
-    }
-  }, [meetingId, user?.id, user?.name]);
-
-  // 3. Periodic Heartbeat Ping & Stale Peer Pruning (Every 2.5s)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (broadcastChannelRef.current && user?.id) {
-        broadcastChannelRef.current.postMessage({
-          type: "peer_update",
-          userId: user.id,
-          name: user.name || "Participant",
-          isMicOn,
-          isCamOn,
-          isHandRaised,
-          isScreenSharing,
-        });
-      }
-
-      // Prune stale peers (> 6s since last ping)
-      const now = Date.now();
-      setPeersState((prev) => {
-        let changed = false;
-        const updated = { ...prev };
-        for (const [idStr, peer] of Object.entries(updated)) {
-          if (now - peer.lastSeen > 6000) {
-            delete updated[Number(idStr)];
-            changed = true;
-          }
-        }
-        return changed ? updated : prev;
-      });
-    }, 2500);
-
-    return () => clearInterval(interval);
-  }, [user?.id, user?.name, isMicOn, isCamOn, isHandRaised, isScreenSharing]);
-
-  // 4. Handle Window Close / Unload Event
-  useEffect(() => {
-    const onUnload = () => {
-      if (broadcastChannelRef.current && user?.id) {
-        broadcastChannelRef.current.postMessage({
-          type: "peer_leave",
-          userId: user.id,
-        });
-      }
-      if (myParticipantId) {
-        const prefix = user?.role ? `/${user.role}` : "/employee";
-        const leaveUrl = `/backend-api${prefix}/meeting-participants/${myParticipantId}/leave`;
-        navigator.sendBeacon?.(leaveUrl);
-      }
+    if (!room) return;
+    const sync = () => setAudioBlocked(!room.canPlaybackAudio);
+    sync();
+    room.on(RoomEvent.AudioPlaybackStatusChanged, sync);
+    return () => {
+      room.off(RoomEvent.AudioPlaybackStatusChanged, sync);
     };
-    window.addEventListener("beforeunload", onUnload);
-    return () => window.removeEventListener("beforeunload", onUnload);
-  }, [myParticipantId, user?.id, user?.role]);
-
-  // Broadcast our local changes
-  const broadcastMyState = useCallback(
-    (updates: Partial<{ isMicOn: boolean; isCamOn: boolean; isHandRaised: boolean; isScreenSharing: boolean }>) => {
-      if (broadcastChannelRef.current && user?.id) {
-        broadcastChannelRef.current.postMessage({
-          type: "peer_update",
-          userId: user.id,
-          name: user.name || "Participant",
-          isMicOn: updates.isMicOn !== undefined ? updates.isMicOn : isMicOn,
-          isCamOn: updates.isCamOn !== undefined ? updates.isCamOn : isCamOn,
-          isHandRaised: updates.isHandRaised !== undefined ? updates.isHandRaised : isHandRaised,
-          isScreenSharing: updates.isScreenSharing !== undefined ? updates.isScreenSharing : isScreenSharing,
-        });
-      }
-    },
-    [user?.id, user?.name, isMicOn, isCamOn, isHandRaised, isScreenSharing]
-  );
-
-  // 3. Audio & Mic Processing
-  const startAudioProcessing = (stream: MediaStream) => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const audioCtx = new AudioCtx();
-      audioContextRef.current = audioCtx;
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyserRef.current = analyser;
-
-      const source = audioCtx.createMediaStreamSource(stream);
-      source.connect(analyser);
-
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const checkVolume = () => {
-        if (!analyserRef.current) return;
-        analyserRef.current.getByteFrequencyData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const avg = sum / bufferLength;
-        setIsSpeaking(avg > 18);
-        animFrameRef.current = requestAnimationFrame(checkVolume);
-      };
-      checkVolume();
-    } catch {
-      // Ignore audio context initialization error if blocked
-    }
-  };
-
-  // Toggle Microphone
-  const toggleMic = async () => {
-    try {
-      const nextMicState = !isMicOn;
-      if (nextMicState) {
-        if (!localStreamRef.current) {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          localStreamRef.current = stream;
-          startAudioProcessing(stream);
-        } else {
-          localStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = true));
-        }
-        setIsMicOn(true);
-        toast.success("Microphone enabled");
-      } else {
-        if (localStreamRef.current) {
-          localStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = false));
-        }
-        setIsMicOn(false);
-        setIsSpeaking(false);
-        toast.success("Microphone muted");
-      }
-      broadcastMyState({ isMicOn: nextMicState });
-    } catch (err: any) {
-      toast.error("Could not access microphone: " + (err?.message || "Permission denied"));
-      setIsMicOn(false);
-    }
-  };
-
-  // Toggle Camera
-  const toggleCamera = async () => {
-    try {
-      const nextCamState = !isCamOn;
-      if (nextCamState) {
-        let stream = localStreamRef.current;
-        if (!stream || stream.getVideoTracks().length === 0) {
-          const newStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 640 }, height: { ideal: 360 } },
-            audio: isMicOn,
-          });
-          localStreamRef.current = newStream;
-          stream = newStream;
-          if (isMicOn) startAudioProcessing(newStream);
-        } else {
-          stream.getVideoTracks().forEach((t) => (t.enabled = true));
-        }
-
-        setIsCamOn(true);
-        if (localVideoRef.current && stream) {
-          localVideoRef.current.srcObject = stream;
-          localVideoRef.current.play().catch(() => {});
-        }
-        toast.success("Camera turned on");
-      } else {
-        if (localStreamRef.current) {
-          localStreamRef.current.getVideoTracks().forEach((t) => (t.enabled = false));
-        }
-        setIsCamOn(false);
-        toast.success("Camera turned off");
-      }
-      broadcastMyState({ isCamOn: nextCamState });
-    } catch (err: any) {
-      toast.error("Could not access camera: " + (err?.message || "Permission denied"));
-      setIsCamOn(false);
-    }
-  };
-
-  // Toggle Screen Share
-  const toggleScreenShare = async () => {
-    try {
-      if (!isScreenSharing) {
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true,
-        });
-        screenStreamRef.current = stream;
-        setIsScreenSharing(true);
-
-        if (screenVideoRef.current) {
-          screenVideoRef.current.srcObject = stream;
-          screenVideoRef.current.play().catch(() => {});
-        }
-
-        stream.getVideoTracks()[0].onended = () => {
-          setIsScreenSharing(false);
-          broadcastMyState({ isScreenSharing: false });
-        };
-        toast.success("Screen sharing started");
-        broadcastMyState({ isScreenSharing: true });
-      } else {
-        if (screenStreamRef.current) {
-          screenStreamRef.current.getTracks().forEach((t) => t.stop());
-          screenStreamRef.current = null;
-        }
-        setIsScreenSharing(false);
-        toast.success("Screen sharing stopped");
-        broadcastMyState({ isScreenSharing: false });
-      }
-    } catch (err: any) {
-      if (err.name !== "AbortError") {
-        toast.error("Screen share error: " + (err?.message || "Permission denied"));
-      }
-      setIsScreenSharing(false);
-    }
-  };
-
-  // Toggle Hand Raise
-  const toggleHandRaise = () => {
-    const next = !isHandRaised;
-    setIsHandRaised(next);
-    broadcastMyState({ isHandRaised: next });
-    toast.success(next ? "Hand raised" : "Hand lowered");
-  };
+  }, [room]);
 
   // Fullscreen handler
   const toggleFullscreen = () => {
@@ -409,39 +158,14 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
   };
 
   const handleLeave = useCallback(() => {
-    // 1. Call backend leave API
     if (myParticipantId) {
       leaveMeeting(myParticipantId);
     }
-    // 2. Broadcast leave to other tabs/browsers immediately
-    if (broadcastChannelRef.current && user?.id) {
-      broadcastChannelRef.current.postMessage({
-        type: "peer_leave",
-        userId: user.id,
-      });
-    }
-    // 3. Cleanup media
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((t) => t.stop());
-    }
-    if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach((t) => t.stop());
-    }
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-    }
-    router.push("/meetings");
-  }, [myParticipantId, leaveMeeting, user?.id, router]);
-
-  // Helper for initials
-  const getInitials = (name: string) => {
-    if (!name) return "SA";
-    const parts = name.trim().split(" ");
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  };
+    // Disconnecting stops every local track and notifies the media server.
+    void disconnect();
+    if (onLeave) onLeave();
+    else router.push("/meetings");
+  }, [myParticipantId, leaveMeeting, disconnect, onLeave, router]);
 
   if (isLoading) {
     return (
@@ -469,42 +193,25 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
     );
   }
 
-  const isHost =
-    meeting.created_by === user?.id ||
-    user?.role === "super_admin" ||
-    user?.role === "company";
+  // Moderator powers come from the roster role, never the account role — see
+  // useMeetingPermissions for the API rules this mirrors.
+  const isHost = permissions.isOwner;
 
-  // Filter only active connected participants who haven't left
-  const activeDbParticipants = (participants || []).filter(
-    (p: any) =>
-      (!p.left_at || p.left_at === null) &&
-      p.connection_status !== "disconnected" &&
-      p.connection_status !== "idle" &&
-      p.user_id !== user?.id
-  );
-
-  // Merge with real-time broadcasting peers
-  const dbUserIds = new Set(activeDbParticipants.map((p: any) => p.user_id));
-  const additionalPeers = Object.values(peersState).filter(
-    (peer) => peer.userId !== user?.id && !dbUserIds.has(peer.userId)
-  );
-
-  const uniqueParticipants = [
-    ...activeDbParticipants,
-    ...additionalPeers.map((bp) => ({
-      id: bp.userId,
-      user_id: bp.userId,
-      name: bp.name,
-      role: "participant",
-      connection_status: "connected",
-    })),
-  ];
-
-  const totalPeople = Math.max(1, uniqueParticipants.length + 1);
-  const currentUserName = user?.name || "Super Admin";
-  const userInitials = getInitials(currentUserName);
+  // Presence is whatever LiveKit reports; the roster only supplies names and
+  // roles. `room.numParticipants` excludes us, hence the +1.
+  const totalPeople = room ? room.numParticipants + 1 : 1;
+  const currentUserName = user?.name || "Participant";
+  const startedAt = meeting.started_at
+    ? new Date(meeting.started_at).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   return (
+    <RoomContext.Provider value={room ?? undefined}>
+    {/* Attaches every remote audio track — without it the room is silent. */}
+    {room && <RoomAudioRenderer />}
     <div
       ref={containerRef}
       className="relative w-full h-[calc(100vh-120px)] min-h-[640px] max-h-[980px] bg-[#0D1117] rounded-[16px] border border-[#1A2236] text-white flex flex-col justify-between overflow-hidden shadow-2xl transition-all select-none"
@@ -535,18 +242,62 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
               {meeting.meeting_code || "WF-2847"}
             </button>
             <span className="text-[12px] text-[#475569] hidden md:inline truncate">
-              Started 06:51 · {totalPeople} {totalPeople === 1 ? "person" : "people"} in the room
+              {startedAt ? `Started ${startedAt} · ` : ""}
+              {totalPeople} {totalPeople === 1 ? "person" : "people"} in the room
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22C55E] text-[10px] font-extrabold tracking-wider shrink-0">
-            <span>LIVE</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
-          </div>
+          {meeting.status === "live" && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22C55E] text-[10px] font-extrabold tracking-wider shrink-0">
+              <span>LIVE</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
+            </div>
+          )}
         </div>
 
         {/* Right: Copy link, Fullscreen, Connected badge, People count */}
         <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center rounded-lg bg-[#161B22] border border-[#1A2236] p-0.5">
+            <button
+              type="button"
+              onClick={() => setLayout("grid")}
+              title="Grid — everyone the same size"
+              className={cn(
+                "h-6 px-2 rounded-md flex items-center gap-1 text-[10px] font-bold transition-colors cursor-pointer",
+                layout === "grid" ? "bg-[#25C6DA] text-white" : "text-[#64748B] hover:text-white"
+              )}
+            >
+              <LayoutGrid size={12} />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLayout("speaker")}
+              title="Speaker — the person talking, large"
+              className={cn(
+                "h-6 px-2 rounded-md flex items-center gap-1 text-[10px] font-bold transition-colors cursor-pointer",
+                layout === "speaker" ? "bg-[#25C6DA] text-white" : "text-[#64748B] hover:text-white"
+              )}
+            >
+              <User size={12} />
+              <span className="hidden sm:inline">Speaker</span>
+            </button>
+          </div>
+
+          {audioBlocked && (
+            <button
+              type="button"
+              onClick={() => {
+                room?.startAudio().then(() => setAudioBlocked(false)).catch(() => {});
+              }}
+              title="Your browser blocked meeting audio"
+              className="h-7 px-2.5 rounded-lg bg-amber-500 text-white text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <Volume2 size={12} />
+              Enable sound
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleCopyCode}
@@ -565,8 +316,17 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
             {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
 
-          <div className="hidden sm:flex items-center justify-center px-2.5 py-0.5 rounded-full border border-[rgba(34,197,94,0.3)] text-[#22C55E] text-[10px] font-bold">
-            Connected
+          <div
+            className={cn(
+              "hidden sm:flex items-center justify-center px-2.5 py-0.5 rounded-full border text-[10px] font-bold",
+              isConnected
+                ? "border-[rgba(34,197,94,0.3)] text-[#22C55E]"
+                : isConnecting
+                  ? "border-[rgba(245,158,11,0.3)] text-amber-400"
+                  : "border-[rgba(239,68,68,0.3)] text-red-400"
+            )}
+          >
+            {isConnected ? "Connected" : isConnecting ? "Connecting…" : "Offline"}
           </div>
 
           <div className="flex items-center gap-1 text-[12px] text-[#64748B] ps-1">
@@ -580,152 +340,31 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
       <div className="relative flex-1 flex min-h-0 overflow-hidden bg-[#0D1117]">
         {/* Main Stage Video / Card Grid Area */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto p-4 sm:p-6 items-center justify-center relative">
-          {/* Active Screen Share View (if active) */}
-          {isScreenSharing ? (
-            <div className="w-full h-full max-w-5xl rounded-[16px] overflow-hidden border border-[#25C6DA]/50 shadow-2xl relative bg-black flex items-center justify-center">
-              <video
-                ref={screenVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-contain"
-              />
-              <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm text-xs font-bold text-[#25C6DA] flex items-center gap-2">
-                <ScreenShare size={14} />
-                <span>You are sharing your screen</span>
-              </div>
+          {mediaError ? (
+            <div className="flex flex-col items-center justify-center gap-3 text-center">
+              <p className="text-sm font-bold text-red-400">Could not join the media room</p>
+              <p className="text-xs text-gray-500 max-w-sm">{mediaError}</p>
             </div>
           ) : isWhiteboardMain ? (
             <div className="w-full h-full rounded-[16px] overflow-hidden border border-[#1E293B]">
-              <WhiteboardCanvas meetingId={meeting.id} isHost={isHost} />
+              <WhiteboardCanvas meetingId={meeting.id} isHost={permissions.canManageWhiteboard} />
             </div>
+          ) : room ? (
+            /* Screen share takes over the stage inside the grid when active. */
+            <LiveParticipantGrid
+              roster={participants}
+              remoteHands={remoteHands}
+              localHandRaised={isHandRaised}
+              fallbackName={currentUserName}
+              meetingId={meetingId}
+              layout={layout}
+              pinnedIdentity={pinnedIdentity}
+              onPinChange={setPinnedIdentity}
+            />
           ) : (
-            /* Video/Participant Tiles Container matching Figma (w:318px h:179px per card) */
-            <div className="flex items-center justify-center flex-wrap gap-4 w-full max-w-4xl">
-              {/* Active User Tile (Figma Match) */}
-              <div
-                className={cn(
-                  "relative w-[318px] h-[179px] bg-[#161B22] border rounded-[16px] p-2.5 flex flex-col justify-between items-center shadow-lg transition-all group select-none overflow-hidden",
-                  isSpeaking
-                    ? "border-[#22C55E] ring-2 ring-[#22C55E]/40"
-                    : "border-[#1E293B]/80 hover:border-[#25C6DA]/40"
-                )}
-                style={{
-                  boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
-                }}
-              >
-                {/* Live Camera Video Stream if active */}
-                {isCamOn && (
-                  <video
-                    ref={localVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="absolute inset-0 w-full h-full object-cover rounded-[16px] z-0 scale-x-[-1]"
-                  />
-                )}
-
-                {/* Top Tile Row: Mic status & hand */}
-                <div className="w-full flex items-center justify-between px-1 z-10">
-                  <div
-                    className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors",
-                      isMicOn
-                        ? isSpeaking
-                          ? "bg-[#22C55E] text-white shadow-sm"
-                          : "bg-[#25C6DA]/20 text-[#25C6DA]"
-                        : "bg-red-500/20 text-red-400"
-                    )}
-                  >
-                    {isMicOn ? <Mic size={12} /> : <MicOff size={12} />}
-                  </div>
-
-                  {isHandRaised && (
-                    <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center animate-bounce shadow-sm">
-                      <Hand size={12} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Center: Avatar Circle when camera is off */}
-                {!isCamOn && (
-                  <div className="flex items-center justify-center my-auto z-10">
-                    <div
-                      className={cn(
-                        "w-[64px] h-[64px] rounded-full text-white flex items-center justify-center text-[20px] font-bold shadow-[0_4px_14px_rgba(37,198,218,0.4)] transition-all",
-                        isSpeaking
-                          ? "bg-[#22C55E] ring-4 ring-[#22C55E]/30"
-                          : "bg-[#25C6DA]"
-                      )}
-                    >
-                      {userInitials}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bottom Badges Row (Super Admin, YOU, HOST) */}
-                <div className="flex items-center gap-1.5 self-start z-10 mt-auto">
-                  <span className="px-2 py-0.5 rounded-[10px] bg-black/60 text-white text-[11px] font-semibold leading-tight backdrop-blur-xs">
-                    {currentUserName}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded-[4px] bg-[rgba(37,198,218,0.8)] text-white text-[9px] font-bold leading-tight">
-                    YOU
-                  </span>
-                  {isHost && (
-                    <span className="px-1.5 py-0.5 rounded-[4px] bg-[rgba(245,158,11,0.8)] text-white text-[9px] font-bold leading-tight">
-                      HOST
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Extra participants cards */}
-              {uniqueParticipants.map((p: any) => {
-                const peerData = peersState[p.user_id || p.id];
-                const pName = p.name || p.user?.name || "Participant";
-                const pInitials = getInitials(pName);
-                const pMicOn = peerData?.isMicOn ?? true;
-                const pHandRaised = peerData?.isHandRaised ?? false;
-
-                return (
-                  <div
-                    key={p.id}
-                    className="relative w-[318px] h-[179px] bg-[#161B22] border border-[#1E293B]/80 rounded-[16px] p-2.5 flex flex-col justify-between items-center shadow-lg select-none"
-                  >
-                    <div className="w-full flex items-center justify-between px-1 z-10">
-                      <div
-                        className={cn(
-                          "w-6 h-6 rounded-full flex items-center justify-center text-xs",
-                          pMicOn ? "bg-[#25C6DA]/20 text-[#25C6DA]" : "bg-red-500/20 text-red-400"
-                        )}
-                      >
-                        {pMicOn ? <Mic size={12} /> : <MicOff size={12} />}
-                      </div>
-
-                      {pHandRaised && (
-                        <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center animate-bounce shadow-sm">
-                          <Hand size={12} />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="w-[64px] h-[64px] rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-[20px] font-bold my-auto shadow-md">
-                      {pInitials}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 self-start z-10">
-                      <span className="px-2 py-0.5 rounded-[10px] bg-black/60 text-white text-[11px] font-semibold leading-tight">
-                        {pName}
-                      </span>
-                      {p.role === "host" && (
-                        <span className="px-1.5 py-0.5 rounded-[4px] bg-[rgba(245,158,11,0.8)] text-white text-[9px] font-bold leading-tight">
-                          HOST
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="w-10 h-10 border-4 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
+              <p className="text-sm text-gray-400 font-medium">Connecting to the media room…</p>
             </div>
           )}
         </div>
@@ -742,6 +381,7 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
                 {activeSideDrawer === "polls" && <BarChart2 size={16} className="text-[#25C6DA]" />}
                 {activeSideDrawer === "decisions" && <ShieldCheck size={16} className="text-[#25C6DA]" />}
                 {activeSideDrawer === "action_items" && <CheckSquare size={16} className="text-[#25C6DA]" />}
+                {activeSideDrawer === "settings" && <Settings2 size={16} className="text-[#25C6DA]" />}
                 <span>{activeSideDrawer.replace("_", " ")}</span>
               </h3>
               <button
@@ -756,18 +396,29 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
             {/* Panel Content */}
             <div className="flex-1 overflow-y-auto p-3">
               {activeSideDrawer === "people" && (
-                <MeetingParticipants meetingId={meeting.id} isHost={isHost} />
+                <MeetingParticipants meetingId={meeting.id} isHost={permissions.canInvite} />
               )}
               {activeSideDrawer === "chat" && <MeetingChat meetingId={meeting.id} />}
               {activeSideDrawer === "notes" && <MeetingNotes meetingId={meeting.id} />}
               {activeSideDrawer === "polls" && (
-                <MeetingPolls meetingId={meeting.id} isHost={isHost} />
+                <MeetingPolls meetingId={meeting.id} isHost={permissions.canManagePolls} />
               )}
               {activeSideDrawer === "decisions" && (
                 <MeetingDecisions meetingId={meeting.id} isHost={isHost} />
               )}
               {activeSideDrawer === "action_items" && (
                 <MeetingActionItems meetingId={meeting.id} />
+              )}
+              {activeSideDrawer === "settings" && (
+                <MeetingSettingsPanel
+                  room={room}
+                  preferences={preferences}
+                  update={updatePreferences}
+                  controls={controls}
+                  isMicOn={isMicOn}
+                  isCamOn={isCamOn}
+                  canPublish={canPublish}
+                />
               )}
             </div>
           </div>
@@ -882,6 +533,21 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
           >
             <CheckSquare size={16} />
           </button>
+
+          {/* 8. Settings — camera, microphone, speaker, background */}
+          <button
+            type="button"
+            onClick={() => setActiveSideDrawer(activeSideDrawer === "settings" ? null : "settings")}
+            className={cn(
+              "mt-auto w-8 h-8 rounded-[10px] flex items-center justify-center transition-all cursor-pointer",
+              activeSideDrawer === "settings"
+                ? "bg-[#25C6DA] text-white shadow-sm"
+                : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
+            )}
+            title="Devices and background"
+          >
+            <Settings2 size={16} />
+          </button>
         </div>
       </div>
 
@@ -892,15 +558,14 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
           {/* Mic Button (44x44) with real capture & speaking ring */}
           <button
             type="button"
-            onClick={toggleMic}
+            onClick={controls.toggleMic}
             className={cn(
-              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed",
               isMicOn
-                ? isSpeaking
-                  ? "bg-[#22C55E] text-white ring-4 ring-[#22C55E]/40 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
-                  : "bg-[#25C6DA] text-white shadow-[0_0_12px_rgba(37,198,218,0.4)]"
+                ? "bg-[#25C6DA] text-white shadow-[0_0_12px_rgba(37,198,218,0.4)]"
                 : "bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30"
             )}
+            disabled={!isConnected || !canPublish}
             title={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
           >
             {isMicOn ? <Mic size={18} /> : <MicOff size={18} />}
@@ -909,43 +574,64 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
           {/* Camera Button (44x44) with real video stream */}
           <button
             type="button"
-            onClick={toggleCamera}
+            onClick={controls.toggleCamera}
             className={cn(
-              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed",
               isCamOn
                 ? "bg-[#25C6DA] text-white shadow-[0_0_12px_rgba(37,198,218,0.4)]"
                 : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
             )}
+            disabled={!isConnected || !canPublish}
             title={isCamOn ? "Turn off camera" : "Turn on camera"}
           >
             {isCamOn ? <VideoIcon size={18} /> : <VideoOff size={18} />}
           </button>
 
-          {/* Screen Share Button (44x44) with real getDisplayMedia */}
+          {/* Device settings — the mic/camera pickers live in the room, so keep
+              them next to the mic/camera buttons where they are looked for. */}
           <button
             type="button"
-            onClick={toggleScreenShare}
+            onClick={() => setActiveSideDrawer(activeSideDrawer === "settings" ? null : "settings")}
             className={cn(
               "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+              activeSideDrawer === "settings"
+                ? "bg-[#25C6DA] text-white shadow-[0_0_12px_rgba(37,198,218,0.4)]"
+                : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
+            )}
+            title="Devices and background"
+          >
+            <Settings2 size={18} />
+          </button>
+
+          {/* Screen Share Button (44x44) — publishes through LiveKit */}
+          {meeting.allow_screen_share && (
+          <button
+            type="button"
+            onClick={controls.toggleScreenShare}
+            className={cn(
+              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed",
               isScreenSharing
                 ? "bg-[#25C6DA] text-white shadow-[0_0_12px_rgba(37,198,218,0.4)] ring-2 ring-[#25C6DA]"
                 : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
             )}
+            disabled={!isConnected || !canShareScreen}
             title={isScreenSharing ? "Stop sharing" : "Share screen"}
           >
             <ScreenShare size={18} />
           </button>
+          )}
 
           {/* Hand Raise Button (44x44) */}
           <button
             type="button"
-            onClick={toggleHandRaise}
+            onClick={controls.toggleHandRaise}
             className={cn(
-              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md",
+              "w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed",
               isHandRaised
                 ? "bg-amber-500 text-white shadow-[0_0_12px_rgba(245,158,11,0.4)]"
                 : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
             )}
+            disabled={!isConnected}
             title={isHandRaised ? "Lower hand" : "Raise hand"}
           >
             <Hand size={18} />
@@ -955,17 +641,16 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
           <div className="w-[1px] h-6 bg-[#1E293B] mx-1" />
 
           {/* End Meeting Button (only for host) */}
-          {isHost && (
+          {permissions.canEnd && (
             <button
               type="button"
               onClick={() => {
                 if (window.confirm("Are you sure you want to end the meeting for everyone?")) {
                   endMeeting(meetingId, {
                     onSuccess: () => {
-                      if (localStreamRef.current) localStreamRef.current.getTracks().forEach((t) => t.stop());
-                      if (screenStreamRef.current) screenStreamRef.current.getTracks().forEach((t) => t.stop());
+                      void disconnect();
                       router.push("/meetings");
-                    }
+                    },
                   });
                 }
               }}
@@ -988,5 +673,6 @@ export function MeetingRoomPage({ meetingId }: MeetingRoomPageProps) {
         </div>
       </div>
     </div>
+    </RoomContext.Provider>
   );
 }

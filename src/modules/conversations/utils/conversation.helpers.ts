@@ -1,3 +1,4 @@
+import { ENV } from "@/config/env";
 import type {
   Conversation,
   ConversationMember,
@@ -176,6 +177,21 @@ export function getMessageSender(message: Message): ConversationUser | undefined
 }
 
 /** Normalises every attachment shape the API has used into `{ url, name }`. */
+/**
+ * Turns whatever the API stored into something an `<img>` or a download link
+ * can use.
+ *
+ * Attachments come back as `{ file_name, file_path, mime_type }`, where
+ * `file_path` is storage-relative (`messages/ab12….png`) — so it has to be
+ * resolved against `ENV.FILES_URL`. `url`/`path`/`name` are only read as a
+ * fallback for legacy payloads.
+ */
+function resolveAttachmentUrl(raw: string): string {
+  if (!raw) return "";
+  if (/^(https?:)?\/\//i.test(raw) || raw.startsWith("data:")) return raw;
+  return `${ENV.FILES_URL.replace(/\/+$/, "")}/${raw.replace(/^\/+/, "")}`;
+}
+
 export function getMessageAttachments(message: Message) {
   const raw = [
     ...(Array.isArray(message.attachments) ? message.attachments : []),
@@ -190,12 +206,13 @@ export function getMessageAttachments(message: Message) {
   }
   return raw
     .map((a) => {
-      const url = a?.url || a?.path || "";
-      if (!url) return null;
-      const name = a?.name || url.split("/").pop() || "file";
+      const source = a?.file_path || a?.url || a?.path || "";
+      if (!source) return null;
+      const url = resolveAttachmentUrl(source);
+      const name = a?.file_name || a?.name || source.split("/").pop() || "file";
       const isImage =
         (a?.mime_type ?? "").startsWith("image/") ||
-        /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(url);
+        /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(name || source);
       return { url, name, isImage };
     })
     .filter(Boolean) as { url: string; name: string; isImage: boolean }[];

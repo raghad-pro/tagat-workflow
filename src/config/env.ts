@@ -2,6 +2,15 @@
 export const ENV = {
   API_URL: process.env.NODE_ENV === "development" ? "/backend-api" : (process.env.NEXT_PUBLIC_API_URL || "https://workflow.aliservice.site/api/v1"),
   API_TIMEOUT: Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000,
+  /**
+   * Where uploaded files are served from.
+   *
+   * Not derivable from `API_URL`: that is the API prefix (`/api/v1`, or the dev
+   * proxy path), while uploads live under `/storage`. Attachments come back as
+   * storage-relative paths like `messages/ab12….png` and need this in front.
+   */
+  FILES_URL:
+    process.env.NEXT_PUBLIC_FILES_URL || "https://workflow.aliservice.site/storage",
   ACCESS_TOKEN_KEY: process.env.NEXT_PUBLIC_ACCESS_TOKEN_KEY || "accessToken",
   REFRESH_TOKEN_KEY: process.env.NEXT_PUBLIC_REFRESH_TOKEN_KEY || "refreshToken",
   APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || "Workflow",

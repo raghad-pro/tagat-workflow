@@ -6,13 +6,13 @@ import {
   Send,
   Paperclip,
   CheckSquare,
-  FileText,
-  Download,
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMeetingMessages, useSendMessage } from "../../hooks/useMeetings";
+import MeetingAttachment from "./MeetingAttachment";
 import ConvertToTaskModal from "./ConvertToTaskModal";
 import type { MeetingMessage } from "../../types/meetings.types";
+import { useMeetingUserDirectory } from "../../hooks/useMeetingUserDirectory";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -22,6 +22,7 @@ interface MeetingChatProps {
 
 export default function MeetingChat({ meetingId }: MeetingChatProps) {
   const { user } = useAuth();
+  const role = user?.role || "employee";
   const [inputText, setInputText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [convertTaskMessage, setConvertTaskMessage] = useState<MeetingMessage | null>(null);
@@ -33,6 +34,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
 
   const { data: serverMessages = [], isLoading } = useMeetingMessages(meetingId);
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+  const { resolveName } = useMeetingUserDirectory(meetingId);
 
   const allMessages = React.useMemo(() => {
     const serverIds = new Set(serverMessages.map((m: any) => m.id));
@@ -126,7 +128,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
         ) : (
           allMessages.map((msg) => {
             const isMe = msg.user_id === user?.id;
-            const senderName = msg.user?.name || "Participant";
+            const senderName = msg.user?.name || resolveName(msg.user_id);
             const initials = getInitials(senderName);
 
             return (
@@ -167,22 +169,12 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
                   {msg.attachments && msg.attachments.length > 0 && (
                     <div className="space-y-1 mt-2">
                       {msg.attachments.map((att) => (
-                        <a
+                        <MeetingAttachment
                           key={att.id}
-                          href={att.file_url || att.download_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={cn(
-                            "flex items-center gap-2 p-2 rounded-[8px] border text-xs transition-colors",
-                            isMe
-                              ? "bg-white/10 border-white/20 hover:bg-white/20"
-                              : "bg-[#111827] border-[#2A3756] hover:border-[#25C6DA]"
-                          )}
-                        >
-                          <FileText className="w-4 h-4" />
-                          <span className="truncate flex-1">{att.file_name}</span>
-                          <Download className="w-3.5 h-3.5 opacity-80" />
-                        </a>
+                          attachment={att}
+                          role={role}
+                          isMine={isMe}
+                        />
                       ))}
                     </div>
                   )}

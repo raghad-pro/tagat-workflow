@@ -17,22 +17,30 @@ interface CreateMeetingModalProps {
   onClose: () => void;
 }
 
-const createMeetingSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  company_id: z.string().optional(),
-  amount: z.string().optional(),
-  type: z.enum(["scheduled", "instant", "recurring"]).default("scheduled"),
-  scheduled_at: z.string().optional(),
-  max_participants: z.string().default("100"),
-  notes: z.string().optional(),
-  is_private: z.boolean().default(false),
-  password: z.string().optional(),
-  allow_chat: z.boolean().default(true),
-  allow_screen_share: z.boolean().default(true),
-  allow_whiteboard: z.boolean().default(true),
-  allow_file_share: z.boolean().default(true),
-  allow_recording: z.boolean().default(false),
-});
+// Mirrors the API's own validation: it rejects a meeting with no company
+// ("Please select the company this meeting belongs to.") and a private meeting
+// with no password ("The password field is required when the meeting is private.").
+const createMeetingSchema = z
+  .object({
+    title: z.string().min(1, "Title is required"),
+    company_id: z.string().min(1, "Please select the company this meeting belongs to"),
+    amount: z.string().optional(),
+    type: z.enum(["scheduled", "instant"]).default("scheduled"),
+    scheduled_at: z.string().optional(),
+    max_participants: z.string().default("100"),
+    notes: z.string().optional(),
+    is_private: z.boolean().default(false),
+    password: z.string().optional(),
+    allow_chat: z.boolean().default(true),
+    allow_screen_share: z.boolean().default(true),
+    allow_whiteboard: z.boolean().default(true),
+    allow_file_share: z.boolean().default(true),
+    allow_recording: z.boolean().default(false),
+  })
+  .refine((v) => !v.is_private || Boolean(v.password && v.password.trim()), {
+    path: ["password"],
+    message: "Password is required when the meeting is private",
+  });
 
 type FormValues = z.infer<typeof createMeetingSchema>;
 
@@ -190,6 +198,11 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
                   className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-[#718096]"
                 />
               </div>
+              {form.formState.errors.company_id && (
+                <span className="text-[11px] text-red-500">
+                  {String(form.formState.errors.company_id.message)}
+                </span>
+              )}
             </div>
 
             {/* Column 2 - Row 1: Title */}
@@ -258,7 +271,6 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
                 >
                   <option value="scheduled">Scheduled</option>
                   <option value="instant">Instant</option>
-                  <option value="recurring">Recurring</option>
                 </select>
                 <ChevronDown
                   size={15}

@@ -21,6 +21,7 @@ import { Button } from "@/components/atoms/Button";
 import { ClientAvatar } from "@/components/atoms/Clientavatar";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { getEmployeeStatus } from "@/modules/employees/types/employees.types";
 import AssignRoleModal from "./AssignRoleModal";
 import {
   getBaseRole,
@@ -125,39 +126,52 @@ export default function AccessManagementPage() {
         key: "employee",
         header: t("columns.employee"),
         isPrimary: true,
-        render: (row) => (
-          <div className="flex items-center gap-3">
-            <ClientAvatar name={row?.user?.name ?? "?"} size="md" />
-            <div className="flex flex-col min-w-0">
-              <Text size="sm" weight="medium" tag="span">{row?.user?.name ?? "—"}</Text>
-              <Text size="sm" className="ds-text-gray-200 truncate">
-                {row?.job_title || row?.user?.email || ""}
-              </Text>
+        render: (row) => {
+          const isActive = getEmployeeStatus(row) === "active";
+          return (
+            <div className={`flex items-center gap-3 ${!isActive ? "opacity-50 grayscale" : ""}`}>
+              <ClientAvatar name={row?.user?.name ?? "?"} size="md" />
+              <div className="flex flex-col min-w-0">
+                <Text size="sm" weight="medium" tag="span">{row?.user?.name ?? "—"}</Text>
+                <Text size="sm" className="ds-text-gray-200 truncate">
+                  {row?.job_title || row?.user?.email || ""}
+                </Text>
+              </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         key: "baseRole",
         header: t("columns.baseRole"),
         hideOnMobile: true,
-        render: (row) => (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-[var(--color-primary)]">
-            {getBaseRole(row)?.name ?? "—"}
-          </span>
-        ),
+        render: (row) => {
+          const isActive = getEmployeeStatus(row) === "active";
+          return (
+            <div className={!isActive ? "opacity-50 grayscale" : ""}>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-[var(--color-primary)]">
+                {getBaseRole(row)?.name ?? "—"}
+              </span>
+            </div>
+          );
+        }
       },
       {
         key: "extraRole",
         header: t("columns.extraRole"),
         render: (row) => {
+          const isActive = getEmployeeStatus(row) === "active";
           const extra = getExtraRole(row);
-          return extra ? (
-            <span className="text-xs px-2 py-0.5 rounded-full ds-bg-primary-200 ds-text-brand">
-              {extra.name}
-            </span>
-          ) : (
-            <Text size="sm" className="ds-text-gray-200">{t("noRole")}</Text>
+          return (
+            <div className={!isActive ? "opacity-50 grayscale" : ""}>
+              {extra ? (
+                <span className="text-xs px-2 py-0.5 rounded-full ds-bg-primary-200 ds-text-brand">
+                  {extra.name}
+                </span>
+              ) : (
+                <Text size="sm" className="ds-text-gray-200">{t("noRole")}</Text>
+              )}
+            </div>
           );
         },
       },
@@ -168,7 +182,14 @@ export default function AccessManagementPage() {
         key: "company",
         header: t("columns.company"),
         hideOnMobile: true,
-        render: (row) => <Text size="sm" tag="span">{row?.company?.name ?? "—"}</Text>,
+        render: (row) => {
+          const isActive = getEmployeeStatus(row) === "active";
+          return (
+            <div className={!isActive ? "opacity-50 grayscale" : ""}>
+              <Text size="sm" tag="span">{row?.company?.name ?? "—"}</Text>
+            </div>
+          );
+        },
       });
     }
 

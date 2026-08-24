@@ -371,6 +371,7 @@ export function useMeetingWhiteboard(meetingId: number | string) {
     queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId),
     queryFn: () => meetingsApi.getWhiteboard(role, meetingId),
     enabled: Boolean(meetingId),
+    refetchInterval: 2000,
   });
 }
 
@@ -399,6 +400,112 @@ export function useDrawWhiteboardElement() {
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
     },
+  });
+}
+
+export function useDeleteWhiteboardElement() {
+  const { user } = useAuth();
+  const role = user?.role || "employee";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ meetingId, elementId }: { meetingId: number | string; elementId: string }) =>
+      meetingsApi.deleteElement(role, meetingId, elementId),
+    onSuccess: (_, { meetingId }) => {
+      queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
+    },
+  });
+}
+
+export function useUndoWhiteboard() {
+  const { user } = useAuth();
+  const role = user?.role || "employee";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    // The API requires the board state to restore; it will not infer it.
+    mutationFn: ({ meetingId, elements }: { meetingId: number | string; elements: WhiteboardElement[] }) =>
+      meetingsApi.undoWhiteboard(role, meetingId, { elements }),
+    onSuccess: (_, { meetingId }) => {
+      queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
+    },
+  });
+}
+
+export function useRedoWhiteboard() {
+  const { user } = useAuth();
+  const role = user?.role || "employee";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    // Like undo, the API requires the board state to restore.
+    mutationFn: ({ meetingId, elements }: { meetingId: number | string; elements: WhiteboardElement[] }) =>
+      meetingsApi.redoWhiteboard(role, meetingId, { elements }),
+    onSuccess: (_, { meetingId }) => {
+      queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
+    },
+  });
+}
+
+export function useUpdateWhiteboardElement() {
+  const { user } = useAuth();
+  const role = user?.role || "employee";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      meetingId,
+      elementId,
+      element,
+    }: {
+      meetingId: number | string;
+      elementId: string;
+      element: Partial<WhiteboardElement>;
+    }) => meetingsApi.updateElement(role, meetingId, elementId, element),
+    onSuccess: (_, { meetingId }) => {
+      queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
+    },
+  });
+}
+
+export function useToggleWhiteboardElementLock() {
+  const { user } = useAuth();
+  const role = user?.role || "employee";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      meetingId,
+      elementId,
+      locked,
+    }: {
+      meetingId: number | string;
+      elementId: string;
+      locked: boolean;
+    }) =>
+      locked
+        ? meetingsApi.lockElement(role, meetingId, elementId)
+        : meetingsApi.unlockElement(role, meetingId, elementId),
+    onSuccess: (_, { meetingId }) => {
+      queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
+    },
+  });
+}
+
+export function useToggleWhiteboardLock() {
+  const { user } = useAuth();
+  const role = user?.role || "employee";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ meetingId, locked }: { meetingId: number | string; locked: boolean }) =>
+      locked
+        ? meetingsApi.lockWhiteboard(role, meetingId)
+        : meetingsApi.unlockWhiteboard(role, meetingId),
+    onSuccess: (_, { meetingId }) => {
+      queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
+    },
+    onError: () => toast.error("Only a host or co-host may lock the whiteboard"),
   });
 }
 

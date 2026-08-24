@@ -88,7 +88,7 @@ export function KpisDashboardPage() {
           {/* ── Date Filters & Actions ── */}
           <div className="flex items-center gap-3 flex-wrap">
             {/* Year Selector */}
-            <div className="flex items-center gap-2 bg-white dark:bg-card rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center gap-2 ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
               <Calendar className="w-4 h-4 text-[#25C6DA]" />
               <select
                 value={selectedYear}
@@ -104,7 +104,7 @@ export function KpisDashboardPage() {
             </div>
 
             {/* Month Selector */}
-            <div className="flex items-center gap-2 bg-white dark:bg-card rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center gap-2 ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
               <select
                 value={selectedMonth ?? ""}
                 onChange={(e) => {
@@ -126,7 +126,7 @@ export function KpisDashboardPage() {
             <button
               onClick={() => refetch()}
               disabled={isRefetching}
-              className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] bg-white dark:bg-card text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)] disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] ds-bg-form border border-slate-100 dark:border-slate-800 text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)] disabled:opacity-50"
               title="Refresh KPI Metrics"
             >
               <RotateCw className={cn("w-4 h-4 text-[#25C6DA]", isRefetching && "animate-spin")} />
@@ -143,7 +143,7 @@ export function KpisDashboardPage() {
               "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "all"
                 ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <Layers className="w-4 h-4" />
@@ -156,7 +156,7 @@ export function KpisDashboardPage() {
               "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "financial"
                 ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <DollarSign className="w-4 h-4" />
@@ -169,7 +169,7 @@ export function KpisDashboardPage() {
               "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "operations"
                 ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <FolderKanban className="w-4 h-4" />
@@ -182,7 +182,7 @@ export function KpisDashboardPage() {
               "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "people"
                 ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <Users className="w-4 h-4" />
@@ -195,7 +195,7 @@ export function KpisDashboardPage() {
               "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
               activeTab === "trends"
                 ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "bg-white dark:bg-card text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
             )}
           >
             <TrendingUp className="w-4 h-4" />
