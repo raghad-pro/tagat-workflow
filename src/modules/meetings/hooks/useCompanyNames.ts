@@ -66,8 +66,33 @@ export function useCompanyNames() {
     [namesById]
   );
 
+  /** The companies this account may file a meeting under. */
+  const options = useMemo(
+    () => Array.from(namesById, ([id, name]) => ({ id, name })),
+    [namesById]
+  );
+
+  /**
+   * The single company a non-super-admin belongs to, so forms can pre-select it.
+   *
+   * Everyone except a super admin owns exactly one company, and the API rejects
+   * a meeting with no company at all — leaving the field blank just produced a
+   * validation error the user could not resolve, because the picker they were
+   * shown was empty (`/super_admin/companies` answers 403 for them).
+   */
+  const ownCompanyId = useMemo(() => {
+    if (isSuperAdmin) return null;
+    const fromAccount = Number(account?.data?.company?.id);
+    if (Number.isFinite(fromAccount)) return fromAccount;
+    const fromUser = Number(user?.company_id);
+    return Number.isFinite(fromUser) ? fromUser : null;
+  }, [isSuperAdmin, account, user?.company_id]);
+
   return {
     namesById,
+    options,
+    ownCompanyId,
+    isSuperAdmin,
     resolveCompanyName,
     isLoading: isSuperAdmin ? loadingList : loadingAccount,
   };

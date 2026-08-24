@@ -8,7 +8,7 @@ import { z } from "zod";
 import { ArrowLeft, Send, ChevronDown, Clock, Info, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCreateMeeting } from "../hooks/useMeetings";
-import { useCompanies } from "@/modules/companies/hooks/useCompanies";
+import { useCompanyNames } from "../hooks/useCompanyNames";
 import type { CreateMeetingPayload, MeetingType } from "../types/meetings.types";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +48,9 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
   const { mutate: createMeeting, isPending } = useCreateMeeting();
-  const { data: companiesData } = useCompanies({ per_page: 100 });
+  // Role-aware: `/super_admin/companies` answers 403 for a company manager, so
+  // asking it directly left the picker empty and every meeting unfileable.
+  const { options: companyOptions, ownCompanyId, isSuperAdmin } = useCompanyNames();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(createMeetingSchema) as any,
@@ -72,9 +74,22 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
 
   useEffect(() => setMounted(true), []);
 
+  /**
+   * Pre-select the account's own company.
+   *
+   * Anyone below super admin belongs to exactly one company and cannot file a
+   * meeting anywhere else, so making them pick it is a step with one legal
+   * answer. Runs when the modal opens and once the id resolves, and never
+   * overwrites a choice already made.
+   */
+  useEffect(() => {
+    if (!isOpen || isSuperAdmin || ownCompanyId === null) return;
+    if (form.getValues("company_id")) return;
+    form.setValue("company_id", String(ownCompanyId), { shouldValidate: true });
+  }, [isOpen, isSuperAdmin, ownCompanyId, form]);
+
   if (!mounted || !isOpen) return null;
 
-  const companiesList = companiesData?.data?.data || [];
   const selectedType = form.watch("type");
 
   const onSubmit = (values: FormValues) => {
@@ -182,12 +197,17 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
                 Company
               </label>
               <div className="relative">
+                {/* Only a super admin has more than one company to choose from. */}
                 <select
                   {...form.register("company_id")}
-                  className="w-full h-[38px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 pe-8 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors appearance-none cursor-pointer"
+                  disabled={!isSuperAdmin}
+                  className={cn(
+                    "w-full h-[38px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 pe-8 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors appearance-none",
+                    isSuperAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-80"
+                  )}
                 >
-                  <option value="">select</option>
-                  {companiesList.map((comp: any) => (
+                  {isSuperAdmin && <option value="">select</option>}
+                  {companyOptions.map((comp) => (
                     <option key={comp.id} value={comp.id}>
                       {comp.name || `Company #${comp.id}`}
                     </option>
