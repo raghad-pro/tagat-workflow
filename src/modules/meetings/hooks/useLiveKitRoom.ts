@@ -40,6 +40,55 @@ const BACKDROP_DATA_URLS: Partial<Record<BackgroundEffect, string>> = Object.fro
 );
 
 /**
+ * Turns the camera on at the best size it will actually accept.
+ *
+ * A webcam that cannot produce the requested resolution rejects the request
+ * outright instead of negotiating down, so a saved quality of 720p locks the
+ * owner of a 480p camera out of video entirely. Step down through the presets
+ * and finish with an unconstrained attempt, which any working camera satisfies.
+ */
+async function enableCameraWithFallback(
+  participant: Room["localParticipant"],
+  preferred: VideoQuality | null
+) {
+  const order: VideoQuality[] = ["high", "balanced", "low"];
+  const ladder = preferred
+    ? order.slice(order.indexOf(preferred)).filter(Boolean)
+    : [];
+
+  for (const quality of ladder) {
+    const preset = QUALITY_PRESETS[quality];
+    try {
+      await participant.setCameraEnabled(true, {
+        resolution: { width: preset.width, height: preset.height },
+      });
+      return;
+    } catch (err: any) {
+      if (err?.name !== "OverconstrainedError" && err?.name !== "NotFoundError") {
+        throw err;
+      }
+      // Too big for this camera — try the next size down.
+    }
+  }
+
+  // Whatever the camera offers by default.
+  await participant.setCameraEnabled(true);
+}
+
+/** Applying an effect must never cost the user their camera, so a processor
+ *  that will not start is given a bounded amount of time and then abandoned. */
+const PROCESSOR_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("timed out")), ms)
+    ),
+  ]);
+}
+
+/**
  * Applies a background effect to the published camera track.
  *
  * The processor pulls a MediaPipe segmentation model, so it is imported lazily
@@ -51,8 +100,16 @@ async function applyBackgroundEffect(room: Room, effect: BackgroundEffect) {
   if (!track) return;
 
   try {
-    const mod = await import("@livekit/track-processors");
-    if (!mod.supportsBackgroundProcessors()) return;
+    const mod = await withTimeout(
+      import("@livekit/track-processors"),
+      PROCESSOR_TIMEOUT_MS
+    );
+    if (!mod.supportsBackgroundProcessors()) {
+      if (effect !== "none") {
+        toast.error("Background effects are not supported in this browser");
+      }
+      return;
+    }
 
     if (effect === "none") {
       await track.stopProcessor();
@@ -60,21 +117,37 @@ async function applyBackgroundEffect(room: Room, effect: BackgroundEffect) {
     }
 
     const blurRadius = BLUR_RADIUS[effect];
-    if (blurRadius) {
-      await track.setProcessor(
-        mod.BackgroundProcessor({ mode: "background-blur", blurRadius })
-      );
-      return;
+    const processor = blurRadius
+      ? mod.BackgroundProcessor({ mode: "background-blur", blurRadius })
+      : BACKDROP_DATA_URLS[effect]
+        ? mod.BackgroundProcessor({
+            mode: "virtual-background",
+            imagePath: BACKDROP_DATA_URLS[effect],
+          })
+        : null;
+    if (!processor) return;
+
+    // Detach whatever is attached before binding a new processor. Turning the
+    // camera off and on again publishes a *new* track while the previous
+    // processor is still bound, and stacking a second one on top produced a
+    // track that stayed at 0x0 — the camera looked on and sent nothing.
+    try {
+      await track.stopProcessor();
+    } catch {
+      // Nothing was attached; that is the normal first-run case.
     }
 
-    const gradient = BACKDROP_DATA_URLS[effect];
-    if (gradient) {
-      await track.setProcessor(
-        mod.BackgroundProcessor({ mode: "virtual-background", imagePath: gradient })
-      );
-    }
+    await withTimeout(track.setProcessor(processor), PROCESSOR_TIMEOUT_MS);
   } catch {
-    // Effects are optional; a missing model or unsupported browser is fine.
+    // A half-attached processor leaves the camera published but producing no
+    // frames — and because this used to fail silently, picking a background
+    // simply killed the camera with nothing to explain it. Detach and say so.
+    try {
+      await track.stopProcessor();
+    } catch {
+      // Nothing else to try; the raw track is still published.
+    }
+    toast.error("Could not apply the background effect — camera left unchanged");
   }
 }
 
@@ -135,8 +208,22 @@ export function useLiveKitRoom(
   prefsRef.current = preferences;
 
   const roomRef = useRef<Room | null>(null);
-  // Guards against React 18 StrictMode double-invoking the connect effect.
-  const connectingRef = useRef(false);
+  /**
+   * Identifies the current connect attempt.
+   *
+   * Every run of the effect claims the next number and re-checks it after each
+   * `await`; a run whose number has been superseded stops and tears its own
+   * room down. Without this, StrictMode's double-invoke plus the re-run caused
+   * by `role` settling as auth loads opened several LiveKit sessions under the
+   * same identity — and LiveKit answers a duplicate identity by kicking the
+   * older session, so they knocked each other offline and the room ended up
+   * disconnected with "you joined from another tab".
+   *
+   * A plain "already connecting" boolean cannot express this: the cleanup that
+   * releases it runs *before* the next attempt starts, so it never blocked the
+   * second connect — while the attempt it did block left no room at all.
+   */
+  const attemptRef = useRef(0);
 
   const [room, setRoom] = useState<Room | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>(
@@ -154,12 +241,15 @@ export function useLiveKitRoom(
 
   // ─── Connect ───────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!enabled || !meetingId || connectingRef.current) return;
-    connectingRef.current = true;
+    // Wait for auth before connecting: `role` decides the API prefix, and
+    // letting it settle from its fallback to the real value would otherwise
+    // re-run this effect and open a second session.
+    if (!enabled || !meetingId || !user) return;
 
-    let cancelled = false;
+    const attempt = ++attemptRef.current;
+    const isStale = () => attemptRef.current !== attempt;
+
     const startPrefs = prefsRef.current;
-    const startPreset = startPrefs ? QUALITY_PRESETS[startPrefs.quality] : null;
 
     const lkRoom = new Room({
       adaptiveStream: true,
@@ -171,11 +261,13 @@ export function useLiveKitRoom(
         noiseSuppression: true,
         autoGainControl: true,
       },
+      // Deliberately no `resolution` here. Room defaults are merged into every
+      // capture, so a resolution parked on them survives even a call that
+      // passes no options — which made the "retry without the constraint"
+      // fallback below re-send a constraint and fail exactly the same way.
+      // Quality is always passed explicitly at the call site instead.
       videoCaptureDefaults: {
         deviceId: startPrefs?.cameraId || undefined,
-        resolution: startPreset
-          ? { width: startPreset.width, height: startPreset.height }
-          : undefined,
       },
     });
 
@@ -247,19 +339,22 @@ export function useLiveKitRoom(
         // `POST /join` is what flips that flag, so it has to run too — it
         // updates the existing row rather than adding a second one.
         await meetingsApi.join(role, meetingId, password ? { password } : undefined);
+        if (isStale()) return;
 
         const res = await meetingsApi.mediaJoin(role, meetingId, password);
         const media = (res as any)?.media ?? res;
         if (!media?.url || !media?.token) {
           throw new Error("Media server did not return a token");
         }
-        if (cancelled) return;
+        if (isStale()) return;
 
         setCanPublish(media.can_publish !== false);
         setCanShareScreen(media.can_share_screen !== false);
 
         await lkRoom.connect(media.url, media.token);
-        if (cancelled) {
+        if (isStale()) {
+          // A newer attempt owns the identity now; leaving this one connected
+          // would get that one kicked for a duplicate identity.
           await lkRoom.disconnect();
           return;
         }
@@ -270,7 +365,6 @@ export function useLiveKitRoom(
 
         const prefs = prefsRef.current;
         if (prefs) {
-          const preset = QUALITY_PRESETS[prefs.quality];
           // Switched independently: a device that vanished between setup and
           // join must not stop the others from being applied.
           const switchDeviceSafely = async (kind: MediaDeviceKind, id: string) => {
@@ -294,9 +388,7 @@ export function useLiveKitRoom(
           }
           if (prefs.cameraEnabled) {
             try {
-              await lkRoom.localParticipant.setCameraEnabled(true, {
-                resolution: { width: preset.width, height: preset.height },
-              });
+              await enableCameraWithFallback(lkRoom.localParticipant, prefs.quality);
               await applyBackgroundEffect(lkRoom, prefs.effect);
             } catch (err: any) {
               toast.error(`Camera failed to start: ${err?.message || "in use"}`);
@@ -307,7 +399,7 @@ export function useLiveKitRoom(
         // Seed hands for participants already in the room.
         lkRoom.remoteParticipants.forEach((p) => readHand(p));
       } catch (err: any) {
-        if (cancelled) return;
+        if (isStale()) return;
         const msg =
           err?.response?.data?.message || err?.message || "Failed to join media";
         setError(msg);
@@ -316,15 +408,20 @@ export function useLiveKitRoom(
     })();
 
     return () => {
-      cancelled = true;
-      connectingRef.current = false;
+      // Retire this attempt so its in-flight continuation sees itself as stale
+      // even when no newer attempt follows (an unmount).
+      attemptRef.current++;
       lkRoom.removeAllListeners();
       lkRoom.disconnect().catch(() => {});
       meetingsApi.mediaLeave(role, meetingId).catch(() => {});
-      roomRef.current = null;
-      setRoom(null);
+      // Only surrender the shared refs if this attempt is the one holding them;
+      // a superseded teardown must not blank out the live room.
+      if (roomRef.current === lkRoom) {
+        roomRef.current = null;
+        setRoom(null);
+      }
     };
-  }, [meetingId, role, password, enabled]);
+  }, [meetingId, role, password, enabled, user]);
 
   // ─── Controls ──────────────────────────────────────────────────────────────
   const guard = useCallback(
@@ -332,6 +429,19 @@ export function useLiveKitRoom(
       const lp = roomRef.current?.localParticipant;
       if (!lp) {
         toast.error("Not connected to the meeting yet");
+        return null;
+      }
+      // Browsers expose `mediaDevices` only in a secure context. Served over
+      // plain HTTP from anything but localhost — a LAN IP such as
+      // http://192.168.1.5:3000, which is how a second device usually reaches a
+      // dev server — the whole API is simply absent, so the buttons look dead
+      // and nothing explains why.
+      if (!navigator.mediaDevices?.getUserMedia) {
+        toast.error(
+          window.isSecureContext
+            ? "This browser does not support camera and microphone access"
+            : "Camera and microphone need HTTPS. Open the site over https:// or on localhost."
+        );
         return null;
       }
       if (!allowed) {
@@ -358,20 +468,39 @@ export function useLiveKitRoom(
   const toggleCamera = useCallback(async () => {
     const lp = guard(canPublish, "turn on your camera");
     if (!lp) return;
+
+    const next = !lp.isCameraEnabled;
+    const prefs = prefsRef.current;
+
     try {
-      const next = !lp.isCameraEnabled;
-      const prefs = prefsRef.current;
-      const preset = prefs ? QUALITY_PRESETS[prefs.quality] : null;
-      await lp.setCameraEnabled(
-        next,
-        preset ? { resolution: { width: preset.width, height: preset.height } } : undefined
-      );
-      setIsCamOn(next);
-      if (next && prefs && roomRef.current) {
-        await applyBackgroundEffect(roomRef.current, prefs.effect);
+      if (next) {
+        await enableCameraWithFallback(lp, prefs?.quality ?? null);
+      } else {
+        await lp.setCameraEnabled(false);
       }
+
+      setIsCamOn(next);
     } catch (err: any) {
-      toast.error(`Could not access camera: ${err?.message || "denied"}`);
+      // Say which of the handful of real causes this is; "denied" sent people
+      // to their browser settings when the camera was simply already in use.
+      const reason =
+        {
+          NotAllowedError:
+            "permission was blocked — allow the camera in the address bar",
+          NotFoundError: "no camera was found on this device",
+          NotReadableError:
+            "another app is using it (close Zoom, Teams or your camera app)",
+          OverconstrainedError: "this camera cannot produce the selected quality",
+          AbortError: "the camera stopped unexpectedly",
+        }[err?.name as string] || err?.message || "unknown error";
+      toast.error(`Could not turn on the camera: ${reason}`);
+      return;
+    }
+
+    // Applied after the camera is already live and reported, so a failing
+    // effect can never be mistaken for the camera itself failing.
+    if (next && prefs && roomRef.current) {
+      await applyBackgroundEffect(roomRef.current, prefs.effect);
     }
   }, [canPublish, guard]);
 
