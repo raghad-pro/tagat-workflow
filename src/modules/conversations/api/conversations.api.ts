@@ -158,9 +158,14 @@ export const conversationsApi = {
   },
 
   /**
-   * Sends `message` + `files[]` only. The previous version also appended the
-   * legacy `body` and `attachment` keys alongside them, which duplicates the
-   * payload and trips strict validators.
+   * Sends `message` + `files[]`.
+   *
+   * `files[]` is the only upload key the server actually stores — verified by
+   * posting the same file under `attachment`, `attachments[]` and `file` as
+   * well: each answered 200 and saved a message with an empty `attachments`
+   * array. A 200 here is therefore not evidence that a file was attached, which
+   * is why the duplicate legacy keys this used to send were removed rather than
+   * kept "just in case".
    */
   sendMessage: async (
     role: string,
@@ -169,22 +174,10 @@ export const conversationsApi = {
   ) => {
     const formData = new FormData();
     formData.append("message", data.message ?? "");
-    // Legacy fallback for older API endpoints
-    if (data.message) {
-      formData.append("body", data.message);
-    }
 
     const files = data.files ?? [];
     formData.append("type", files.length > 0 ? "file" : "text");
-    
-    files.forEach((file) => {
-      formData.append("files[]", file);
-    });
-
-    if (files.length > 0) {
-      // Legacy fallback for file uploads
-      formData.append("attachment", files[0]);
-    }
+    files.forEach((file) => formData.append("files[]", file));
 
     const body = await apiClient.post(`${base(role)}/${id}/messages`, formData);
     return unwrapOne(body);

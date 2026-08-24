@@ -1,24 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { useRouter } from "next/navigation";
 import { MeetingDetailsPreJoin } from "./MeetingDetailsPreJoin";
-import { MeetingRoomPage } from "./room/MeetingRoomPage";
 
 interface MeetingDetailsContainerProps {
   meetingId: string | number;
 }
 
 export function MeetingDetailsContainer({ meetingId }: MeetingDetailsContainerProps) {
-  const [hasEnteredRoom, setHasEnteredRoom] = useState(false);
-
-  if (hasEnteredRoom) {
-    return <MeetingRoomPage meetingId={meetingId} />;
-  }
+  const router = useRouter();
 
   return (
     <MeetingDetailsPreJoin
       meetingId={meetingId}
-      onJoin={() => setHasEnteredRoom(true)}
+      // The room is its own route so a refresh keeps the user inside it; the
+      // device-setup screen there also collects the password when needed.
+      onJoin={() => router.push(`/meetings/${meetingId}/room`)}
     />
   );
 }

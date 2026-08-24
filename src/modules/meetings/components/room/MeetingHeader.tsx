@@ -29,7 +29,7 @@ export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
   const { mutate: startMeeting, isPending: isStarting } = useStartMeeting();
   const { mutate: endMeeting, isPending: isEnding } = useEndMeeting();
 
-  const isLive = meeting.status === "in_progress";
+  const isLive = meeting.status === "live";
 
   useEffect(() => {
     let interval: any;

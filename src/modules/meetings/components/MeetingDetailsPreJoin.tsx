@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { 
@@ -8,7 +8,8 @@ import {
   useMeetingParticipants, 
   useMeetingInvitations,
   useStartMeeting,
-  useEndMeeting
+  useEndMeeting,
+  useSendInvitation
 } from "../hooks/useMeetings";
 import { 
   Video, 
@@ -17,13 +18,18 @@ import {
   UserPlus,
   PhoneOff,
   Play,
-  Send
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActionModal } from "@/components/molecules/ActionModal";
+import { useMeetingUserDirectory } from "../hooks/useMeetingUserDirectory";
+import { useInvitableUsers } from "../hooks/useInvitableUsers";
+import { useCompanyNames } from "../hooks/useCompanyNames";
+import { useMeetingPermissions } from "../hooks/useMeetingPermissions";
 
 interface MeetingDetailsPreJoinProps {
   meetingId: string | number;
-  onJoin: () => void;
+  onJoin: (password?: string) => void;
 }
 
 export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJoinProps) {
@@ -35,6 +41,15 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
   
   const { mutate: startMeeting, isPending: isStarting } = useStartMeeting();
   const { mutate: endMeeting, isPending: isEnding } = useEndMeeting();
+  const { mutate: sendInvite, isPending: isInviting } = useSendInvitation();
+  const { users: invitableUsers } = useInvitableUsers(meetingId);
+  const { resolveCompanyName } = useCompanyNames();
+  const permissions = useMeetingPermissions(meetingId);
+  const [inviteUserId, setInviteUserId] = useState("");
+  // No meetingId here on purpose: chat is only readable by active participants,
+  // so mining it before joining would just poll 403s.
+  const { resolveName } = useMeetingUserDirectory();
+
 
   if (isLoading) {
     return (
@@ -62,13 +77,15 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
     );
   }
 
-  const isHost = meeting.created_by === user?.id || user?.role === "super_admin" || user?.role === "company";
+  // The API grants moderator actions by roster role or creator — not by the
+  // account's role, which is what this used to assume.
+  const isHost = permissions.isOwner;
 
   const renderStatusBadge = () => {
     switch (meeting.status) {
       case "waiting":
         return <span className="px-3 py-0.5 rounded-full bg-[#FFFDEB] text-[#D97706] text-xs font-bold">Waiting</span>;
-      case "in_progress":
+      case "live":
         return <span className="px-3 py-0.5 rounded-full bg-[#E6F8F9] text-[#25C6DA] text-xs font-bold animate-pulse">Live</span>;
       case "ended":
         return <span className="px-3 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">Ended</span>;
@@ -88,14 +105,19 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
 
   const handleJoinOrStart = () => {
     if (isHost && meeting.status === "waiting") {
-      startMeeting(meetingId, {
-        onSuccess: () => {
-          onJoin();
-        }
-      });
-    } else {
-      onJoin();
+      startMeeting(meetingId, { onSuccess: () => onJoin() });
+      return;
     }
+    // The device-setup screen collects the password for private meetings.
+    onJoin();
+  };
+
+  const handleSendInvite = () => {
+    if (!inviteUserId) return;
+    sendInvite(
+      { meetingId, payload: { user_id: Number(inviteUserId), role: "participant" } },
+      { onSuccess: () => setInviteUserId("") }
+    );
   };
 
   const handleEndMeeting = () => {
@@ -109,7 +131,7 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
       
       {/* Page Header (Title) */}
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-[28px] font-extrabold text-[#1A202C]">
+        <h1 className="text-[28px] font-extrabold text-slate-900 dark:text-slate-100">
           {meeting.title}
         </h1>
         {/* Placeholder for Add Meeting button if they have it in their layout, 
@@ -118,20 +140,20 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
       </div>
 
       {/* 1. Details Card */}
-      <div className="bg-white rounded-[12px] shadow-sm border border-[#E2E8F0] overflow-hidden flex flex-col">
+      <div className="ds-bg-form rounded-[12px] shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col">
         {/* Cyan top border line */}
         <div className="h-1 w-full bg-[#25C6DA]" />
         
         {/* Card Header */}
         <div className="flex items-center justify-between px-6 py-5">
-          <h2 className="text-xl font-bold text-[#1A202C]">Details</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Details</h2>
           <div className="flex items-center gap-3">
             {renderStatusBadge()}
             <span className="text-[#25C6DA] text-[13px] font-bold tracking-wide">
               {meeting.meeting_code || `WF-${meeting.id}`}
             </span>
             
-            {isHost && (meeting.status === "waiting" || meeting.status === "in_progress") && (
+            {permissions.canEnd && (
               <button
                 onClick={handleEndMeeting}
                 disabled={isEnding || isStarting}
@@ -166,49 +188,55 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
           {/* Col 1 */}
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Type</span>
-              <span className="text-[14px] font-medium text-[#1A202C] capitalize">{meeting.type}</span>
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Type</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100 capitalize">{meeting.type}</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Created by</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">{meeting.creator?.name || "System"}</span>
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Company</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">
+                {resolveCompanyName(meeting.company_id)}
+              </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Max participants</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">{meeting.max_participants || "50"}</span>
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Created by</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">{meeting.creator?.name || resolveName(meeting.created_by, "System")}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Max participants</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">{meeting.max_participants || "50"}</span>
             </div>
           </div>
           {/* Col 2 */}
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Scheduled at</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Scheduled at</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">
                 {meeting.scheduled_at ? new Date(meeting.scheduled_at).toLocaleString() : "—"}
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Ended at</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Ended at</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">
                 {meeting.ended_at ? new Date(meeting.ended_at).toLocaleString() : "—"}
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Peak participants</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">{meeting.peak_participants || "0"}</span>
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Peak participants</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">{meeting.peak_participants || "0"}</span>
             </div>
           </div>
           {/* Col 3 */}
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Privacy</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">{meeting.is_private ? "Private" : "Public"}</span>
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Privacy</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">{meeting.is_private ? "Private (password)" : "Public"}</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Project</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">{meeting.project?.title || meeting.project?.name || "—"}</span>
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Project</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">{meeting.project?.title || meeting.project?.name || "—"}</span>
             </div>
             <div className="flex flex-col gap-2">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Features</span>
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Features</span>
               <div className="flex flex-wrap gap-1.5">
                 {meeting.allow_chat && (
                   <span className="px-2 py-0.5 rounded-[4px] bg-[#E6F8F9] text-[#25C6DA] text-[10px] font-bold">Chat</span>
@@ -228,14 +256,14 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
           {/* Col 4 */}
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Started at</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Started at</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">
                 {meeting.started_at ? new Date(meeting.started_at).toLocaleString() : "—"}
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-[#A0AEC0]">Duration</span>
-              <span className="text-[14px] font-medium text-[#1A202C]">
+              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Duration</span>
+              <span className="text-[14px] font-medium text-slate-900 dark:text-slate-100">
                 {meeting.duration ? `${meeting.duration} minutes` : "—"}
               </span>
             </div>
@@ -243,11 +271,11 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
         </div>
 
         {/* Divider */}
-        <div className="h-[1px] bg-[#E2E8F0] w-full" />
+        <div className="h-[1px] bg-slate-200 dark:bg-slate-800 w-full" />
 
         {/* Description & Action */}
         <div className="p-6 flex flex-col gap-4">
-          <p className="text-[14px] text-[#1A202C] font-bold max-w-4xl leading-relaxed">
+          <p className="text-[14px] text-slate-900 dark:text-slate-100 font-bold max-w-4xl leading-relaxed">
             {meeting.description || "No description provided."}
           </p>
           
@@ -275,7 +303,7 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
                 Meeting {meeting.status}
               </button>
             )}
-            <span className="text-[12px] font-medium text-[#A0AEC0]">
+            <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
               Adds you to the roster.
             </span>
           </div>
@@ -283,10 +311,10 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
       </div>
 
       {/* 2. Participants Card */}
-      <div className="bg-white rounded-[12px] shadow-sm border border-[#E2E8F0] p-6 flex flex-col gap-4">
+      <div className="ds-bg-form rounded-[12px] shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4">
         <div>
-          <h2 className="text-[18px] font-bold text-[#1A202C]">Participants ({participants.length})</h2>
-          <p className="text-[12px] text-[#A0AEC0] mt-0.5">
+          <h2 className="text-[18px] font-bold text-slate-900 dark:text-slate-100">Participants ({participants.length})</h2>
+          <p className="text-[12px] text-slate-400 dark:text-slate-500 mt-0.5">
             Peak {meeting.peak_participants || 0} of {meeting.max_participants || 50} allowed.
           </p>
         </div>
@@ -294,53 +322,55 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
         <div className="w-full mt-2">
           {participants.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <Users className="w-8 h-8 text-[#CBD5E0] mb-3" />
-              <p className="text-[13px] font-medium text-[#718096]">No one has joined yet.</p>
+              <Users className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-3" />
+              <p className="text-[13px] font-medium text-slate-500 dark:text-slate-400">No one has joined yet.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
-                  <tr className="bg-[#F8FAFC]">
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider w-[50px]">#</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">USER</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">ROLE</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">CONNECTION</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">JOINED</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">LEFT</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">ACTIONS</th>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50">
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-[50px]">#</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">USER</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">ROLE</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">CONNECTION</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">JOINED</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">LEFT</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E8F0]">
                   {participants.map((p: any, idx: number) => (
                     <tr key={p.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#A0AEC0]">{idx + 1}</td>
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">{idx + 1}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-[#E6F8F9] text-[#25C6DA] flex items-center justify-center text-[11px] font-bold">
-                            {getInitials(p.user?.name || "User")}
+                            {getInitials(resolveName(p.user_id, `U${p.user_id}`))}
                           </div>
-                          <span className="text-[13px] font-bold text-[#1A202C]">{p.user?.name || "Unknown"}</span>
+                          <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100">
+                            {resolveName(p.user_id, `User #${p.user_id}`)}
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-[13px] font-medium text-[#718096] capitalize">{p.role}</span>
+                        <span className="text-[13px] font-medium text-slate-500 dark:text-slate-400 capitalize">{p.role}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={cn(
                           "text-[13px] font-medium",
-                          p.connection_status === "connected" ? "text-[#22C55E]" : "text-[#A0AEC0]"
+                          p.connection_status === "connected" ? "text-[#22C55E]" : "text-slate-400 dark:text-slate-500"
                         )}>
                           {p.connection_status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#718096]">
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-500 dark:text-slate-400">
                         {p.joined_at ? new Date(p.joined_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#718096]">
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-500 dark:text-slate-400">
                         {p.left_at ? new Date(p.left_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#A0AEC0]">—</td>
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">—</td>
                     </tr>
                   ))}
                 </tbody>
@@ -351,22 +381,40 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
       </div>
 
       {/* 3. Invitations Card */}
-      <div className="bg-white rounded-[12px] shadow-sm border border-[#E2E8F0] p-6 flex flex-col gap-4">
+      <div className="ds-bg-form rounded-[12px] shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h2 className="text-[18px] font-bold text-[#1A202C]">Invitations ({invitations.length})</h2>
-            <p className="text-[12px] text-[#A0AEC0] mt-0.5">
+            <h2 className="text-[18px] font-bold text-slate-900 dark:text-slate-100">Invitations ({invitations.length})</h2>
+            <p className="text-[12px] text-slate-400 dark:text-slate-500 mt-0.5">
               Company members and approved clients can be invited.
             </p>
           </div>
-          {isHost && (
+          {permissions.canInvite && (
             <div className="flex items-center gap-3">
-              <select className="h-9 rounded-full border border-[#E2E8F0] bg-white px-4 text-[13px] font-medium text-[#718096] outline-none focus:border-[#25C6DA] min-w-[150px]">
-                <option>-- Select User --</option>
+              <select
+                value={inviteUserId}
+                onChange={(e) => setInviteUserId(e.target.value)}
+                disabled={invitableUsers.length === 0}
+                className="h-9 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-transparent px-4 text-[13px] font-medium text-slate-500 dark:text-slate-400 outline-none focus:border-[#25C6DA] min-w-[190px] disabled:opacity-60"
+              >
+                <option value="">
+                  {invitableUsers.length === 0
+                    ? "No one left to invite"
+                    : "-- Select User --"}
+                </option>
+                {invitableUsers.map((u) => (
+                  <option key={u.userId} value={u.userId}>
+                    {u.name} ({u.source})
+                  </option>
+                ))}
               </select>
-              <button className="h-9 px-5 rounded-full bg-[#25C6DA] hover:bg-[#20b2c4] text-white font-bold text-[13px] transition-colors flex items-center gap-1.5 cursor-pointer">
+              <button
+                onClick={handleSendInvite}
+                disabled={!inviteUserId || isInviting}
+                className="h-9 px-5 rounded-full bg-[#25C6DA] hover:bg-[#20b2c4] text-white font-bold text-[13px] transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Send className="w-3.5 h-3.5 -rotate-45" />
-                Invite
+                {isInviting ? "Sending..." : "Invite"}
               </button>
             </div>
           )}
@@ -375,42 +423,44 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
         <div className="w-full mt-2">
           {invitations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <Send className="w-8 h-8 text-[#CBD5E0] mb-3 -rotate-45" />
-              <p className="text-[13px] font-medium text-[#718096]">No invitations sent yet. Use the form above to invite someone.</p>
+              <Send className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-3 -rotate-45" />
+              <p className="text-[13px] font-medium text-slate-500 dark:text-slate-400">No invitations sent yet. Use the form above to invite someone.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
-                  <tr className="bg-[#F8FAFC]">
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider w-[50px]">#</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">USER</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">INVITED BY</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">STATUS</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">SENT</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#A0AEC0] uppercase tracking-wider">ACTIONS</th>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50">
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-[50px]">#</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">USER</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">INVITED BY</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">STATUS</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">SENT</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E8F0]">
                   {invitations.map((inv: any, idx: number) => (
                     <tr key={inv.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#A0AEC0]">{idx + 1}</td>
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">{idx + 1}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-[#E6F8F9] text-[#25C6DA] flex items-center justify-center text-[11px] font-bold">
-                            {getInitials(inv.user?.name || "User")}
+                            {getInitials(inv.user?.name || resolveName(inv.user_id, "User"))}
                           </div>
-                          <span className="text-[13px] font-bold text-[#1A202C]">{inv.user?.name || "Unknown"}</span>
+                          <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100">{inv.user?.name || resolveName(inv.user_id, "Unknown")}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#718096]">—</td>
-                      <td className="px-4 py-3">
-                        <span className="text-[13px] font-medium text-[#718096] capitalize">{inv.status}</span>
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-500 dark:text-slate-400">
+                        {resolveName(inv.invited_by, "—")}
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#718096]">
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] font-medium text-slate-500 dark:text-slate-400 capitalize">{inv.status}</span>
+                      </td>
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-500 dark:text-slate-400">
                         {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString() : "—"}
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium text-[#A0AEC0]">—</td>
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">—</td>
                     </tr>
                   ))}
                 </tbody>

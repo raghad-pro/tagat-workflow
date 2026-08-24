@@ -82,6 +82,8 @@ export function buildEmployeePayload(
     hourly_rate: toNumber(employee?.hourly_rate ?? employee?.hourlyRate),
     monthly_salary: toNumber(employee?.monthly_salary ?? employee?.monthlySalary),
     currency_id: toNumber(employee?.currency_id ?? employee?.currency?.id),
+    // Preserve the active status when updating other fields
+    is_active: employee?.user?.is_active ?? employee?.is_active ?? 1,
     // Always explicit. Omitting the key detaches the role just as `null` does,
     // so "leave it alone" is not something this endpoint can express.
     role_id: roleId,
@@ -150,3 +152,4 @@ export const useBulkAssignRole = () => {
     },
   });
 };
+

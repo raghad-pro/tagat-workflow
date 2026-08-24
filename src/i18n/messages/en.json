@@ -560,6 +560,7 @@
     "budgetExceeded": "You have exceeded the budget. Remaining: {budget}"
   },
   "timesheets": {
+    "monthlyTotal": "Monthly total",
     "title": "Timesheets Dashboard",
     "subtitle": "Overview of employee time logs and salaries",
     "add": "Add Time Log",
@@ -579,6 +580,7 @@
       "badge": "Multi Currency"
     },
     "filter": {
+      "fromTasks": "From tasks",
       "allStatus": "All Status",
       "pending": "Pending",
       "completed": "Completed",
@@ -592,6 +594,7 @@
       "rejected": "Rejected"
     },
     "columns": {
+      "task": "Task",
       "employee": "Employee",
       "company": "Company",
       "date": "Date",

@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
 import { PageContainer } from "@/components/template/PageContainer";
 import { PageHeader } from "@/components/molecules/Pageheader";
-import { StatCard } from "@/components/atoms/Statcard";
 import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
-import { DataTable, TableColumn, TableAction } from "@/components/molecules/Datatable";
 import { Pagination } from "@/components/molecules/Pagination";
 import {
   PageCard,
@@ -17,22 +15,17 @@ import {
 } from "@/components/molecules/Pagecard";
 import {
   useRoles,
-  useRoleStats,
   useDeleteRole,
   useCreateRole,
   useUpdateRole,
 } from "../hooks/useRoles";
-import { ShieldCheck, Users } from "@/assets/icons/icons";
-import { Eye, Edit2, Trash2 } from "@/assets/icons/icons";
 import { isBaseRole, type Role, type RolePayload } from "../types/roles.types";
 import AddRoleModal from "./AddRoleModal";
 import EditRoleModal from "./EditRoleModal";
-import { ViewRoleModal, permissionSummary } from "./ViewRoleModal";
-import { Text } from "@/components/atoms/Text";
-import { ClientAvatar } from "@/components/atoms/Clientavatar";
+import { ViewRoleModal } from "./ViewRoleModal";
+import { RoleCard } from "./RoleCard";
 import { useActionModals } from "@/hooks/useActionModals";
 import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
-import { useAuth } from "@/providers/AuthProvider";
 import { usePermission } from "@/hooks/usePermission";
 
 const PAGE_SIZE = 8;
@@ -41,15 +34,10 @@ export default function RolesManagementPage() {
   const t = useTranslations("role");
   const tCommon = useTranslations("common");
 
-  const { user } = useAuth();
   const { can } = usePermission();
-  const isSuperAdmin = user?.role === "super_admin";
-
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const { data: statsData } = useRoleStats();
   const { data: rolesData, isLoading, isFetching } = useRoles({
     search,
     page,
@@ -64,81 +52,6 @@ export default function RolesManagementPage() {
 
   const rows = rolesData?.data ?? [];
   const total = rolesData?.meta?.total ?? rows.length;
-
-  const columns: TableColumn<Role>[] = useMemo(() => {
-    const base: TableColumn<Role>[] = [
-      {
-        key: "name",
-        header: t("columns.roleName"),
-        isPrimary: true,
-        render: (row) => (
-          <div className="flex items-center gap-3">
-            <ClientAvatar name={row.name} size="md" />
-            <div className="flex flex-col">
-              <Text size="sm" weight="medium" tag="span">{row.name}</Text>
-              {isBaseRole(row.id) && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded w-fit bg-primary/10 text-[var(--color-primary)]">
-                  {t("types.system")}
-                </span>
-              )}
-            </div>
-          </div>
-        ),
-      },
-      {
-        key: "permissions",
-        header: t("columns.permissions"),
-        hideOnMobile: true,
-        render: (row) => (
-          <div className="flex items-center gap-2">
-            <span className="text-xs px-2 py-0.5 rounded-full ds-bg-primary-200 ds-text-brand shrink-0">
-              {row.permissions?.length ?? 0}
-            </span>
-            <Text size="sm" tag="span" className="ds-text-gray-200 capitalize">
-              {permissionSummary(row)}
-            </Text>
-          </div>
-        ),
-      },
-    ];
-
-    if (isSuperAdmin) {
-      base.push({
-        key: "company",
-        header: t("columns.company"),
-        hideOnMobile: true,
-        render: (row) => (
-          <Text size="sm" tag="span">{row.company?.name ?? t("allCompanies")}</Text>
-        ),
-      });
-    }
-
-    return base;
-  }, [t, isSuperAdmin]);
-
-  const actions: TableAction<Role>[] = useMemo(
-    () => [
-      { icon: Eye, label: tCommon("view"), colorScheme: "send", onClick: openView },
-      {
-        icon: Edit2,
-        label: tCommon("edit"),
-        colorScheme: "edit",
-        onClick: openEdit,
-        // Base roles are shared across every account — editing one would
-        // change what `employee` means for everybody.
-        disabled: (row) => isBaseRole(row.id),
-        hidden: () => !can("roles.update"),
-      },
-      {
-        icon: Trash2,
-        label: tCommon("delete"),
-        colorScheme: "delete",
-        onClick: openDelete,
-        hidden: (row) => isBaseRole(row.id) || !can("roles.delete"),
-      },
-    ],
-    [tCommon, openView, openEdit, openDelete, can]
-  );
 
   const handleAddRole = (payload: RolePayload) => {
     createRoleMutation.mutate(payload, {
@@ -193,30 +106,6 @@ export default function RolesManagementPage() {
           }
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <StatCard
-            icon={Users}
-            value={statsData?.customRoles ?? 0}
-            label={t("stats.custom")}
-            iconColor="var(--color-status-pending)"
-            iconBg="var(--color-status-pending-bg)"
-          />
-          <StatCard
-            icon={ShieldCheck}
-            value={statsData?.total ?? 0}
-            label={t("stats.total")}
-            iconColor="var(--color-primary)"
-            iconBg="var(--color-bg-primary-200)"
-          />
-          <StatCard
-            icon={ShieldCheck}
-            value={statsData?.systemRoles ?? 0}
-            label={t("stats.system")}
-            iconColor="var(--color-status-active)"
-            iconBg="var(--color-status-active-bg)"
-          />
-        </div>
-
         <PageCard>
           <PageCardSection>
             <SearchFilterBar
@@ -230,13 +119,37 @@ export default function RolesManagementPage() {
           </PageCardSection>
 
           <PageCardBody>
-            <DataTable
-              columns={columns}
-              data={rows}
-              actions={actions}
-              actionsHeader={tCommon("actions")}
-              isLoading={isFetching}
-            />
+            {isFetching ? (
+              <div className="flex justify-center items-center p-8">
+                <span className="text-gray-500">{tCommon("loading")}...</span>
+              </div>
+            ) : rows.length === 0 ? (
+              <div className="flex justify-center items-center p-8">
+                <span className="text-gray-500">{tCommon("noData")}</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4">
+                {rows.map((role) => (
+                  <RoleCard
+                    key={role.id}
+                    role={role}
+                    onEdit={() => {
+                      if (!isBaseRole(role.id) && can("roles.update")) {
+                        openEdit(role);
+                      }
+                    }}
+                    onDelete={() => {
+                      if (!isBaseRole(role.id) && can("roles.delete")) {
+                        openDelete(role);
+                      }
+                    }}
+                    onView={() => openView(role)}
+                    canEdit={can("roles.update")}
+                    canDelete={can("roles.delete")}
+                  />
+                ))}
+              </div>
+            )}
           </PageCardBody>
 
           <PageCardFooter>

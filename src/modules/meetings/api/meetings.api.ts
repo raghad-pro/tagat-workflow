@@ -1,4 +1,5 @@
 import apiClient from "@/services/apiClient";
+import axiosInstance from "@/services/axiosConfig";
 import { getRolePrefix } from "@/utils/rolePrefix";
 import type {
   Meeting,
@@ -18,6 +19,7 @@ import type {
   WhiteboardState,
   WhiteboardElement,
   MediaTokenResponse,
+  MediaJoinResponse,
   MeetingNote,
   CreateNotePayload,
   UpdateNotePayload,
@@ -147,13 +149,15 @@ export const meetingsApi = {
       list = response;
     }
 
-    // Filter out participants who left or are disconnected
-    return list.filter(
-      (p: any) =>
-        (!p.left_at || p.left_at === null) &&
-        p.connection_status !== "disconnected" &&
-        p.connection_status !== "idle"
-    );
+    // `left_at` is NOT cleared by the API when someone rejoins, so a stale
+    // timestamp older than `joined_at` must not hide a participant who is back
+    // in the room. `connection_status` is the authoritative signal.
+    return list.filter((p: any) => {
+      if (p.connection_status === "disconnected") return false;
+      if (!p.left_at) return true;
+      if (!p.joined_at) return false;
+      return new Date(p.left_at).getTime() <= new Date(p.joined_at).getTime();
+    });
   },
 
   join: async (role: string, meetingId: number | string, payload?: JoinMeetingPayload) => {
@@ -198,17 +202,29 @@ export const meetingsApi = {
     return [];
   },
 
+  /**
+   * The upload field is `file`, not `attachment`.
+   *
+   * Verified by posting the same image under `attachment`, `attachments[]`,
+   * `files[]`, `media`, `upload`, `image` and `documents[]`: every one answered
+   * 201 with `type: "text"` and an empty `attachments` array — the file was
+   * accepted and thrown away. Only `file` produced `type: "file"` and a stored
+   * attachment, so a 201 alone proves nothing here.
+   *
+   * (Note this differs from the conversations chat, where the key is `files[]`.)
+   */
   sendMessage: async (
     role: string,
     meetingId: number | string,
     payload: { message: string; attachment?: File }
   ) => {
     const prefix = getRolePrefix(role);
-    let body: any = payload;
+    let body: any = { message: payload.message };
     if (payload.attachment) {
       const formData = new FormData();
       formData.append("message", payload.message);
-      formData.append("attachment", payload.attachment);
+      formData.append("type", "file");
+      formData.append("file", payload.attachment);
       body = formData;
     }
     const response = await apiClient.post<ApiResponse<MeetingMessage>>(
@@ -216,6 +232,26 @@ export const meetingsApi = {
       body
     );
     return response.data;
+  },
+
+  /**
+   * Fetches a meeting attachment's bytes.
+   *
+   * The message payload carries only `{ id, file_name, mime_type, size }` — no
+   * path and no URL — so the file has to be pulled from
+   * `/meeting-attachments/{id}/download` by id.
+   *
+   * It cannot be used as an `<img src>`: the route sits behind auth, and a bare
+   * element sends no `Authorization` header (nor the `Accept: application/json`
+   * that makes Laravel answer 401 instead of redirecting to the web login). It
+   * has to be fetched through the API client and turned into an object URL.
+   */
+  downloadAttachment: async (role: string, attachmentId: number | string) => {
+    const response = await axiosInstance.get(
+      `${getRolePrefix(role)}/meeting-attachments/${attachmentId}/download`,
+      { responseType: "blob" }
+    );
+    return response.data as Blob;
   },
 
   getAttachmentDownloadUrl: (role: string, attachmentId: number | string) => {
@@ -296,20 +332,24 @@ export const meetingsApi = {
     return response.data;
   },
 
-  undoWhiteboard: async (role: string, meetingId: number | string, content?: { elements: WhiteboardElement[] }) => {
+  // The API rejects undo without a `content` body (422), so the caller must pass
+  // the board state it wants restored.
+  undoWhiteboard: async (role: string, meetingId: number | string, content: { elements: WhiteboardElement[] }) => {
     const prefix = getRolePrefix(role);
     const response = await apiClient.post<ApiResponse<WhiteboardState>>(
       `${prefix}/meetings/${meetingId}/whiteboard/undo`,
-      content ? { content } : undefined
+      { content }
     );
     return response.data;
   },
 
-  redoWhiteboard: async (role: string, meetingId: number | string, content?: { elements: WhiteboardElement[] }) => {
+  // The API rejects redo without a `content` body (422), so the caller must pass
+  // the board state it wants restored.
+  redoWhiteboard: async (role: string, meetingId: number | string, content: { elements: WhiteboardElement[] }) => {
     const prefix = getRolePrefix(role);
     const response = await apiClient.post<ApiResponse<WhiteboardState>>(
       `${prefix}/meetings/${meetingId}/whiteboard/redo`,
-      content ? { content } : undefined
+      { content }
     );
     return response.data;
   },
@@ -394,11 +434,14 @@ export const meetingsApi = {
     return response.data;
   },
 
+  // Joins the roster and mints a LiveKit token in one call. The API rejects a
+  // bare `media-token` request with 403 until the caller has joined, so this is
+  // the entry point the room should use.
   mediaJoin: async (role: string, meetingId: number | string, password?: string) => {
     const prefix = getRolePrefix(role);
-    const response = await apiClient.post<ApiResponse<any>>(
+    const response = await apiClient.post<ApiResponse<MediaJoinResponse>>(
       `${prefix}/meetings/${meetingId}/media/join`,
-      password ? { password } : undefined
+      password ? { password } : {}
     );
     return response.data;
   },

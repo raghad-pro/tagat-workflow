@@ -19,6 +19,7 @@ import EditTimesheetModal from "./EditTimesheetModal";
 import { ViewTimesheetModal } from "./ViewTimesheetModal";
 
 import { useTimesheets, useApproveTimesheet, useRejectTimesheet } from "../hooks/useTimesheets";
+import { useCompletedTaskEntries } from "../hooks/useCompletedTaskEntries";
 
 
 
@@ -59,8 +60,39 @@ export default function TimesheetsPage() {
     per_page: PAGE_SIZE
   } as any);
   
-  let Timesheets = TimesheetsResponse?.data || [];
-  const totalItems = TimesheetsResponse?.total || 0;
+  const { data: taskEntries = [], isLoading: isLoadingTasks } = useCompletedTaskEntries();
+
+  /**
+   * Stored timesheets plus the hours employees logged by finishing tasks.
+   *
+   * A task that already has a stored timesheet pointing at it is dropped from
+   * the derived side so the same work is never counted twice — including in the
+   * hours and salary totals below.
+   */
+  const merged = useMemo(() => {
+    const stored = TimesheetsResponse?.data || [];
+    const claimed = new Set(
+      stored.map((row: any) => Number(row?.task_id)).filter(Number.isFinite)
+    );
+    const derived = taskEntries.filter((row) => !claimed.has(row.task_id));
+
+    return [...stored, ...derived].sort((a: any, b: any) =>
+      String(b?.date ?? "").localeCompare(String(a?.date ?? ""))
+    );
+  }, [TimesheetsResponse?.data, taskEntries]);
+
+  let Timesheets: any[] = merged;
+
+  if (search.trim()) {
+    const needle = search.trim().toLowerCase();
+    Timesheets = Timesheets.filter((t: any) =>
+      [t.user?.name, t.user?.company?.name, t.task?.title]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(needle)
+    );
+  }
 
   // Local filtering fallback in case the backend ignores the query params
   if (monthFilter !== "all") {
@@ -76,16 +108,39 @@ export default function TimesheetsPage() {
     Timesheets = Timesheets.filter((t: any) => t.status === statusFilter);
   }
 
-  const approvedCount = Timesheets.filter((t: any) => t.status === "approved").length;
-  const pendingCount = Timesheets.filter((t: any) => t.status === "pending").length;
-  const totalHoursNum = Timesheets.reduce((sum: number, t: any) => sum + (Number(t.hours) || 0), 0);
-  const totalHours = `${Math.floor(totalHoursNum / 60)}h ${Math.round(totalHoursNum % 60)}m`;
-  const totalSalaries = Timesheets.reduce((sum: number, t: any) => {
-    const emp = t.user?.employee;
-    const isMonthly = emp?.payment_type === "monthly" || emp?.paymentType === "monthly";
-    const val = isMonthly ? (emp?.salary || emp?.hourly_rate || emp?.hourlyRate || 0) : t.total;
-    return sum + (Number(val) || 0);
-  }, 0).toFixed(2);
+  // Paginated here rather than by the server: derived task rows never went
+  // through the API's paginator, so its page count would be short by however
+  // many completed tasks there are.
+  const totalItems = Timesheets.length;
+  const pageRows = Timesheets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  /**
+   * Stats come from the stored rows and the server's own summary, never from
+   * the merged list.
+   *
+   * The stored row is a *monthly total per employee* that the API recalculates
+   * every time a task is completed — so it already contains the hours of every
+   * task listed above it. Summing the merged list would count the same work
+   * twice.
+   */
+  const storedRows: any[] = TimesheetsResponse?.data || [];
+  const summary = TimesheetsResponse?.summary ?? {};
+
+  const approvedCount = storedRows.filter((t: any) => t.status === "approved").length;
+  const pendingCount = storedRows.filter((t: any) => t.status === "pending").length;
+
+  const storedMinutes = storedRows.reduce(
+    (sum: number, t: any) => sum + (Number(t.hours) || 0),
+    0
+  );
+  const totalHours =
+    summary.total_formatted ??
+    `${Math.floor(storedMinutes / 60)}h ${Math.round(storedMinutes % 60)}m`;
+
+  const totalSalaries = Number(
+    summary.unpaid_total ??
+      storedRows.reduce((sum: number, t: any) => sum + (Number(t.total) || 0), 0)
+  ).toFixed(2);
 
   const approveTimesheet = useApproveTimesheet();
   const rejectTimesheet = useRejectTimesheet();
@@ -144,6 +199,31 @@ export default function TimesheetsPage() {
 
     cols.push(
       {
+        key: "task",
+        header: t("columns.task"),
+        render: (row) => {
+          if (!row.task?.title) {
+            return (
+              <Text size="sm" weight="medium" tag="span" className="ds-text-gray-200">
+                {t("monthlyTotal")}
+              </Text>
+            );
+          }
+          return (
+            <div className="flex flex-col min-w-0">
+              <Text size="sm" weight="medium" tag="span" className="ds-text-primary truncate">
+                {row.task.title}
+              </Text>
+              {row.task.sprint?.name && (
+                <Text size="sm" className="ds-text-gray-200 text-xs truncate">
+                  {row.task.sprint.name}
+                </Text>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         key: "date",
         header: t("columns.date"),
         render: (row) => <Text size="sm" className="ds-text-gray-200">{row.date || row.created_at?.split('T')[0] || '-'}</Text>,
@@ -195,19 +275,21 @@ export default function TimesheetsPage() {
 
   const actions: TableAction<any>[] = useMemo(() => [
     { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView },
-    { 
-      icon: CheckCircle2, 
-      label: tCommon("approve") || "Approve", 
-      colorScheme: "edit",   
+    // Approve/reject address a stored row by id. A derived task entry has no
+    // such row, so the actions are hidden rather than left to fail.
+    {
+      icon: CheckCircle2,
+      label: tCommon("approve") || "Approve",
+      colorScheme: "edit",
       onClick: (row) => approveTimesheet.mutate(row.id),
-      hidden: (row) => row.status === "approved"
+      hidden: (row) => row.__source === "task" || row.status === "approved"
     },
-    { 
-      icon: XCircle, 
-      label: tCommon("reject") || "Reject", 
-      colorScheme: "delete", 
+    {
+      icon: XCircle,
+      label: tCommon("reject") || "Reject",
+      colorScheme: "delete",
       onClick: (row) => rejectTimesheet.mutate(row.id),
-      hidden: (row) => row.status === "rejected"
+      hidden: (row) => row.__source === "task" || row.status === "rejected"
     }
   ], [tCommon, openView, approveTimesheet, rejectTimesheet]);
 
@@ -271,6 +353,7 @@ export default function TimesheetsPage() {
                 onChange: setStatusFilter,
                 options: [
                   { value: "all", label: t("filter.allStatus") },
+                  { value: "completed", label: t("filter.fromTasks") },
                   { value: "pending", label: "Pending" },
                   { value: "approved", label: "Approved" },
                   { value: "rejected", label: "Rejected" }
@@ -289,11 +372,11 @@ export default function TimesheetsPage() {
           <div className="overflow-x-auto w-full">
             <DataTable
               columns={columns}
-              data={Timesheets}
+              data={pageRows}
               actions={actions}
               actionsHeader={tCommon("actions")}
               emptyMessage={tCommon("noDataFound") || "No time logs found."}
-              isLoading={isLoading}
+              isLoading={isLoading || isLoadingTasks}
             />
           </div>
         </PageCardBody>

@@ -62,7 +62,7 @@ export function TrendsChart({ trends }: TrendsChartProps) {
   const avgForMetric = chartData.length > 0 ? (totalForMetric / chartData.length).toFixed(1) : "0";
 
   return (
-    <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-6">
+    <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-6">
       {/* Header & Tabs */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
@@ -158,7 +158,7 @@ export function TrendsChart({ trends }: TrendsChartProps) {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload as TrendDataPoint;
                   return (
-                    <div className="bg-white dark:bg-card border border-border px-3.5 py-2.5 rounded-[8px] shadow-xl text-xs">
+                    <div className="ds-bg-form border border-slate-100 dark:border-slate-800 border border-border px-3.5 py-2.5 rounded-[8px] shadow-xl text-xs">
                       <p className="font-bold text-[#000000] dark:text-white mb-1">{data.label}</p>
                       <p className="flex items-center gap-1.5" style={{ color: currentTab.color }}>
                         <span className="font-semibold">{currentTab.label}:</span>

@@ -15,6 +15,8 @@ import {
   Trash2,
   ExternalLink,
   Copy,
+  Play,
+  PhoneOff,
   ChevronLeft,
   ChevronRight,
   ShieldAlert,
@@ -22,7 +24,13 @@ import {
 import toast from "react-hot-toast";
 
 import { useAuth } from "@/providers/AuthProvider";
-import { useMeetings, useDeleteMeeting } from "../hooks/useMeetings";
+import {
+  useMeetings,
+  useDeleteMeeting,
+  useStartMeeting,
+  useEndMeeting,
+} from "../hooks/useMeetings";
+import { useCompanyNames } from "../hooks/useCompanyNames";
 import type { Meeting, MeetingStatus, MeetingType } from "../types/meetings.types";
 import CreateMeetingModal from "./CreateMeetingModal";
 import EditMeetingModal from "./EditMeetingModal";
@@ -64,6 +72,9 @@ export function MeetingsManagementPage() {
   });
 
   const { mutate: deleteMeeting, isPending: isDeleting } = useDeleteMeeting();
+  const { mutate: startMeeting } = useStartMeeting();
+  const { mutate: endMeeting } = useEndMeeting();
+  const { resolveCompanyName } = useCompanyNames();
 
   const meetings = useMemo(() => {
     return meetingsResponse?.data || [];
@@ -75,7 +86,7 @@ export function MeetingsManagementPage() {
   // Compute live stats matching Figma design cards
   const stats = useMemo(() => {
     const total = totalItems;
-    const inProgress = meetings.filter((m) => m.status === "in_progress").length;
+    const inProgress = meetings.filter((m) => m.status === "live").length;
     const scheduled = meetings.filter((m) => m.status === "waiting" || m.type === "scheduled").length;
     const ended = meetings.filter((m) => m.status === "ended" || m.status === "cancelled").length;
 
@@ -100,7 +111,7 @@ export function MeetingsManagementPage() {
   // Status options
   const statusOptions = [
     { label: "All Statuses", value: "all" },
-    { label: "Live", value: "in_progress" },
+    { label: "Live", value: "live" },
     { label: "Waiting", value: "waiting" },
     { label: "Ended", value: "ended" },
     { label: "Cancelled", value: "cancelled" },
@@ -111,13 +122,12 @@ export function MeetingsManagementPage() {
     { label: "All Types", value: "all" },
     { label: "Scheduled", value: "scheduled" },
     { label: "Instant", value: "instant" },
-    { label: "Recurring", value: "recurring" },
   ];
 
   // Status Badge Formatter matching Figma EXACT styles
   const renderStatusBadge = (status: MeetingStatus) => {
     switch (status) {
-      case "in_progress":
+      case "live":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#EDF7EE] text-[#4CAF50] text-[13px] font-medium">
             <span className="w-2 h-2 rounded-full bg-[#4CAF50] animate-pulse" />
@@ -159,19 +169,19 @@ export function MeetingsManagementPage() {
     if (type === "scheduled") {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#E6F6FE] text-[#03A9F4] text-[11px] font-bold">
-          scheduled
+          Scheduled
         </span>
       );
     }
     if (type === "instant") {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FAF5FF] text-[#9810FA] text-[11px] font-bold">
-          instant
+          Instant
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] text-[11px] font-bold">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] text-[11px] font-bold capitalize">
         {type}
       </span>
     );
@@ -199,7 +209,7 @@ export function MeetingsManagementPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsJoinByCodeOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] border border-[#E2E8F0] bg-white dark:bg-card text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] border border-[#E2E8F0] ds-bg-form border border-slate-100 dark:border-slate-800 text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-sm"
           >
             <Video className="w-4 h-4 text-[#25C6DA]" />
             <span>Join by Code</span>
@@ -219,7 +229,7 @@ export function MeetingsManagementPage() {
       {/* ── 4 Stats Cards (Figma Exact Match) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total */}
-        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
+        <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#E6F6FE] flex items-center justify-center shrink-0">
               <Video className="w-6 h-6 text-[#03A9F4]" />
@@ -236,7 +246,7 @@ export function MeetingsManagementPage() {
         </div>
 
         {/* Card 2: Live */}
-        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
+        <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#EDF7EE] flex items-center justify-center shrink-0">
               <Radio className="w-6 h-6 text-[#4CAF50]" />
@@ -253,7 +263,7 @@ export function MeetingsManagementPage() {
         </div>
 
         {/* Card 3: Scheduled */}
-        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
+        <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#FFFDEB] flex items-center justify-center shrink-0">
               <Clock className="w-6 h-6 text-[#E8D636]" />
@@ -270,7 +280,7 @@ export function MeetingsManagementPage() {
         </div>
 
         {/* Card 4: Ended */}
-        <div className="bg-white dark:bg-card rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
+        <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[8px] bg-[#FEECEB] flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-6 h-6 text-[#F44336]" />
@@ -288,7 +298,7 @@ export function MeetingsManagementPage() {
       </div>
 
       {/* ── Table & Filter Area (Figma Exact Match) ── */}
-      <div className="bg-white dark:bg-card rounded-[8px] p-4 flex flex-col gap-4 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)]">
+      <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-4 flex flex-col gap-4 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)]">
         {/* Filter Bar */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Search Box */}
@@ -320,7 +330,7 @@ export function MeetingsManagementPage() {
               </button>
 
               {typeDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-full min-w-[170px] rounded-[12px] bg-white dark:bg-card border border-border shadow-xl z-30 p-1.5 flex flex-col gap-0.5">
+                <div className="absolute right-0 top-full mt-2 w-full min-w-[170px] rounded-[12px] ds-bg-form border border-slate-100 dark:border-slate-800 border border-border shadow-xl z-30 p-1.5 flex flex-col gap-0.5">
                   {typeOptions.map((opt) => (
                     <button
                       key={opt.value}
@@ -358,7 +368,7 @@ export function MeetingsManagementPage() {
               </button>
 
               {statusDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-full min-w-[170px] rounded-[12px] bg-white dark:bg-card border border-border shadow-xl z-30 p-1.5 flex flex-col gap-0.5">
+                <div className="absolute right-0 top-full mt-2 w-full min-w-[170px] rounded-[12px] ds-bg-form border border-slate-100 dark:border-slate-800 border border-border shadow-xl z-30 p-1.5 flex flex-col gap-0.5">
                   {statusOptions.map((opt) => (
                     <button
                       key={opt.value}
@@ -388,20 +398,23 @@ export function MeetingsManagementPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="h-[40px] bg-[#F1F5F9]/50 dark:bg-muted/40 border-b border-[#E2E8F0] dark:border-border">
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider w-[60px]">
+                  #
+                </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
                   TITLE
-                </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  Company
-                </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  SCHEDULED
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
                   CODE
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  COMPANY
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
                   TYPE
+                </th>
+                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                  SCHEDULED
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
                   STATUS
@@ -412,7 +425,7 @@ export function MeetingsManagementPage() {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-[#E2E8F0] dark:divide-border bg-white dark:bg-card">
+            <tbody className="divide-y divide-[#E2E8F0] dark:divide-border ds-bg-form border border-slate-100 dark:border-slate-800">
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12">
@@ -426,12 +439,16 @@ export function MeetingsManagementPage() {
                   </td>
                 </tr>
               ) : (
-                meetings.map((meeting) => {
-                  const companyName =
-                    (meeting as any).company?.name ||
-                    (meeting as any).project?.company?.name ||
-                    (meeting as any).project?.title ||
-                    "Advanced Tech Company";
+                meetings.map((meeting, index) => {
+                  // The API returns `company_id` only, so the name is looked up.
+                  const companyName = resolveCompanyName(meeting.company_id);
+
+                  // The list response carries no roster roles, so ownership is
+                  // judged by creator alone. A host or co-host who did not
+                  // create the meeting still gets these actions inside the room,
+                  // where the roster is available — better than showing buttons
+                  // here that the API would answer with 403.
+                  const isCreator = Number(meeting.created_by) === Number(user?.id);
 
                   let scheduledFormatted = "-";
                   if (meeting.scheduled_at) {
@@ -448,21 +465,16 @@ export function MeetingsManagementPage() {
                       onClick={() => handleEnterRoom(meeting.id)}
                       className="h-[76px] hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors cursor-pointer"
                     >
+                      {/* Row number */}
+                      <td className="px-6 text-[13px] font-medium text-[#94A3B8]">
+                        {(currentPage - 1) * PAGE_SIZE + index + 1}
+                      </td>
+
                       {/* Title */}
                       <td className="px-6">
                         <span className="text-[14px] font-semibold text-[#111827] dark:text-white hover:text-[#25C6DA] transition-colors">
                           {meeting.title}
                         </span>
-                      </td>
-
-                      {/* Company */}
-                      <td className="px-6 text-[13px] font-medium text-[#000000] dark:text-gray-300">
-                        {companyName}
-                      </td>
-
-                      {/* Scheduled */}
-                      <td className="px-6 text-[13px] font-medium text-[#424242] dark:text-gray-300">
-                        {scheduledFormatted}
                       </td>
 
                       {/* Code */}
@@ -477,9 +489,19 @@ export function MeetingsManagementPage() {
                         </button>
                       </td>
 
+                      {/* Company */}
+                      <td className="px-6 text-[13px] font-medium text-[#000000] dark:text-gray-300">
+                        {companyName}
+                      </td>
+
                       {/* Type */}
                       <td className="px-6">
                         {renderTypeBadge(meeting.type || "scheduled")}
+                      </td>
+
+                      {/* Scheduled */}
+                      <td className="px-6 text-[13px] font-medium text-[#424242] dark:text-gray-300">
+                        {scheduledFormatted}
                       </td>
 
                       {/* Status */}
@@ -500,8 +522,36 @@ export function MeetingsManagementPage() {
                             <ExternalLink className="w-4 h-4" />
                           </button>
 
-                          {/* Edit Button */}
-                          {role !== "client" && (
+                          {/* Start — only meaningful while the meeting is waiting */}
+                          {isCreator && meeting.status === "waiting" && (
+                            <button
+                              type="button"
+                              onClick={() => startMeeting(meeting.id)}
+                              title="Start Meeting"
+                              className="w-8 h-8 rounded-[16px] bg-[#EDF7EE] text-[#4CAF50] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                            >
+                              <Play className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* End — only while it is live */}
+                          {isCreator && meeting.status === "live" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm("End this meeting for everyone?")) {
+                                  endMeeting(meeting.id);
+                                }
+                              }}
+                              title="End Meeting"
+                              className="w-8 h-8 rounded-[16px] bg-[#FFF7ED] text-[#F97316] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                            >
+                              <PhoneOff className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Edit — the API rejects edits after a meeting starts */}
+                          {isCreator && meeting.status === "waiting" && (
                             <button
                               type="button"
                               onClick={() => setEditingMeeting(meeting)}
@@ -513,7 +563,7 @@ export function MeetingsManagementPage() {
                           )}
 
                           {/* Delete Button */}
-                          {role !== "client" && (
+                          {isCreator && (
                             <button
                               type="button"
                               onClick={() => setDeletingMeeting(meeting)}
@@ -557,7 +607,7 @@ export function MeetingsManagementPage() {
                   "w-8 h-8 rounded-[8px] text-[12px] font-semibold flex items-center justify-center transition-colors",
                   isActive
                     ? "bg-[#E9F9FB] text-[#000000] dark:text-white font-bold"
-                    : "bg-white dark:bg-card text-[#000000] dark:text-gray-300 hover:bg-gray-100"
+                    : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#000000] dark:text-gray-300 hover:bg-gray-100"
                 )}
               >
                 {p}

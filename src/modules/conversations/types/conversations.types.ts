@@ -37,6 +37,11 @@ export interface ConversationMember extends ConversationUser {
 
 export interface MessageAttachment {
   id?: number | string;
+  /** Storage-relative, e.g. `messages/ab12….png` — this is what the API sends. */
+  file_path?: string;
+  /** Original upload name, e.g. `diagram.png` — this is what the API sends. */
+  file_name?: string;
+  /** Absolute URL. Only legacy payloads carry one. */
   url?: string;
   path?: string;
   name?: string;

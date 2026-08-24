@@ -74,7 +74,7 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+    <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
       {/* Title */}
       <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">
         Task status

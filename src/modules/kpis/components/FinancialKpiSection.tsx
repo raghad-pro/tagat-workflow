@@ -97,7 +97,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
 
       {/* Multi-Currency Breakdown if present */}
       {financial?.by_currency && financial.by_currency.length > 0 && (
-        <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+        <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h4 className="text-[15px] font-bold text-[#000000] dark:text-white">Multi-Currency Portfolio</h4>
             <span className="text-xs text-[#707070] dark:text-gray-400">

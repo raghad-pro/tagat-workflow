@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -237,6 +237,43 @@ export default function AddTaskModal({
     form.setValue("employee", "");
     form.setValue("sprint", "");
   }, [selectedProjectId, form]);
+
+  // ── Default the sprint to the project's active one ───────────────────────────
+  // New work almost always belongs to the sprint that is currently running, so
+  // pre-select it instead of dropping the task into the backlog. Only one sprint
+  // per project can be `active`; if none is, the field stays empty (backlog).
+  //
+  // Keyed by project so the default is applied once per project rather than on
+  // every refetch of the sprint list — otherwise deliberately choosing "no
+  // sprint" would be silently undone.
+  const defaultedSprintForProject = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Closing does not unmount this modal, so the form keeps its values. Re-arm
+    // on close and depend on `isOpen` here, otherwise reopening would inherit
+    // the previous run's choice and never re-apply the default.
+    if (!isOpen) {
+      defaultedSprintForProject.current = null;
+      return;
+    }
+
+    const projectKey = projectIdForQuery ? String(projectIdForQuery) : null;
+    if (!projectKey) {
+      defaultedSprintForProject.current = null;
+      return;
+    }
+    if (defaultedSprintForProject.current === projectKey) return;
+
+    // The list arrives after the project is picked; wait for it rather than
+    // marking this project as handled with nothing to apply.
+    const activeSprint = (sprintsOfProject ?? []).find(
+      (sprint) => String(sprint.status) === "active"
+    );
+    if (!activeSprint) return;
+
+    defaultedSprintForProject.current = projectKey;
+    form.setValue("sprint", String(activeSprint.id));
+  }, [isOpen, sprintsOfProject, projectIdForQuery, form]);
 
   // ── Auto-select if only "no-data" option ────────────────────────────────────
   useEffect(() => {

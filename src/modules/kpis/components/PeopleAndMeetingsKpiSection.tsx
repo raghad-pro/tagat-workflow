@@ -78,7 +78,7 @@ export function PeopleAndMeetingsKpiSection({ users, clients, meetings }: People
 
       {/* Meetings Breakdown Detail Card */}
       {meetings && (
-        <div className="bg-white dark:bg-card rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+        <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-[6px] bg-[#E6F6FE] flex items-center justify-center text-[#25C6DA]">

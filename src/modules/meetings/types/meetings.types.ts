@@ -1,8 +1,8 @@
 // ─── Meetings Types ────────────────────────────────────────────────────────────
 
-export type MeetingType = "instant" | "scheduled" | "recurring";
-export type MeetingStatus = "waiting" | "in_progress" | "ended" | "cancelled";
-export type ParticipantRole = "host" | "co_host" | "presenter" | "participant";
+export type MeetingType = "instant" | "scheduled";
+export type MeetingStatus = "waiting" | "live" | "ended" | "cancelled";
+export type ParticipantRole = "host" | "co_host" | "participant" | "viewer";
 export type ConnectionStatus = "connected" | "disconnected" | "reconnecting" | "idle";
 export type InvitationStatus = "pending" | "accepted" | "declined" | "tentative";
 export type NoteStatus = "draft" | "published";
@@ -127,10 +127,14 @@ export interface MeetingParticipant {
   connection_status: ConnectionStatus;
   camera_enabled: boolean;
   microphone_enabled: boolean;
-  screen_sharing: boolean;
-  hand_raised?: boolean;
+  screen_share_enabled: boolean;
+  muted_by_host: boolean;
   joined_at?: string;
+  // The API does not clear `left_at` when a participant rejoins, so it is only
+  // meaningful when compared against `joined_at` — never as a "has left" flag.
   left_at?: string | null;
+  last_seen_at?: string | null;
+  duration?: number;
   user?: UserSummary;
 }
 
@@ -143,8 +147,17 @@ export interface MeetingAttachment {
   id: number;
   message_id?: number;
   file_name: string;
+  /** The API sends `size` and `mime_type`; the rest are legacy spellings. */
+  size?: number;
+  mime_type?: string;
+  /** "image" | "document" | … — the server's own coarse classification. */
+  type?: string;
   file_size?: number;
   file_type?: string;
+  /**
+   * Not sent by the API. The payload has no path or URL at all, so the link is
+   * built from `id` via `meetingsApi.attachmentDownloadUrl`.
+   */
   file_url?: string;
   download_url?: string;
 }
@@ -204,13 +217,33 @@ export interface VotePollPayload {
 }
 
 // ─── Whiteboard ───────────────────────────────────────────────────────────────
+export type WhiteboardElementType =
+  | "rectangle"
+  | "circle"
+  | "line"
+  | "arrow"
+  | "text"
+  | "freehand";
+
+/**
+ * The API validates these per type:
+ *   rectangle → width, height   circle → radius
+ *   line/arrow → x1, y1, x2, y2 text → text
+ *   freehand → points
+ * `id` must be a UUID; anything else is rejected with 422.
+ */
 export interface WhiteboardElement {
   id: string;
-  type: "rectangle" | "circle" | "line" | "arrow" | "pencil" | "text" | "sticky";
+  type: WhiteboardElementType;
   x: number;
   y: number;
   width?: number;
   height?: number;
+  radius?: number;
+  x1?: number;
+  y1?: number;
+  x2?: number;
+  y2?: number;
   points?: { x: number; y: number }[];
   text?: string;
   z_index?: number;
@@ -233,9 +266,19 @@ export interface WhiteboardState {
 // ─── Media (LiveKit) ──────────────────────────────────────────────────────────
 export interface MediaTokenResponse {
   token: string;
-  server_url?: string;
-  room_name?: string;
-  participant_identity?: string;
+  url: string;
+  room: string;
+  identity: string;
+  expires_at?: string;
+  can_publish?: boolean;
+  can_share_screen?: boolean;
+}
+
+/** Payload of `POST /meetings/{id}/media/join` — joins the roster and mints a
+ *  LiveKit token in one round trip. */
+export interface MediaJoinResponse {
+  participant: MeetingParticipant;
+  media: MediaTokenResponse;
 }
 
 // ─── Notes ────────────────────────────────────────────────────────────────────
