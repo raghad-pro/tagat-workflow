@@ -2,6 +2,7 @@
 
 import React from "react";
 import { DollarSign, FileText, TrendingUp, CreditCard, Receipt, Wallet } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { KpiMetricCard } from "./KpiMetricCard";
 import type { FinancialKpis, InvoicesKpis } from "../types/kpis.types";
 
@@ -11,6 +12,8 @@ interface FinancialKpiSectionProps {
 }
 
 export function FinancialKpiSection({ financial, invoices }: FinancialKpiSectionProps) {
+  const t = useTranslations("kpis.financial");
+
   if (!financial && !invoices) return null;
 
   return (
@@ -20,14 +23,14 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
           <DollarSign className="w-5 h-5" />
         </div>
         <h2 className="text-[20px] sm:text-[22px] font-bold text-[#000000] dark:text-white tracking-tight leading-[32px]">
-          Financial & Revenue KPIs
+          {t("heading")}
         </h2>
       </div>
 
       {/* Primary Financial Metric Cards (4 cards, unified 145px) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiMetricCard
-          label="Total Revenue"
+          label={t("totalRevenue")}
           metric={financial?.revenue}
           icon={DollarSign}
           iconBg="#E6F6FE"
@@ -36,7 +39,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
         />
 
         <KpiMetricCard
-          label="Total Invoiced"
+          label={t("totalInvoiced")}
           metric={financial?.invoiced}
           icon={Receipt}
           iconBg="#FAF5FF"
@@ -45,7 +48,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
         />
 
         <KpiMetricCard
-          label="Total Expenses"
+          label={t("totalExpenses")}
           metric={financial?.expenses}
           icon={CreditCard}
           iconBg="#FEECEB"
@@ -54,7 +57,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
         />
 
         <KpiMetricCard
-          label="Net Profit"
+          label={t("netProfit")}
           metric={financial?.profit}
           icon={TrendingUp}
           iconBg="#EDF7EE"
@@ -67,7 +70,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
       {invoices && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <KpiMetricCard
-            label="Paid Invoices Amount"
+            label={t("paidInvoices")}
             valueOverride={`$${(invoices.paid_amount || 0).toLocaleString("en-US")}`}
             subLabel={`${invoices.paid_count || 0} invoices settled`}
             icon={Receipt}
@@ -76,7 +79,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
           />
 
           <KpiMetricCard
-            label="Outstanding Invoices"
+            label={t("outstandingInvoices")}
             valueOverride={`$${(invoices.outstanding_amount || 0).toLocaleString("en-US")}`}
             subLabel={`${invoices.unpaid_count || 0} unpaid • ${invoices.overdue_count || 0} overdue`}
             icon={FileText}
@@ -85,7 +88,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
           />
 
           <KpiMetricCard
-            label="Employee Payouts"
+            label={t("employeePayouts")}
             metric={financial?.employee_payouts}
             icon={Wallet}
             iconBg="rgba(37, 198, 218, 0.12)"
@@ -99,7 +102,7 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
       {financial?.by_currency && financial.by_currency.length > 0 && (
         <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-[15px] font-bold text-[#000000] dark:text-white">Multi-Currency Portfolio</h4>
+            <h4 className="text-[15px] font-bold text-[#000000] dark:text-white">{t("multiCurrency")}</h4>
             <span className="text-xs text-[#707070] dark:text-gray-400">
               {financial.by_currency.length} currencies tracked
             </span>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Lock } from "lucide-react";
 
 interface MeetingPasswordGateProps {
@@ -21,6 +22,8 @@ export default function MeetingPasswordGate({
   onSubmit,
   onCancel,
 }: MeetingPasswordGateProps) {
+  const t = useTranslations("meetings.passwordGate");
+  const tc = useTranslations("common");
   const [password, setPassword] = useState("");
   const canSubmit = password.trim().length > 0;
 
@@ -35,11 +38,11 @@ export default function MeetingPasswordGate({
           type="button"
           onClick={onCancel}
           className="w-8 h-8 rounded-full flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-[#161B22] transition-colors cursor-pointer rtl:rotate-180"
-          title="Back to meeting"
+          title={t("backToMeeting")}
         >
           <ArrowLeft size={17} />
         </button>
-        <h1 className="text-[16px] font-bold truncate">{title || "Meeting"}</h1>
+        <h1 className="text-[16px] font-bold truncate">{title || t("fallbackTitle")}</h1>
       </div>
 
       <div className="flex-1 flex items-center justify-center">
@@ -48,9 +51,9 @@ export default function MeetingPasswordGate({
             <div className="w-12 h-12 rounded-full bg-[#25C6DA]/15 border border-[#25C6DA]/40 flex items-center justify-center">
               <Lock size={20} className="text-[#25C6DA]" />
             </div>
-            <h2 className="text-[15px] font-bold">This meeting is private</h2>
+            <h2 className="text-[15px] font-bold">{t("privateTitle")}</h2>
             <p className="text-[12px] text-[#94A3B8]">
-              Enter the meeting password to join.
+              {t("privateDesc")}
             </p>
           </div>
 
@@ -62,7 +65,7 @@ export default function MeetingPasswordGate({
             onKeyDown={(e) => {
               if (e.key === "Enter") submit();
             }}
-            placeholder="Meeting password"
+            placeholder={t("passwordPlaceholder")}
             className="h-10 rounded-lg bg-[#0D1117] border border-[#1E293B] px-3 text-[13px] focus:outline-none focus:border-[#25C6DA]"
           />
 
@@ -73,14 +76,14 @@ export default function MeetingPasswordGate({
               onClick={submit}
               className="h-11 rounded-[12px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white font-bold text-[14px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Join meeting
+              {t("joinBtn")}
             </button>
             <button
               type="button"
               onClick={onCancel}
               className="h-10 rounded-[12px] bg-transparent text-[#94A3B8] hover:text-white text-[13px] font-semibold transition-colors cursor-pointer"
             >
-              Not now
+              {tc("notNow")}
             </button>
           </div>
         </div>

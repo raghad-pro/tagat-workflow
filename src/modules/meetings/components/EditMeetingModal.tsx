@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Save, ChevronDown, Clock, Info, Check, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import { useUpdateMeeting } from "../hooks/useMeetings";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
@@ -18,8 +19,11 @@ interface EditMeetingModalProps {
   meeting: Meeting | null;
 }
 
-const editMeetingSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+// Rebuilt per-locale inside the component so a validation message follows
+// the interface language instead of being fixed at module load.
+const buildEditMeetingSchema = (t: (key: string) => string) =>
+  z.object({
+  title: z.string().min(1, t("validation.titleRequired")),
   company_id: z.string().optional(),
   amount: z.string().optional(),
   scheduled_at: z.string().optional(),
@@ -34,13 +38,17 @@ const editMeetingSchema = z.object({
   allow_recording: z.boolean().default(false),
 });
 
-type FormValues = z.infer<typeof editMeetingSchema>;
+type FormValues = z.infer<ReturnType<typeof buildEditMeetingSchema>>;
 
 export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeetingModalProps) {
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("meetings.form");
+  const tc = useTranslations("common");
   const { user } = useAuth();
   const { mutate: updateMeeting, isPending } = useUpdateMeeting();
   const { data: companiesData } = useCompanies({ per_page: 100 });
+
+  const editMeetingSchema = useMemo(() => buildEditMeetingSchema(t as (key: string) => string), [t]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(editMeetingSchema) as any,
@@ -177,16 +185,16 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
             type="button"
             onClick={onClose}
             className="p-1 text-[#2D3748] dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
-            aria-label="Back"
+            aria-label={t("back")}
           >
             <ArrowLeft size={18} />
           </button>
           <div>
             <h2 className="text-[20px] sm:text-[22px] font-bold text-[#1A202C] dark:text-white leading-tight">
-              Edit Meeting
+              {t("editTitle")}
             </h2>
             <p className="text-[12px] sm:text-[13px] text-[#718096] dark:text-gray-400 mt-0.5">
-              Update details for {meeting.title}
+              {t("editSubtitleWithTitle", { title: meeting.title })}
             </p>
           </div>
         </div>
@@ -198,17 +206,17 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
             {/* Column 1 - Row 1: Company */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Company
+                {t("company")}
               </label>
               <div className="relative">
                 <select
                   {...form.register("company_id")}
                   className="w-full h-[38px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 pe-8 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="">select</option>
+                  <option value="">{tc("select")}</option>
                   {companiesList.map((comp: any) => (
                     <option key={comp.id} value={comp.id}>
-                      {comp.name || `Company #${comp.id}`}
+                      {comp.name || t("companyFallback", { id: comp.id })}
                     </option>
                   ))}
                 </select>
@@ -222,7 +230,7 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
             {/* Column 2 - Row 1: Title */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Title
+                {t("title")}
               </label>
               <input
                 type="text"
@@ -240,15 +248,15 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
             {/* Column 1 - Row 2: Amount */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Amount
+                {t("amount")}
               </label>
               <div className="relative">
                 <select
                   {...form.register("amount")}
                   className="w-full h-[38px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 pe-8 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="">select</option>
-                  <option value="0">0.00 (Free)</option>
+                  <option value="">{tc("select")}</option>
+                  <option value="0">{t("free")}</option>
                   <option value="50">50.00 USD</option>
                   <option value="100">100.00 USD</option>
                   <option value="200">200.00 USD</option>
@@ -263,7 +271,7 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
             {/* Column 2 - Row 2: Max Participants */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Max Participants
+                {t("maxParticipants")}
               </label>
               <input
                 type="number"
@@ -276,7 +284,7 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
             {/* Column 1 - Row 3: Scheduled At (Span 2) */}
             <div className="md:col-span-2 flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Scheduled At
+                {t("scheduledAt")}
               </label>
               <div className="relative">
                 <input
@@ -294,7 +302,7 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
             {/* Full Width Row 4: Notes */}
             <div className="md:col-span-2 flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Notes
+                {t("notes")}
               </label>
               <textarea
                 rows={2}
@@ -309,7 +317,7 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
           <div className="border border-dashed border-[#CBD5E0] dark:border-gray-700 rounded-[10px] p-3.5 flex flex-col gap-2.5">
             {/* Private Meeting pill */}
             <div className="bg-[#F8FAFC] dark:bg-[#2D3748]/60 rounded-[6px] p-2.5 flex flex-col gap-2">
-              <CustomCheckbox name="is_private" label="Private meeting" />
+              <CustomCheckbox name="is_private" label={t("privateMeeting")} />
               {form.watch("is_private") && (
                 <div className="flex flex-col gap-1 ps-6">
                   <label className="text-[12px] font-semibold text-[#1A202C] dark:text-gray-200" htmlFor="edit-meeting-password">
@@ -319,9 +327,9 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
                     id="edit-meeting-password"
                     type="password"
                     {...form.register("password", {
-                      validate: (value) => !form.getValues("is_private") || Boolean(value?.trim()) || "Password is required for private meetings",
+                      validate: (value) => !form.getValues("is_private") || Boolean(value?.trim()) || t("validation.passwordRequired"),
                     })}
-                    placeholder="Enter a password"
+                    placeholder={t("enterPassword")}
                     className="w-full h-[36px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors"
                   />
                   {form.formState.errors.password && (
@@ -340,11 +348,11 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-2.5 gap-x-4">
-                <CustomCheckbox name="allow_chat" label="Allow chat" />
-                <CustomCheckbox name="allow_screen_share" label="Allow screen share" />
-                <CustomCheckbox name="allow_whiteboard" label="Allow whiteboard" />
-                <CustomCheckbox name="allow_file_share" label="Allow file share" />
-                <CustomCheckbox name="allow_recording" label="Allow recording" />
+                <CustomCheckbox name="allow_chat" label={t("allowChat")} />
+                <CustomCheckbox name="allow_screen_share" label={t("allowScreenShare")} />
+                <CustomCheckbox name="allow_whiteboard" label={t("allowWhiteboard")} />
+                <CustomCheckbox name="allow_file_share" label={t("allowFileShare")} />
+                <CustomCheckbox name="allow_recording" label={t("allowRecording")} />
               </div>
             </div>
           </div>
@@ -359,12 +367,12 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
               {isPending ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Updating...</span>
+                  <span>{tc("updating")}</span>
                 </>
               ) : (
                 <>
                   <Save size={15} />
-                  <span>Update</span>
+                  <span>{tc("update")}</span>
                 </>
               )}
             </button>
@@ -375,7 +383,7 @@ export default function EditMeetingModal({ isOpen, onClose, meeting }: EditMeeti
               disabled={isPending}
               className="h-[44px] px-8 sm:w-[170px] rounded-[8px] bg-[#F7FAFC] dark:bg-[#2D3748] text-[#1A202C] dark:text-white font-bold text-[14px] hover:bg-[#EDF2F7] dark:hover:bg-gray-700 transition-all cursor-pointer flex items-center justify-center disabled:opacity-50"
             >
-              Cancel
+              {tc("cancel")}
             </button>
           </div>
         </form>

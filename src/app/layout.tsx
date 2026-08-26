@@ -4,6 +4,7 @@ import "./globals.css";
 import AppProvider from "@/providers/AppProvider";
 import { getLocale, getMessages } from "next-intl/server";
 import { cookies } from "next/headers";
+import { getDirection, resolveLocale } from "@/i18n/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,7 +50,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getLocale();
+  const locale = resolveLocale(await getLocale());
   const messages = await getMessages();
   const cookieStore = await cookies();
   const theme = cookieStore.get("wf-theme")?.value || "light";
@@ -58,7 +59,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      dir={locale === "en" ?  "ltr":"rtl"}
+      dir={getDirection(locale)}
       className={`${isDark ? "dark" : ""} ${geistSans.variable} ${geistMono.variable} ${cairo.variable} ${inter.variable} ${poppins.variable} ${tajawal.variable}`}
       data-theme={theme}
     >

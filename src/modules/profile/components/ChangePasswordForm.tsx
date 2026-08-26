@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ import { changePasswordSchema, type ChangePasswordValues } from "../types/profil
 import { useChangePassword } from "../hooks/useChangePassword";
 
 export const ChangePasswordForm = () => {
+  const t = useTranslations("profile");
+  const tc = useTranslations("common");
   const { mutate: changePassword, isPending } = useChangePassword();
 
   const form = useForm<ChangePasswordValues>({
@@ -38,8 +41,8 @@ export const ChangePasswordForm = () => {
 
   return (
     <div className="ds-bg-form p-6 rounded-lg shadow-sm border ds-border-form mt-6">
-      <h2 className="text-xl font-bold mb-2">Change Password</h2>
-      <p className="text-sm text-gray-500 mb-6">Update your account password to maintain security.</p>
+      <h2 className="text-xl font-bold mb-2">{t("changePassword")}</h2>
+      <p className="text-sm text-gray-500 mb-6">{t("changePasswordSubtitle")}</p>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -48,9 +51,9 @@ export const ChangePasswordForm = () => {
             name="old_password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Current Password</FormLabel>
+                <FormLabel>{t("labels.currentPassword")}</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Enter current password" {...field} />
+                  <Input type="password" placeholder={t("placeholders.currentPassword")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -62,12 +65,12 @@ export const ChangePasswordForm = () => {
             name="new_password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>New Password</FormLabel>
+                <FormLabel>{t("labels.newPassword")}</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Enter new password" {...field} />
+                  <Input type="password" placeholder={t("placeholders.newPassword")} {...field} />
                 </FormControl>
                 <FormDescription>
-                  Password must be at least 8 characters long and include a mix of letters, numbers, and symbols.
+                  {t("passwordHint")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -79,9 +82,9 @@ export const ChangePasswordForm = () => {
             name="new_password_confirmation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirm New Password</FormLabel>
+                <FormLabel>{t("labels.confirmPassword")}</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Confirm new password" {...field} />
+                  <Input type="password" placeholder={t("placeholders.confirmPassword")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -90,10 +93,10 @@ export const ChangePasswordForm = () => {
 
           <div className="flex justify-end gap-3 mt-8">
             <Button type="button" variant="outline" onClick={() => form.reset()}>
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={isPending} className="bg-teal-500 hover:bg-teal-600 text-white min-w-[100px]">
-              {isPending ? "Saving..." : "Save"}
+              {isPending ? tc("saving") : tc("save")}
             </Button>
           </div>
         </form>

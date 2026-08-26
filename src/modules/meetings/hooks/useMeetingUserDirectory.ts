@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import { useEmployees } from "@/modules/employees/hooks/useEmployees";
 import { useClients } from "@/modules/clients/hooks/useClients";
@@ -72,6 +73,7 @@ export function rememberUserName(userId: unknown, name?: string | null) {
  * @param meetingId when given, chat messages of that meeting are mined for names.
  */
 export function useMeetingUserDirectory(meetingId?: number | string) {
+  const t = useTranslations("meetings");
   const { user } = useAuth();
   const { data: employeesData, isLoading: loadingEmployees } = useEmployees({ per_page: 100 });
   const { data: clientsData, isLoading: loadingClients } = useClients({ per_page: 100 });
@@ -147,9 +149,9 @@ export function useMeetingUserDirectory(meetingId?: number | string) {
   );
 
   const resolveName = useCallback(
-    (userId: unknown, fallback = "Participant"): string =>
-      directory.get(Number(userId))?.name || fallback,
-    [directory]
+    (userId: unknown, fallback?: string): string =>
+      directory.get(Number(userId))?.name || fallback || t("room.participantFallback"),
+    [directory, t]
   );
 
   return {

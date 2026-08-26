@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Volume2, Mic, MicOff, Video as VideoIcon, VideoOff } from "lucide-react";
 import { Room, Track, createAudioAnalyser, type LocalAudioTrack } from "livekit-client";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 import {
@@ -14,14 +15,14 @@ import {
 } from "../../hooks/useMediaPreferences";
 import type { LiveKitControls } from "../../hooks/useLiveKitRoom";
 
-const EFFECTS: { value: BackgroundEffect; label: string }[] = [
-  { value: "none", label: "None" },
-  { value: "blur-light", label: "Light blur" },
-  { value: "blur-medium", label: "Blur" },
-  { value: "blur-strong", label: "Strong blur" },
-  { value: "graphite", label: "Graphite" },
-  { value: "dusk", label: "Dusk" },
-  { value: "teal", label: "Teal" },
+const EFFECTS: BackgroundEffect[] = [
+  "none",
+  "blur-light",
+  "blur-medium",
+  "blur-strong",
+  "graphite",
+  "dusk",
+  "teal",
 ];
 
 /**
@@ -108,6 +109,7 @@ export default function MeetingSettingsPanel({
   isCamOn,
   canPublish,
 }: MeetingSettingsPanelProps) {
+  const t = useTranslations("meetings.settings");
   const { devices, refresh } = useDeviceLists();
   const level = useLocalMicLevel(room, isMicOn);
 
@@ -173,7 +175,7 @@ export default function MeetingSettingsPanel({
           )}
         >
           {isCamOn ? <VideoIcon size={14} /> : <VideoOff size={14} />}
-          Camera
+          {t("camera")}
         </button>
         <button
           type="button"
@@ -187,30 +189,30 @@ export default function MeetingSettingsPanel({
           )}
         >
           {isMicOn ? <Mic size={14} /> : <MicOff size={14} />}
-          Microphone
+          {t("microphone")}
         </button>
       </div>
 
       {/* ── Camera ────────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-2">
-        <h3 className={sectionTitleClass}>Camera</h3>
+        <h3 className={sectionTitleClass}>{t("camera")}</h3>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] text-[#94A3B8]">Device</span>
+          <span className="text-[11px] text-[#94A3B8]">{t("device")}</span>
           <select
             value={preferences.cameraId}
             onChange={(e) => void handleCameraChange(e.target.value)}
             className={selectClass}
           >
-            <option value="">Default</option>
+            <option value="">{t("default")}</option>
             {devices.cameras.map((d) => (
               <option key={d.deviceId} value={d.deviceId}>
-                {d.label || `Camera ${d.deviceId.slice(0, 6)}`}
+                {d.label || t("cameraFallback", { id: d.deviceId.slice(0, 6) })}
               </option>
             ))}
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] text-[#94A3B8]">Quality</span>
+          <span className="text-[11px] text-[#94A3B8]">{t("quality")}</span>
           <select
             value={preferences.quality}
             onChange={(e) => void handleQualityChange(e.target.value as VideoQuality)}
@@ -218,7 +220,7 @@ export default function MeetingSettingsPanel({
           >
             {(Object.keys(QUALITY_PRESETS) as VideoQuality[]).map((q) => (
               <option key={q} value={q}>
-                {QUALITY_PRESETS[q].label}
+                {t(`quality_${q}` as never)}
               </option>
             ))}
           </select>
@@ -227,51 +229,51 @@ export default function MeetingSettingsPanel({
 
       {/* ── Background ────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-2">
-        <h3 className={sectionTitleClass}>Background</h3>
+        <h3 className={sectionTitleClass}>{t("background")}</h3>
         <div className="flex flex-wrap gap-1.5">
           {EFFECTS.map((fx) => (
             <button
-              key={fx.value}
+              key={fx}
               type="button"
-              onClick={() => void handleEffectChange(fx.value)}
+              onClick={() => void handleEffectChange(fx)}
               className={cn(
                 "px-2.5 h-7 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer",
-                preferences.effect === fx.value
+                preferences.effect === fx
                   ? "bg-[#25C6DA] text-white border-[#25C6DA]"
                   : "bg-[#0D1117] text-[#94A3B8] border-[#1E293B] hover:text-white"
               )}
             >
-              {fx.label}
+              {t(`effects.${fx}` as never)}
             </button>
           ))}
         </div>
         {!isCamOn && (
           <p className="text-[10px] text-[#475569]">
-            Turn your camera on to see the effect.
+            {t("cameraOffHint")}
           </p>
         )}
       </section>
 
       {/* ── Microphone ────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-2">
-        <h3 className={sectionTitleClass}>Microphone</h3>
+        <h3 className={sectionTitleClass}>{t("microphone")}</h3>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] text-[#94A3B8]">Device</span>
+          <span className="text-[11px] text-[#94A3B8]">{t("device")}</span>
           <select
             value={preferences.microphoneId}
             onChange={(e) => void handleMicrophoneChange(e.target.value)}
             className={selectClass}
           >
-            <option value="">Default</option>
+            <option value="">{t("default")}</option>
             {devices.microphones.map((d) => (
               <option key={d.deviceId} value={d.deviceId}>
-                {d.label || `Microphone ${d.deviceId.slice(0, 6)}`}
+                {d.label || t("micFallback", { id: d.deviceId.slice(0, 6) })}
               </option>
             ))}
           </select>
         </label>
         <div className="flex flex-col gap-1">
-          <span className="text-[11px] text-[#94A3B8]">Level</span>
+          <span className="text-[11px] text-[#94A3B8]">{t("level")}</span>
           <div className="h-2 rounded-full bg-[#0D1117] border border-[#1E293B] overflow-hidden">
             <div
               className="h-full bg-[#22C55E] transition-[width] duration-75"
@@ -280,26 +282,26 @@ export default function MeetingSettingsPanel({
           </div>
           <span className="text-[10px] text-[#475569]">
             {isMicOn
-              ? "Speak — the bar should move."
-              : "Turn your microphone on to see the level."}
+              ? t("micOnHint")
+              : t("micOffHint")}
           </span>
         </div>
       </section>
 
       {/* ── Speaker ───────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-2">
-        <h3 className={sectionTitleClass}>Speaker</h3>
+        <h3 className={sectionTitleClass}>{t("speaker")}</h3>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] text-[#94A3B8]">Device</span>
+          <span className="text-[11px] text-[#94A3B8]">{t("device")}</span>
           <select
             value={preferences.speakerId}
             onChange={(e) => void handleSpeakerChange(e.target.value)}
             className={selectClass}
           >
-            <option value="">Default</option>
+            <option value="">{t("default")}</option>
             {devices.speakers.map((d) => (
               <option key={d.deviceId} value={d.deviceId}>
-                {d.label || `Speaker ${d.deviceId.slice(0, 6)}`}
+                {d.label || t("speakerFallback", { id: d.deviceId.slice(0, 6) })}
               </option>
             ))}
           </select>
@@ -310,7 +312,7 @@ export default function MeetingSettingsPanel({
           className="h-9 rounded-lg bg-[#0D1117] border border-[#1E293B] text-[12px] flex items-center justify-center gap-2 hover:border-[#25C6DA] cursor-pointer"
         >
           <Volume2 size={14} />
-          Play test sound
+          {t("playTestSound")}
         </button>
       </section>
     </div>

@@ -5,7 +5,9 @@ import { useLocale } from "next-intl";
 import ThemeButton from "@/components/atoms/ThemeButton";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLogout } from "@/modules/auth/hooks/useLogout";
-import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check, MessageSquare, Users } from "lucide-react";
+import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check, MessageSquare, Users, Video } from "lucide-react";
+import { meetingsApi } from "@/modules/meetings/api/meetings.api";
+import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -65,7 +67,38 @@ function formatTimeAgo(dateStr?: string, isAr?: boolean) {
 }
 
 // ─── Notifications Dropdown ───────────────────────────────────────────────────
+
+/** Ids already announced as a toast, so a refetch never repeats one. */
+const SEEN_NOTIFICATIONS_KEY = "wf-announced-notifications";
+/** Ceiling on one batch, so a first login does not stack a wall of toasts. */
+const MAX_TOASTS_PER_PASS = 3;
+/** Trim the stored set; without a cap it grows for the life of the browser. */
+const MAX_SEEN_IDS = 200;
+/** How often to look for new items while the tab stays open. */
+const NOTIFICATION_POLL_MS = 120_000;
+
+function readSeenIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+    return new Set<string>(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function writeSeenIds(ids: Set<string>) {
+  try {
+    localStorage.setItem(
+      SEEN_NOTIFICATIONS_KEY,
+      JSON.stringify([...ids].slice(-MAX_SEEN_IDS))
+    );
+  } catch {
+    // A full or blocked storage only costs a repeated toast; never block on it.
+  }
+}
+
 function NotificationsDropdown() {
+  const router = useRouter();
   const locale = useLocale();
   const isAr = locale === "ar";
   const { user } = useAuth();
@@ -76,6 +109,9 @@ function NotificationsDropdown() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Persisted across reloads: a refresh must not re-announce what the user has
+  // already been shown.
+  const announcedRef = useRef<Set<string> | null>(null);
 
   const fetchLiveNotifications = async () => {
     setIsLoading(true);
@@ -97,7 +133,7 @@ function NotificationsDropdown() {
       if (Array.isArray(apiNotifs) && apiNotifs.length > 0) {
         apiNotifs.forEach((n: any) => {
           items.push({
-            id: n.id || Math.random(),
+            id: n.id ? `api-${n.id}` : `api-${n.created_at || n.date || ""}-${n.title || n.message || ""}`,
             title: isAr ? (n.title_ar || n.title || "إشعار جديد") : (n.title_en || n.title || "New Notification"),
             description: isAr ? (n.body_ar || n.message || n.description || "") : (n.body_en || n.message || n.description || ""),
             time: formatTimeAgo(n.created_at || n.date, isAr),
@@ -110,12 +146,43 @@ function NotificationsDropdown() {
       }
 
       // Fetch live activity events from API (Company Requests, Invoices, Timesheets, Payments)
-      const [requestsRes, invoicesRes, timesheetsRes, paymentsRes] = await Promise.allSettled([
+      const [requestsRes, invoicesRes, timesheetsRes, paymentsRes, invitationsRes] = await Promise.allSettled([
         apiClient.get<any>(`${rolePrefix}/company-requests`),
         apiClient.get<any>(`${rolePrefix}/invoices`),
         apiClient.get<any>(`/timesheets?status=pending`),
         apiClient.get<any>(`${rolePrefix}/payments`),
+        user?.id
+          ? meetingsApi.listMyInvitations(role, Number(user.id))
+          : Promise.resolve([]),
       ]);
+
+      // 0. Meeting invitations addressed to me.
+      //
+      // The backend files an invitation without notifying anyone, so this is
+      // the only way the invitee learns about it. Rooms are invitation-only, so
+      // missing this notification means missing the meeting entirely.
+      const myInvitations = invitationsRes.status === "fulfilled" ? invitationsRes.value : [];
+      if (Array.isArray(myInvitations)) {
+        myInvitations.forEach((inv: any) => {
+          const meetingId = inv.meeting_id ?? inv.meeting?.id;
+          if (!meetingId) return;
+          const title = inv.meeting?.title || (isAr ? "اجتماع" : "a meeting");
+          items.push({
+            id: `inv-meeting-${inv.id}`,
+            title: isAr ? "دعوة اجتماع" : "Meeting Invitation",
+            description: isAr
+              ? `تمت دعوتك لحضور "${title}". اضغط للدخول.`
+              : `You have been invited to "${title}". Click to open it.`,
+            time: formatTimeAgo(inv.sent_at || inv.created_at, isAr),
+            rawDate: new Date(inv.sent_at || inv.created_at || Date.now()).getTime(),
+            icon: Video,
+            iconBg: "bg-[#25C6DA]/10 text-[#25C6DA]",
+            // Only an unanswered invitation is news; an accepted one is history.
+            isUnread: inv.status === "pending",
+            href: `/meetings/${meetingId}`,
+          });
+        });
+      }
 
       // 1. Company Requests / User Registrations
       const requests = requestsRes.status === "fulfilled" ? (requestsRes.value?.data?.data || requestsRes.value?.data || requestsRes.value || []) : [];
@@ -194,6 +261,7 @@ function NotificationsDropdown() {
       
       setNotifications(items);
       setUnreadCount(items.filter((i) => i.isUnread).length);
+      announceNew(items);
     } catch {
       // Graceful fallback
     } finally {
@@ -201,9 +269,78 @@ function NotificationsDropdown() {
     }
   };
 
+  /**
+   * Pops a toast for anything unread the user has not been shown before.
+   *
+   * Everything in the batch is marked seen, not just what gets a toast: the
+   * overflow past `MAX_TOASTS_PER_PASS` is deliberately swallowed rather than
+   * queued, otherwise it would surface on the next poll instead — the same wall
+   * of toasts, only later.
+   */
+  const announceNew = (items: any[]) => {
+    if (announcedRef.current === null) announcedRef.current = readSeenIds();
+    const seen = announcedRef.current;
+
+    const fresh = items.filter((i) => i.isUnread && !seen.has(String(i.id)));
+    items.forEach((i) => seen.add(String(i.id)));
+    writeSeenIds(seen);
+
+    fresh.slice(0, MAX_TOASTS_PER_PASS).forEach((item) => {
+      const IconComp = item.icon || Bell;
+      toast.custom(
+        (instance) => (
+          <div
+            role={item.href ? "link" : undefined}
+            onClick={() => {
+              toast.dismiss(instance.id);
+              if (item.href) router.push(item.href);
+            }}
+            className={cn(
+              "flex items-start gap-3 max-w-[360px] w-full p-3.5 rounded-2xl border shadow-lg",
+              item.href && "cursor-pointer",
+              instance.visible ? "animate-in fade-in slide-in-from-top-2" : "opacity-0"
+            )}
+            style={{
+              background: "var(--color-bg-form)",
+              borderColor: "var(--color-border-inputs)",
+            }}
+            dir={isAr ? "rtl" : "ltr"}
+          >
+            <div className={cn("p-2 rounded-xl shrink-0", item.iconBg)}>
+              <IconComp size={17} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                {item.title}
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
+                {item.description}
+              </p>
+            </div>
+          </div>
+        ),
+        { duration: 6000, position: "top-center" }
+      );
+    });
+  };
+
   useEffect(() => {
     fetchLiveNotifications();
-  }, [role, isAr]);
+    // `user?.id` matters on its own: `role` falls back to "super_admin" before
+    // auth resolves, so for an actual super admin it never changes and the
+    // first pass — the one with no user id, and therefore no invitations —
+    // would be the only one.
+  }, [role, isAr, user?.id]);
+
+  // A toast that only ever fires on mount is not a toast — the navbar survives
+  // client-side navigation, so without this the user would have to reload to
+  // learn about an invitation. Two minutes keeps it responsive; the fetch fans
+  // out over several endpoints, so a tighter loop is not worth the traffic.
+  useEffect(() => {
+    if (!user?.id) return;
+    const timer = setInterval(fetchLiveNotifications, NOTIFICATION_POLL_MS);
+    return () => clearInterval(timer);
+  }, [role, isAr, user?.id]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -268,7 +405,7 @@ function NotificationsDropdown() {
           <div className="max-h-[320px] overflow-y-auto divide-y divide-[var(--color-border-form)]">
             {isLoading ? (
               <div className="p-6 text-center text-xs font-medium text-slate-400">
-                {isAr ? "جاري تحميل الإشعارات الحية..." : "Loading live notifications..."}
+                {isAr ? "جاري تحميل الإشعارات..." : "Loading notifications..."}
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-6 text-center text-xs font-medium text-slate-400">
@@ -280,6 +417,20 @@ function NotificationsDropdown() {
                 return (
                   <div
                     key={item.id}
+                    // Only the sources that know where they point are clickable;
+                    // the rest keep the plain look they had.
+                    role={item.href ? "link" : undefined}
+                    tabIndex={item.href ? 0 : undefined}
+                    onClick={() => {
+                      if (!item.href) return;
+                      setOpen(false);
+                      router.push(item.href);
+                    }}
+                    onKeyDown={(e) => {
+                      if (!item.href || e.key !== "Enter") return;
+                      setOpen(false);
+                      router.push(item.href);
+                    }}
                     className={cn(
                       "p-3.5 flex items-start gap-3 transition-colors hover:bg-slate-50 dark:hover:bg-[#121a24] cursor-pointer",
                       item.isUnread && unreadCount > 0 && "bg-[#22c8e0]/5"
@@ -310,7 +461,7 @@ function NotificationsDropdown() {
           {/* Footer */}
           <div className="p-2 text-center border-t border-[var(--color-border-form)] bg-slate-50/50 dark:bg-[#0b1118]/50">
             <span className="text-xs font-bold text-[#22c8e0] block py-1 cursor-pointer hover:underline">
-              {isAr ? "جميع إشعارات الداش بورد محدثة من الـ API" : "All dashboard notifications updated live from API"}
+              {isAr ? "أنت على اطلاع بكل شيء" : "You're all caught up"}
             </span>
           </div>
         </div>
@@ -369,7 +520,7 @@ function UserDropdown() {
           {user?.image ? (
             <img 
               src={user.image} 
-              alt={user?.name ?? "User"} 
+              alt={user?.name ?? (isAr ? "مستخدم" : "User")} 
               className="w-full h-full object-cover" 
             />
           ) : (
@@ -400,7 +551,7 @@ function UserDropdown() {
             className="px-5 py-4"
             style={{ borderBottom: "1px solid var(--color-border-form)" }}
           >
-            <p className="text-sm font-bold text-slate-900 dark:text-white">{user?.name ?? "User"}</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">{user?.name ?? (isAr ? "مستخدم" : "User")}</p>
             <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
               {user?.email ?? ""}
             </p>
@@ -544,7 +695,7 @@ function ConversationsDropdown() {
                     (isAr ? "مرفق" : "Attachment")
                   : isAr
                   ? "لا توجد رسائل بعد"
-                  : "No messages yet";
+                  : isAr ? "لا توجد رسائل بعد" : "No messages yet";
                 const unread = Number(conv.unread_count ?? 0);
 
                 return (

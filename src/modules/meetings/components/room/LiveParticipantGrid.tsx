@@ -9,6 +9,7 @@ import {
   type TrackReference,
 } from "@livekit/components-react";
 import { Track, type Participant } from "livekit-client";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 import { useMeetingUserDirectory } from "../../hooks/useMeetingUserDirectory";
@@ -55,6 +56,7 @@ function ParticipantTile({
   isPinned = false,
   onTogglePin,
 }: TileProps) {
+  const t = useTranslations("meetings.grid");
   // Render the video element whenever an unmuted publication exists: with
   // adaptive streaming, attaching the element is what triggers the
   // subscription. The avatar stays on top until a real track arrives, so a
@@ -112,7 +114,7 @@ function ParticipantTile({
             <button
               type="button"
               onClick={onTogglePin}
-              title={isPinned ? "Unpin" : "Pin to the big tile"}
+              title={isPinned ? t("unpin") : t("pin")}
               className={cn(
                 "w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer",
                 isPinned
@@ -187,6 +189,7 @@ export default function LiveParticipantGrid({
   pinnedIdentity,
   onPinChange,
 }: LiveParticipantGridProps) {
+  const t = useTranslations("meetings.grid");
   const participants = useParticipants();
   const { resolveName, rememberUserName } = useMeetingUserDirectory(meetingId);
   const cameraTracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
@@ -256,12 +259,12 @@ export default function LiveParticipantGrid({
       <div className="w-full h-full flex flex-col gap-4 items-center">
         <div className="w-full flex-1 max-w-5xl rounded-[16px] overflow-hidden border border-[#25C6DA]/50 shadow-2xl relative bg-black flex items-center justify-center">
           <VideoTrack trackRef={activeScreen} className="w-full h-full object-contain" />
-          <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm text-xs font-bold text-[#25C6DA] flex items-center gap-2">
+          <div className="absolute top-3 start-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-sm text-xs font-bold text-[#25C6DA] flex items-center gap-2">
             <ScreenShare size={14} />
             <span>
               {sharer.isLocal
-                ? "You are sharing your screen"
-                : `${resolve(sharer).displayName} is sharing`}
+                ? t("youAreSharing")
+                : t("isSharing", { name: resolve(sharer).displayName })}
             </span>
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   Paperclip,
   CheckSquare,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMeetingMessages, useSendMessage } from "../../hooks/useMeetings";
 import MeetingAttachment from "./MeetingAttachment";
@@ -22,6 +23,8 @@ interface MeetingChatProps {
 
 export default function MeetingChat({ meetingId }: MeetingChatProps) {
   const { user } = useAuth();
+  const t = useTranslations("meetings");
+  const tc = useTranslations("common");
   const role = user?.role || "employee";
   const [inputText, setInputText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -57,7 +60,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
       user_id: user?.id || 0,
       user: {
         id: user?.id || 0,
-        name: user?.name || "Super Admin",
+        name: user?.name || tc("user"),
         avatar: user?.image || null,
       },
       message: text,
@@ -89,7 +92,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
       },
       {
         onError: (err: any) => {
-          toast.error("Failed to send message: " + (err?.message || "Server error"));
+          toast.error(`${t("chat.sendFailed")}: ${err?.message || t("chat.serverError")}`);
         },
       }
     );
@@ -109,7 +112,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-[#25C6DA]" />
           <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
-            chat
+            {t("chat.title")}
           </span>
         </div>
       </div>
@@ -123,7 +126,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
         ) : allMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-10 text-xs text-[#64748B] space-y-1">
             <MessageSquare className="w-8 h-8 opacity-40 mb-1" />
-            <p className="text-[12px] font-medium text-[#475569]">No messages yet.</p>
+            <p className="text-[12px] font-medium text-[#475569]">{t("chat.empty")}</p>
           </div>
         ) : (
           allMessages.map((msg) => {
@@ -194,10 +197,10 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
                     <button
                       onClick={() => setConvertTaskMessage(msg)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity hover:underline inline-flex items-center gap-1"
-                      title="Convert to task"
+                      title={t("chat.convertToTask")}
                     >
                       <CheckSquare className="w-2.5 h-2.5" />
-                      <span>Task</span>
+                      <span>{t("chat.taskShort")}</span>
                     </button>
                   </div>
                 </div>
@@ -218,7 +221,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
               onClick={() => setSelectedFile(null)}
               className="text-red-400 font-bold hover:underline"
             >
-              Remove
+              {tc("remove")}
             </button>
           </div>
         )}
@@ -237,7 +240,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="w-[37px] h-[37px] rounded-[10px] bg-[#1A2236] border border-[#2A3756] text-[#94A3B8] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-            title="Attach file"
+            title={t("chat.attachFile")}
           >
             <Paperclip className="w-4 h-4" />
           </button>
@@ -247,7 +250,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Message..."
+            placeholder={t("chat.placeholder")}
             className="flex-1 h-[37px] px-3.5 rounded-[10px] bg-[#1A2236] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA] transition-colors"
           />
 
@@ -270,7 +273,7 @@ export default function MeetingChat({ meetingId }: MeetingChatProps) {
           meetingId={meetingId}
           sourceType="message"
           sourceId={convertTaskMessage.id}
-          defaultTitle={convertTaskMessage.message ? convertTaskMessage.message.slice(0, 50) : "مهمة من الشات"}
+          defaultTitle={convertTaskMessage.message ? convertTaskMessage.message.slice(0, 50) : t("chat.defaultTaskTitle")}
           defaultDescription={convertTaskMessage.message || ""}
         />
       )}

@@ -27,7 +27,7 @@ export default function JoinByCodeModal({ isOpen, onClose }: JoinByCodeModalProp
   const handleJoin = async () => {
     const cleanInput = code.trim();
     if (!cleanInput) {
-      toast.error("يرجى إدخال كود الاجتماع أو رابط الدعوة");
+      toast.error(t("validation.codeRequired"));
       return;
     }
 
@@ -60,7 +60,7 @@ export default function JoinByCodeModal({ isOpen, onClose }: JoinByCodeModalProp
       }
 
       if (!meetingId) {
-        toast.error("لم يتم العثور على اجتماع بهذا الكود");
+        toast.error(t("validation.codeNotFound"));
         return;
       }
 

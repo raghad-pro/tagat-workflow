@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type { TasksKpis } from "../types/kpis.types";
@@ -9,6 +10,8 @@ interface TaskStatusDonutChartProps {
 }
 
 interface StatusSlice {
+  /** Stable identifier — colour lookups key off this, never the label. */
+  key: string;
   name: string;
   value: number;
   color: string;
@@ -24,23 +27,24 @@ const TASK_COLORS: Record<string, string> = {
 };
 
 export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
+  const t = useTranslations("kpis.taskStatus");
   const byStatus = tasks?.by_status || {};
   const total = (tasks?.total?.value as number) || 0;
 
   const rawData: StatusSlice[] = [
-    { name: "Backlog", value: byStatus.backlog || 0, color: TASK_COLORS.Backlog },
-    { name: "To Do", value: byStatus.todo || 0, color: TASK_COLORS["To Do"] },
-    { name: "In Progress", value: byStatus.in_progress || 0, color: TASK_COLORS["In Progress"] },
-    { name: "In Review", value: byStatus.in_review || 0, color: TASK_COLORS["In Review"] },
-    { name: "Completed", value: byStatus.completed || 0, color: TASK_COLORS.Completed },
-    { name: "Pending", value: byStatus.pending || 0, color: TASK_COLORS.Pending },
+    { key: "Backlog", name: t("backlog"), value: byStatus.backlog || 0, color: TASK_COLORS.Backlog },
+    { key: "To Do", name: t("todo"), value: byStatus.todo || 0, color: TASK_COLORS["To Do"] },
+    { key: "In Progress", name: t("inProgress"), value: byStatus.in_progress || 0, color: TASK_COLORS["In Progress"] },
+    { key: "In Review", name: t("inReview"), value: byStatus.in_review || 0, color: TASK_COLORS["In Review"] },
+    { key: "Completed", name: t("completed"), value: byStatus.completed || 0, color: TASK_COLORS.Completed },
+    { key: "Pending", name: t("pending"), value: byStatus.pending || 0, color: TASK_COLORS.Pending },
   ].filter((d) => total === 0 || d.value > 0);
 
   // Fallback if 0
   const chartData = rawData.length > 0 ? rawData : [
-    { name: "In Progress", value: 1, color: TASK_COLORS["In Progress"] },
-    { name: "Completed", value: 2, color: TASK_COLORS.Completed },
-    { name: "Backlog", value: 1, color: TASK_COLORS.Backlog },
+    { key: "In Progress", name: t("inProgress"), value: 1, color: TASK_COLORS["In Progress"] },
+    { key: "Completed", name: t("completed"), value: 2, color: TASK_COLORS.Completed },
+    { key: "Backlog", name: t("backlog"), value: 1, color: TASK_COLORS.Backlog },
   ];
 
   // Custom label on the donut slice
@@ -77,7 +81,7 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
     <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
       {/* Title */}
       <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">
-        Task status
+        {t("heading")}
       </h3>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-6 min-h-[260px]">
@@ -110,7 +114,7 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
                       <div
                         className="px-3.5 py-1.5 rounded-[8px] text-white font-bold text-xs shadow-lg flex items-center justify-center"
                         style={{
-                          backgroundColor: d.name === "Pending" ? "#FFA500" : d.color,
+                          backgroundColor: d.key === "Pending" ? "#FFA500" : d.color,
                         }}
                       >
                         <span>{d.name}: {d.value}</span>
@@ -127,7 +131,7 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
         {/* Legend on the right */}
         <div className="grid grid-cols-2 sm:grid-cols-1 gap-2.5 sm:w-[40%] sm:ps-4">
           {chartData.map((item) => (
-            <div key={item.name} className="flex items-center gap-2 text-[13px]">
+            <div key={item.key} className="flex items-center gap-2 text-[13px]">
               <span
                 className="w-3 h-3 rounded-full shrink-0"
                 style={{ backgroundColor: item.color }}

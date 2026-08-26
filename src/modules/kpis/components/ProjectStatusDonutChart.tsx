@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from "recharts";
 import type { ProjectsKpis } from "../types/kpis.types";
@@ -9,6 +10,8 @@ interface ProjectStatusDonutChartProps {
 }
 
 interface StatusSlice {
+  /** Stable identifier — colour lookups key off this, never the label. */
+  key: string;
   name: string;
   value: number;
   color: string;
@@ -21,6 +24,7 @@ const COLORS = {
 };
 
 export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartProps) {
+  const t = useTranslations("kpis.projectStatus");
   const pending = projects?.pending ?? 0;
   const inProgress = projects?.in_progress ?? 0;
   const completed = projects?.completed ?? 0;
@@ -28,15 +32,15 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
 
   // If no data exists, provide sample or zero data
   const data: StatusSlice[] = [
-    { name: "Pending", value: pending, color: COLORS.Pending },
-    { name: "In progress", value: inProgress, color: COLORS["In progress"] },
-    { name: "Completed", value: completed, color: COLORS.Completed },
+    { key: "Pending", name: t("pending"), value: pending, color: COLORS.Pending },
+    { key: "In progress", name: t("inProgress"), value: inProgress, color: COLORS["In progress"] },
+    { key: "Completed", name: t("completed"), value: completed, color: COLORS.Completed },
   ].filter((d) => total === 0 || d.value > 0);
 
   // Fallback for visual demonstration if total is 0
   const chartData = data.length > 0 ? data : [
-    { name: "In progress", value: 1, color: COLORS["In progress"] },
-    { name: "Completed", value: 1, color: COLORS.Completed },
+    { key: "In progress", name: t("inProgress"), value: 1, color: COLORS["In progress"] },
+    { key: "Completed", name: t("completed"), value: 1, color: COLORS.Completed },
   ];
 
   const totalCount = chartData.reduce((acc, curr) => acc + curr.value, 0);
@@ -75,7 +79,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
     <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
       {/* Title */}
       <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">
-        Project status
+        {t("heading")}
       </h3>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-6 min-h-[260px]">
@@ -108,7 +112,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
                       <div
                         className="px-3.5 py-1.5 rounded-[8px] text-white font-bold text-xs shadow-lg flex items-center justify-center"
                         style={{
-                          backgroundColor: d.name === "Completed" ? "#FFA500" : d.color,
+                          backgroundColor: d.key === "Completed" ? "#FFA500" : d.color,
                         }}
                       >
                         <span>{d.name}: {d.value}</span>
@@ -129,7 +133,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
               className="w-3.5 h-3.5 rounded-full shrink-0"
               style={{ backgroundColor: COLORS.Pending }}
             />
-            <span className="text-[#424242] dark:text-gray-200 font-medium">Pending</span>
+            <span className="text-[#424242] dark:text-gray-200 font-medium">{t("pending")}</span>
             {pending > 0 && (
               <span className="ms-auto font-bold text-xs text-muted-foreground">
                 ({pending})
@@ -142,7 +146,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
               className="w-3.5 h-3.5 rounded-full shrink-0"
               style={{ backgroundColor: COLORS["In progress"] }}
             />
-            <span className="text-[#424242] dark:text-gray-200 font-medium">In progress</span>
+            <span className="text-[#424242] dark:text-gray-200 font-medium">{t("inProgress")}</span>
             {inProgress > 0 && (
               <span className="ms-auto font-bold text-xs text-muted-foreground">
                 ({inProgress})
@@ -155,7 +159,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
               className="w-3.5 h-3.5 rounded-full shrink-0"
               style={{ backgroundColor: COLORS.Completed }}
             />
-            <span className="text-[#424242] dark:text-gray-200 font-medium">Completed</span>
+            <span className="text-[#424242] dark:text-gray-200 font-medium">{t("completed")}</span>
             {completed > 0 && (
               <span className="ms-auto font-bold text-xs text-muted-foreground">
                 ({completed})

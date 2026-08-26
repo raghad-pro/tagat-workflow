@@ -7,6 +7,7 @@ import {
   Trash2,
   Lock,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingPolls,
@@ -24,13 +25,15 @@ interface MeetingPollsProps {
 
 export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
   const { user } = useAuth();
+  const t = useTranslations("meetings.polls");
+  const tc = useTranslations("common");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "closed">("all");
 
   // Form state
   const [question, setQuestion] = useState("");
   const [multipleChoice, setMultipleChoice] = useState(false);
-  const [options, setOptions] = useState<string[]>(["Option 1", "Option 2"]);
+  const [options, setOptions] = useState<string[]>(["", ""]);
 
   const { data: polls = [], isLoading } = useMeetingPolls(meetingId);
   const { mutate: createPoll, isPending: isCreating } = useCreatePoll();
@@ -39,7 +42,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
 
   const handleAddOption = () => {
     if (options.length < 6) {
-      setOptions([...options, `Option ${options.length + 1}`]);
+      setOptions([...options, ""]);
     }
   };
 
@@ -58,7 +61,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
   const handleCancel = () => {
     setIsFormOpen(false);
     setQuestion("");
-    setOptions(["Option 1", "Option 2"]);
+    setOptions(["", ""]);
   };
 
   const handleCreate = () => {
@@ -77,6 +80,8 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
     );
   };
 
+  const validOptionCount = options.filter((o) => o.trim()).length;
+
   const filteredPolls = polls.filter((p) => {
     if (filterStatus === "all") return true;
     if (filterStatus === "closed") return p.is_closed;
@@ -90,7 +95,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
         <div className="flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-[#25C6DA]" />
           <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
-            polls ({polls.length})
+            {t("title")} ({polls.length})
           </span>
         </div>
 
@@ -101,9 +106,9 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
             onChange={(e) => setFilterStatus(e.target.value as any)}
             className="h-[33px] px-2.5 rounded-[10px] bg-[#1A2236] text-[#CBD5E1] text-[12px] border border-[#2A3756] focus:outline-none focus:border-[#25C6DA]"
           >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="closed">Closed</option>
+            <option value="all">{t("allStatuses")}</option>
+            <option value="active">{t("active")}</option>
+            <option value="closed">{t("closed")}</option>
           </select>
 
           {isHost && !isFormOpen && (
@@ -112,7 +117,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
               className="flex items-center gap-1 px-3 h-[33px] rounded-[10px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-all shadow-sm cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>New poll</span>
+              <span>{t("newPoll")}</span>
             </button>
           )}
         </div>
@@ -125,12 +130,12 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
           <div className="p-4 rounded-[14px] bg-[#1A2236] border border-[#2A3756] space-y-3 animate-in fade-in-50">
             {/* Question */}
             <div className="space-y-1">
-              <label className="text-[12px] font-semibold text-[#94A3B8]">Question</label>
+              <label className="text-[12px] font-semibold text-[#94A3B8]">{t("question")}</label>
               <input
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Ask something..."
+                placeholder={t("questionPlaceholder")}
                 className="w-full h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA]"
                 autoFocus
               />
@@ -138,27 +143,27 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
 
             {/* Type */}
             <div className="space-y-1">
-              <label className="text-[12px] font-semibold text-[#94A3B8]">Type</label>
+              <label className="text-[12px] font-semibold text-[#94A3B8]">{t("type")}</label>
               <select
                 value={multipleChoice ? "multiple_choice" : "single_choice"}
                 onChange={(e) => setMultipleChoice(e.target.value === "multiple_choice")}
                 className="w-full h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-[#CBD5E1] text-[14px] focus:outline-none focus:border-[#25C6DA]"
               >
-                <option value="single_choice">Single choice</option>
-                <option value="multiple_choice">Multiple choice</option>
+                <option value="single_choice">{t("singleChoice")}</option>
+                <option value="multiple_choice">{t("multipleChoice")}</option>
               </select>
             </div>
 
             {/* Options list */}
             <div className="space-y-2">
-              <label className="text-[12px] font-semibold text-[#94A3B8]">Options</label>
+              <label className="text-[12px] font-semibold text-[#94A3B8]">{t("options")}</label>
               {options.map((opt, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <input
                     type="text"
                     value={opt}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
-                    placeholder={`Option ${idx + 1}`}
+                    placeholder={t("optionN", { n: idx + 1 })}
                     className="flex-1 h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-[#CBD5E1] text-[14px] focus:outline-none focus:border-[#25C6DA]"
                   />
                   {options.length > 2 && (
@@ -180,7 +185,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
                   className="flex items-center gap-1 text-[11px] font-medium text-[#25C6DA] hover:underline pt-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add option</span>
+                  <span>{t("addOption")}</span>
                 </button>
               )}
             </div>
@@ -190,10 +195,10 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
               <button
                 type="button"
                 onClick={handleCreate}
-                disabled={isCreating || !question.trim()}
+                disabled={isCreating || !question.trim() || validOptionCount < 2}
                 className="px-4 py-1.5 h-[28px] rounded-[10px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {isCreating ? "Creating..." : "Create poll"}
+                {isCreating ? tc("creating") : t("createBtn")}
               </button>
 
               <button
@@ -201,7 +206,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
                 onClick={handleCancel}
                 className="px-3 py-1.5 h-[28px] text-[12px] font-medium text-[#64748B] hover:text-white transition-colors cursor-pointer"
               >
-                Cancel
+                {tc("cancel")}
               </button>
             </div>
           </div>
@@ -214,7 +219,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
           </div>
         ) : filteredPolls.length === 0 && !isFormOpen ? (
           <div className="text-center py-10 text-xs text-[#64748B]">
-            No polls active. Click &quot;New poll&quot; to create one.
+            {t("empty")}
           </div>
         ) : (
           filteredPolls.map((poll) => {
@@ -236,7 +241,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
                       <button
                         onClick={() => closePoll({ pollId: poll.id, meetingId })}
                         className="p-1 text-[#94A3B8] hover:text-amber-400"
-                        title="Close poll"
+                        title={t("closePollTitle")}
                       >
                         <Lock className="w-3.5 h-3.5" />
                       </button>
@@ -273,7 +278,7 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
                       >
                         {/* Fill percentage bar */}
                         <div
-                          className="absolute top-0 left-0 bottom-0 bg-[#25C6DA]/20 transition-all duration-500"
+                          className="absolute top-0 start-0 bottom-0 bg-[#25C6DA]/20 transition-all duration-500"
                           style={{ width: `${percentage}%` }}
                         />
 
@@ -289,9 +294,9 @@ export default function MeetingPolls({ meetingId, isHost }: MeetingPollsProps) {
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-[#64748B] pt-1">
-                  <span>Total votes: {totalVotes}</span>
+                  <span>{t("totalVotes")}: {totalVotes}</span>
                   <span className={isClosed ? "text-red-400" : "text-emerald-400"}>
-                    {isClosed ? "Closed" : "Active"}
+                    {isClosed ? t("closed") : t("active")}
                   </span>
                 </div>
               </div>

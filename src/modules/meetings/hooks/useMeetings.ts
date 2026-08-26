@@ -19,6 +19,7 @@ import type {
   ConvertToTaskPayload,
 } from "../types/meetings.types";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 export const MEETINGS_QUERY_KEYS = {
@@ -39,6 +40,7 @@ export const MEETINGS_QUERY_KEYS = {
 export function useMeetings(filters?: MeetingFilters) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.list(role, filters),
@@ -50,6 +52,7 @@ export function useMeetings(filters?: MeetingFilters) {
 export function useMeetingDetails(meetingId: number | string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.detail(role, meetingId),
@@ -63,16 +66,17 @@ export function useMeetingDetails(meetingId: number | string) {
 export function useCreateMeeting() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: CreateMeetingPayload) => meetingsApi.create(role, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.all });
-      toast.success("تم إنشاء الاجتماع بنجاح");
+      toast.success(tt("createSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إنشاء الاجتماع");
+      toast.error(err?.message || tt("createError"));
     },
   });
 }
@@ -80,6 +84,7 @@ export function useCreateMeeting() {
 export function useUpdateMeeting() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -88,10 +93,10 @@ export function useUpdateMeeting() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.detail(role, id) });
-      toast.success("تم تحديث الاجتماع بنجاح");
+      toast.success(tt("updateSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تحديث الاجتماع");
+      toast.error(err?.message || tt("updateError"));
     },
   });
 }
@@ -99,16 +104,17 @@ export function useUpdateMeeting() {
 export function useDeleteMeeting() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: number | string) => meetingsApi.delete(role, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.all });
-      toast.success("تم حذف الاجتماع بنجاح");
+      toast.success(tt("deleteSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في حذف الاجتماع");
+      toast.error(err?.message || tt("deleteError"));
     },
   });
 }
@@ -116,6 +122,7 @@ export function useDeleteMeeting() {
 export function useStartMeeting() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -123,10 +130,10 @@ export function useStartMeeting() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.detail(role, id) });
-      toast.success("تم بدء الاجتماع بنجاح");
+      toast.success(tt("startSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في بدء الاجتماع");
+      toast.error(err?.message || tt("startError"));
     },
   });
 }
@@ -134,6 +141,7 @@ export function useStartMeeting() {
 export function useEndMeeting() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -141,18 +149,34 @@ export function useEndMeeting() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.detail(role, id) });
-      toast.success("تم إنهاء الاجتماع");
+      toast.success(tt("endSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إنهاء الاجتماع");
+      toast.error(err?.message || tt("endError"));
     },
   });
+}
+
+/**
+ * The clearest sentence the API gave us about a failed invite.
+ *
+ * The response interceptor already lifts `data.message` onto `error.message`,
+ * but a 422 carries the useful detail in `errors` — "The selected user does not
+ * belong to this meeting's company." lives there, while `message` is often the
+ * generic "The given data was invalid."
+ */
+function invitationError(err: any, fallback: string): string {
+  const firstFieldError = Object.values(
+    (err?.response?.data?.errors ?? {}) as Record<string, string[]>
+  )[0]?.[0];
+  return firstFieldError || err?.response?.data?.message || err?.message || fallback;
 }
 
 // ─── Invitations Hooks ────────────────────────────────────────────────────────
 export function useMeetingInvitations(meetingId: number | string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.invitations(role, meetingId),
@@ -164,6 +188,7 @@ export function useMeetingInvitations(meetingId: number | string) {
 export function useSendInvitation() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -171,10 +196,13 @@ export function useSendInvitation() {
       meetingsApi.sendInvitation(role, meetingId, payload),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.invitations(role, meetingId) });
-      toast.success("تم إرسال الدعوة بنجاح");
+      // The room gate reads the invitation list, so a fresh invite has to reach
+      // the invitee's cache too — not just the host's own view.
+      queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.all });
+      toast.success(tt("inviteSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إرسال الدعوة");
+      toast.error(invitationError(err, tt("inviteError")));
     },
   });
 }
@@ -182,6 +210,7 @@ export function useSendInvitation() {
 export function useRespondInvitation() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -189,10 +218,10 @@ export function useRespondInvitation() {
       meetingsApi.respondInvitation(role, invitationId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.all });
-      toast.success("تم الرد على الدعوة");
+      toast.success(tt("respondSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تحديث الدعوة");
+      toast.error(invitationError(err, tt("respondError")));
     },
   });
 }
@@ -201,6 +230,7 @@ export function useRespondInvitation() {
 export function useMeetingParticipants(meetingId: number | string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.participants(role, meetingId),
@@ -213,6 +243,7 @@ export function useMeetingParticipants(meetingId: number | string) {
 export function useJoinMeeting() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -228,6 +259,7 @@ export function useJoinMeeting() {
 export function useLeaveMeeting() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -241,6 +273,7 @@ export function useLeaveMeeting() {
 export function useUpdateParticipantRole() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -255,10 +288,10 @@ export function useUpdateParticipantRole() {
     }) => meetingsApi.updateParticipantRole(role, participantId, participantRole),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.participants(role, meetingId) });
-      toast.success("تم تحديث دور المشارك");
+      toast.success(tt("roleSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تحديث الدور");
+      toast.error(err?.message || tt("roleError"));
     },
   });
 }
@@ -267,6 +300,7 @@ export function useUpdateParticipantRole() {
 export function useMeetingMessages(meetingId: number | string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.messages(role, meetingId),
@@ -279,6 +313,7 @@ export function useMeetingMessages(meetingId: number | string) {
 export function useSendMessage() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -299,6 +334,7 @@ export function useSendMessage() {
 export function useMeetingPolls(meetingId: number | string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.polls(role, meetingId),
@@ -311,6 +347,7 @@ export function useMeetingPolls(meetingId: number | string) {
 export function useCreatePoll() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -318,10 +355,10 @@ export function useCreatePoll() {
       meetingsApi.createPoll(role, meetingId, payload),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.polls(role, meetingId) });
-      toast.success("تم إنشاء استطلاع الرأي بنجاح");
+      toast.success(tt("pollCreateSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إنشاء الاستطلاع");
+      toast.error(err?.message || tt("pollCreateError"));
     },
   });
 }
@@ -329,6 +366,7 @@ export function useCreatePoll() {
 export function useVotePoll() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -336,10 +374,10 @@ export function useVotePoll() {
       meetingsApi.votePoll(role, pollId, payload),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.polls(role, meetingId) });
-      toast.success("تم تسجيل صوتك بنجاح");
+      toast.success(tt("voteSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تسجيل التصويت");
+      toast.error(err?.message || tt("voteError"));
     },
   });
 }
@@ -347,6 +385,7 @@ export function useVotePoll() {
 export function useClosePoll() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -354,10 +393,10 @@ export function useClosePoll() {
       meetingsApi.closePoll(role, pollId),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.polls(role, meetingId) });
-      toast.success("تم إغلاق استطلاع الرأي");
+      toast.success(tt("pollCloseSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إغلاق الاستطلاع");
+      toast.error(err?.message || tt("pollCloseError"));
     },
   });
 }
@@ -366,6 +405,7 @@ export function useClosePoll() {
 export function useMeetingWhiteboard(meetingId: number | string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId),
@@ -378,6 +418,7 @@ export function useMeetingWhiteboard(meetingId: number | string) {
 export function useUpdateWhiteboard() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -392,6 +433,7 @@ export function useUpdateWhiteboard() {
 export function useDrawWhiteboardElement() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -406,6 +448,7 @@ export function useDrawWhiteboardElement() {
 export function useDeleteWhiteboardElement() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -420,6 +463,7 @@ export function useDeleteWhiteboardElement() {
 export function useUndoWhiteboard() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -435,6 +479,7 @@ export function useUndoWhiteboard() {
 export function useRedoWhiteboard() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -450,6 +495,7 @@ export function useRedoWhiteboard() {
 export function useUpdateWhiteboardElement() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -471,6 +517,7 @@ export function useUpdateWhiteboardElement() {
 export function useToggleWhiteboardElementLock() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -495,6 +542,7 @@ export function useToggleWhiteboardElementLock() {
 export function useToggleWhiteboardLock() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -505,20 +553,21 @@ export function useToggleWhiteboardLock() {
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
     },
-    onError: () => toast.error("Only a host or co-host may lock the whiteboard"),
+    onError: () => toast.error(tt("whiteboardLockDenied")),
   });
 }
 
 export function useClearWhiteboard() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (meetingId: number | string) => meetingsApi.clearWhiteboard(role, meetingId),
     onSuccess: (_, meetingId) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.whiteboard(role, meetingId) });
-      toast.success("تم مسح السبورة");
+      toast.success(tt("whiteboardCleared"));
     },
   });
 }
@@ -527,6 +576,7 @@ export function useClearWhiteboard() {
 export function useMeetingNotes(meetingId: number | string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.notes(role, meetingId),
@@ -538,6 +588,7 @@ export function useMeetingNotes(meetingId: number | string) {
 export function useCreateNote() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -545,10 +596,10 @@ export function useCreateNote() {
       meetingsApi.createNote(role, meetingId, payload),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.notes(role, meetingId) });
-      toast.success("تمت إضافة الملاحظة بنجاح");
+      toast.success(tt("noteCreateSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إضافة الملاحظة");
+      toast.error(err?.message || tt("noteCreateError"));
     },
   });
 }
@@ -556,6 +607,7 @@ export function useCreateNote() {
 export function useUpdateNote() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -563,10 +615,10 @@ export function useUpdateNote() {
       meetingsApi.updateNote(role, noteId, payload),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.notes(role, meetingId) });
-      toast.success("تم تحديث الملاحظة");
+      toast.success(tt("noteUpdateSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تحديث الملاحظة");
+      toast.error(err?.message || tt("noteUpdateError"));
     },
   });
 }
@@ -574,6 +626,7 @@ export function useUpdateNote() {
 export function useDeleteNote() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -581,10 +634,10 @@ export function useDeleteNote() {
       meetingsApi.deleteNote(role, noteId),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.notes(role, meetingId) });
-      toast.success("تم حذف الملاحظة");
+      toast.success(tt("noteDeleteSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في حذف الملاحظة");
+      toast.error(err?.message || tt("noteDeleteError"));
     },
   });
 }
@@ -593,6 +646,7 @@ export function useDeleteNote() {
 export function useMeetingDecisions(meetingId: number | string, status?: string) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.decisions(role, meetingId, status),
@@ -604,6 +658,7 @@ export function useMeetingDecisions(meetingId: number | string, status?: string)
 export function useCreateDecision() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -611,10 +666,10 @@ export function useCreateDecision() {
       meetingsApi.createDecision(role, meetingId, payload),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.decisions(role, meetingId) });
-      toast.success("تم تسجيل القرار بنجاح");
+      toast.success(tt("decisionCreateSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تسجيل القرار");
+      toast.error(err?.message || tt("decisionCreateError"));
     },
   });
 }
@@ -622,6 +677,7 @@ export function useCreateDecision() {
 export function useApproveDecision() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -629,10 +685,10 @@ export function useApproveDecision() {
       meetingsApi.approveDecision(role, decisionId),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.decisions(role, meetingId) });
-      toast.success("تم اعتماد القرار بنجاح");
+      toast.success(tt("decisionApproveSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في اعتماد القرار");
+      toast.error(err?.message || tt("decisionApproveError"));
     },
   });
 }
@@ -640,6 +696,7 @@ export function useApproveDecision() {
 export function useDeleteDecision() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -647,10 +704,10 @@ export function useDeleteDecision() {
       meetingsApi.deleteDecision(role, decisionId),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.decisions(role, meetingId) });
-      toast.success("تم حذف القرار");
+      toast.success(tt("decisionDeleteSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في حذف القرار");
+      toast.error(err?.message || tt("decisionDeleteError"));
     },
   });
 }
@@ -659,6 +716,7 @@ export function useDeleteDecision() {
 export function useMeetingActionItems(meetingId: number | string, filters?: any) {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
 
   return useQuery({
     queryKey: MEETINGS_QUERY_KEYS.actionItems(role, meetingId, filters),
@@ -670,6 +728,7 @@ export function useMeetingActionItems(meetingId: number | string, filters?: any)
 export function useCreateActionItem() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -677,10 +736,10 @@ export function useCreateActionItem() {
       meetingsApi.createActionItem(role, meetingId, payload),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.actionItems(role, meetingId) });
-      toast.success("تمت إضافة بند العمل بنجاح");
+      toast.success(tt("actionCreateSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إضافة بند العمل");
+      toast.error(err?.message || tt("actionCreateError"));
     },
   });
 }
@@ -688,6 +747,7 @@ export function useCreateActionItem() {
 export function useCompleteActionItem() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -695,10 +755,10 @@ export function useCompleteActionItem() {
       meetingsApi.completeActionItem(role, actionItemId),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.actionItems(role, meetingId) });
-      toast.success("تم إكمال بند العمل بنجاح");
+      toast.success(tt("actionCompleteSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في إكمال بند العمل");
+      toast.error(err?.message || tt("actionCompleteError"));
     },
   });
 }
@@ -706,6 +766,7 @@ export function useCompleteActionItem() {
 export function useDeleteActionItem() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -713,10 +774,10 @@ export function useDeleteActionItem() {
       meetingsApi.deleteActionItem(role, actionItemId),
     onSuccess: (_, { meetingId }) => {
       queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.actionItems(role, meetingId) });
-      toast.success("تم حذف بند العمل");
+      toast.success(tt("actionDeleteSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في حذف بند العمل");
+      toast.error(err?.message || tt("actionDeleteError"));
     },
   });
 }
@@ -725,6 +786,7 @@ export function useDeleteActionItem() {
 export function useConvertDecisionToTask() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -741,10 +803,10 @@ export function useConvertDecisionToTask() {
         queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.decisions(role, meetingId) });
       }
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("تم تحويل القرار إلى مهمة بنجاح");
+      toast.success(tt("decisionToTaskSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تحويل القرار إلى مهمة");
+      toast.error(err?.message || tt("decisionToTaskError"));
     },
   });
 }
@@ -752,6 +814,7 @@ export function useConvertDecisionToTask() {
 export function useConvertActionItemToTask() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -768,10 +831,10 @@ export function useConvertActionItemToTask() {
         queryClient.invalidateQueries({ queryKey: MEETINGS_QUERY_KEYS.actionItems(role, meetingId) });
       }
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("تم تحويل التوصية إلى مهمة بنجاح");
+      toast.success(tt("actionToTaskSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تحويل التوصية إلى مهمة");
+      toast.error(err?.message || tt("actionToTaskError"));
     },
   });
 }
@@ -779,6 +842,7 @@ export function useConvertActionItemToTask() {
 export function useConvertMessageToTask() {
   const { user } = useAuth();
   const role = user?.role || "employee";
+  const tt = useTranslations("meetings.toasts");
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -792,10 +856,10 @@ export function useConvertMessageToTask() {
     }) => meetingsApi.convertMessageToTask(role, messageId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("تم تحويل الرسالة إلى مهمة بنجاح");
+      toast.success(tt("messageToTaskSuccess"));
     },
     onError: (err: any) => {
-      toast.error(err?.message || "فشل في تحويل الرسالة إلى مهمة");
+      toast.error(err?.message || tt("messageToTaskError"));
     },
   });
 }

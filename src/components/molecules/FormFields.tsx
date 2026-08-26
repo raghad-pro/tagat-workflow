@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useFormContext } from "react-hook-form";
 import apiClient from "@/services/apiClient";
 import { LucideIcon, ChevronsUpDown, Loader2 } from "lucide-react";
@@ -250,6 +251,8 @@ export function SelectField<T extends FieldValues>({
   icon: Icon,
   disabled,
 }: SelectFieldProps<T>) {
+  const tc = useTranslations("common");
+
   return (
     <FormField
       control={control}
@@ -303,7 +306,7 @@ export function SelectField<T extends FieldValues>({
                   disabled
                   className="ds-text-main py-3 px-3 mx-1 border-b ds-border-form last:border-b-0 cursor-not-allowed rounded-none text-sm font-medium opacity-50"
                 >
-                  {placeholder || "No options available"}
+                  {placeholder || tc("noOptions")}
                 </SelectItem>
               )}
             </SelectContent>
@@ -385,6 +388,8 @@ export function MultiSelectField<T extends FieldValues>({
   icon: Icon,
   disabled,
 }: SelectFieldProps<T>) {
+  const tc = useTranslations("common");
+
   return (
     <FormField
       control={control}
@@ -417,7 +422,7 @@ export function MultiSelectField<T extends FieldValues>({
                     {Icon && <Icon className="absolute left-3 h-5 w-5 opacity-50" />}
                     {field.value && field.value.length > 0
                       ? `${field.value.length} selected`
-                      : placeholder || "Select options"}
+                      : placeholder || tc("selectOptions")}
                   </div>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
