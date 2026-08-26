@@ -6,6 +6,7 @@ import { CompanyDashboard }    from "./CompanyDashboard";
 import { SuperAdminDashboard } from "./SuperAdminDashboard";
 import { EmployeeDashboard }   from "./EmployeeDashboard";
 import { ClientDashboard }     from "./ClientDashboard";
+import { HubGrid }             from "./HubGrid";
 import { useAuth }             from "@/providers/AuthProvider";
 import { tokenService }        from "@/services/tokenServices";
 import { PageSkeleton }        from "@/components/atoms/PageSkeleton";
@@ -28,20 +29,31 @@ export function DashboardPage() {
 
   let currentRole = user.role?.toLowerCase();
 
-  switch (currentRole) {
-    case "super_admin":
-      return <SuperAdminDashboard role={user.role} token={token} />;
-    case "company":
-      return <CompanyDashboard role={user.role} token={token} />;
-    case "employee":
-      return <EmployeeDashboard role={user.role} token={token} />;
-    case "client":
-      return <ClientDashboard role={user.role} token={token} />;
-    default:
-      return (
-        <div className="p-8 text-center ds-text-priority-high">
-          Unknown role
-        </div>
-      );
-  }
+  const roleDashboard = (() => {
+    switch (currentRole) {
+      case "super_admin":
+        return <SuperAdminDashboard role={user.role} token={token} />;
+      case "company":
+        return <CompanyDashboard role={user.role} token={token} />;
+      case "employee":
+        return <EmployeeDashboard role={user.role} token={token} />;
+      case "client":
+        return <ClientDashboard role={user.role} token={token} />;
+      default:
+        return (
+          <div className="p-8 text-center ds-text-priority-high">
+            Unknown role
+          </div>
+        );
+    }
+  })();
+
+  // The launcher sits above the role's own stats and charts: sections first,
+  // numbers underneath.
+  return (
+    <>
+      <HubGrid />
+      {roleDashboard}
+    </>
+  );
 }

@@ -18,8 +18,10 @@ export default function DashboardLayout({
         <SidebarProvider
           className="h-svh overflow-hidden"
           style={{
-            // desktop: العرض الكامل — mobile: أيقونات فقط (56px)
-            "--sidebar-width": "240px",
+            // The hubs' pages unfold inside the column now, indented under
+            // their hub, so the width has to carry the longest page name plus
+            // that indent — not just the six hub names.
+            "--sidebar-width": "218px",
             "--sidebar-width-icon": "56px",
           } as React.CSSProperties}
         >
