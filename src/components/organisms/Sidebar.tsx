@@ -77,7 +77,6 @@ export function AppSidebar() {
   useEffect(() => {
     if (!hubKeys) return;
     setOpenHubKeys(expandAll ? hubKeys.split(",") : routeHub ? [routeHub.key] : []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hubKeys, expandAll]);
 
   // Unlike the popover — a transient surface that closed the moment it had
@@ -90,7 +89,6 @@ export function AppSidebar() {
       if (!expandAll) return [routeHub.key];
       return current.includes(routeHub.key) ? current : [...current, routeHub.key];
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeHub?.key, expandAll]);
 
   const openHub = (current: string[], hubKey: string) =>
