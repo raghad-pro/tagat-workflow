@@ -1763,7 +1763,10 @@
       "declinedBody": "You turned down the invitation to this meeting. Ask the host to invite you again if you need to join.",
       "notInvitedTitle": "You have not been invited",
       "notInvitedBody": "This meeting is open to invited people only. Ask the host to send you an invitation, then reload this page.",
-      "backToMeetings": "Back to Meetings"
+      "backToMeetings": "Back to Meetings",
+      "pendingTitle": "Accept your invitation first",
+      "pendingBody": "You have been invited to this meeting but have not answered yet. Accept the invitation and you can go straight in.",
+      "goToInvitation": "Go to the invitation"
     },
     "passwordGate": {
       "backToMeeting": "Back to meeting",
@@ -1868,8 +1871,10 @@
       "accept": "Accept",
       "decline": "Decline",
       "invitedBanner": "You have been invited to this meeting.",
-      "invitedBannerHint": "Let the host know whether to expect you.",
-      "invitationAccepted": "You accepted this invitation."
+      "invitedBannerHint": "Accepting is what opens the meeting for you.",
+      "invitationAccepted": "You accepted this invitation.",
+      "acceptFirst": "Accept to join",
+      "pendingHint": "Accept the invitation below to join."
     },
     "connection": {
       "connected": "Connected",

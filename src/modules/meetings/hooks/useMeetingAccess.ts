@@ -15,8 +15,10 @@ export type MeetingAccessReason =
   | "creator"
   /** Already on the roster, so they were admitted at some point. */
   | "participant"
-  /** Holds an invitation that has not been declined. */
+  /** Holds an invitation they have accepted. */
   | "invited"
+  /** Invited, but has not answered yet — accepting is what opens the room. */
+  | "pending"
   /** Was invited and turned it down. */
   | "declined"
   /** Proven absent from the invitation list. */
@@ -41,8 +43,12 @@ export interface MeetingAccess {
 /**
  * Decides whether the current account may enter a meeting room.
  *
- * The rule is "invitation only": the creator and anyone already on the roster
- * get in, everyone else needs an invitation that they have not declined.
+ * The rule is "invitation only, and answered": the creator and anyone already
+ * on the roster get in, everyone else needs an invitation they have
+ * **accepted**. An unanswered one is not a yes — it is the question — so it
+ * holds the door and offers Accept instead of Join. That is also what makes
+ * the host's invitations table mean anything: without it, "pending" would
+ * describe people who had already walked in.
  *
  * This is a **UI gate, not the security boundary.** The browser can always
  * `POST /meetings/{id}/media/join` directly, so the server has to enforce the
@@ -105,12 +111,29 @@ export function useMeetingAccess(meetingId: number | string): MeetingAccess {
       };
     }
 
+    const invitationId = Number(myInvitation.id) || null;
+
+    // Anything not yet answered holds the door. Read as "not accepted" rather
+    // than matching the literal "pending", so a row that omits the field or
+    // spells it differently is treated as unanswered — the safe direction,
+    // since the worst case is one extra click on a button that is right there.
+    const answered = String(myInvitation.status ?? "").toLowerCase() === "accepted";
+    if (!answered) {
+      return {
+        isLoading: false,
+        canJoin: false,
+        reason: "pending",
+        invitationStatus: myInvitation.status ?? null,
+        invitationId,
+      };
+    }
+
     return {
       isLoading: false,
       canJoin: true,
       reason: "invited",
       invitationStatus: myInvitation.status ?? null,
-      invitationId: Number(myInvitation.id) || null,
+      invitationId,
     };
   }, [
     loadingMeeting,

@@ -71,6 +71,7 @@ export function MeetingRoomContainer({ meetingId }: MeetingRoomContainerProps) {
       <MeetingAccessDenied
         reason={access.reason}
         meetingTitle={meeting?.title}
+        meetingId={meetingId}
         variant="dark"
       />
     );

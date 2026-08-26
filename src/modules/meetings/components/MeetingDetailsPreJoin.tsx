@@ -421,21 +421,27 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
                 disabled
                 className="px-4 py-2 rounded-[8px] bg-gray-200 text-gray-500 font-bold text-[13px] cursor-not-allowed"
               >
-                {isBlocked ? t("invitationRequired") : t("meetingStatus", { status: tm(`status.${meeting.status}` as never) })}
+                {isBlocked
+                  ? access.reason === "pending"
+                    ? t("acceptFirst")
+                    : t("invitationRequired")
+                  : t("meetingStatus", { status: tm(`status.${meeting.status}` as never) })}
               </button>
             )}
             <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
               {isBlocked
                 ? access.reason === "declined"
                   ? t("declinedHint")
-                  : t("notInvitedHint")
+                  : access.reason === "pending"
+                    ? t("pendingHint")
+                    : t("notInvitedHint")
                 : t("joinHint")}
             </span>
           </div>
 
           {/* The invitee arrives here from the bell, so the answer belongs
               beside the Join button and not only buried in the table below. */}
-          {access.invitationStatus === "pending" && access.invitationId && (
+          {access.reason === "pending" && access.invitationId && (
             <div className="flex flex-wrap items-center gap-3 rounded-[8px] border border-[#25C6DA]/30 bg-[#25C6DA]/5 px-4 py-3">
               <div className="flex flex-col">
                 <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100">
@@ -624,7 +630,9 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
                         {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString() : "—"}
                       </td>
                       <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">
-                        {invitationUserId(inv) === Number(user?.id) && inv.status === "pending"
+                        {invitationUserId(inv) === Number(user?.id) &&
+                        String(inv.status ?? "").toLowerCase() !== "accepted" &&
+                        String(inv.status ?? "").toLowerCase() !== "declined"
                           ? renderInvitationAnswer(Number(inv.id))
                           : "—"}
                       </td>

@@ -9,6 +9,8 @@ import type { MeetingAccessReason } from "../hooks/useMeetingAccess";
 interface MeetingAccessDeniedProps {
   reason: MeetingAccessReason;
   meetingTitle?: string;
+  /** Sends "accept first" back to the page holding the Accept button. */
+  meetingId?: number | string;
   /** Dark palette for the room route, light for the details page. */
   variant?: "light" | "dark";
 }
@@ -17,6 +19,7 @@ interface MeetingAccessDeniedProps {
 const COPY: Record<string, { title: string; body: string }> = {
   declined: { title: "declinedTitle", body: "declinedBody" },
   not_invited: { title: "notInvitedTitle", body: "notInvitedBody" },
+  pending: { title: "pendingTitle", body: "pendingBody" },
 };
 
 /**
@@ -25,12 +28,17 @@ const COPY: Record<string, { title: string; body: string }> = {
 export function MeetingAccessDenied({
   reason,
   meetingTitle,
+  meetingId,
   variant = "light",
 }: MeetingAccessDeniedProps) {
   const router = useRouter();
   const t = useTranslations("meetings.accessDenied");
   const copy = COPY[reason] ?? COPY.not_invited;
   const isDark = variant === "dark";
+
+  // An unanswered invitation is the one case with something to do about it,
+  // so point at the Accept button rather than back to the list.
+  const canAnswer = reason === "pending" && meetingId != null;
 
   return (
     <div
@@ -77,10 +85,12 @@ export function MeetingAccessDenied({
       </p>
 
       <button
-        onClick={() => router.push("/meetings")}
+        onClick={() =>
+          router.push(canAnswer ? `/meetings/${meetingId}` : "/meetings")
+        }
         className="mt-4 px-5 py-2 rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white transition-colors font-bold text-sm cursor-pointer"
       >
-        {t("backToMeetings")}
+        {canAnswer ? t("goToInvitation") : t("backToMeetings")}
       </button>
     </div>
   );
