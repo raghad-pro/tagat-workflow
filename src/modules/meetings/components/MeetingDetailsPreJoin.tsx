@@ -56,7 +56,8 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
   const { user } = useAuth();
   const { data: meeting, isLoading, isError } = useMeetingDetails(meetingId);
   const { data: participants = [] } = useMeetingParticipants(meetingId);
-  const { data: invitations = [] } = useMeetingInvitations(meetingId);
+  const { data: invitations = [], isError: invitationsUnreadable } =
+    useMeetingInvitations(meetingId);
   
   const { mutate: startMeeting, isPending: isStarting } = useStartMeeting();
   const { mutate: endMeeting, isPending: isEnding } = useEndMeeting();
@@ -209,6 +210,8 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
    * left `useMeetingAccess` branching on a "declined" state nothing could
    * produce.
    */
+  // Green accept, red decline — the two outcomes are opposites, and a solid
+  // pair reads faster in a table row than a branded button beside an outline.
   const renderInvitationAnswer = (invitationId: number, size: "sm" | "md" = "sm") => (
     <div className="flex items-center gap-2">
       <button
@@ -216,8 +219,8 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
         disabled={isResponding}
         onClick={() => respondInvitation({ invitationId, status: "accepted" })}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-[8px] bg-[#25C6DA] font-bold text-white",
-          "transition-colors hover:bg-[#20b2c4] cursor-pointer disabled:opacity-50",
+          "inline-flex items-center gap-1.5 rounded-[8px] bg-[#22C55E] font-bold text-white",
+          "transition-colors hover:bg-[#16A34A] cursor-pointer disabled:opacity-50",
           size === "md" ? "px-4 py-2 text-[13px]" : "px-2.5 py-1 text-[12px]"
         )}
       >
@@ -229,9 +232,8 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
         disabled={isResponding}
         onClick={() => respondInvitation({ invitationId, status: "declined" })}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-[8px] border border-slate-200 font-bold",
-          "text-slate-500 transition-colors hover:border-[#EF4444] hover:text-[#EF4444]",
-          "cursor-pointer disabled:opacity-50 dark:border-slate-700 dark:text-slate-400",
+          "inline-flex items-center gap-1.5 rounded-[8px] bg-[#EF4444] font-bold text-white",
+          "transition-colors hover:bg-[#DC2626] cursor-pointer disabled:opacity-50",
           size === "md" ? "px-4 py-2 text-[13px]" : "px-2.5 py-1 text-[12px]"
         )}
       >
@@ -593,7 +595,14 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
           {invitations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Send className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-3 -rotate-45" />
-              <p className="text-[13px] font-medium text-slate-500 dark:text-slate-400">{t("noInvitations")}</p>
+              {/* "None" and "could not look" are different answers, and the
+                  second one matters: a client cannot read this list at all
+                  (no such route for their prefix), so telling them no
+                  invitations were sent can be flatly untrue — their own may
+                  be sitting in a response they are not allowed to fetch. */}
+              <p className="text-[13px] font-medium text-slate-500 dark:text-slate-400">
+                {invitationsUnreadable ? t("invitationsUnreadable") : t("noInvitations")}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">

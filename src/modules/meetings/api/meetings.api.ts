@@ -43,6 +43,10 @@ interface ApiResponse<T> {
  *  gets picked up. */
 const invitationIndexMissing = new Set<string>();
 
+/** Role prefixes with no per-meeting invitation list — see `getInvitations`.
+ *  Without this a client fires eight guaranteed 404s on every bell poll. */
+const invitationListMissing = new Set<string>();
+
 /** How many meetings the invitation scan may probe in one pass. */
 const MY_INVITATION_SCAN_LIMIT = 8;
 
@@ -113,11 +117,45 @@ export const meetingsApi = {
   },
 
   // ─── 02 - Invitations ───────────────────────────────────────────────────────
+  /**
+   * The invitation list for one meeting.
+   *
+   * Not available to every role. Probed against the live API (2026-08-26):
+   *
+   *   GET /employee/meetings/{id}/invitations     401 — exists
+   *   GET /company/meetings/{id}/invitations      401 — exists
+   *   GET /super_admin/meetings/{id}/invitations  401 — exists
+   *   GET /client/meetings/{id}/invitations       404 — NOT REGISTERED
+   *
+   * The published Postman collection agrees: it documents this route for the
+   * other three roles and gives clients only
+   * `PUT /client/meeting-invitations/{id}`. So a client can answer an
+   * invitation but cannot read one, which is why their bell finds nothing and
+   * their Accept button never appears — the id it needs lives in a response
+   * they are not allowed to fetch.
+   *
+   * The 404 is remembered per role prefix and the request skipped after the
+   * first, but it still rejects rather than returning `[]`: callers have to be
+   * able to tell "no invitations" from "cannot see invitations". The room gate
+   * depends on that distinction to avoid locking out an invited client, and
+   * the details page uses it to stop claiming a meeting has no invitations
+   * when it simply could not look.
+   */
   getInvitations: async (role: string, meetingId: number | string) => {
     const prefix = getRolePrefix(role);
-    const response = await apiClient.get<ApiResponse<PaginatedData<MeetingInvitation> | MeetingInvitation[]>>(
-      `${prefix}/meetings/${meetingId}/invitations`
-    );
+    if (invitationListMissing.has(prefix)) {
+      throw new Error(`No invitation list route for ${prefix}`);
+    }
+
+    let response;
+    try {
+      response = await apiClient.get<ApiResponse<PaginatedData<MeetingInvitation> | MeetingInvitation[]>>(
+        `${prefix}/meetings/${meetingId}/invitations`
+      );
+    } catch (err: any) {
+      if (err?.response?.status === 404) invitationListMissing.add(prefix);
+      throw err;
+    }
     const res = response?.data;
     if (Array.isArray(res)) return res;
     if (res && "data" in res && Array.isArray(res.data)) return res.data;

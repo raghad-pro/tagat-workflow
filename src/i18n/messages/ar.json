@@ -1874,7 +1874,8 @@
       "invitedBannerHint": "القبول هو ما يفتح لك الاجتماع.",
       "invitationAccepted": "لقد قبلت هذه الدعوة.",
       "acceptFirst": "اقبل للدخول",
-      "pendingHint": "اقبل الدعوة بالأسفل لتتمكن من الدخول."
+      "pendingHint": "اقبل الدعوة بالأسفل لتتمكن من الدخول.",
+      "invitationsUnreadable": "تعذّر تحميل الدعوات لهذا الحساب."
     },
     "connection": {
       "connected": "متصل",

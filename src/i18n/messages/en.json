@@ -1874,7 +1874,8 @@
       "invitedBannerHint": "Accepting is what opens the meeting for you.",
       "invitationAccepted": "You accepted this invitation.",
       "acceptFirst": "Accept to join",
-      "pendingHint": "Accept the invitation below to join."
+      "pendingHint": "Accept the invitation below to join.",
+      "invitationsUnreadable": "Invitations could not be loaded for this account."
     },
     "connection": {
       "connected": "Connected",
