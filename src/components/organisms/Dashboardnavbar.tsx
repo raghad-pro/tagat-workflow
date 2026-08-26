@@ -81,6 +81,30 @@ const MAX_SEEN_IDS = 200;
 /** How often to look for new items while the tab stays open. */
 const NOTIFICATION_POLL_MS = 120_000;
 
+/**
+ * Endpoints that answered 404 in this session, so the bell stops asking.
+ *
+ * Probed against the live API (2026-08-26): `/{prefix}/notifications` does
+ * not exist for any role, so the bell opened every poll — every two minutes,
+ * for every signed-in user — with a request that could only fail, and logged
+ * a console error for it each time.
+ *
+ * Only 404 is remembered. A 500 or a timeout might resolve on its own, so
+ * those keep retrying. Cleared on reload, which is when a newly deployed
+ * route gets picked up.
+ */
+const deadEndpoints = new Set<string>();
+
+async function probe(url: string): Promise<any> {
+  if (deadEndpoints.has(url)) return null;
+  try {
+    return await apiClient.get<any>(url);
+  } catch (err: any) {
+    if (err?.response?.status === 404) deadEndpoints.add(url);
+    throw err;
+  }
+}
+
 function readSeenIds(): Set<string> {
   try {
     const raw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
@@ -125,7 +149,7 @@ function NotificationsDropdown() {
       // Attempt to fetch from official /notifications endpoint first
       let apiNotifs: any[] = [];
       try {
-        const notifRes = await apiClient.get<any>(`${rolePrefix}/notifications`);
+        const notifRes = await probe(`${rolePrefix}/notifications`);
         apiNotifs = notifRes?.data?.data || notifRes?.data || notifRes || [];
       } catch {
         apiNotifs = [];
@@ -151,10 +175,16 @@ function NotificationsDropdown() {
 
       // Fetch live activity events from API (Company Requests, Invoices, Timesheets, Payments)
       const [requestsRes, invoicesRes, timesheetsRes, paymentsRes, invitationsRes] = await Promise.allSettled([
-        apiClient.get<any>(`${rolePrefix}/company-requests`),
-        apiClient.get<any>(`${rolePrefix}/invoices`),
-        apiClient.get<any>(`/timesheets?status=pending`),
-        apiClient.get<any>(`${rolePrefix}/payments`),
+        // `/{prefix}/company-requests` and a prefix-less `/timesheets` both
+        // 404 — neither has ever matched a route, so the join-request and
+        // pending-timesheet notifications have never once fired. The real
+        // paths are the ones their own modules already use:
+        // `company-requests.api.ts` → `{prefix}/requests`, and
+        // `timesheets.api.ts` → `{prefix}/timesheets`.
+        probe(`${rolePrefix}/requests`),
+        probe(`${rolePrefix}/invoices`),
+        probe(`${rolePrefix}/timesheets?status=pending`),
+        probe(`${rolePrefix}/payments`),
         user?.id
           ? meetingsApi.listMyInvitations(role, Number(user.id))
           : Promise.resolve([]),
@@ -233,7 +263,13 @@ function NotificationsDropdown() {
       }
 
       // 3. Pending Timesheets
-      const timesheets = timesheetsRes.status === "fulfilled" ? (timesheetsRes.value?.data?.data || timesheetsRes.value?.data || timesheetsRes.value || []) : [];
+      // `data` is `{ timesheets: { data: [...] }, summary, ... }` here, not a
+      // bare paginator — see the note in `timesheets.api.ts`.
+      const timesheetsPayload = timesheetsRes.status === "fulfilled" ? timesheetsRes.value?.data : null;
+      const timesheets = timesheetsPayload?.timesheets?.data
+        || timesheetsPayload?.data
+        || (Array.isArray(timesheetsPayload) ? timesheetsPayload : [])
+        || [];
       if (Array.isArray(timesheets)) {
         timesheets.slice(0, 3).forEach((ts: any) => {
           const empName = ts.employee?.name || ts.employee_name || (isAr ? "موظف" : "Employee");
