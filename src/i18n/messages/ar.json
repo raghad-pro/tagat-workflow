@@ -681,7 +681,8 @@
       "createFailed": "تعذّر إنشاء الدور",
       "updateFailed": "تعذّر تحديث الدور",
       "deleteFailed": "تعذّر حذف الدور"
-    }
+    },
+    "permissionCount": "{count, plural, =0 {بلا صلاحيات} one {صلاحية واحدة} two {صلاحيتان} few {# صلاحيات} other {# صلاحية}}"
   },
   "companyRequest": {
     "title": "طلبات الانضمام",

@@ -681,7 +681,8 @@
       "createFailed": "Could not create the role",
       "updateFailed": "Could not update the role",
       "deleteFailed": "Could not delete the role"
-    }
+    },
+    "permissionCount": "{count, plural, =0 {no permissions} one {# permission} other {# permissions}}"
   },
   "companyRequest": {
     "title": "Join Requests",
