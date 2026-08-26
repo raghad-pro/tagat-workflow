@@ -48,9 +48,13 @@ export function WalletTransactionsManagementPage() {
   }, []);
 
   // Queries
+  // "all" and an empty search box are this screen's way of saying "no filter".
+  // Sent as values, the API filters on them — `type=all` matches no row, which
+  // is why a transaction could be created and then never appear. Every other
+  // module here drops them the same way.
   const { data: transactionsRes, isLoading, isFetching } = useWalletTransactions({
-    search,
-    type,
+    search: search.trim() || undefined,
+    type: type === "all" ? undefined : type,
     page,
     per_page: perPage,
   });
