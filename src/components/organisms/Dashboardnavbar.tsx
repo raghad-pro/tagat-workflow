@@ -72,6 +72,10 @@ function formatTimeAgo(dateStr?: string, isAr?: boolean) {
 const SEEN_NOTIFICATIONS_KEY = "wf-announced-notifications";
 /** Ceiling on one batch, so a first login does not stack a wall of toasts. */
 const MAX_TOASTS_PER_PASS = 3;
+/** How long a toast stays up. A meeting invitation gets longer: it is the
+ *  only warning the invitee gets, and the meeting may be starting now. */
+const TOAST_MS = 6000;
+const URGENT_TOAST_MS = 14000;
 /** Trim the stored set; without a cap it grows for the life of the browser. */
 const MAX_SEEN_IDS = 200;
 /** How often to look for new items while the tab stays open. */
@@ -177,8 +181,16 @@ function NotificationsDropdown() {
             rawDate: new Date(inv.sent_at || inv.created_at || Date.now()).getTime(),
             icon: Video,
             iconBg: "bg-[#25C6DA]/10 text-[#25C6DA]",
-            // Only an unanswered invitation is news; an accepted one is history.
-            isUnread: inv.status === "pending",
+            // Only an unanswered invitation is news; an accepted one is
+            // history. Read as "not yet answered" rather than matching the
+            // literal "pending": a row that omits the field, or spells it
+            // differently, is still an invitation nobody has replied to, and
+            // treating it as read would silence the only warning sent.
+            isUnread: !["accepted", "declined"].includes(
+              String(inv.status ?? "").toLowerCase()
+            ),
+            // Wins its toast slot against routine items — see `announceNew`.
+            urgent: true,
             href: `/meetings/${meetingId}`,
           });
         });
@@ -285,7 +297,16 @@ function NotificationsDropdown() {
     items.forEach((i) => seen.add(String(i.id)));
     writeSeenIds(seen);
 
-    fresh.slice(0, MAX_TOASTS_PER_PASS).forEach((item) => {
+    // Urgent items take the slots first. Everything in the batch is marked
+    // seen above, so whatever the cap drops is dropped for good — and a
+    // meeting invitation losing that race to three invoices would mean the
+    // invitee is never told at all. Ordering is otherwise left alone: the
+    // list is already newest-first.
+    const queued = [...fresh].sort(
+      (a, b) => Number(Boolean(b.urgent)) - Number(Boolean(a.urgent))
+    );
+
+    queued.slice(0, MAX_TOASTS_PER_PASS).forEach((item) => {
       const IconComp = item.icon || Bell;
       toast.custom(
         (instance) => (
@@ -319,7 +340,10 @@ function NotificationsDropdown() {
             </div>
           </div>
         ),
-        { duration: 6000, position: "top-center" }
+        {
+          duration: item.urgent ? URGENT_TOAST_MS : TOAST_MS,
+          position: "top-center",
+        }
       );
     });
   };
