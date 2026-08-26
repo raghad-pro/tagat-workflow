@@ -114,6 +114,27 @@ export interface MeetingInvitation {
 }
 
 /**
+ * Whose invitation a row is, however the API chose to serialise it.
+ *
+ * The flat `user_id` is only one of the shapes that comes back: an endpoint
+ * that serialises the relation hands over `user: { id }` and drops the foreign
+ * key. Reading `row.user_id` alone then yields `undefined`, every "is this
+ * mine?" comparison fails, and an invitation that was really sent is filtered
+ * out of the bell and out of the room gate. The employee and client pickers
+ * already read both forms; invitations did not.
+ */
+export function invitationUserId(row: unknown): number | null {
+  const candidate = row as Record<string, any> | null | undefined;
+  const raw =
+    candidate?.user_id ??
+    candidate?.user?.id ??
+    candidate?.invitee_id ??
+    candidate?.invited_user_id;
+  const id = Number(raw);
+  return Number.isFinite(id) ? id : null;
+}
+
+/**
  * Whether a roster row is someone currently in the meeting.
  *
  * `left_at` is NOT cleared by the API when someone rejoins, so a stale

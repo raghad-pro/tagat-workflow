@@ -7,6 +7,7 @@ import {
   useMeetingParticipants,
   useMeetingInvitations,
 } from "./useMeetings";
+import { invitationUserId } from "../types/meetings.types";
 import type { InvitationStatus } from "../types/meetings.types";
 
 export type MeetingAccessReason =
@@ -87,7 +88,7 @@ export function useMeetingAccess(meetingId: number | string): MeetingAccess {
       return { isLoading: false, canJoin: true, reason: "undetermined", invitationStatus: null, invitationId: null };
     }
 
-    const myInvitation = invitations.find((i: any) => Number(i.user_id) === myId);
+    const myInvitation = invitations.find((i: any) => invitationUserId(i) === myId);
     if (!myInvitation) {
       return { isLoading: false, canJoin: false, reason: "not_invited", invitationStatus: null, invitationId: null };
     }

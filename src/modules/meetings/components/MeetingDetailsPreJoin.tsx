@@ -32,6 +32,7 @@ import { useInvitableUsers } from "../hooks/useInvitableUsers";
 import { useCompanyNames } from "../hooks/useCompanyNames";
 import { useMeetingPermissions } from "../hooks/useMeetingPermissions";
 import { useMeetingAccess } from "../hooks/useMeetingAccess";
+import { invitationUserId } from "../types/meetings.types";
 import type { ParticipantRole } from "../types/meetings.types";
 
 /**
@@ -608,9 +609,9 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-[#E6F8F9] text-[#25C6DA] flex items-center justify-center text-[11px] font-bold">
-                            {getInitials(inv.user?.name || resolveName(inv.user_id, tc("unknown")))}
+                            {getInitials(inv.user?.name || resolveName(invitationUserId(inv), tc("unknown")))}
                           </div>
-                          <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100">{inv.user?.name || resolveName(inv.user_id, tc("unknown"))}</span>
+                          <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100">{inv.user?.name || resolveName(invitationUserId(inv), tc("unknown"))}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-[13px] font-medium text-slate-500 dark:text-slate-400">
@@ -623,7 +624,7 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
                         {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString() : "—"}
                       </td>
                       <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">
-                        {Number(inv.user_id) === Number(user?.id) && inv.status === "pending"
+                        {invitationUserId(inv) === Number(user?.id) && inv.status === "pending"
                           ? renderInvitationAnswer(Number(inv.id))
                           : "—"}
                       </td>

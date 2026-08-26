@@ -1,6 +1,7 @@
 import apiClient from "@/services/apiClient";
 import axiosInstance from "@/services/axiosConfig";
 import { getRolePrefix } from "@/utils/rolePrefix";
+import { invitationUserId } from "../types/meetings.types";
 import type {
   Meeting,
   CreateMeetingPayload,
@@ -148,7 +149,7 @@ export const meetingsApi = {
     const prefix = getRolePrefix(role);
     const mine = (rows: unknown) =>
       (Array.isArray(rows) ? rows : []).filter(
-        (row: any) => Number(row?.user_id) === Number(userId)
+        (row: any) => invitationUserId(row) === Number(userId)
       ) as MeetingInvitation[];
 
     try {
