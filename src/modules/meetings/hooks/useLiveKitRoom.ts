@@ -460,19 +460,6 @@ export function useLiveKitRoom(
         );
         return null;
       }
-      // Browsers expose `mediaDevices` only in a secure context. Served over
-      // plain HTTP from anything but localhost — a LAN IP such as
-      // http://192.168.1.5:3000, which is how a second device usually reaches a
-      // dev server — the whole API is simply absent, so the buttons look dead
-      // and nothing explains why.
-      if (!navigator.mediaDevices?.getUserMedia) {
-        toast.error(
-          window.isSecureContext
-            ? "This browser does not support camera and microphone access"
-            : "Camera and microphone need HTTPS. Open the site over https:// or on localhost."
-        );
-        return null;
-      }
       if (!allowed) {
         toast.error(tRef.current(deniedKey));
         return null;
