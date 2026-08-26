@@ -44,7 +44,7 @@ export default function MeetingDecisions({ meetingId, isHost = false }: MeetingD
   const handleCreateSubmit = () => {
     const cleanTitle = title.trim();
     if (!cleanTitle) {
-      toast.error("يرجى إدخال عنوان القرار");
+      toast.error(t("validation.decisionTitleRequired"));
       return;
     }
 

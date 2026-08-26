@@ -2,6 +2,7 @@
 
 import React from "react";
 import { FolderKanban, CheckSquare, Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { KpiMetricCard } from "./KpiMetricCard";
 import { ProjectStatusDonutChart } from "./ProjectStatusDonutChart";
 import { TaskStatusDonutChart } from "./TaskStatusDonutChart";
@@ -14,6 +15,9 @@ interface OperationsKpiSectionProps {
 }
 
 export function OperationsKpiSection({ projects, tasks, timesheets }: OperationsKpiSectionProps) {
+  const t = useTranslations("kpis.operations");
+  const th = useTranslations("kpis.trends");
+
   if (!projects && !tasks && !timesheets) return null;
 
   return (
@@ -23,7 +27,7 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
           <FolderKanban className="w-5 h-5" />
         </div>
         <h2 className="text-[20px] sm:text-[22px] font-bold text-[#000000] dark:text-white tracking-tight leading-[32px]">
-          Operations & Project Delivery KPIs
+          {t("heading")}
         </h2>
       </div>
 
@@ -32,7 +36,7 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
         {/* Projects Card */}
         {projects && (
           <KpiMetricCard
-            label="Total Projects"
+            label={t("totalProjects")}
             metric={projects.total}
             subLabel={`${projects.completion_rate || 0}% Completion Rate`}
             icon={FolderKanban}
@@ -44,7 +48,7 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
         {/* Tasks Card */}
         {tasks && (
           <KpiMetricCard
-            label="Total Tasks"
+            label={t("totalTasks")}
             metric={tasks.total}
             subLabel={`${tasks.completion_rate || 0}% Done (${tasks.completed?.value || 0} tasks)`}
             icon={CheckSquare}
@@ -56,9 +60,9 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
         {/* Timesheets Card */}
         {timesheets && (
           <KpiMetricCard
-            label="Tracked Hours"
+            label={t("trackedHours")}
             metric={timesheets.hours}
-            suffix=" hrs"
+            suffix={th("hoursSuffix")}
             subLabel={`${timesheets.approved_hours || 0} approved • ${timesheets.pending_hours || 0} pending`}
             icon={Clock}
             iconBg="#FFFDEB"

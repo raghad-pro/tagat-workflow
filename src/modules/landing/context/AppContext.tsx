@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { content as defaults, mergeContent } from '../i18n/content'
+import { useLocaleSwitcher } from '@/hooks/useLocaleSwitcher'
+import type { Locale } from '@/i18n/config'
 
 const AppContext = createContext<any>({} as any)
 
@@ -26,12 +28,14 @@ function applyTheme(theme: any) {
   document.documentElement.classList.toggle('dark', isDark)
 }
 
-export function AppProvider({ initialTheme, initialLang = 'en', children }: any) {
+export function AppProvider({ initialTheme, children }: any) {
+  // The landing page no longer keeps its own idea of the language. It reads and
+  // writes the same cookie next-intl serves the auth and dashboard screens
+  // from, so a visitor who picks العربية here lands on an Arabic /login.
+  const { locale, setLocale } = useLocaleSwitcher()
+
   const [theme, setTheme] = useState(() => {
     return getCookie('wf-theme') || initialTheme || 'light'
-  })
-  const [lang, setLang] = useState(() => {
-    return getCookie('locale') || getCookie('wf-lang') || initialLang
   })
   const [overrides, setOverrides] = useState(null)
 
@@ -39,13 +43,6 @@ export function AppProvider({ initialTheme, initialLang = 'en', children }: any)
     applyTheme(theme)
     persist('wf-theme', theme)
   }, [theme])
-
-  useEffect(() => {
-    document.documentElement.setAttribute('lang', lang)
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr')
-    persist('wf-lang', lang)
-    persist('locale', lang)
-  }, [lang])
 
   useEffect(() => {
     const ctrl = new AbortController()
@@ -59,22 +56,22 @@ export function AppProvider({ initialTheme, initialLang = 'en', children }: any)
   }, [])
 
   const t = useMemo(() => {
-    const key = lang as keyof typeof defaults;
-    const base = defaults[key];
-    const over = overrides && (overrides as any)[key];
-    return over ? mergeContent(base, over) : base;
-  }, [lang, overrides])
+    const key = locale as keyof typeof defaults
+    const base = defaults[key] ?? defaults.en
+    const over = overrides && (overrides as any)[key]
+    return over ? mergeContent(base, over) : base
+  }, [locale, overrides])
 
   const value = useMemo(
     () => ({
       theme,
-      lang,
+      lang: locale,
       t,
-      isRTL: lang === 'ar',
+      isRTL: locale === 'ar',
       toggleTheme: () => setTheme((p: any) => (p === 'dark' ? 'light' : 'dark')),
-      toggleLang: () => setLang((p: any) => (p === 'en' ? 'ar' : 'en')),
+      toggleLang: () => setLocale((locale === 'en' ? 'ar' : 'en') as Locale),
     }),
-    [theme, lang, t]
+    [theme, locale, t, setLocale]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -42,6 +42,7 @@ const PAGE_SIZE = 10;
 
 export function MeetingsManagementPage() {
   const t = useTranslations("meetings");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { user } = useAuth();
   const role = user?.role || "employee";
@@ -110,18 +111,18 @@ export function MeetingsManagementPage() {
 
   // Status options
   const statusOptions = [
-    { label: "All Statuses", value: "all" },
-    { label: "Live", value: "live" },
-    { label: "Waiting", value: "waiting" },
-    { label: "Ended", value: "ended" },
-    { label: "Cancelled", value: "cancelled" },
+    { label: t("list.allStatuses"), value: "all" },
+    { label: t("status.live"), value: "live" },
+    { label: t("status.waiting"), value: "waiting" },
+    { label: t("status.ended"), value: "ended" },
+    { label: t("status.cancelled"), value: "cancelled" },
   ];
 
   // Type options
   const typeOptions = [
-    { label: "All Types", value: "all" },
-    { label: "Scheduled", value: "scheduled" },
-    { label: "Instant", value: "instant" },
+    { label: t("list.allTypes"), value: "all" },
+    { label: t("type.scheduled"), value: "scheduled" },
+    { label: t("type.instant"), value: "instant" },
   ];
 
   // Status Badge Formatter matching Figma EXACT styles
@@ -131,28 +132,28 @@ export function MeetingsManagementPage() {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#EDF7EE] text-[#4CAF50] text-[13px] font-medium">
             <span className="w-2 h-2 rounded-full bg-[#4CAF50] animate-pulse" />
-            Live
+            {t("status.live")}
           </span>
         );
       case "waiting":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#FFFDEB] text-[#D97706] text-[13px] font-medium">
             <span className="w-2 h-2 rounded-full bg-[#E8D636]" />
-            Waiting
+            {t("status.waiting")}
           </span>
         );
       case "ended":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#FEECEB] text-[#F44336] text-[13px] font-medium">
             <span className="w-2 h-2 rounded-full bg-[#F44336]" />
-            Overdue
+            {t("list.overdue")}
           </span>
         );
       case "cancelled":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#F3F4F6] text-[#6B7280] text-[13px] font-medium">
             <span className="w-2 h-2 rounded-full bg-[#9CA3AF]" />
-            Cancelled
+            {t("status.cancelled")}
           </span>
         );
       default:
@@ -169,14 +170,14 @@ export function MeetingsManagementPage() {
     if (type === "scheduled") {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#E6F6FE] text-[#03A9F4] text-[11px] font-bold">
-          Scheduled
+          {t("type.scheduled")}
         </span>
       );
     }
     if (type === "instant") {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FAF5FF] text-[#9810FA] text-[11px] font-bold">
-          Instant
+          {t("type.instant")}
         </span>
       );
     }
@@ -191,7 +192,7 @@ export function MeetingsManagementPage() {
     <div className="flex flex-col gap-8 pb-12">
       {/* ── Background Glow Overlay from Figma ── */}
       <div
-        className="pointer-events-none fixed top-0 right-0 w-[820px] h-[688px] rounded-full blur-[96px] -z-10"
+        className="pointer-events-none fixed top-0 end-0 w-[820px] h-[688px] rounded-full blur-[96px] -z-10"
         style={{ backgroundColor: "rgba(81, 209, 225, 0.15)" }}
       />
 
@@ -199,10 +200,10 @@ export function MeetingsManagementPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-[31px] font-bold tracking-tight text-[#000000] dark:text-white leading-[47px]">
-            Meetings Management
+            {t("title")}
           </h1>
           <p className="text-[16px] text-[#424242] dark:text-gray-300 font-normal leading-[24px]">
-            Schedule and manage all meetings across companies
+            {t("subtitle")}
           </p>
         </div>
 
@@ -212,7 +213,7 @@ export function MeetingsManagementPage() {
             className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] border border-[#E2E8F0] ds-bg-form border border-slate-100 dark:border-slate-800 text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-sm"
           >
             <Video className="w-4 h-4 text-[#25C6DA]" />
-            <span>Join by Code</span>
+            <span>{t("joinByCode")}</span>
           </button>
 
           {role !== "client" && (
@@ -220,7 +221,7 @@ export function MeetingsManagementPage() {
               onClick={() => setIsCreateOpen(true)}
               className="flex items-center justify-center gap-2 px-8 h-[40px] rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[16px] font-medium transition-all shadow-sm cursor-pointer whitespace-nowrap"
             >
-              <span>+ Add Meeting</span>
+              <span>{t("list.addMeeting")}</span>
             </button>
           )}
         </div>
@@ -303,13 +304,13 @@ export function MeetingsManagementPage() {
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#707070]" />
+            <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#707070]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Searching...."
-              className="w-full h-[48px] pl-12 pr-4 rounded-[8px] border border-[#E1E1E1] dark:border-border bg-white dark:bg-background text-[#000000] dark:text-white text-[16px] placeholder:text-[#707070] focus:outline-none focus:border-[#25C6DA] transition-colors"
+              placeholder={t("searchPlaceholder")}
+              className="w-full h-[48px] ps-12 pe-4 rounded-[8px] border border-[#E1E1E1] dark:border-border bg-white dark:bg-background text-[#000000] dark:text-white text-[16px] placeholder:text-[#707070] focus:outline-none focus:border-[#25C6DA] transition-colors"
             />
           </div>
 
@@ -402,25 +403,25 @@ export function MeetingsManagementPage() {
                   #
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  TITLE
+                  {t("list.columns.title")}
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  CODE
+                  {t("list.columns.code")}
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  COMPANY
+                  {t("list.columns.company")}
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  TYPE
+                  {t("list.columns.type")}
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  SCHEDULED
+                  {t("list.columns.scheduled")}
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
-                  STATUS
+                  {t("list.columns.status")}
                 </th>
                 <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider text-right">
-                  Actions
+                  {tc("actions")}
                 </th>
               </tr>
             </thead>
@@ -435,7 +436,7 @@ export function MeetingsManagementPage() {
               ) : meetings.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-[#707070]">
-                    No meetings found.
+                    {t("list.empty")}
                   </td>
                 </tr>
               ) : (
@@ -516,7 +517,7 @@ export function MeetingsManagementPage() {
                           <button
                             type="button"
                             onClick={() => handleEnterRoom(meeting.id)}
-                            title="Join Meeting"
+                            title={t("joinMeeting")}
                             className="w-8 h-8 rounded-[16px] bg-[#E6F6FE] text-[#03A9F4] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -527,7 +528,7 @@ export function MeetingsManagementPage() {
                             <button
                               type="button"
                               onClick={() => startMeeting(meeting.id)}
-                              title="Start Meeting"
+                              title={t("startMeeting")}
                               className="w-8 h-8 rounded-[16px] bg-[#EDF7EE] text-[#4CAF50] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
                             >
                               <Play className="w-4 h-4" />
@@ -539,11 +540,11 @@ export function MeetingsManagementPage() {
                             <button
                               type="button"
                               onClick={() => {
-                                if (window.confirm("End this meeting for everyone?")) {
+                                if (window.confirm(t("list.endConfirm"))) {
                                   endMeeting(meeting.id);
                                 }
                               }}
-                              title="End Meeting"
+                              title={t("endMeeting")}
                               className="w-8 h-8 rounded-[16px] bg-[#FFF7ED] text-[#F97316] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
                             >
                               <PhoneOff className="w-4 h-4" />
@@ -555,7 +556,7 @@ export function MeetingsManagementPage() {
                             <button
                               type="button"
                               onClick={() => setEditingMeeting(meeting)}
-                              title="Edit Meeting"
+                              title={t("editMeeting")}
                               className="w-8 h-8 rounded-[16px] bg-[#EDF7EE] text-[#4CAF50] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
                             >
                               <Edit className="w-4 h-4" />
@@ -567,7 +568,7 @@ export function MeetingsManagementPage() {
                             <button
                               type="button"
                               onClick={() => setDeletingMeeting(meeting)}
-                              title="Delete Meeting"
+                              title={t("deleteMeeting")}
                               className="w-8 h-8 rounded-[16px] bg-[#FEECEB] text-[#F44336] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />

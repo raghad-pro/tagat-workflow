@@ -45,7 +45,7 @@ export default function MeetingActionItems({ meetingId }: MeetingActionItemsProp
   const handleCreateSubmit = () => {
     const cleanTitle = title.trim();
     if (!cleanTitle) {
-      toast.error("يرجى إدخال عنوان بند العمل");
+      toast.error(t("validation.actionTitleRequired"));
       return;
     }
 

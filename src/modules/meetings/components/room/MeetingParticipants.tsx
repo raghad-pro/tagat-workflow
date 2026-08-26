@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Users,
   Mic,
@@ -13,6 +13,7 @@ import {
 import { useMaybeRoomContext } from "@livekit/components-react";
 import { RoomEvent, type Participant } from "livekit-client";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingDetails,
@@ -25,6 +26,7 @@ import { useMeetingUserDirectory } from "../../hooks/useMeetingUserDirectory";
 import { useInvitableUsers } from "../../hooks/useInvitableUsers";
 import { ActionModal } from "@/components/molecules/ActionModal";
 import { cn } from "@/lib/utils";
+import { isActiveParticipant } from "../../types/meetings.types";
 import type { ParticipantRole } from "../../types/meetings.types";
 
 /** LiveKit identities are minted server-side as `user-{id}`. */
@@ -49,11 +51,17 @@ interface MeetingParticipantsProps {
 
 export default function MeetingParticipants({ meetingId, isHost }: MeetingParticipantsProps) {
   const { user } = useAuth();
+  const t = useTranslations("meetings.participants");
+  const tc = useTranslations("common");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<ParticipantRole>("participant");
 
-  const { data: participants = [], isLoading } = useMeetingParticipants(meetingId);
+  const { data: roster = [], isLoading } = useMeetingParticipants(meetingId);
+  // The fetch now returns the whole roster so the details screen can edit roles
+  // of people who have left. This panel is about who is in the meeting, so it
+  // keeps narrowing to the active rows as it always has.
+  const participants = useMemo(() => roster.filter(isActiveParticipant), [roster]);
   const { users: invitableUsers } = useInvitableUsers(meetingId);
   const { resolveName, rememberUserName } = useMeetingUserDirectory(meetingId);
 
@@ -93,7 +101,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
       const uid = userIdFromIdentity(p.identity);
       if (uid !== null && !announcedRef.current.has(uid)) {
         announcedRef.current.add(uid);
-        toast(`${resolveName(uid, p.name || "Someone")} joined`, { icon: "👋" });
+        toast(t("joined", { name: resolveName(uid, p.name || t("someone")) }), { icon: "👋" });
       }
       snapshot();
     };
@@ -102,7 +110,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
       const uid = userIdFromIdentity(p.identity);
       if (uid !== null) {
         announcedRef.current.delete(uid);
-        toast(`${resolveName(uid, p.name || "Someone")} left`, { icon: "🚪" });
+        toast(t("left", { name: resolveName(uid, p.name || t("someone")) }), { icon: "🚪" });
       }
       snapshot();
     };
@@ -176,7 +184,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#25C6DA]" />
           <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
-            people ({participants.length})
+            {t("title")} ({participants.length})
           </span>
         </div>
 
@@ -186,7 +194,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
             className="flex items-center gap-1 px-3 py-1.5 rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-all shadow-sm cursor-pointer"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>Invite</span>
+            <span>{t("invite")}</span>
           </button>
         )}
       </div>
@@ -199,7 +207,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
           </div>
         ) : participants.length === 0 ? (
           <div className="text-center py-10 text-xs text-[#64748B]">
-            No participants yet.
+            {t("empty")}
           </div>
         ) : (
           participants
@@ -221,7 +229,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
             // covers roster rows that have not joined the media room yet.
             const displayName =
               live?.name ||
-              resolveName(userId, isMe ? user?.name || "You" : `User #${userId}`);
+              resolveName(userId, isMe ? user?.name || tc("you") : t("userFallback", { id: userId }));
             const initials = getInitials(displayName);
             const isParticipantHost = p.role === "host" || p.role === "co_host";
             const isInRoom = Boolean(live);
@@ -248,7 +256,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
                         "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#1A2236]",
                         isInRoom ? "bg-[#22C55E]" : "bg-[#64748B]"
                       )}
-                      title={isInRoom ? "In the room" : "On the roster, not connected"}
+                      title={isInRoom ? t("inRoom") : t("onRoster")}
                     />
                   </div>
 
@@ -259,20 +267,20 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
                       </span>
                       {isMe && (
                         <span className="px-1.5 rounded bg-[#25C6DA]/20 text-[#25C6DA] text-[9px] font-extrabold">
-                          YOU
+                          {t("you")}
                         </span>
                       )}
                       {isParticipantHost && (
                         <span className="px-1.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase">
-                          {p.role === "host" ? "host" : "co-host"}
+                          {p.role === "host" ? t("hostBadge") : t("coHostBadge")}
                         </span>
                       )}
                       {live?.handRaised && (
                         <Hand className="w-3 h-3 text-amber-400 animate-bounce" />
                       )}
                     </div>
-                    <span className="text-[11px] text-[#94A3B8] font-medium capitalize">
-                      {isInRoom ? p.role.replace("_", " ") : "Not connected"}
+                    <span className="text-[11px] text-[#94A3B8] font-medium">
+                      {isInRoom ? t(`roles.${p.role}` as never) : t("notConnected")}
                     </span>
                   </div>
                 </div>
@@ -291,7 +299,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
                               : "bg-emerald-500/20 text-emerald-400"
                             : "bg-red-500/20 text-red-400"
                       )}
-                      title={live?.micOn ? "Microphone on" : "Microphone off"}
+                      title={live?.micOn ? t("micOn") : t("micOff")}
                     >
                       {live?.micOn ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3" />}
                     </div>
@@ -304,7 +312,7 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
                             ? "bg-emerald-500/20 text-emerald-400"
                             : "bg-red-500/20 text-red-400"
                       )}
-                      title={live?.camOn ? "Camera on" : "Camera off"}
+                      title={live?.camOn ? t("camOn") : t("camOff")}
                     >
                       {live?.camOn ? <Video className="w-3 h-3" /> : <VideoOff className="w-3 h-3" />}
                     </div>
@@ -316,9 +324,9 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
                       onChange={(e) => handleRoleChange(p.id, e.target.value as ParticipantRole)}
                       className="bg-[#111827] text-white border border-[#2A3756] text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-[#25C6DA]"
                     >
-                      <option value="participant">Participant</option>
-                      <option value="viewer">Viewer</option>
-                      <option value="co_host">Co-Host</option>
+                      <option value="participant">{t("roles.participant")}</option>
+                      <option value="viewer">{t("roles.viewer")}</option>
+                      <option value="co_host">{t("roles.co_host")}</option>
                     </select>
                   )}
                 </div>
@@ -332,16 +340,16 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
       <ActionModal
         isOpen={isInviteOpen}
         onClose={() => setIsInviteOpen(false)}
-        title="Invite Member"
+        title={t("inviteModalTitle")}
         mode="add"
-        saveLabel="Send Invite"
+        saveLabel={t("sendInvite")}
         onSubmit={handleSendInvite}
         isLoading={isSendingInvite}
         size="sm"
       >
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">Select Member</label>
+            <label className="text-xs font-medium text-foreground">{t("selectMember")}</label>
             <select
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
@@ -349,8 +357,8 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
             >
               <option value="">
                 {invitableUsers.length === 0
-                  ? "No one left to invite"
-                  : "Choose employee/client..."}
+                  ? t("noneLeftToInvite")
+                  : t("chooseMember")}
               </option>
               {invitableUsers.map((u) => (
                 <option key={u.userId} value={u.userId}>
@@ -361,15 +369,15 @@ export default function MeetingParticipants({ meetingId, isHost }: MeetingPartic
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-foreground">Room Role</label>
+            <label className="text-xs font-medium text-foreground">{t("roomRole")}</label>
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as ParticipantRole)}
               className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
             >
-              <option value="participant">Participant</option>
-              <option value="viewer">Viewer</option>
-              <option value="co_host">Co-Host</option>
+              <option value="participant">{t("roles.participant")}</option>
+              <option value="viewer">{t("roles.viewer")}</option>
+              <option value="co_host">{t("roles.co_host")}</option>
             </select>
           </div>
         </div>

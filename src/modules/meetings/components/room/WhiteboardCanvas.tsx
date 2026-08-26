@@ -26,6 +26,7 @@ import {
   useClearWhiteboard,
 } from "../../hooks/useMeetings";
 import type { WhiteboardElement } from "../../types/meetings.types";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -39,6 +40,7 @@ type ToolType = "select" | "pencil" | "rect" | "circle" | "line" | "arrow" | "te
 const CANVAS_HEIGHT = 540;
 
 export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvasProps) {
+  const t = useTranslations("meetings.whiteboard");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [currentTool, setCurrentTool] = useState<ToolType>("pencil");
   const [strokeColor, setStrokeColor] = useState("#000000");
@@ -291,7 +293,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
   // ─── Pointer handlers ──────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isLocked) {
-      toast.error("The whiteboard is locked by the host");
+      toast.error(t("boardLocked"));
       return;
     }
     const coords = getCanvasCoords(e);
@@ -305,7 +307,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
     if (currentTool === "eraser") {
       const target = hitTest(coords);
       if (target?.is_locked) {
-        toast.error("That element is locked");
+        toast.error(t("elementLocked"));
         return;
       }
       if (target) {
@@ -316,7 +318,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
     }
 
     if (currentTool === "text") {
-      const text = window.prompt("Text to add:")?.trim();
+      const text = window.prompt(t("textPrompt"))?.trim();
       if (text) {
         commit({
           id: crypto.randomUUID(),
@@ -393,7 +395,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
   const handleDeleteSelected = () => {
     if (!selected) return;
     if (selected.is_locked) {
-      toast.error("That element is locked");
+      toast.error(t("elementLocked"));
       return;
     }
     setPending((prev) => prev.filter((p) => p.id !== selected.id));
@@ -412,8 +414,8 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
     replaceBoard(
       { meetingId, elements },
       {
-        onSuccess: () => toast.success("Whiteboard saved"),
-        onError: () => toast.error("Could not save the whiteboard"),
+        onSuccess: () => toast.success(t("saved")),
+        onError: () => toast.error(t("saveFailed")),
       }
     );
   };
@@ -435,7 +437,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
         <div className="flex items-center gap-2">
           <PenTool className="w-4 h-4 text-[#25C6DA]" />
           <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
-            whiteboard
+            {t("panelTitle")}
           </span>
         </div>
 
@@ -446,13 +448,13 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
             className="flex items-center gap-1 px-3 py-1.5 rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>Save</span>
+            <span>{t("save")}</span>
           </button>
 
           <button
             onClick={handleDownload}
             className="p-1.5 rounded-[8px] bg-[#1A2236] text-[#94A3B8] hover:text-white border border-[#2A3756]"
-            title="Download PNG"
+            title={t("downloadPng")}
           >
             <Download className="w-4 h-4" />
           </button>
@@ -469,7 +471,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-bold transition-colors",
               currentTool === "select" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Select (↖)"
+            title={`${t("select")} (↖)`}
           >
             ↖
           </button>
@@ -480,7 +482,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs transition-colors",
               currentTool === "pencil" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Pencil (✏️)"
+            title={`${t("pencil")} (✏️)`}
           >
             ✏️
           </button>
@@ -491,7 +493,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-bold transition-colors",
               currentTool === "rect" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Rectangle (□)"
+            title={`${t("rectangle")} (□)`}
           >
             □
           </button>
@@ -502,7 +504,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-bold transition-colors",
               currentTool === "circle" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Circle (○)"
+            title={`${t("circle")} (○)`}
           >
             ○
           </button>
@@ -513,7 +515,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-bold transition-colors",
               currentTool === "line" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Line (—)"
+            title={`${t("line")} (—)`}
           >
             —
           </button>
@@ -524,7 +526,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-bold transition-colors",
               currentTool === "arrow" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Arrow (→)"
+            title={`${t("arrow")} (→)`}
           >
             →
           </button>
@@ -535,7 +537,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-bold transition-colors",
               currentTool === "text" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Text (T)"
+            title={`${t("text")} (T)`}
           >
             T
           </button>
@@ -546,7 +548,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               "w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-bold transition-colors",
               currentTool === "eraser" ? "bg-[#25C6DA] text-white" : "text-[#94A3B8] hover:text-white"
             )}
-            title="Eraser (⌫)"
+            title={`${t("eraser")} (⌫)`}
           >
             ⌫
           </button>
@@ -572,7 +574,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               onClick={() => handleLayer("backward")}
               disabled={!selected}
               className="p-1.5 rounded text-[#94A3B8] hover:text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-              title="Send backward"
+              title={t("sendBackward")}
             >
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
@@ -581,7 +583,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               onClick={() => handleLayer("forward")}
               disabled={!selected}
               className="p-1.5 rounded text-[#94A3B8] hover:text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-              title="Bring forward"
+              title={t("bringForward")}
             >
               <ChevronUp className="w-3.5 h-3.5" />
             </button>
@@ -593,7 +595,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
                 "p-1.5 rounded hover:text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed",
                 selected?.is_locked ? "text-amber-400" : "text-[#94A3B8]"
               )}
-              title={selected?.is_locked ? "Unlock element" : "Lock element"}
+              title={selected?.is_locked ? t("unlockElement") : t("lockElement")}
             >
               {selected?.is_locked ? (
                 <Unlock className="w-3.5 h-3.5" />
@@ -606,7 +608,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               onClick={handleDeleteSelected}
               disabled={!selected}
               className="p-1.5 rounded text-[#94A3B8] hover:text-red-400 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-              title="Delete selected"
+              title={t("deleteSelected")}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -617,7 +619,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               onClick={handleUndo}
               disabled={elements.length === 0}
               className="p-1.5 rounded text-[#94A3B8] hover:text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-              title="Undo"
+              title={t("undo")}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -626,7 +628,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
               onClick={handleRedo}
               disabled={redoStack.length === 0}
               className="p-1.5 rounded text-[#94A3B8] hover:text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-              title="Redo"
+              title={t("redo")}
             >
               <RotateCw className="w-3.5 h-3.5" />
             </button>
@@ -639,7 +641,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
                   "p-1.5 rounded hover:text-white cursor-pointer",
                   boardLocked ? "text-amber-400" : "text-[#94A3B8]"
                 )}
-                title={boardLocked ? "Unlock the whole board" : "Lock the whole board"}
+                title={boardLocked ? t("unlockBoard") : t("lockBoard")}
               >
                 {boardLocked ? (
                   <Unlock className="w-3.5 h-3.5" />
@@ -654,7 +656,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
             onClick={handleClear}
             className="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-bold cursor-pointer"
           >
-            Clear
+            {t("clear")}
           </button>
         </div>
       </div>
@@ -679,7 +681,7 @@ export default function WhiteboardCanvas({ meetingId, isHost }: WhiteboardCanvas
       {/* ── Footer text matching Figma ── */}
       <div className="px-4 py-2 border-t border-[#1F2937] bg-[#111827] text-center">
         <p className="text-[10px] text-[#475569] font-medium">
-          {isLocked ? "Whiteboard locked by the host" : "Collaborative whiteboard"}
+          {isLocked ? t("lockedCaption") : t("collaborativeCaption")}
         </p>
       </div>
     </div>

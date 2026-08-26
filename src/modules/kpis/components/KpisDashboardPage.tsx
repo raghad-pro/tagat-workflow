@@ -24,6 +24,7 @@ type KpiTab = "all" | "financial" | "operations" | "people" | "trends";
 
 export function KpisDashboardPage() {
   const t = useTranslations("common");
+  const tk = useTranslations("kpis");
 
   const [activeTab, setActiveTab] = useState<KpiTab>("all");
   const [selectedYear, setSelectedYear] = useState<number>(2026);
@@ -46,21 +47,13 @@ export function KpisDashboardPage() {
     const monthList = filtersData?.months?.[String(selectedYear)];
     if (monthList && monthList.length > 0) return monthList;
 
-    return [
-      { value: 1, label: "January" },
-      { value: 2, label: "February" },
-      { value: 3, label: "March" },
-      { value: 4, label: "April" },
-      { value: 5, label: "May" },
-      { value: 6, label: "June" },
-      { value: 7, label: "July" },
-      { value: 8, label: "August" },
-      { value: 9, label: "September" },
-      { value: 10, label: "October" },
-      { value: 11, label: "November" },
-      { value: 12, label: "December" },
-    ];
-  }, [filtersData?.months, selectedYear]);
+    // Labelled from the message files so the fallback list follows the
+    // interface language, same as the list the filters API returns.
+    return Array.from({ length: 12 }, (_, i) => ({
+      value: i + 1,
+      label: tk(`months.${i + 1}` as never),
+    }));
+  }, [filtersData?.months, selectedYear, tk]);
 
   // Combined trends data (either from dashboard payload or trends endpoint)
   const finalTrends = kpiData?.trends || trendsData;
@@ -70,7 +63,7 @@ export function KpisDashboardPage() {
       <div className="flex flex-col gap-8 pb-12">
         {/* ── Background Glow Overlay matching Meetings page ── */}
         <div
-          className="pointer-events-none fixed top-0 right-0 w-[820px] h-[688px] rounded-full blur-[96px] -z-10"
+          className="pointer-events-none fixed top-0 end-0 w-[820px] h-[688px] rounded-full blur-[96px] -z-10"
           style={{ backgroundColor: "rgba(81, 209, 225, 0.15)" }}
         />
 
@@ -78,10 +71,10 @@ export function KpisDashboardPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-[31px] font-bold tracking-tight text-[#000000] dark:text-white leading-[47px]">
-              KPIs & Performance Dashboard
+              {tk("pageTitle")}
             </h1>
             <p className="text-[16px] text-[#424242] dark:text-gray-300 font-normal leading-[24px]">
-              Executive business metrics, financial health, and operational performance
+              {tk("pageSubtitle")}
             </p>
           </div>
 
@@ -97,7 +90,7 @@ export function KpisDashboardPage() {
               >
                 {availableYears.map((yr) => (
                   <option key={yr} value={yr} className="bg-popover text-foreground">
-                    Year {yr}
+                    {tk("year", { year: yr })}
                   </option>
                 ))}
               </select>
@@ -113,7 +106,7 @@ export function KpisDashboardPage() {
                 }}
                 className="bg-transparent text-[14px] font-medium text-[#000000] dark:text-white focus:outline-none cursor-pointer"
               >
-                <option value="" className="bg-popover text-foreground">All Months (Annual)</option>
+                <option value="" className="bg-popover text-foreground">{tk("allMonths")}</option>
                 {availableMonths.map((m) => (
                   <option key={m.value} value={m.value} className="bg-popover text-foreground">
                     {m.label}
@@ -127,10 +120,10 @@ export function KpisDashboardPage() {
               onClick={() => refetch()}
               disabled={isRefetching}
               className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] ds-bg-form border border-slate-100 dark:border-slate-800 text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)] disabled:opacity-50"
-              title="Refresh KPI Metrics"
+              title={tk("refreshTitle")}
             >
               <RotateCw className={cn("w-4 h-4 text-[#25C6DA]", isRefetching && "animate-spin")} />
-              <span className="hidden sm:inline">Refresh</span>
+              <span className="hidden sm:inline">{tk("refresh")}</span>
             </button>
           </div>
         </div>
@@ -147,7 +140,7 @@ export function KpisDashboardPage() {
             )}
           >
             <Layers className="w-4 h-4" />
-            <span>Overview & All KPIs</span>
+            <span>{tk("tabs.overview")}</span>
           </button>
 
           <button
@@ -160,7 +153,7 @@ export function KpisDashboardPage() {
             )}
           >
             <DollarSign className="w-4 h-4" />
-            <span>Financial & Invoices</span>
+            <span>{tk("tabs.financial")}</span>
           </button>
 
           <button
@@ -173,7 +166,7 @@ export function KpisDashboardPage() {
             )}
           >
             <FolderKanban className="w-4 h-4" />
-            <span>Projects & Tasks</span>
+            <span>{tk("tabs.operations")}</span>
           </button>
 
           <button
@@ -186,7 +179,7 @@ export function KpisDashboardPage() {
             )}
           >
             <Users className="w-4 h-4" />
-            <span>People & Meetings</span>
+            <span>{tk("tabs.people")}</span>
           </button>
 
           <button
@@ -199,7 +192,7 @@ export function KpisDashboardPage() {
             )}
           >
             <TrendingUp className="w-4 h-4" />
-            <span>Annual Trends</span>
+            <span>{tk("tabs.trends")}</span>
           </button>
         </div>
 

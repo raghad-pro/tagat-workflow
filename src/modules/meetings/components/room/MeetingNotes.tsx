@@ -7,6 +7,7 @@ import {
   Edit2,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingNotes,
@@ -22,6 +23,8 @@ interface MeetingNotesProps {
 
 export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
   const { user } = useAuth();
+  const t = useTranslations("meetings.notes");
+  const tc = useTranslations("common");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<MeetingNote | null>(null);
 
@@ -91,7 +94,7 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
         <div className="flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-[#25C6DA]" />
           <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#64748B]">
-            notes ({notes.length})
+            {t("panelTitle")} ({notes.length})
           </span>
         </div>
 
@@ -101,7 +104,7 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
             className="flex items-center gap-1 px-3 py-1.5 rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-all shadow-sm cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New note</span>
+            <span>{t("newNote")}</span>
           </button>
         )}
       </div>
@@ -113,12 +116,12 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
           <div className="p-3.5 rounded-[14px] bg-[#1A2236] border border-[#2A3756] space-y-3 animate-in fade-in-50">
             {/* Title */}
             <div className="space-y-1">
-              <label className="text-[12px] font-semibold text-[#94A3B8]">Title</label>
+              <label className="text-[12px] font-semibold text-[#94A3B8]">{t("title")}</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Note title..."
+                placeholder={t("titlePlaceholder")}
                 className="w-full h-[37px] px-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA]"
                 autoFocus
               />
@@ -126,11 +129,11 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
 
             {/* Note Textarea */}
             <div className="space-y-1">
-              <label className="text-[12px] font-semibold text-[#94A3B8]">Note</label>
+              <label className="text-[12px] font-semibold text-[#94A3B8]">{t("noteLabel")}</label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Write note contents..."
+                placeholder={t("contentPlaceholder")}
                 rows={4}
                 className="w-full p-3 rounded-[10px] bg-[#111827] border border-[#2A3756] text-white text-[14px] placeholder:text-[#475569] focus:outline-none focus:border-[#25C6DA] resize-none"
               />
@@ -145,13 +148,13 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
                   onChange={(e) => setIsShared(e.target.checked)}
                   className="w-3.5 h-3.5 rounded border-gray-600 text-[#25C6DA] focus:ring-[#25C6DA] bg-[#111827]"
                 />
-                <span>Shared with meeting</span>
+                <span>{t("sharedWithMeeting")}</span>
               </label>
             </div>
 
             {/* Info hint text from Figma */}
             <p className="text-[10px] text-[#64748B] leading-tight pt-1">
-              Others see a note only when it is shared with the meeting room.
+              {t("sharedHint")}
             </p>
 
             {/* Action buttons from Figma */}
@@ -162,7 +165,7 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
                 disabled={isCreating || isUpdating || !title.trim() || !content.trim()}
                 className="px-4 py-1.5 h-[28px] rounded-[10px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[12px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {isCreating || isUpdating ? "Saving..." : "Save note"}
+                {isCreating || isUpdating ? tc("saving") : t("saveNote")}
               </button>
 
               <button
@@ -170,7 +173,7 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
                 onClick={handleCancel}
                 className="px-3 py-1.5 h-[28px] text-[12px] font-medium text-[#64748B] hover:text-white transition-colors cursor-pointer"
               >
-                Cancel
+                {tc("cancel")}
               </button>
             </div>
           </div>
@@ -183,7 +186,7 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
           </div>
         ) : notes.length === 0 && !isFormOpen ? (
           <div className="text-center py-10 text-xs text-[#64748B]">
-            No notes added yet. Click &quot;New note&quot; to begin.
+            {t("empty")}
           </div>
         ) : (
           notes.map((note) => (
@@ -217,11 +220,11 @@ export default function MeetingNotes({ meetingId }: MeetingNotesProps) {
               </p>
 
               <div className="flex items-center gap-2 pt-1 border-t border-[#2A3756]/60 text-[10px] text-[#64748B]">
-                <span>{note.is_shared ? "Shared" : "Private"}</span>
+                <span>{note.is_shared ? t("shared") : t("private")}</span>
                 {note.creator && (
                   <>
                     <span>•</span>
-                    <span>By {note.creator.name}</span>
+                    <span>{t("by", { name: note.creator.name })}</span>
                   </>
                 )}
               </div>

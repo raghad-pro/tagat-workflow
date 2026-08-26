@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Send, ChevronDown, Clock, Info, Check, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCreateMeeting } from "../hooks/useMeetings";
 import { useCompanyNames } from "../hooks/useCompanyNames";
@@ -20,37 +21,45 @@ interface CreateMeetingModalProps {
 // Mirrors the API's own validation: it rejects a meeting with no company
 // ("Please select the company this meeting belongs to.") and a private meeting
 // with no password ("The password field is required when the meeting is private.").
-const createMeetingSchema = z
-  .object({
-    title: z.string().min(1, "Title is required"),
-    company_id: z.string().min(1, "Please select the company this meeting belongs to"),
-    amount: z.string().optional(),
-    type: z.enum(["scheduled", "instant"]).default("scheduled"),
-    scheduled_at: z.string().optional(),
-    max_participants: z.string().default("100"),
-    notes: z.string().optional(),
-    is_private: z.boolean().default(false),
-    password: z.string().optional(),
-    allow_chat: z.boolean().default(true),
-    allow_screen_share: z.boolean().default(true),
-    allow_whiteboard: z.boolean().default(true),
-    allow_file_share: z.boolean().default(true),
-    allow_recording: z.boolean().default(false),
-  })
-  .refine((v) => !v.is_private || Boolean(v.password && v.password.trim()), {
-    path: ["password"],
-    message: "Password is required when the meeting is private",
-  });
+type MeetingFormMessages = (key: string) => string;
 
-type FormValues = z.infer<typeof createMeetingSchema>;
+const buildCreateMeetingSchema = (t: MeetingFormMessages) =>
+  z
+    .object({
+      title: z.string().min(1, t("validation.titleRequired")),
+      company_id: z.string().min(1, t("validation.companyRequired")),
+      amount: z.string().optional(),
+      type: z.enum(["scheduled", "instant"]).default("scheduled"),
+      scheduled_at: z.string().optional(),
+      max_participants: z.string().default("100"),
+      notes: z.string().optional(),
+      is_private: z.boolean().default(false),
+      password: z.string().optional(),
+      allow_chat: z.boolean().default(true),
+      allow_screen_share: z.boolean().default(true),
+      allow_whiteboard: z.boolean().default(true),
+      allow_file_share: z.boolean().default(true),
+      allow_recording: z.boolean().default(false),
+    })
+    .refine((v) => !v.is_private || Boolean(v.password && v.password.trim()), {
+      path: ["password"],
+      message: t("validation.passwordRequired"),
+    });
+
+type FormValues = z.infer<ReturnType<typeof buildCreateMeetingSchema>>;
 
 export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingModalProps) {
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("meetings.form");
+  const tc = useTranslations("common");
+  const tm = useTranslations("meetings");
   const { user } = useAuth();
   const { mutate: createMeeting, isPending } = useCreateMeeting();
   // Role-aware: `/super_admin/companies` answers 403 for a company manager, so
   // asking it directly left the picker empty and every meeting unfileable.
   const { options: companyOptions, ownCompanyId, isSuperAdmin } = useCompanyNames();
+
+  const createMeetingSchema = useMemo(() => buildCreateMeetingSchema(t as MeetingFormMessages), [t]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(createMeetingSchema) as any,
@@ -173,16 +182,16 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             type="button"
             onClick={onClose}
             className="p-1 text-[#2D3748] dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
-            aria-label="Back"
+            aria-label={t("back")}
           >
             <ArrowLeft size={18} />
           </button>
           <div>
             <h2 className="text-[20px] sm:text-[22px] font-bold text-[#1A202C] dark:text-white leading-tight">
-              Add Meeting
+              {t("addTitle")}
             </h2>
             <p className="text-[12px] sm:text-[13px] text-[#718096] dark:text-gray-400 mt-0.5">
-              Fill in the details to schedule a new meeting
+              {t("addSubtitle")}
             </p>
           </div>
         </div>
@@ -194,7 +203,7 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             {/* Column 1 - Row 1: Company */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Company
+                {t("company")}
               </label>
               <div className="relative">
                 {/* Only a super admin has more than one company to choose from. */}
@@ -206,10 +215,10 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
                     isSuperAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-80"
                   )}
                 >
-                  {isSuperAdmin && <option value="">select</option>}
+                  {isSuperAdmin && <option value="">{tc("select")}</option>}
                   {companyOptions.map((comp) => (
                     <option key={comp.id} value={comp.id}>
-                      {comp.name || `Company #${comp.id}`}
+                      {comp.name || t("companyFallback", { id: comp.id })}
                     </option>
                   ))}
                 </select>
@@ -228,7 +237,7 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             {/* Column 2 - Row 1: Title */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Title
+                {t("title")}
               </label>
               <input
                 type="text"
@@ -246,15 +255,15 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             {/* Column 1 - Row 2: Amount */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Amount
+                {t("amount")}
               </label>
               <div className="relative">
                 <select
                   {...form.register("amount")}
                   className="w-full h-[38px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 pe-8 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="">select</option>
-                  <option value="0">0.00 (Free)</option>
+                  <option value="">{tc("select")}</option>
+                  <option value="0">{t("free")}</option>
                   <option value="50">50.00 USD</option>
                   <option value="100">100.00 USD</option>
                   <option value="200">200.00 USD</option>
@@ -269,7 +278,7 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             {/* Column 2 - Row 2: Max Participants */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Max Participants
+                {t("maxParticipants")}
               </label>
               <input
                 type="number"
@@ -282,15 +291,15 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             {/* Column 1 - Row 3: Type */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Type
+                {t("type")}
               </label>
               <div className="relative">
                 <select
                   {...form.register("type")}
                   className="w-full h-[38px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 pe-8 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors appearance-none cursor-pointer capitalize"
                 >
-                  <option value="scheduled">Scheduled</option>
-                  <option value="instant">Instant</option>
+                  <option value="scheduled">{tm("type.scheduled")}</option>
+                  <option value="instant">{tm("type.instant")}</option>
                 </select>
                 <ChevronDown
                   size={15}
@@ -302,7 +311,7 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             {/* Column 2 - Row 3: Scheduled At */}
             <div className="flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Scheduled At
+                {t("scheduledAt")}
               </label>
               <div className="relative">
                 <input
@@ -317,14 +326,14 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
                 />
               </div>
               <span className="text-[11px] text-[#718096] dark:text-gray-400">
-                Required when the type is Scheduled, and must be in the future.
+                {t("scheduledAtHint")}
               </span>
             </div>
 
             {/* Full Width Row 4: Notes */}
             <div className="md:col-span-2 flex flex-col gap-1">
               <label className="text-[13.5px] font-bold text-[#1A202C] dark:text-gray-200">
-                Notes
+                {t("notes")}
               </label>
               <textarea
                 rows={2}
@@ -339,19 +348,19 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
           <div className="border border-dashed border-[#CBD5E0] dark:border-gray-700 rounded-[10px] p-3.5 flex flex-col gap-2.5">
             {/* Private Meeting pill */}
             <div className="bg-[#F8FAFC] dark:bg-[#2D3748]/60 rounded-[6px] p-2.5 flex flex-col gap-2">
-              <CustomCheckbox name="is_private" label="Private meeting" />
+              <CustomCheckbox name="is_private" label={t("privateMeeting")} />
               {form.watch("is_private") && (
                 <div className="flex flex-col gap-1 ps-6">
                   <label className="text-[12px] font-semibold text-[#1A202C] dark:text-gray-200" htmlFor="meeting-password">
-                    Meeting password
+                    {t("meetingPassword")}
                   </label>
                   <input
                     id="meeting-password"
                     type="password"
                     {...form.register("password", {
-                      validate: (value) => !form.getValues("is_private") || Boolean(value?.trim()) || "Password is required for private meetings",
+                      validate: (value) => !form.getValues("is_private") || Boolean(value?.trim()) || t("validation.passwordRequired"),
                     })}
-                    placeholder="Enter a password"
+                    placeholder={t("enterPassword")}
                     className="w-full h-[36px] rounded-[8px] bg-white dark:bg-[#2D3748] border border-[#E2E8F0] dark:border-gray-700 px-3 text-[13px] text-[#2D3748] dark:text-white focus:outline-none focus:border-[#25C6DA] transition-colors"
                   />
                   {form.formState.errors.password && (
@@ -366,22 +375,22 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
             {/* Features list */}
             <div>
               <span className="text-[12px] text-[#718096] dark:text-gray-400 font-medium block mb-2">
-                Features
+                {t("features")}
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-2.5 gap-x-4">
-                <CustomCheckbox name="allow_chat" label="Allow chat" />
-                <CustomCheckbox name="allow_screen_share" label="Allow screen share" />
-                <CustomCheckbox name="allow_whiteboard" label="Allow whiteboard" />
-                <CustomCheckbox name="allow_file_share" label="Allow file share" />
-                <CustomCheckbox name="allow_recording" label="Allow recording" />
+                <CustomCheckbox name="allow_chat" label={t("allowChat")} />
+                <CustomCheckbox name="allow_screen_share" label={t("allowScreenShare")} />
+                <CustomCheckbox name="allow_whiteboard" label={t("allowWhiteboard")} />
+                <CustomCheckbox name="allow_file_share" label={t("allowFileShare")} />
+                <CustomCheckbox name="allow_recording" label={t("allowRecording")} />
               </div>
             </div>
 
             {/* Info Message Callout */}
             <div className="bg-[#E6FAFC] dark:bg-[#25C6DA]/10 rounded-full px-3.5 py-1.5 flex items-center gap-2 text-[#00ACC1] dark:text-[#25C6DA] text-[12px] font-medium mt-0.5">
               <Info size={14} className="shrink-0" />
-              <span>The meeting code and room name are generated automatically once saved.</span>
+              <span>{t("autoGeneratedHint")}</span>
             </div>
           </div>
 
@@ -395,12 +404,12 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
               {isPending ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Saving...</span>
+                  <span>{tc("saving")}</span>
                 </>
               ) : (
                 <>
                   <Send size={15} />
-                  <span>Save</span>
+                  <span>{tc("save")}</span>
                 </>
               )}
             </button>
@@ -411,7 +420,7 @@ export default function CreateMeetingModal({ isOpen, onClose }: CreateMeetingMod
               disabled={isPending}
               className="h-[44px] px-8 sm:w-[170px] rounded-[8px] bg-[#F7FAFC] dark:bg-[#2D3748] text-[#1A202C] dark:text-white font-bold text-[14px] hover:bg-[#EDF2F7] dark:hover:bg-gray-700 transition-all cursor-pointer flex items-center justify-center disabled:opacity-50"
             >
-              Cancel
+              {tc("cancel")}
             </button>
           </div>
         </form>

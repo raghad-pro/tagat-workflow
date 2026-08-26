@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React from "react";
 import { Text } from "@/components/atoms/Text";
 import { StatusBadge } from "@/components/atoms/Statusbadge";
@@ -40,13 +41,16 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
     return "$";
   };
 
+  const t = useTranslations("invoice");
+  const tc = useTranslations("common");
+
   return (
     <ViewDetailsLayout
       isOpen={isOpen}
       onClose={onClose}
-      title="Invoice Details"
+      title={t("viewTitle")}
       headerIcon={<FileText size={24} />}
-      headerTitle={data ? `Invoice #${data.id}` : "Loading..."}
+      headerTitle={data ? t("headerTitle", { id: data.id }) : tc("loading")}
       headerSubtitle={data ? getClientName() : ""}
     >
       {isLoading ? (
@@ -56,44 +60,44 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
       ) : data ? (
         <>
           {!isCompanyAdmin && !isClient && (
-        <InfoRow label="Company">
+        <InfoRow label={t("columns.company")}>
           <Text size="sm" tag="span">
             {getCompanyName()}
           </Text>
         </InfoRow>
       )}
 
-      <InfoRow label="Client">
+      <InfoRow label={t("columns.client")}>
         <Text size="sm" tag="span">
           {getClientName()}
         </Text>
       </InfoRow>
 
-      <InfoRow label="Project">
+      <InfoRow label={t("project")}>
         <Text size="sm" tag="span">
           {getProjectTitle()}
         </Text>
       </InfoRow>
 
-      <InfoRow label="Amount">
+      <InfoRow label={t("columns.amount")}>
         <Text size="sm" tag="span">
           {getCurrencySymbol()}{Number(data.amount).toLocaleString('en-US')}
         </Text>
       </InfoRow>
 
-      <InfoRow label="Issue Date">
+      <InfoRow label={t("columns.issueDate")}>
         <Text size="sm" tag="span">
           {data.invoice_date}
         </Text>
       </InfoRow>
 
-      <InfoRow label="Due Date">
+      <InfoRow label={t("columns.dueDate")}>
         <Text size="sm" tag="span">
           {data.due_date}
         </Text>
       </InfoRow>
 
-      <InfoRow label="Status">
+      <InfoRow label={t("columns.status")}>
         {data.status ? (
           <StatusBadge
             status={INVOICE_STATUS_TO_GENERIC[data.status] ?? "pending"}
@@ -105,7 +109,7 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
       </InfoRow>
       
       {data.created_at && (
-        <InfoRow label="Created At">
+        <InfoRow label={tc("createdAt")}>
           <Text size="sm" tag="span">
             {new Date(data.created_at).toLocaleDateString()}
           </Text>
@@ -114,7 +118,7 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
       
       {data.payments && Array.isArray(data.payments) && data.payments.length > 0 && (
         <div className="mt-6 flex flex-col gap-3">
-          <Text size="sm" weight="medium" className="ds-text-primary">Payments</Text>
+          <Text size="sm" weight="medium" className="ds-text-primary">{t("payments")}</Text>
           <div className="border rounded-xl divide-y overflow-hidden">
             {data.payments.map((payment: any, index: number) => (
               <div key={index} className="p-3 flex justify-between items-center bg-[var(--color-bg)]">
@@ -132,7 +136,7 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
       )}
       </>
       ) : (
-        <div className="p-8 text-center text-gray-500">Invoice not found.</div>
+        <div className="p-8 text-center text-gray-500">{t("notFound")}</div>
       )}
     </ViewDetailsLayout>
   );

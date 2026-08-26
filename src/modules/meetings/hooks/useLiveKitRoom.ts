@@ -11,6 +11,7 @@ import {
   type RemoteParticipant,
 } from "livekit-client";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 import { useAuth } from "@/providers/AuthProvider";
 import { meetingsApi } from "../api/meetings.api";
@@ -94,7 +95,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
  * The processor pulls a MediaPipe segmentation model, so it is imported lazily
  * and any failure degrades to "no effect" rather than breaking the camera.
  */
-async function applyBackgroundEffect(room: Room, effect: BackgroundEffect) {
+/** Message lookup, passed in because this runs outside the hook. */
+type Translate = (key: string, values?: Record<string, string | number>) => string;
+
+async function applyBackgroundEffect(
+  room: Room,
+  effect: BackgroundEffect,
+  t: Translate
+) {
   const publication = room.localParticipant.getTrackPublication(Track.Source.Camera);
   const track = publication?.track as LocalVideoTrack | undefined;
   if (!track) return;
@@ -106,7 +114,7 @@ async function applyBackgroundEffect(room: Room, effect: BackgroundEffect) {
     );
     if (!mod.supportsBackgroundProcessors()) {
       if (effect !== "none") {
-        toast.error("Background effects are not supported in this browser");
+        toast.error(t("effectsUnsupported"));
       }
       return;
     }
@@ -147,7 +155,7 @@ async function applyBackgroundEffect(room: Room, effect: BackgroundEffect) {
     } catch {
       // Nothing else to try; the raw track is still published.
     }
-    toast.error("Could not apply the background effect — camera left unchanged");
+    toast.error(t("effectFailed"));
   }
 }
 
@@ -239,6 +247,15 @@ export function useLiveKitRoom(
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [remoteHands, setRemoteHands] = useState<Record<string, boolean>>({});
 
+  const t = useTranslations("meetings.errors");
+  // Held in a ref on purpose. The connection effect below must not list
+  // the translator among its dependencies — re-running it would tear down
+  // a live room and rejoin it just because the language changed — yet its
+  // event listeners outlive the render that created them and still need
+  // the current one.
+  const tRef = useRef(t);
+  tRef.current = t;
+
   // ─── Connect ───────────────────────────────────────────────────────────────
   useEffect(() => {
     // Wait for auth before connecting: `role` decides the API prefix, and
@@ -309,12 +326,11 @@ export function useLiveKitRoom(
         // so always say why — especially the duplicate-identity case, which
         // happens whenever the same account opens the room twice.
         const explain: Partial<Record<DisconnectReason, string>> = {
-          [DisconnectReason.DUPLICATE_IDENTITY]:
-            "You joined this meeting from another tab or device, so this session was disconnected.",
-          [DisconnectReason.PARTICIPANT_REMOVED]: "You were removed from the meeting.",
-          [DisconnectReason.ROOM_DELETED]: "The meeting was ended by the host.",
-          [DisconnectReason.SERVER_SHUTDOWN]: "The media server restarted. Try rejoining.",
-          [DisconnectReason.JOIN_FAILURE]: "Could not join the media room.",
+          [DisconnectReason.DUPLICATE_IDENTITY]: tRef.current("duplicateSession"),
+          [DisconnectReason.PARTICIPANT_REMOVED]: tRef.current("removed"),
+          [DisconnectReason.ROOM_DELETED]: tRef.current("roomDeleted"),
+          [DisconnectReason.SERVER_SHUTDOWN]: tRef.current("serverShutdown"),
+          [DisconnectReason.JOIN_FAILURE]: tRef.current("joinFailure"),
         };
         const message = reason !== undefined ? explain[reason] : undefined;
         if (message) {
@@ -322,13 +338,13 @@ export function useLiveKitRoom(
           toast.error(message);
         }
       })
-      .on(RoomEvent.Reconnecting, () => toast.loading("Reconnecting…", { id: "lk-reconnect" }))
+      .on(RoomEvent.Reconnecting, () => toast.loading(tRef.current("reconnecting"), { id: "lk-reconnect" }))
       .on(RoomEvent.Reconnected, () => {
         toast.dismiss("lk-reconnect");
-        toast.success("Reconnected");
+        toast.success(tRef.current("reconnected"));
       })
       .on(RoomEvent.MediaDevicesError, (e: Error) =>
-        toast.error(`Device error: ${e.message}`)
+        toast.error(tRef.current("deviceError", { message: e.message }))
       );
 
     (async () => {
@@ -344,7 +360,7 @@ export function useLiveKitRoom(
         const res = await meetingsApi.mediaJoin(role, meetingId, password);
         const media = (res as any)?.media ?? res;
         if (!media?.url || !media?.token) {
-          throw new Error("Media server did not return a token");
+          throw new Error(tRef.current("noToken"));
         }
         if (isStale()) return;
 
@@ -389,7 +405,7 @@ export function useLiveKitRoom(
           if (prefs.cameraEnabled) {
             try {
               await enableCameraWithFallback(lkRoom.localParticipant, prefs.quality);
-              await applyBackgroundEffect(lkRoom, prefs.effect);
+              await applyBackgroundEffect(lkRoom, prefs.effect, tRef.current);
             } catch (err: any) {
               toast.error(`Camera failed to start: ${err?.message || "in use"}`);
             }
@@ -401,7 +417,7 @@ export function useLiveKitRoom(
       } catch (err: any) {
         if (isStale()) return;
         const msg =
-          err?.response?.data?.message || err?.message || "Failed to join media";
+          err?.response?.data?.message || err?.message || tRef.current("joinFailed");
         setError(msg);
         toast.error(msg);
       }
@@ -425,10 +441,10 @@ export function useLiveKitRoom(
 
   // ─── Controls ──────────────────────────────────────────────────────────────
   const guard = useCallback(
-    (allowed: boolean, label: string) => {
+    (allowed: boolean, deniedKey: string) => {
       const lp = roomRef.current?.localParticipant;
       if (!lp) {
-        toast.error("Not connected to the meeting yet");
+        toast.error(tRef.current("notConnected"));
         return null;
       }
       // Browsers expose `mediaDevices` only in a secure context. Served over
@@ -439,13 +455,13 @@ export function useLiveKitRoom(
       if (!navigator.mediaDevices?.getUserMedia) {
         toast.error(
           window.isSecureContext
-            ? "This browser does not support camera and microphone access"
-            : "Camera and microphone need HTTPS. Open the site over https:// or on localhost."
+            ? tRef.current("noMediaSupport")
+            : tRef.current("httpsRequired")
         );
         return null;
       }
       if (!allowed) {
-        toast.error(`You are not allowed to ${label} in this meeting`);
+        toast.error(tRef.current(deniedKey));
         return null;
       }
       return lp;
@@ -454,7 +470,7 @@ export function useLiveKitRoom(
   );
 
   const toggleMic = useCallback(async () => {
-    const lp = guard(canPublish, "unmute");
+    const lp = guard(canPublish, "notAllowedMic");
     if (!lp) return;
     try {
       const next = !lp.isMicrophoneEnabled;
@@ -466,7 +482,7 @@ export function useLiveKitRoom(
   }, [canPublish, guard]);
 
   const toggleCamera = useCallback(async () => {
-    const lp = guard(canPublish, "turn on your camera");
+    const lp = guard(canPublish, "notAllowedCamera");
     if (!lp) return;
 
     const next = !lp.isCameraEnabled;
@@ -500,12 +516,12 @@ export function useLiveKitRoom(
     // Applied after the camera is already live and reported, so a failing
     // effect can never be mistaken for the camera itself failing.
     if (next && prefs && roomRef.current) {
-      await applyBackgroundEffect(roomRef.current, prefs.effect);
+      await applyBackgroundEffect(roomRef.current, prefs.effect, tRef.current);
     }
   }, [canPublish, guard]);
 
   const toggleScreenShare = useCallback(async () => {
-    const lp = guard(canShareScreen, "share your screen");
+    const lp = guard(canShareScreen, "notAllowedScreenShare");
     if (!lp) return;
     try {
       const next = !lp.isScreenShareEnabled;
@@ -514,7 +530,11 @@ export function useLiveKitRoom(
     } catch (err: any) {
       // The user dismissing the picker is not an error worth surfacing.
       if (err?.name !== "NotAllowedError" && err?.name !== "AbortError") {
-        toast.error(`Screen share failed: ${err?.message || "unknown error"}`);
+        toast.error(
+          tRef.current("screenShareFailed", {
+            message: err?.message || tRef.current("unknownError"),
+          })
+        );
       }
     }
   }, [canShareScreen, guard]);
@@ -532,7 +552,7 @@ export function useLiveKitRoom(
   }, [isHandRaised]);
 
   const setBackgroundEffect = useCallback(async (effect: BackgroundEffect) => {
-    if (roomRef.current) await applyBackgroundEffect(roomRef.current, effect);
+    if (roomRef.current) await applyBackgroundEffect(roomRef.current, effect, tRef.current);
   }, []);
 
   /**

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import {
   AreaChart,
@@ -30,21 +31,25 @@ interface MetricTabConfig {
   suffix?: string;
 }
 
-const METRIC_TABS: MetricTabConfig[] = [
-  { key: "revenue", label: "Revenue", icon: DollarSign, color: "#25C6DA", gradientId: "gradRevenue", prefix: "$" },
-  { key: "expenses", label: "Expenses", icon: DollarSign, color: "#F44336", gradientId: "gradExpenses", prefix: "$" },
-  { key: "invoiced", label: "Invoiced", icon: FileText, color: "#03A9F4", gradientId: "gradInvoiced", prefix: "$" },
-  { key: "projects", label: "Projects", icon: FileText, color: "#9810FA", gradientId: "gradProjects" },
-  { key: "tasks", label: "Tasks", icon: CheckSquare, color: "#4CAF50", gradientId: "gradTasks" },
-  { key: "users", label: "Users", icon: Users, color: "#E8D636", gradientId: "gradUsers" },
-  { key: "meetings", label: "Meetings", icon: Video, color: "#00ACC1", gradientId: "gradMeetings" },
-  { key: "hours", label: "Hours", icon: Clock, color: "#FF9800", gradientId: "gradHours", suffix: " hrs" },
-];
+const METRIC_TABS = [
+  { key: "revenue", icon: DollarSign, color: "#25C6DA", gradientId: "gradRevenue", prefix: "$" },
+  { key: "expenses", icon: DollarSign, color: "#F44336", gradientId: "gradExpenses", prefix: "$" },
+  { key: "invoiced", icon: FileText, color: "#03A9F4", gradientId: "gradInvoiced", prefix: "$" },
+  { key: "projects", icon: FileText, color: "#9810FA", gradientId: "gradProjects" },
+  { key: "tasks", icon: CheckSquare, color: "#4CAF50", gradientId: "gradTasks" },
+  { key: "users", icon: Users, color: "#E8D636", gradientId: "gradUsers" },
+  { key: "meetings", icon: Video, color: "#00ACC1", gradientId: "gradMeetings" },
+  { key: "hours", icon: Clock, color: "#FF9800", gradientId: "gradHours", suffixKey: "hoursSuffix" },
+] as const;
 
 export function TrendsChart({ trends }: TrendsChartProps) {
+  const t = useTranslations("kpis.trends");
   const [activeMetric, setActiveMetric] = useState<MetricKey>("revenue");
 
-  const currentTab = METRIC_TABS.find((t) => t.key === activeMetric) || METRIC_TABS[0];
+  const currentTab = METRIC_TABS.find((tab) => tab.key === activeMetric) || METRIC_TABS[0];
+  const currentLabel = t(currentTab.key);
+  const currentSuffix = "suffixKey" in currentTab ? t(currentTab.suffixKey) : "";
+  const currentPrefix = "prefix" in currentTab ? currentTab.prefix : "";
 
   // Prepare chart data points
   const rawPoints = trends?.[activeMetric];
@@ -70,10 +75,10 @@ export function TrendsChart({ trends }: TrendsChartProps) {
             <div className="w-8 h-8 rounded-[8px] bg-[rgba(37,198,218,0.12)] flex items-center justify-center text-[#25C6DA]">
               <TrendingUp className="w-4 h-4" />
             </div>
-            <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">Annual Trends ({trends?.year || 2026})</h3>
+            <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">{t("heading", { year: trends?.year || 2026 })}</h3>
           </div>
           <p className="text-xs text-[#707070] dark:text-gray-400 mt-1">
-            Track month-by-month trajectory and growth dynamics
+            {t("subtitle")}
           </p>
         </div>
 
@@ -95,7 +100,7 @@ export function TrendsChart({ trends }: TrendsChartProps) {
                 )}
               >
                 <IconEl className="w-3.5 h-3.5" style={{ color: isActive ? "#ffffff" : tab.color }} />
-                <span>{tab.label}</span>
+                <span>{t(tab.key)}</span>
               </button>
             );
           })}
@@ -105,25 +110,25 @@ export function TrendsChart({ trends }: TrendsChartProps) {
       {/* Summary Chips */}
       <div className="flex items-center gap-4 flex-wrap text-xs text-[#707070] dark:text-gray-400 border-b border-border/40 pb-4">
         <div className="flex items-center gap-2">
-          <span>Active Metric:</span>
-          <span className="font-bold text-[#000000] dark:text-white">{currentTab.label}</span>
+          <span>{t("activeMetric")}</span>
+          <span className="font-bold text-[#000000] dark:text-white">{currentLabel}</span>
         </div>
         <div className="w-1 h-1 rounded-full bg-[#707070]" />
         <div className="flex items-center gap-2">
-          <span>Annual Total:</span>
+          <span>{t("annualTotal")}</span>
           <span className="font-bold text-[#000000] dark:text-white">
-            {currentTab.prefix}
+            {currentPrefix}
             {totalForMetric.toLocaleString("en-US")}
-            {currentTab.suffix}
+            {currentSuffix}
           </span>
         </div>
         <div className="w-1 h-1 rounded-full bg-[#707070]" />
         <div className="flex items-center gap-2">
-          <span>Monthly Average:</span>
+          <span>{t("monthlyAverage")}</span>
           <span className="font-bold text-[#000000] dark:text-white">
-            {currentTab.prefix}
+            {currentPrefix}
             {avgForMetric}
-            {currentTab.suffix}
+            {currentSuffix}
           </span>
         </div>
       </div>
@@ -151,7 +156,7 @@ export function TrendsChart({ trends }: TrendsChartProps) {
               axisLine={false}
               tick={{ fontSize: 12, fill: "currentColor" }}
               className="text-[#707070]"
-              tickFormatter={(v) => `${currentTab.prefix || ""}${v}${currentTab.suffix || ""}`}
+              tickFormatter={(v) => `${currentPrefix}${v}${currentSuffix}`}
             />
             <Tooltip
               content={({ active, payload }) => {
@@ -161,11 +166,11 @@ export function TrendsChart({ trends }: TrendsChartProps) {
                     <div className="ds-bg-form border border-slate-100 dark:border-slate-800 border border-border px-3.5 py-2.5 rounded-[8px] shadow-xl text-xs">
                       <p className="font-bold text-[#000000] dark:text-white mb-1">{data.label}</p>
                       <p className="flex items-center gap-1.5" style={{ color: currentTab.color }}>
-                        <span className="font-semibold">{currentTab.label}:</span>
+                        <span className="font-semibold">{currentLabel}:</span>
                         <span className="font-mono font-bold">
-                          {currentTab.prefix}
+                          {currentPrefix}
                           {data.value?.toLocaleString("en-US") || 0}
-                          {currentTab.suffix}
+                          {currentSuffix}
                         </span>
                       </p>
                     </div>

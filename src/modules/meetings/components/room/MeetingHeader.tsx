@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Copy,
   PhoneOff,
@@ -24,6 +25,7 @@ interface MeetingHeaderProps {
 
 export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
   const router = useRouter();
+  const t = useTranslations("meetings");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const { mutate: startMeeting, isPending: isStarting } = useStartMeeting();
@@ -55,7 +57,7 @@ export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(meeting.meeting_code);
-    toast.success("تم نسخ كود الاجتماع!");
+    toast.success(t("header.codeCopied"));
   };
 
   const handleLeave = () => {
@@ -96,12 +98,12 @@ export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
             {isLive ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EDF7EE]/15 text-[#4CAF50] font-bold">
                 <span className="w-2 h-2 rounded-full bg-[#4CAF50] animate-ping" />
-                Live
+                {t("header.live")}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1A2236] text-[#D97706]">
                 <Clock className="w-3 h-3" />
-                {meeting.status}
+                {t.has(`status.${meeting.status}`) ? t(`status.${meeting.status}` as never) : meeting.status}
               </span>
             )}
 
@@ -124,7 +126,7 @@ export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
             className="flex items-center gap-1.5 px-4 h-[36px] rounded-[8px] bg-[#25C6DA] hover:bg-[#20b2c4] text-white text-[13px] font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
           >
             <Play className="w-4 h-4 fill-white" />
-            <span>Start Meeting</span>
+            <span>{t("startMeeting")}</span>
           </button>
         )}
 
@@ -135,7 +137,7 @@ export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
             className="flex items-center gap-1.5 px-4 h-[36px] rounded-[8px] bg-red-600/90 hover:bg-red-700 text-white text-[13px] font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
           >
             <Square className="w-3.5 h-3.5 fill-white" />
-            <span>End Meeting</span>
+            <span>{t("endMeeting")}</span>
           </button>
         )}
 
@@ -145,7 +147,7 @@ export default function MeetingHeader({ meeting, isHost }: MeetingHeaderProps) {
           className="flex items-center gap-1.5 px-4 h-[36px] rounded-[8px] bg-[#FEECEB] hover:bg-red-100 text-[#F44336] text-[13px] font-bold transition-colors cursor-pointer"
         >
           <PhoneOff className="w-4 h-4" />
-          <span>Leave Meeting</span>
+          <span>{t("leaveMeeting")}</span>
         </button>
       </div>
     </div>

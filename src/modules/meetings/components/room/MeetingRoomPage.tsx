@@ -31,6 +31,7 @@ import toast from "react-hot-toast";
 import { RoomContext, RoomAudioRenderer } from "@livekit/components-react";
 import { RoomEvent } from "livekit-client";
 
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useMeetingDetails,
@@ -82,6 +83,8 @@ export function MeetingRoomPage({
   // a `?pwd=` query param (the "join by code" deep link) — prefer the prop.
   const pwd = passwordProp ?? searchParams.get("pwd");
   const { user } = useAuth();
+  const t = useTranslations("meetings.room");
+  const tm = useTranslations("meetings");
   const containerRef = useRef<HTMLDivElement>(null);
   // Owned here rather than handed in, so the in-room settings panel edits the
   // same object the session is running on.
@@ -154,7 +157,7 @@ export function MeetingRoomPage({
   const handleCopyCode = () => {
     if (!meeting) return;
     navigator.clipboard.writeText(meeting.meeting_code);
-    toast.success("Meeting code copied!");
+    toast.success(tm("header.codeCopied"));
   };
 
   const handleLeave = useCallback(() => {
@@ -171,7 +174,7 @@ export function MeetingRoomPage({
     return (
       <div className="flex flex-col items-center justify-center min-h-[550px] gap-3 bg-[#0D1117] rounded-[16px] border border-[#1A2236] text-white">
         <div className="w-10 h-10 border-4 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
-        <p className="text-sm text-gray-400 font-medium">Preparing meeting room...</p>
+        <p className="text-sm text-gray-400 font-medium">{t("preparing")}</p>
       </div>
     );
   }
@@ -179,15 +182,15 @@ export function MeetingRoomPage({
   if (isError || !meeting) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[450px] text-center p-8 bg-[#0D1117] border border-[#1A2236] rounded-[16px] text-white">
-        <h2 className="text-lg font-bold text-red-400">Unable to join meeting</h2>
+        <h2 className="text-lg font-bold text-red-400">{t("unableToJoin")}</h2>
         <p className="text-sm text-gray-400 mt-1 max-w-md">
-          Please check the meeting ID or code and ensure your account has proper permissions.
+          {t("joinErrorHint")}
         </p>
         <button
           onClick={handleLeave}
           className="mt-5 px-5 py-2 rounded-lg bg-[#161B22] text-white hover:bg-[#1E293B] transition-colors font-medium text-sm cursor-pointer"
         >
-          Return to Meetings
+          {t("returnToMeetings")}
         </button>
       </div>
     );
@@ -200,7 +203,7 @@ export function MeetingRoomPage({
   // Presence is whatever LiveKit reports; the roster only supplies names and
   // roles. `room.numParticipants` excludes us, hence the +1.
   const totalPeople = room ? room.numParticipants + 1 : 1;
-  const currentUserName = user?.name || "Participant";
+  const currentUserName = user?.name || t("participantFallback");
   const startedAt = meeting.started_at
     ? new Date(meeting.started_at).toLocaleTimeString([], {
         hour: "2-digit",
@@ -224,32 +227,32 @@ export function MeetingRoomPage({
             type="button"
             onClick={handleLeave}
             className="w-7 h-7 rounded-full flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-[#161B22] transition-colors cursor-pointer shrink-0 rtl:rotate-180"
-            aria-label="Back"
+            aria-label={t("back")}
           >
             <ArrowLeft size={17} />
           </button>
 
           <div className="flex items-baseline gap-2.5 truncate">
             <h1 className="text-[14px] font-bold text-white tracking-tight truncate">
-              {meeting.title || "Q3 Product Review"}
+              {meeting.title}
             </h1>
             <button
               type="button"
               onClick={handleCopyCode}
               className="text-[12px] text-[#475569] font-mono hover:text-[#25C6DA] transition-colors cursor-pointer shrink-0"
-              title="Copy code"
+              title={t("copyCode")}
             >
-              {meeting.meeting_code || "WF-2847"}
+              {meeting.meeting_code}
             </button>
             <span className="text-[12px] text-[#475569] hidden md:inline truncate">
-              {startedAt ? `Started ${startedAt} · ` : ""}
-              {totalPeople} {totalPeople === 1 ? "person" : "people"} in the room
+              {startedAt ? `${t("startedAt", { time: startedAt })} · ` : ""}
+              {t("peopleInRoom", { count: totalPeople })}
             </span>
           </div>
 
           {meeting.status === "live" && (
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22C55E] text-[10px] font-extrabold tracking-wider shrink-0">
-              <span>LIVE</span>
+              <span>{t("liveBadge")}</span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
             </div>
           )}
@@ -261,26 +264,26 @@ export function MeetingRoomPage({
             <button
               type="button"
               onClick={() => setLayout("grid")}
-              title="Grid — everyone the same size"
+              title={t("layoutGridHint")}
               className={cn(
                 "h-6 px-2 rounded-md flex items-center gap-1 text-[10px] font-bold transition-colors cursor-pointer",
                 layout === "grid" ? "bg-[#25C6DA] text-white" : "text-[#64748B] hover:text-white"
               )}
             >
               <LayoutGrid size={12} />
-              <span className="hidden sm:inline">Grid</span>
+              <span className="hidden sm:inline">{t("layoutGrid")}</span>
             </button>
             <button
               type="button"
               onClick={() => setLayout("speaker")}
-              title="Speaker — the person talking, large"
+              title={t("layoutSpeakerHint")}
               className={cn(
                 "h-6 px-2 rounded-md flex items-center gap-1 text-[10px] font-bold transition-colors cursor-pointer",
                 layout === "speaker" ? "bg-[#25C6DA] text-white" : "text-[#64748B] hover:text-white"
               )}
             >
               <User size={12} />
-              <span className="hidden sm:inline">Speaker</span>
+              <span className="hidden sm:inline">{t("layoutSpeaker")}</span>
             </button>
           </div>
 
@@ -290,11 +293,11 @@ export function MeetingRoomPage({
               onClick={() => {
                 room?.startAudio().then(() => setAudioBlocked(false)).catch(() => {});
               }}
-              title="Your browser blocked meeting audio"
+              title={t("audioBlocked")}
               className="h-7 px-2.5 rounded-lg bg-amber-500 text-white text-[10px] font-bold flex items-center gap-1 cursor-pointer"
             >
               <Volume2 size={12} />
-              Enable sound
+              {t("enableSound")}
             </button>
           )}
 
@@ -302,7 +305,7 @@ export function MeetingRoomPage({
             type="button"
             onClick={handleCopyCode}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[#64748B] hover:text-white hover:bg-[#161B22] transition-colors cursor-pointer"
-            title="Copy Meeting Code"
+            title={t("copyMeetingCode")}
           >
             <Copy size={14} />
           </button>
@@ -311,7 +314,7 @@ export function MeetingRoomPage({
             type="button"
             onClick={toggleFullscreen}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[#64748B] hover:text-white hover:bg-[#161B22] transition-colors cursor-pointer"
-            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
           >
             {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
@@ -326,7 +329,7 @@ export function MeetingRoomPage({
                   : "border-[rgba(239,68,68,0.3)] text-red-400"
             )}
           >
-            {isConnected ? "Connected" : isConnecting ? "Connecting…" : "Offline"}
+            {isConnected ? t("connected") : isConnecting ? t("connecting") : t("offline")}
           </div>
 
           <div className="flex items-center gap-1 text-[12px] text-[#64748B] ps-1">
@@ -342,7 +345,7 @@ export function MeetingRoomPage({
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto p-4 sm:p-6 items-center justify-center relative">
           {mediaError ? (
             <div className="flex flex-col items-center justify-center gap-3 text-center">
-              <p className="text-sm font-bold text-red-400">Could not join the media room</p>
+              <p className="text-sm font-bold text-red-400">{t("mediaJoinFailed")}</p>
               <p className="text-xs text-gray-500 max-w-sm">{mediaError}</p>
             </div>
           ) : isWhiteboardMain ? (
@@ -436,10 +439,10 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Participants"
+            title={t("tabs.people")}
           >
             <Users size={16} />
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#25C6DA] text-white text-[8px] font-bold flex items-center justify-center shadow-xs">
+            <span className="absolute -top-1 -end-1 w-3.5 h-3.5 rounded-full bg-[#25C6DA] text-white text-[8px] font-bold flex items-center justify-center shadow-xs">
               {totalPeople}
             </span>
           </button>
@@ -454,7 +457,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Chat"
+            title={t("tabs.chat")}
           >
             <MessageSquare size={16} />
           </button>
@@ -469,7 +472,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Whiteboard"
+            title={t("tabs.whiteboard")}
           >
             <PenTool size={16} />
           </button>
@@ -484,7 +487,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Notes"
+            title={t("tabs.notes")}
           >
             <BookOpen size={16} />
           </button>
@@ -499,7 +502,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Polls"
+            title={t("tabs.polls")}
           >
             <BarChart2 size={16} />
           </button>
@@ -514,7 +517,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Decisions"
+            title={t("tabs.decisions")}
           >
             <ShieldCheck size={16} />
           </button>
@@ -529,7 +532,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Action Items"
+            title={t("tabs.actionItems")}
           >
             <CheckSquare size={16} />
           </button>
@@ -544,7 +547,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-sm"
                 : "text-[#64748B] hover:text-white hover:bg-[#161B22]"
             )}
-            title="Devices and background"
+            title={t("devicesAndBackground")}
           >
             <Settings2 size={16} />
           </button>
@@ -566,7 +569,7 @@ export function MeetingRoomPage({
                 : "bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30"
             )}
             disabled={!isConnected || !canPublish}
-            title={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
+            title={isMicOn ? t("muteMic") : t("unmuteMic")}
           >
             {isMicOn ? <Mic size={18} /> : <MicOff size={18} />}
           </button>
@@ -582,7 +585,7 @@ export function MeetingRoomPage({
                 : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
             )}
             disabled={!isConnected || !canPublish}
-            title={isCamOn ? "Turn off camera" : "Turn on camera"}
+            title={isCamOn ? t("cameraOff") : t("cameraOn")}
           >
             {isCamOn ? <VideoIcon size={18} /> : <VideoOff size={18} />}
           </button>
@@ -598,7 +601,7 @@ export function MeetingRoomPage({
                 ? "bg-[#25C6DA] text-white shadow-[0_0_12px_rgba(37,198,218,0.4)]"
                 : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
             )}
-            title="Devices and background"
+            title={t("devicesAndBackground")}
           >
             <Settings2 size={18} />
           </button>
@@ -615,7 +618,7 @@ export function MeetingRoomPage({
                 : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
             )}
             disabled={!isConnected || !canShareScreen}
-            title={isScreenSharing ? "Stop sharing" : "Share screen"}
+            title={isScreenSharing ? t("stopSharing") : t("shareScreen")}
           >
             <ScreenShare size={18} />
           </button>
@@ -632,7 +635,7 @@ export function MeetingRoomPage({
                 : "bg-[#161B22] text-white border border-[#1E293B] hover:bg-[#1E293B]"
             )}
             disabled={!isConnected}
-            title={isHandRaised ? "Lower hand" : "Raise hand"}
+            title={isHandRaised ? t("lowerHand") : t("raiseHand")}
           >
             <Hand size={18} />
           </button>
@@ -645,7 +648,7 @@ export function MeetingRoomPage({
             <button
               type="button"
               onClick={() => {
-                if (window.confirm("Are you sure you want to end the meeting for everyone?")) {
+                if (window.confirm(t("endConfirm"))) {
                   endMeeting(meetingId, {
                     onSuccess: () => {
                       void disconnect();
@@ -657,7 +660,7 @@ export function MeetingRoomPage({
               className="h-10 px-5 rounded-[16px] bg-[#161B22] text-[#EF4444] border border-[#EF4444]/30 hover:bg-[#EF4444]/10 font-bold text-[14px] flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <PhoneOff size={15} />
-              <span>End Meeting</span>
+              <span>{tm("endMeeting")}</span>
             </button>
           )}
 
@@ -668,7 +671,7 @@ export function MeetingRoomPage({
             className="h-10 px-5 rounded-[16px] bg-gradient-to-br from-[#EF4444] to-[#DC2626] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-[0px_4px_14px_0px_rgba(239,68,68,0.25)] hover:opacity-90 active:scale-98 transition-all cursor-pointer"
           >
             <PhoneOff size={15} />
-            <span>Leave Meeting</span>
+            <span>{tm("leaveMeeting")}</span>
           </button>
         </div>
       </div>

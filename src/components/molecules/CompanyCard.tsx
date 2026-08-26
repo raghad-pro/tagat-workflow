@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslations } from "next-intl";
 import { Text } from "@/components/atoms/Text";
 import { Button } from "@/components/atoms/Button";
 import { Building2, Rocket, Globe2, TestTube, Briefcase, User, Hourglass } from "lucide-react";
@@ -19,13 +20,14 @@ const getCompanyIconConfig = (id: number) => {
 };
 
 export function CompanyCard({ id, name, domain, logo, status, onJoin, isLoading }: CompanyCardProps) {
+  const t = useTranslations("company");
   const isPending = status === "pending";
   const isApproved = status === "approved" || status === "active";
   const { icon: Icon, bg, color } = getCompanyIconConfig(id);
 
-  let buttonText = "Join Request";
-  if (isPending) buttonText = "Pending";
-  if (isApproved) buttonText = "Approved";
+  let buttonText = t("joinRequest");
+  if (isPending) buttonText = t("joinPending");
+  if (isApproved) buttonText = t("joinApproved");
 
   // Classes for the button
   let buttonClasses = "w-full font-medium";
@@ -53,7 +55,7 @@ export function CompanyCard({ id, name, domain, logo, status, onJoin, isLoading 
         {isPending && (
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#51D1E1] text-white border-none">
             <Hourglass size={12} />
-            <span>Pending</span>
+            <span>{t("joinPending")}</span>
           </div>
         )}
       </div>
@@ -64,7 +66,7 @@ export function CompanyCard({ id, name, domain, logo, status, onJoin, isLoading 
           {name}
         </Text>
         <Text size="sm" className="ds-text-gray-200 line-clamp-1">
-          {domain || "no-domain.com"}
+          {domain || t("noDomain")}
         </Text>
       </div>
 
