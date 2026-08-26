@@ -37,6 +37,9 @@ interface ApiResponse<T> {
   errors?: Record<string, string[]>;
 }
 
+/** How many meetings the invitation scan may probe in one pass. */
+const MY_INVITATION_SCAN_LIMIT = 8;
+
 interface PaginatedData<T> {
   data: T[];
   total: number;
@@ -124,6 +127,58 @@ export const meetingsApi = {
     return response.data;
   },
 
+  /**
+   * Every open invitation addressed to the signed-in account, across meetings.
+   *
+   * This exists because the platform has no server-side notification for a
+   * meeting invite: `POST /meetings/{id}/invitations` writes the row and stops
+   * there, so nothing ever reaches `GET /{prefix}/notifications`. Until the
+   * backend dispatches one, the bell has to go and find these itself.
+   *
+   * Two tiers, because the API surface is only partly known:
+   *   1. `GET /{prefix}/meeting-invitations` — an index route, if it exists.
+   *   2. Otherwise scan the meetings that can still be joined. Bounded by
+   *      `MY_INVITATION_SCAN_LIMIT`; the bell refetches on every open, so an
+   *      unbounded fan-out would cost a request per meeting each time.
+   *
+   * A meeting whose invitation list we may not read simply contributes nothing
+   * — `allSettled`, never a thrown error that would blank the whole bell.
+   */
+  listMyInvitations: async (role: string, userId: number) => {
+    const prefix = getRolePrefix(role);
+    const mine = (rows: unknown) =>
+      (Array.isArray(rows) ? rows : []).filter(
+        (row: any) => Number(row?.user_id) === Number(userId)
+      ) as MeetingInvitation[];
+
+    try {
+      const response = await apiClient.get<any>(`${prefix}/meeting-invitations`);
+      const rows = response?.data?.data ?? response?.data ?? response;
+      const found = mine(rows);
+      if (found.length > 0) return found;
+    } catch {
+      // No index route, or not readable for this role — fall through.
+    }
+
+    const list = await meetingsApi.getAll(role, { per_page: 25 });
+    const joinable = list.data
+      .filter((meeting) => meeting.status === "waiting" || meeting.status === "live")
+      .slice(0, MY_INVITATION_SCAN_LIMIT);
+
+    const settled = await Promise.allSettled(
+      joinable.map(async (meeting) => {
+        const rows = await meetingsApi.getInvitations(role, meeting.id);
+        // Carry the meeting along: the per-meeting route does not embed it, and
+        // the notification needs a title to show.
+        return mine(rows).map((invitation) => ({ ...invitation, meeting }));
+      })
+    );
+
+    return settled.flatMap((result) =>
+      result.status === "fulfilled" ? result.value : []
+    );
+  },
+
   respondInvitation: async (role: string, invitationId: number | string, status: InvitationStatus) => {
     const prefix = getRolePrefix(role);
     const response = await apiClient.put<ApiResponse<MeetingInvitation>>(
@@ -149,15 +204,11 @@ export const meetingsApi = {
       list = response;
     }
 
-    // `left_at` is NOT cleared by the API when someone rejoins, so a stale
-    // timestamp older than `joined_at` must not hide a participant who is back
-    // in the room. `connection_status` is the authoritative signal.
-    return list.filter((p: any) => {
-      if (p.connection_status === "disconnected") return false;
-      if (!p.left_at) return true;
-      if (!p.joined_at) return false;
-      return new Date(p.left_at).getTime() <= new Date(p.joined_at).getTime();
-    });
+    // Returned whole, on purpose. Presence is a *view* of the roster, not the
+    // roster itself: the details screen edits roles of people who have left,
+    // and the room's own panel already derives who is live from LiveKit. Narrow
+    // it at the point of use with `isActiveParticipant`.
+    return list;
   },
 
   join: async (role: string, meetingId: number | string, payload?: JoinMeetingPayload) => {

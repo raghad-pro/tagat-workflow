@@ -113,6 +113,28 @@ export interface MeetingInvitation {
   meeting?: Partial<Meeting>;
 }
 
+/**
+ * Whether a roster row is someone currently in the meeting.
+ *
+ * `left_at` is NOT cleared by the API when someone rejoins, so a stale
+ * timestamp older than `joined_at` must not count as "gone" — that is why
+ * `connection_status` is checked first and `left_at` only breaks ties.
+ *
+ * Kept separate from fetching so each screen can choose: the room shows who is
+ * live, the details screen shows the whole roster including people who have
+ * left, because their roles are still editable there.
+ */
+export function isActiveParticipant(p: {
+  connection_status?: string;
+  joined_at?: string | null;
+  left_at?: string | null;
+}): boolean {
+  if (p.connection_status === "disconnected") return false;
+  if (!p.left_at) return true;
+  if (!p.joined_at) return false;
+  return new Date(p.left_at).getTime() <= new Date(p.joined_at).getTime();
+}
+
 export interface SendInvitationPayload {
   user_id: number;
   role?: ParticipantRole;
