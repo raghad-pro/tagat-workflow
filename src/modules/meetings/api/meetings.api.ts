@@ -184,9 +184,23 @@ export const meetingsApi = {
       }
     }
 
-    const list = await meetingsApi.getAll(role, { per_page: 25 });
+    // Cast wider than the scan budget, then spend the budget on the newest
+    // joinable meetings. The page size and the budget are separate on purpose:
+    // a fresh invitation belongs to a recently created meeting, so ordering the
+    // candidates by recency puts it inside the budget, whereas taking whatever
+    // order the API returned could spend all eight slots on old ones and miss
+    // the invitation entirely.
+    const list = await meetingsApi.getAll(role, { per_page: 50 });
     const joinable = list.data
-      .filter((meeting) => meeting.status === "waiting" || meeting.status === "live")
+      .filter((meeting) => {
+        const status = String(meeting.status ?? "").toLowerCase();
+        return status === "waiting" || status === "live";
+      })
+      .sort((a, b) => {
+        const at = new Date(a.created_at ?? 0).getTime();
+        const bt = new Date(b.created_at ?? 0).getTime();
+        return bt - at || Number(b.id) - Number(a.id);
+      })
       .slice(0, MY_INVITATION_SCAN_LIMIT);
 
     const settled = await Promise.allSettled(
