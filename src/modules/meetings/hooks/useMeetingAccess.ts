@@ -32,6 +32,9 @@ export interface MeetingAccess {
   canJoin: boolean;
   reason: MeetingAccessReason;
   invitationStatus: InvitationStatus | null;
+  /** The viewer's own invitation row, when one was readable. Answering it
+   *  needs the id, and this hook has already found it. */
+  invitationId: number | null;
 }
 
 /**
@@ -66,33 +69,39 @@ export function useMeetingAccess(meetingId: number | string): MeetingAccess {
   return useMemo<MeetingAccess>(() => {
     const isLoading = loadingMeeting || loadingParticipants || loadingInvitations;
     if (isLoading || !user?.id) {
-      return { isLoading: true, canJoin: false, reason: "undetermined", invitationStatus: null };
+      return { isLoading: true, canJoin: false, reason: "undetermined", invitationStatus: null, invitationId: null };
     }
 
     const myId = Number(user.id);
 
     if (meeting?.created_by != null && Number(meeting.created_by) === myId) {
-      return { isLoading: false, canJoin: true, reason: "creator", invitationStatus: null };
+      return { isLoading: false, canJoin: true, reason: "creator", invitationStatus: null, invitationId: null };
     }
 
     const onRoster = participants.some((p: any) => Number(p.user_id) === myId);
     if (onRoster) {
-      return { isLoading: false, canJoin: true, reason: "participant", invitationStatus: null };
+      return { isLoading: false, canJoin: true, reason: "participant", invitationStatus: null, invitationId: null };
     }
 
     if (invitationsUnreadable) {
-      return { isLoading: false, canJoin: true, reason: "undetermined", invitationStatus: null };
+      return { isLoading: false, canJoin: true, reason: "undetermined", invitationStatus: null, invitationId: null };
     }
 
     const myInvitation = invitations.find((i: any) => Number(i.user_id) === myId);
     if (!myInvitation) {
-      return { isLoading: false, canJoin: false, reason: "not_invited", invitationStatus: null };
+      return { isLoading: false, canJoin: false, reason: "not_invited", invitationStatus: null, invitationId: null };
     }
 
     // A declined invitation is a decision, not a lack of one. Re-entering takes
     // a fresh invitation from the host.
     if (myInvitation.status === "declined") {
-      return { isLoading: false, canJoin: false, reason: "declined", invitationStatus: "declined" };
+      return {
+        isLoading: false,
+        canJoin: false,
+        reason: "declined",
+        invitationStatus: "declined",
+        invitationId: Number(myInvitation.id) || null,
+      };
     }
 
     return {
@@ -100,6 +109,7 @@ export function useMeetingAccess(meetingId: number | string): MeetingAccess {
       canJoin: true,
       reason: "invited",
       invitationStatus: myInvitation.status ?? null,
+      invitationId: Number(myInvitation.id) || null,
     };
   }, [
     loadingMeeting,

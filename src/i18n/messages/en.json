@@ -1863,7 +1863,12 @@
         "invitedBy": "Invited by",
         "status": "Status",
         "sent": "Sent"
-      }
+      },
+      "accept": "Accept",
+      "decline": "Decline",
+      "invitedBanner": "You have been invited to this meeting.",
+      "invitedBannerHint": "Let the host know whether to expect you.",
+      "invitationAccepted": "You accepted this invitation."
     },
     "connection": {
       "connected": "Connected",

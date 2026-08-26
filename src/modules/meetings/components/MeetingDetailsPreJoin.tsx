@@ -11,6 +11,7 @@ import {
   useStartMeeting,
   useEndMeeting,
   useSendInvitation,
+  useRespondInvitation,
   useUpdateParticipantRole
 } from "../hooks/useMeetings";
 import { 
@@ -21,6 +22,8 @@ import {
   PhoneOff,
   Play,
   Send,
+  Check,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActionModal } from "@/components/molecules/ActionModal";
@@ -57,6 +60,7 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
   const { mutate: startMeeting, isPending: isStarting } = useStartMeeting();
   const { mutate: endMeeting, isPending: isEnding } = useEndMeeting();
   const { mutate: sendInvite, isPending: isInviting } = useSendInvitation();
+  const { mutate: respondInvitation, isPending: isResponding } = useRespondInvitation();
   const { users: invitableUsers } = useInvitableUsers(meetingId);
   const { resolveCompanyName } = useCompanyNames();
   const permissions = useMeetingPermissions(meetingId);
@@ -194,6 +198,47 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
       </select>
     );
   };
+
+  /**
+   * Accept / Decline for one invitation.
+   *
+   * `useRespondInvitation` existed but had no call site anywhere in the app,
+   * and the invitations table rendered a literal em-dash in its Actions
+   * column — so an invitation could be sent but never answered. That also
+   * left `useMeetingAccess` branching on a "declined" state nothing could
+   * produce.
+   */
+  const renderInvitationAnswer = (invitationId: number, size: "sm" | "md" = "sm") => (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        disabled={isResponding}
+        onClick={() => respondInvitation({ invitationId, status: "accepted" })}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-[8px] bg-[#25C6DA] font-bold text-white",
+          "transition-colors hover:bg-[#20b2c4] cursor-pointer disabled:opacity-50",
+          size === "md" ? "px-4 py-2 text-[13px]" : "px-2.5 py-1 text-[12px]"
+        )}
+      >
+        <Check className="w-3.5 h-3.5" />
+        {t("accept")}
+      </button>
+      <button
+        type="button"
+        disabled={isResponding}
+        onClick={() => respondInvitation({ invitationId, status: "declined" })}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-[8px] border border-slate-200 font-bold",
+          "text-slate-500 transition-colors hover:border-[#EF4444] hover:text-[#EF4444]",
+          "cursor-pointer disabled:opacity-50 dark:border-slate-700 dark:text-slate-400",
+          size === "md" ? "px-4 py-2 text-[13px]" : "px-2.5 py-1 text-[12px]"
+        )}
+      >
+        <X className="w-3.5 h-3.5" />
+        {t("decline")}
+      </button>
+    </div>
+  );
 
   const handleEndMeeting = () => {
     if (window.confirm(t("endConfirm"))) {
@@ -386,6 +431,28 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
                 : t("joinHint")}
             </span>
           </div>
+
+          {/* The invitee arrives here from the bell, so the answer belongs
+              beside the Join button and not only buried in the table below. */}
+          {access.invitationStatus === "pending" && access.invitationId && (
+            <div className="flex flex-wrap items-center gap-3 rounded-[8px] border border-[#25C6DA]/30 bg-[#25C6DA]/5 px-4 py-3">
+              <div className="flex flex-col">
+                <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100">
+                  {t("invitedBanner")}
+                </span>
+                <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
+                  {t("invitedBannerHint")}
+                </span>
+              </div>
+              <div className="ms-auto">{renderInvitationAnswer(access.invitationId, "md")}</div>
+            </div>
+          )}
+
+          {access.invitationStatus === "accepted" && (
+            <span className="text-[12px] font-medium text-[#22C55E]">
+              {t("invitationAccepted")}
+            </span>
+          )}
         </div>
       </div>
 
@@ -555,7 +622,11 @@ export function MeetingDetailsPreJoin({ meetingId, onJoin }: MeetingDetailsPreJo
                       <td className="px-4 py-3 text-[13px] font-medium text-slate-500 dark:text-slate-400">
                         {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString() : "—"}
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">—</td>
+                      <td className="px-4 py-3 text-[13px] font-medium text-slate-400 dark:text-slate-500">
+                        {Number(inv.user_id) === Number(user?.id) && inv.status === "pending"
+                          ? renderInvitationAnswer(Number(inv.id))
+                          : "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

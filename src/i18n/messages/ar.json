@@ -1863,7 +1863,12 @@
         "invitedBy": "دعاه",
         "status": "الحالة",
         "sent": "أُرسلت"
-      }
+      },
+      "accept": "قبول",
+      "decline": "رفض",
+      "invitedBanner": "تمت دعوتك إلى هذا الاجتماع.",
+      "invitedBannerHint": "أخبر المضيف إن كان سيتوقّع حضورك.",
+      "invitationAccepted": "لقد قبلت هذه الدعوة."
     },
     "connection": {
       "connected": "متصل",
