@@ -11,7 +11,13 @@ import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 
 import AddTaskModal from "@/modules/tasks/components/AddTaskModal";
-import { useCreateTask } from "@/modules/tasks/hooks/useTasks";
+import EditTaskModal from "@/modules/tasks/components/EditTaskModal";
+import { ViewTaskModal } from "@/modules/tasks/components/ViewTaskModal";
+import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
+import { useActionModals } from "@/hooks/useActionModals";
+import { useCreateTask, useDeleteTask, useUpdateTask } from "@/modules/tasks/hooks/useTasks";
+import type { Task } from "@/modules/tasks/types/tasks.types";
+import { isProjectLeader } from "@/modules/projects/types/projects.types";
 
 import { useKanban, useSprintBoard, useSprintMutations } from "../hooks/useSprints";
 import { BacklogTable } from "./BacklogTable";
@@ -24,6 +30,7 @@ import {
   type CompleteSprintPayload,
   type KanbanStatus,
   type Sprint,
+  type SprintTask,
 } from "../types/sprints.types";
 
 type View = "backlog" | "board";
@@ -51,6 +58,11 @@ export default function SprintsManagementPage() {
   // edit to a task row.
   const canEdit = role !== "client" && can("tasks.update");
 
+  // Reshaping a task from the board — editing or deleting it — belongs to
+  // whoever runs the company. An employee works the board and may read a card,
+  // so their cards carry the view control alone.
+  const canManageTasks = canEdit && role !== "employee";
+
   const [view, setView] = useState<View>("backlog");
   const [projectId, setProjectId] = useState<number | null>(null);
   const [backlogPage, setBacklogPage] = useState(1);
@@ -61,6 +73,11 @@ export default function SprintsManagementPage() {
   const board = useSprintBoard(role, projectId);
   const kanban = useKanban(role, projectId);
   const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+
+  const { activeModal, selectedRow, openView, openEdit, openDelete, closeModal } =
+    useActionModals<SprintTask>();
 
   const {
     createSprint,
@@ -77,6 +94,25 @@ export default function SprintsManagementPage() {
   const selectedProject = board.data?.selected_project ?? null;
   const sprints = board.data?.sprints ?? [];
   const backlogTasks = board.data?.backlog_tasks ?? [];
+
+  const currentProject =
+    projects.find((project) => project.id === projectId) ?? selectedProject;
+
+  /**
+   * Planning the project — opening a sprint, starting or closing one, adding a
+   * task, moving one in or out of the backlog — is the lead's job. Every other
+   * member works the board: they may drag their own card between columns and
+   * nothing more. Company-side roles are unaffected.
+   */
+  const isLeader = isProjectLeader(currentProject, user?.id);
+  const canPlan = canEdit && (role !== "employee" || isLeader);
+
+  /**
+   * A member drags their own work only. The lead — and anyone planning the
+   * project — moves any card.
+   */
+  const canDragTask = (task: SprintTask) =>
+    canPlan || Number(task.assigned_to) === Number(user?.id);
 
   /**
    * The first request carries no `project_id`, so the server picks a project and
@@ -159,6 +195,40 @@ export default function SprintsManagementPage() {
     }
   };
 
+  /**
+   * The task modals are the tasks page's, and they read a task row: a project
+   * object, an employee object, a duration in text. A kanban card carries ids
+   * and minutes instead, so the card is dressed as a row before it is handed
+   * over.
+   */
+  const selectedTaskRow = useMemo<Task | null>(() => {
+    if (!selectedRow) return null;
+    const minutes = Number(selectedRow.duration ?? 0);
+    return {
+      ...selectedRow,
+      project: projects.find((project) => project.id === selectedRow.project_id) ?? undefined,
+      employee: selectedRow.assigned_user ?? undefined,
+      duration: minutes > 0 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : undefined,
+    } as unknown as Task;
+  }, [selectedRow, projects]);
+
+  /** Both views read the same tasks, so an edit or a delete refreshes both. */
+  const refreshTasks = () => {
+    void board.refetch();
+    void kanban.refetch();
+  };
+
+  const handleDeleteTask = () => {
+    if (!selectedRow) return;
+    deleteTask.mutate(selectedRow.id, {
+      onSuccess: () => {
+        closeModal();
+        refreshTasks();
+      },
+      onError: (error: unknown) => toast.error(apiMessage(error, tCommon("error"))),
+    });
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <PageContainer
@@ -176,7 +246,7 @@ export default function SprintsManagementPage() {
             <p className="mt-1 text-[13px] ds-text-gray-200">{t("pageSubtitle")}</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div data-tour="page-actions" className="flex flex-wrap items-center gap-2.5">
             {projects.length > 1 && (
               <select
                 value={projectId ?? ""}
@@ -193,6 +263,7 @@ export default function SprintsManagementPage() {
             )}
 
             <Button
+              data-tour="sprint-view-toggle"
               variant="outline"
               size="md"
               onClick={() => setView(view === "board" ? "backlog" : "board")}
@@ -201,7 +272,7 @@ export default function SprintsManagementPage() {
               {view === "board" ? t("backlogView") : t("kanbanBoard")}
             </Button>
 
-            {canEdit && (
+            {canPlan && (
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(true)}
@@ -212,7 +283,7 @@ export default function SprintsManagementPage() {
               </button>
             )}
 
-            {canEdit && (
+            {canPlan && (
               <Button
                 variant="solid"
                 size="md"
@@ -236,6 +307,11 @@ export default function SprintsManagementPage() {
             tasks={kanban.data?.tasks ?? []}
             onStatusChange={handleStatusChange}
             canEdit={canEdit}
+            canDragTask={canDragTask}
+            onViewTask={openView}
+            onEditTask={openEdit}
+            onDeleteTask={openDelete}
+            canManageTasks={canManageTasks}
           />
         ) : (
           <>
@@ -254,7 +330,7 @@ export default function SprintsManagementPage() {
                     hasActiveSprint={hasActiveSprint}
                     onStart={handleStartSprint}
                     onComplete={setSprintToComplete}
-                    canEdit={canEdit}
+                    canEdit={canPlan}
                     isBusy={isStartingSprint || isCompletingSprint}
                   />
                 ))}
@@ -267,7 +343,7 @@ export default function SprintsManagementPage() {
               sprints={sprints}
               onMoveToSprint={handleMoveTask}
               onAddTask={() => setIsAddTaskOpen(true)}
-              canEdit={canEdit}
+              canEdit={canPlan}
               page={backlogPage}
               pageSize={BACKLOG_PAGE_SIZE}
               onPageChange={setBacklogPage}
@@ -333,6 +409,69 @@ export default function SprintsManagementPage() {
             }
           );
         }}
+      />
+      {/* ── Card actions ──────────────────────────────────────────────────── */}
+      <ViewTaskModal
+        isOpen={activeModal === "view"}
+        onClose={closeModal}
+        data={selectedTaskRow}
+      />
+
+      <EditTaskModal
+        isOpen={activeModal === "edit"}
+        onClose={closeModal}
+        data={selectedTaskRow}
+        isLoading={updateTask.isPending}
+        onUpdate={(id, values, setError) => {
+          const payload: Record<string, unknown> = {
+            project_id: values.project,
+            assigned_to: values.employee,
+            title: values.title,
+            description: values.notes,
+            // "todo" and not "pending": the kanban's validator accepts only the
+            // four board statuses.
+            status: values.status || "todo",
+            task_date: selectedRow?.task_date ?? new Date().toISOString().split("T")[0],
+            start_time: values.start,
+            end_time: values.end,
+            sprint_id: values.sprint ? Number(values.sprint) : null,
+          };
+          if (values.priority) payload.priority = values.priority;
+          if (values.storyPoints !== undefined && values.storyPoints !== "") {
+            payload.story_points = Number(values.storyPoints);
+          }
+
+          updateTask.mutate(
+            { id, data: payload },
+            {
+              onSuccess: () => {
+                closeModal();
+                refreshTasks();
+              },
+              onError: (error: unknown) => {
+                toast.error(apiMessage(error, tCommon("error")));
+                const fields = (error as {
+                  response?: { data?: { errors?: Record<string, string[]> } };
+                })?.response?.data?.errors;
+                for (const [field, messages] of Object.entries(fields ?? {})) {
+                  const mapped =
+                    { assigned_to: "employee", project_id: "project", sprint_id: "sprint" }[field] ??
+                    field;
+                  setError(mapped, { type: "server", message: messages[0] });
+                }
+              },
+            }
+          );
+        }}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={activeModal === "delete"}
+        onClose={closeModal}
+        title={tCommon("delete")}
+        itemName={selectedRow?.title}
+        isLoading={deleteTask.isPending}
+        onConfirm={handleDeleteTask}
       />
     </PageContainer>
   );

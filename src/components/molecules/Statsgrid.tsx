@@ -26,7 +26,7 @@ const COLS_MAP = {
 
 export function StatsGrid({ stats, cols = 4 }: StatsGridProps) {
   return (
-    <div className={`grid ${COLS_MAP[cols]} gap-4 mb-6`}>
+    <div data-tour="stats" className={`grid ${COLS_MAP[cols]} gap-4 mb-6`}>
       {stats.map((stat, i) => (
         <StatCard key={i} {...stat} />
       ))}

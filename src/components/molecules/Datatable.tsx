@@ -385,7 +385,7 @@ export function DataTable<T extends { id: number | string }>({
   }, [props.data, pagination]);
 
   return (
-    <div className="flex flex-col w-full">
+    <div data-tour="table" className="flex flex-col w-full">
       <DesktopTable {...props} data={displayData} />
       <MobileCards {...props} data={displayData} />
       {pagination && (pagination.totalItems > pagination.pageSize || pagination.currentPage > 1) && (

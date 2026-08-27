@@ -32,6 +32,7 @@ export function HubGrid() {
         hidden: {},
         visible: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
       }}
+      data-tour="hubs"
       className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
     >
       {hubs.map((hub) => {

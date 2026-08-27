@@ -298,7 +298,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Eye, Edit2, Trash2, Folder, Clock, CheckSquare } from "lucide-react";
+import { Plus, Eye, Edit2, Trash2, Folder, Clock, CheckSquare, Crown } from "lucide-react";
 import { PageHeader } from "@/components/molecules/Pageheader";
 import { StatsGrid } from "@/components/molecules/Statsgrid";
 import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
@@ -316,7 +316,7 @@ import {
 } from "../hooks/useProjects";
 import { useQueryClient } from "@tanstack/react-query";
 import { DUMMY_STATS } from "../data/mockData";
-import { Project } from "../types/projects.types";
+import { Project, leaderIdOf, memberUserIdOf } from "../types/projects.types";
 import { useActionModals } from "@/hooks/useActionModals";
 import { DeleteConfirmationModal } from "@/components/molecules/DeleteConfirmationModal";
 import { ViewProjectModal } from "./ViewProjectModal";
@@ -425,21 +425,54 @@ export function ProjectsManagementPage() {
             return String(e);
           };
 
-          let empList = "-";
-          if (Array.isArray(row.employees) && row.employees.length > 0) {
-            empList = row.employees.map(resolveEmp).join(", ");
-          } else if (Array.isArray(row.users) && row.users.length > 0) {
-            empList = row.users.map(resolveEmp).join(", ");
-          } else if (
-            typeof row.employees === "string" &&
-            row.employees.trim() !== ""
-          ) {
-            empList = row.employees;
-          } else if (typeof row.employees === "number") {
-            empList = String(row.employees);
+          const members: any[] = Array.isArray(row.employees) && row.employees.length > 0
+            ? row.employees
+            : Array.isArray(row.users)
+              ? row.users
+              : [];
+
+          // Nothing to mark up: the row carries a count or a pre-joined string.
+          if (members.length === 0) {
+            const fallback =
+              typeof row.employees === "string" && row.employees.trim() !== ""
+                ? row.employees
+                : typeof row.employees === "number"
+                  ? String(row.employees)
+                  : "-";
+            return <Text size="sm" color="gray-200">{fallback}</Text>;
           }
 
-          return <Text size="sm" color="gray-200">{empList}</Text>;
+          const leaderId = leaderIdOf(row);
+          // The lead reads first and in the brand colour; the rest of the team
+          // stays muted, so the one member who may plan the project is visible
+          // at a glance.
+          const ordered = [...members].sort((a, b) => {
+            const aLead = Number(memberUserIdOf(a)) === leaderId ? 0 : 1;
+            const bLead = Number(memberUserIdOf(b)) === leaderId ? 0 : 1;
+            return aLead - bLead;
+          });
+
+          return (
+            <div className="flex flex-wrap items-center gap-1">
+              {ordered.map((member, index) => {
+                const isLeader = Number(memberUserIdOf(member)) === leaderId;
+                return (
+                  <span
+                    key={`${memberUserIdOf(member) || index}`}
+                    title={isLeader ? t("labels.leader") : undefined}
+                    className={
+                      isLeader
+                        ? "inline-flex items-center gap-1 rounded-md bg-[var(--color-bg-primary-200)] px-2 py-0.5 text-[12px] font-bold text-[var(--color-text-brand)]"
+                        : "inline-flex items-center rounded-md px-2 py-0.5 text-[12px] ds-text-gray-200"
+                    }
+                  >
+                    {isLeader && <Crown size={12} />}
+                    {resolveEmp(member)}
+                  </span>
+                );
+              })}
+            </div>
+          );
         },
       },
       {

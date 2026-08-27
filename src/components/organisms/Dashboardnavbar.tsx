@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import ThemeButton from "@/components/atoms/ThemeButton";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLogout } from "@/modules/auth/hooks/useLogout";
-import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check, MessageSquare, Users, Video } from "lucide-react";
+import { Settings, Bell, User, LogOut, FileText, UsersRound, Clock, CheckCircle2, Check, MessageSquare, Users, Video, Compass } from "lucide-react";
 import { meetingsApi } from "@/modules/meetings/api/meetings.api";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -15,6 +15,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import apiClient from "@/services/apiClient";
 import { getRolePrefix } from "@/utils/rolePrefix";
 import LanguageSwitcher from "@/components/atoms/languageSwitcher";
+import { RESTART_EVENT } from "@/modules/onboarding/OnboardingGate";
+import { resetOnboarding } from "@/modules/onboarding/storage";
 import { useConversations } from "@/modules/conversations/hooks/useConversations";
 import type { Conversation } from "@/modules/conversations/types/conversations.types";
 import {
@@ -79,7 +81,9 @@ const URGENT_TOAST_MS = 14000;
 /** Trim the stored set; without a cap it grows for the life of the browser. */
 const MAX_SEEN_IDS = 200;
 /** How often to look for new items while the tab stays open. */
-const NOTIFICATION_POLL_MS = 120_000;
+// Invitations are the only way an employee can enter a private meeting, so do
+// not leave them waiting up to two minutes for the next check.
+const NOTIFICATION_POLL_MS = 30_000;
 
 /**
  * Endpoints that answered 404 in this session, so the bell stops asking.
@@ -136,6 +140,8 @@ function NotificationsDropdown() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [meetingInvitation, setMeetingInvitation] = useState<any | null>(null);
+  const [isAnsweringInvitation, setIsAnsweringInvitation] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   // Persisted across reloads: a refresh must not re-announce what the user has
   // already been shown.
@@ -222,6 +228,8 @@ function NotificationsDropdown() {
             // Wins its toast slot against routine items — see `announceNew`.
             urgent: true,
             href: `/meetings/${meetingId}`,
+            invitationId: inv.id,
+            meetingId,
           });
         });
       }
@@ -309,6 +317,13 @@ function NotificationsDropdown() {
       
       setNotifications(items);
       setUnreadCount(items.filter((i) => i.isUnread).length);
+      // An invitation stays actionable until the employee answers it. Do not
+      // hide an older pending invitation just because an earlier version of
+      // the navbar had already marked its notification as seen locally.
+      const pendingMeetingInvitation = items.find(
+        (item) => item.urgent && item.invitationId && item.isUnread
+      );
+      if (pendingMeetingInvitation) setMeetingInvitation(pendingMeetingInvitation);
       announceNew(items);
     } catch {
       // Graceful fallback
@@ -384,6 +399,30 @@ function NotificationsDropdown() {
     });
   };
 
+  const answerMeetingInvitation = async (status: "accepted" | "declined") => {
+    if (!meetingInvitation?.invitationId || isAnsweringInvitation) return;
+
+    setIsAnsweringInvitation(true);
+    try {
+      await meetingsApi.respondInvitation(role, meetingInvitation.invitationId, status);
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === meetingInvitation.id ? { ...item, isUnread: false } : item
+        )
+      );
+      setUnreadCount((current) => Math.max(0, current - 1));
+      const accepted = status === "accepted";
+      toast.success(accepted ? (isAr ? "تم قبول دعوة الاجتماع" : "Meeting invitation accepted") : (isAr ? "تم رفض دعوة الاجتماع" : "Meeting invitation declined"));
+      const meetingId = meetingInvitation.meetingId;
+      setMeetingInvitation(null);
+      if (accepted && meetingId) router.push(`/meetings/${meetingId}`);
+    } catch (error: any) {
+      toast.error(error?.message || (isAr ? "تعذر تحديث الدعوة" : "Unable to update the invitation"));
+    } finally {
+      setIsAnsweringInvitation(false);
+    }
+  };
+
   useEffect(() => {
     fetchLiveNotifications();
     // `user?.id` matters on its own: `role` falls back to "super_admin" before
@@ -394,8 +433,8 @@ function NotificationsDropdown() {
 
   // A toast that only ever fires on mount is not a toast — the navbar survives
   // client-side navigation, so without this the user would have to reload to
-  // learn about an invitation. Two minutes keeps it responsive; the fetch fans
-  // out over several endpoints, so a tighter loop is not worth the traffic.
+  // learn about an invitation. Thirty seconds keeps the invite flow responsive
+  // while still avoiding a request on every navigation event.
   useEffect(() => {
     if (!user?.id) return;
     const timer = setInterval(fetchLiveNotifications, NOTIFICATION_POLL_MS);
@@ -526,6 +565,49 @@ function NotificationsDropdown() {
           </div>
         </div>
       )}
+
+      {meetingInvitation && (
+        <div
+          className="fixed inset-0 z-[70] flex items-start justify-center bg-slate-950/35 p-4 pt-20 sm:items-center sm:pt-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="meeting-invitation-title"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#25C6DA]/25 bg-white p-5 shadow-2xl dark:bg-[#101821]" dir={isAr ? "rtl" : "ltr"}>
+            <div className="flex items-start gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#25C6DA]/10 text-[#25C6DA]">
+                <Video size={21} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 id="meeting-invitation-title" className="text-base font-bold text-slate-900 dark:text-white">
+                  {isAr ? "دعوة لاجتماع" : "Meeting invitation"}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  {meetingInvitation.description}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => answerMeetingInvitation("declined")}
+                disabled={isAnsweringInvitation}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                {isAr ? "رفض" : "Decline"}
+              </button>
+              <button
+                type="button"
+                onClick={() => answerMeetingInvitation("accepted")}
+                disabled={isAnsweringInvitation}
+                className="rounded-lg bg-[#25C6DA] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#20b2c4] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAnsweringInvitation ? (isAr ? "جارٍ الحفظ..." : "Saving...") : (isAr ? "قبول" : "Accept")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -627,6 +709,22 @@ function UserDropdown() {
               <User size={17} className="text-slate-400 shrink-0" />
               <span>{isAr ? "الملف الشخصي" : "Profile"}</span>
             </Link>
+
+            {/* The guided tour runs itself once per account. This is the way
+                back to it — clearing the record and asking the gate to look
+                again, so it starts on the page they are already on. */}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                resetOnboarding(user?.id);
+                window.dispatchEvent(new Event(RESTART_EVENT));
+              }}
+              className="w-full flex items-center gap-3 px-5 py-3 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#121a24] transition-colors cursor-pointer"
+            >
+              <Compass size={17} className="text-slate-400 shrink-0" />
+              <span>{isAr ? "إعادة الجولة التعريفية" : "Replay the guide"}</span>
+            </button>
           </div>
 
           {/* Logout */}
@@ -868,7 +966,7 @@ export default function DashboardNavbar() {
       </div>
 
       {/* Right Actions (Notifications, Conversations, Theme, User Profile) */}
-      <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+      <div data-tour="navbar-actions" className="flex items-center gap-1 sm:gap-2.5 shrink-0">
 
         {/* Language Switcher */}
         <LanguageSwitcher />

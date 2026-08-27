@@ -79,6 +79,7 @@ export function BacklogTable({
 
   return (
     <div
+      data-tour="table"
       className="rounded-2xl ds-bg-form overflow-hidden"
       style={{ boxShadow: "var(--shadow-sm)" }}
     >
