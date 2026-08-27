@@ -47,9 +47,6 @@ const invitationIndexMissing = new Set<string>();
  *  Without this a client fires eight guaranteed 404s on every bell poll. */
 const invitationListMissing = new Set<string>();
 
-/** How many meetings the invitation scan may probe in one pass. */
-const MY_INVITATION_SCAN_LIMIT = 8;
-
 interface PaginatedData<T> {
   data: T[];
   total: number;
@@ -191,9 +188,7 @@ export const meetingsApi = {
    * this scans must already include the one the invitee was invited to — if
    * the API scopes `/{prefix}/meetings` to meetings the caller has *joined*,
    * an invitation is undiscoverable and the backend has to grow the index
-   * route. Bounded by `MY_INVITATION_SCAN_LIMIT`; the bell refetches on a
-   * timer, so an unbounded fan-out would cost a request per meeting each
-   * time.
+   * route.
    *
    * The index is still attempted once per session, so the day it ships this
    * picks it up with no change here — but only once, because a 404 on every
@@ -222,27 +217,20 @@ export const meetingsApi = {
       }
     }
 
-    // Cast wider than the scan budget, then spend the budget on the newest
-    // joinable meetings. The page size and the budget are separate on purpose:
-    // a fresh invitation belongs to a recently created meeting, so ordering the
-    // candidates by recency puts it inside the budget, whereas taking whatever
-    // order the API returned could spend all eight slots on old ones and miss
-    // the invitation entirely.
-    const list = await meetingsApi.getAll(role, { per_page: 50 });
-    const joinable = list.data
-      .filter((meeting) => {
-        const status = String(meeting.status ?? "").toLowerCase();
-        return status === "waiting" || status === "live";
-      })
-      .sort((a, b) => {
-        const at = new Date(a.created_at ?? 0).getTime();
-        const bt = new Date(b.created_at ?? 0).getTime();
-        return bt - at || Number(b.id) - Number(a.id);
-      })
-      .slice(0, MY_INVITATION_SCAN_LIMIT);
+    // Do not cap this to the newest handful of meetings. Inviting somebody to
+    // an older scheduled meeting is valid, and a cap made that invitation
+    // permanently invisible to the employee. Read every page the API exposes.
+    const firstPage = await meetingsApi.getAll(role, { page: 1, per_page: 50 });
+    const pageCount = Math.max(1, Number(firstPage.last_page) || 1);
+    const remainingPages = await Promise.all(
+      Array.from({ length: pageCount - 1 }, (_, index) =>
+        meetingsApi.getAll(role, { page: index + 2, per_page: 50 })
+      )
+    );
+    const meetings = [firstPage, ...remainingPages].flatMap((page) => page.data);
 
     const settled = await Promise.allSettled(
-      joinable.map(async (meeting) => {
+      meetings.map(async (meeting) => {
         const rows = await meetingsApi.getInvitations(role, meeting.id);
         // Carry the meeting along: the per-meeting route does not embed it, and
         // the notification needs a title to show.
