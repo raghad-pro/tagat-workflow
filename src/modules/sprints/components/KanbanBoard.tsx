@@ -40,6 +40,16 @@ interface KanbanBoardProps {
   tasks: SprintTask[];
   onStatusChange: (taskId: number, status: KanbanStatus) => void;
   canEdit: boolean;
+  /**
+   * Per-card drag permission. A project member may only move their own work,
+   * while the lead moves any card. Omitted means every card is draggable.
+   */
+  canDragTask?: (task: SprintTask) => boolean;
+  onViewTask?: (task: SprintTask) => void;
+  onEditTask?: (task: SprintTask) => void;
+  onDeleteTask?: (task: SprintTask) => void;
+  /** Off for an employee: their cards carry the view control alone. */
+  canManageTasks?: boolean;
 }
 
 export function KanbanBoard({
@@ -47,6 +57,11 @@ export function KanbanBoard({
   tasks,
   onStatusChange,
   canEdit,
+  canDragTask,
+  onViewTask,
+  onEditTask,
+  onDeleteTask,
+  canManageTasks,
 }: KanbanBoardProps) {
   const t = useTranslations("sprint");
   const [draggingTask, setDraggingTask] = useState<SprintTask | null>(null);
@@ -178,7 +193,16 @@ export function KanbanBoard({
                     </p>
                   ) : (
                     columnTasks.map((task) => (
-                      <SprintTaskCard key={task.id} task={task} disabled={!canEdit} />
+                      <SprintTaskCard
+                        key={task.id}
+                        task={task}
+                        disabled={!canEdit || !(canDragTask?.(task) ?? true)}
+                        onClick={onViewTask}
+                        onView={onViewTask}
+                        onEdit={onEditTask}
+                        onDelete={onDeleteTask}
+                        canManage={canManageTasks}
+                      />
                     ))
                   )}
                 </div>

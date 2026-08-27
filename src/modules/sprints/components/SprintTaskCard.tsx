@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Clock, GripVertical } from "lucide-react";
+import { Clock, Edit2, Eye, GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { boardStatusOf, storyPointsOf, type SprintTask } from "../types/sprints.types";
 
@@ -30,10 +30,28 @@ interface SprintTaskCardProps {
   isOverlay?: boolean;
   onClick?: (task: SprintTask) => void;
   disabled?: boolean;
+  onView?: (task: SprintTask) => void;
+  onEdit?: (task: SprintTask) => void;
+  onDelete?: (task: SprintTask) => void;
+  /**
+   * Whether the viewer may reshape the task. Off for an employee, who gets the
+   * view control alone.
+   */
+  canManage?: boolean;
 }
 
-export function SprintTaskCard({ task, isOverlay, onClick, disabled }: SprintTaskCardProps) {
+export function SprintTaskCard({
+  task,
+  isOverlay,
+  onClick,
+  disabled,
+  onView,
+  onEdit,
+  onDelete,
+  canManage,
+}: SprintTaskCardProps) {
   const t = useTranslations("sprint");
+  const tCommon = useTranslations("common");
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `task-${task.id}`,
     data: { type: "task", task },
@@ -126,6 +144,65 @@ export function SprintTaskCard({ task, isOverlay, onClick, disabled }: SprintTas
           )}
         </div>
       </div>
+
+      {/* Row actions. The drag overlay is a copy of the card following the
+          cursor, so it carries no controls. */}
+      {!isOverlay && (onView || (canManage && (onEdit || onDelete))) && (
+        <div className="flex items-center justify-end gap-1 ps-6">
+          {onView && (
+            <CardAction
+              icon={Eye}
+              label={tCommon("view")}
+              scheme="ds-action-send"
+              onClick={() => onView(task)}
+            />
+          )}
+          {canManage && onEdit && (
+            <CardAction
+              icon={Edit2}
+              label={tCommon("edit")}
+              scheme="ds-action-edit"
+              onClick={() => onEdit(task)}
+            />
+          )}
+          {canManage && onDelete && (
+            <CardAction
+              icon={Trash2}
+              label={tCommon("delete")}
+              scheme="ds-action-delete"
+              onClick={() => onDelete(task)}
+            />
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/** One icon button on a card, styled like the table's row actions. */
+function CardAction({
+  icon: Icon,
+  label,
+  scheme,
+  onClick,
+}: {
+  icon: typeof Eye;
+  label: string;
+  scheme: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      className={cn(
+        "flex h-7 w-7 items-center justify-center rounded-lg transition-all hover:opacity-80 focus:outline-none",
+        scheme
+      )}
+    >
+      <Icon size={14} strokeWidth={2} />
+    </button>
   );
 }

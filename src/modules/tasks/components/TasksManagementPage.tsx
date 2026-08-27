@@ -23,6 +23,8 @@ import {
   useTasksData,
 } from "../hooks/useTasks";
 import { useEmployees } from "@/modules/employees/hooks/useEmployees";
+import { useProjects } from "@/modules/projects/hooks/useProjects";
+import { isProjectLeader } from "@/modules/projects/types/projects.types";
 import AddTaskModal from "./AddTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import { ViewTaskModal } from "./ViewTaskModal";
@@ -120,6 +122,19 @@ export function TasksManagementPage() {
   const tCommon = useTranslations("common");
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
+  const isEmployee = user?.role === "employee";
+
+  /**
+   * Adding work is the project lead's job: a plain member only moves the tasks
+   * already assigned to them. An employee therefore gets the add button only
+   * while they lead a project — the same list the dialog offers them.
+   */
+  const { data: projectsResponse } = useProjects({ page: 1, per_page: 1000 });
+  const allProjects = projectsResponse?.data?.data ?? projectsResponse?.data ?? [];
+  const leadsAProject = allProjects.some((project: any) =>
+    isProjectLeader(project, user?.id)
+  );
+  const canAddTask = !isEmployee || leadsAProject;
 
   const [search, setSearch]       = useState("");
   const [currentPage, setPage]    = useState(1);
@@ -326,12 +341,12 @@ export function TasksManagementPage() {
       <PageHeader
         title={t("title")}
         subtitle={t("subtitle")}
-        actions={[{
+        actions={canAddTask ? [{
           label:   t("addTask"),
           icon:    Plus,
           onClick: () => setIsModalOpen(true),
           variant: "solid",
-        }]}
+        }] : []}
       />
 
       <StatsGrid stats={statItems} cols={3} />

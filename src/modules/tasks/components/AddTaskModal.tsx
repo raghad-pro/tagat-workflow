@@ -13,6 +13,7 @@ import { useCompanies } from "@/modules/companies/hooks/useCompanies";
 import { useProjectEmployees } from "../hooks/useTasks";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { useSprintsByProject } from "@/modules/sprints/hooks/useSprints";
+import { isProjectLeader } from "@/modules/projects/types/projects.types";
 import { useTranslations } from "next-intl";
 
 const getTaskSchema = (t: any, tCommon: any, isSuperAdmin: boolean, isEmployee: boolean) =>
@@ -142,17 +143,9 @@ export default function AddTaskModal({
     : (isEmployee ? allProjects : []);
 
   if (isEmployee) {
-    const empId = user?.id?.toString();
-    rawProjects = rawProjects.filter((p: any) => {
-      const users = p.users || p.employees || [];
-      // If the backend already filtered it, this is just a safe guard
-      if (users.length === 0) return true; // assuming if no users array, backend handled it
-      return users.some((u: any) => 
-        u?.id?.toString() === empId || 
-        u?.user_id?.toString() === empId ||
-        (u?.user && u.user?.id?.toString() === empId)
-      );
-    });
+    // Only the lead of a project may add work to it — membership alone is not
+    // enough, so the picker offers the projects this employee leads.
+    rawProjects = rawProjects.filter((p: any) => isProjectLeader(p, user?.id));
   }
 
   let projectOptions = rawProjects.map((p: any) => ({

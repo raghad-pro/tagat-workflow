@@ -8,6 +8,7 @@ import {
   useMeetingParticipants,
   useMeetingInvitations,
 } from "./useMeetings";
+import { invitationUserId } from "../types/meetings.types";
 
 export interface InvitableUser {
   userId: number;
@@ -44,7 +45,10 @@ export function useInvitableUsers(meetingId: number | string) {
 
     const taken = new Set<number>([
       ...participants.map((p: any) => Number(p.user_id)),
-      ...invitations.map((i: any) => Number(i.user_id)),
+      ...invitations.flatMap((i: any) => {
+        const id = invitationUserId(i);
+        return id === null ? [] : [id];
+      }),
     ]);
 
     const seen = new Set<number>();

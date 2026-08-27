@@ -14,9 +14,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { findHubForPath, isItemActive, type Role } from "@/config/navigation";
+import { findHubForPath, isItemActive } from "@/config/navigation";
 import { useVisibleHubs, useHubLabel } from "@/hooks/useNavigation";
-import { useAuth } from "@/providers/AuthProvider";
 import { cn } from "@/lib/utils";
 
 /** The one easing the whole sidebar moves on — a soft, decelerating settle. */
@@ -29,23 +28,12 @@ const EXPAND_TRANSITION = {
 } as const;
 
 /**
- * Roles whose navigation is short enough to show whole.
- *
- * An employee or a client reaches a handful of pages across two or three hubs.
- * Folding those away costs them a click per section and buys back nothing —
- * the column has room to spare — so they get every section open at once. An
- * admin or a company manager can see all six hubs and twenty-odd pages, which
- * only fits as an accordion.
- */
-const EXPANDED_ROLES: readonly Role[] = ["employee", "client"];
-
-/**
  * Six named hubs, each expanding its pages in place underneath it.
  *
  * The pages used to live in a popover floating beside the column. They now
  * unfold inside it, height animated from 0 to natural height so the rows below
- * slide down rather than jump. How many may be open at once depends on how
- * long the account's list is — see `EXPANDED_ROLES`.
+ * slide down rather than jump. Sections are independent, so opening one never
+ * closes another.
  *
  * `collapsible="icon"` drops the names, leaving the six icons as a rail. There
  * is no room to unfold anything at 56px, so a hub tapped from the rail opens
@@ -57,12 +45,9 @@ export function AppSidebar() {
   const locale = useLocale();
   const isAr = locale === "ar";
   const { setOpen, setOpenMobile, isMobile, state } = useSidebar();
-  const { user } = useAuth();
-
   const hubs = useVisibleHubs();
   const hubLabel = useHubLabel();
 
-  const expandAll = EXPANDED_ROLES.includes(user?.role as Role);
   const routeHub = findHubForPath(pathname, hubs);
   const [openHubKeys, setOpenHubKeys] = useState<string[]>([]);
 
@@ -76,25 +61,21 @@ export function AppSidebar() {
   const hubKeys = hubs.map((hub) => hub.key).join(",");
   useEffect(() => {
     if (!hubKeys) return;
-    setOpenHubKeys(expandAll ? hubKeys.split(",") : routeHub ? [routeHub.key] : []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hubKeys, expandAll]);
+    setOpenHubKeys(routeHub ? [routeHub.key] : []);
+  }, [hubKeys]);
 
   // Unlike the popover — a transient surface that closed the moment it had
   // taken you somewhere — an open section is where you are. Landing in a hub
-  // brings it forward: for the folded roles that swaps sections, for the
-  // expanded ones it only makes sure the new one is not shut.
+  // makes sure its section is visible without closing other open sections.
   useEffect(() => {
     if (!routeHub) return;
     setOpenHubKeys((current) => {
-      if (!expandAll) return [routeHub.key];
       return current.includes(routeHub.key) ? current : [...current, routeHub.key];
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeHub?.key, expandAll]);
+  }, [routeHub?.key]);
 
   const openHub = (current: string[], hubKey: string) =>
-    expandAll ? [...current, hubKey] : [hubKey];
+    [...current, hubKey];
 
   const handleHubClick = (hubKey: string) => {
     if (isCollapsed) {

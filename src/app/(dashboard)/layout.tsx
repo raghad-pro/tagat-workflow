@@ -6,6 +6,7 @@ import DashboardNavbar from "@/components/organisms/Dashboardnavbar";
 
 
 import RouteGuard from "@/guards/RouteGuard";
+import { OnboardingGate } from "@/modules/onboarding/OnboardingGate";
 
 export default function DashboardLayout({
   children,
@@ -35,6 +36,9 @@ export default function DashboardLayout({
             <main className="flex-1 overflow-y-auto p-2 sm:p-6 relative z-10">
               <RouteGuard>{children}</RouteGuard>
             </main>
+            {/* Sits outside `main` on purpose: it portals to the body and
+                points at the sidebar and the bar as well as the page. */}
+            <OnboardingGate />
           </SidebarInset>
         </SidebarProvider>
       </TooltipProvider>

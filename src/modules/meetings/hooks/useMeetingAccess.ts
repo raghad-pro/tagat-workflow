@@ -7,6 +7,7 @@ import {
   useMeetingParticipants,
   useMeetingInvitations,
 } from "./useMeetings";
+import { invitationUserId } from "../types/meetings.types";
 import type { InvitationStatus } from "../types/meetings.types";
 
 export type MeetingAccessReason =
@@ -14,8 +15,10 @@ export type MeetingAccessReason =
   | "creator"
   /** Already on the roster, so they were admitted at some point. */
   | "participant"
-  /** Holds an invitation that has not been declined. */
+  /** Holds an invitation they have accepted. */
   | "invited"
+  /** Invited, but has not answered yet — accepting is what opens the room. */
+  | "pending"
   /** Was invited and turned it down. */
   | "declined"
   /** Proven absent from the invitation list. */
@@ -32,13 +35,20 @@ export interface MeetingAccess {
   canJoin: boolean;
   reason: MeetingAccessReason;
   invitationStatus: InvitationStatus | null;
+  /** The viewer's own invitation row, when one was readable. Answering it
+   *  needs the id, and this hook has already found it. */
+  invitationId: number | null;
 }
 
 /**
  * Decides whether the current account may enter a meeting room.
  *
- * The rule is "invitation only": the creator and anyone already on the roster
- * get in, everyone else needs an invitation that they have not declined.
+ * The rule is "invitation only, and answered": the creator and anyone already
+ * on the roster get in, everyone else needs an invitation they have
+ * **accepted**. An unanswered one is not a yes — it is the question — so it
+ * holds the door and offers Accept instead of Join. That is also what makes
+ * the host's invitations table mean anything: without it, "pending" would
+ * describe people who had already walked in.
  *
  * This is a **UI gate, not the security boundary.** The browser can always
  * `POST /meetings/{id}/media/join` directly, so the server has to enforce the
@@ -66,33 +76,56 @@ export function useMeetingAccess(meetingId: number | string): MeetingAccess {
   return useMemo<MeetingAccess>(() => {
     const isLoading = loadingMeeting || loadingParticipants || loadingInvitations;
     if (isLoading || !user?.id) {
-      return { isLoading: true, canJoin: false, reason: "undetermined", invitationStatus: null };
+      return { isLoading: true, canJoin: false, reason: "undetermined", invitationStatus: null, invitationId: null };
     }
 
     const myId = Number(user.id);
 
     if (meeting?.created_by != null && Number(meeting.created_by) === myId) {
-      return { isLoading: false, canJoin: true, reason: "creator", invitationStatus: null };
+      return { isLoading: false, canJoin: true, reason: "creator", invitationStatus: null, invitationId: null };
     }
 
     const onRoster = participants.some((p: any) => Number(p.user_id) === myId);
     if (onRoster) {
-      return { isLoading: false, canJoin: true, reason: "participant", invitationStatus: null };
+      return { isLoading: false, canJoin: true, reason: "participant", invitationStatus: null, invitationId: null };
     }
 
     if (invitationsUnreadable) {
-      return { isLoading: false, canJoin: true, reason: "undetermined", invitationStatus: null };
+      return { isLoading: false, canJoin: true, reason: "undetermined", invitationStatus: null, invitationId: null };
     }
 
-    const myInvitation = invitations.find((i: any) => Number(i.user_id) === myId);
+    const myInvitation = invitations.find((i: any) => invitationUserId(i) === myId);
     if (!myInvitation) {
-      return { isLoading: false, canJoin: false, reason: "not_invited", invitationStatus: null };
+      return { isLoading: false, canJoin: false, reason: "not_invited", invitationStatus: null, invitationId: null };
     }
 
     // A declined invitation is a decision, not a lack of one. Re-entering takes
     // a fresh invitation from the host.
     if (myInvitation.status === "declined") {
-      return { isLoading: false, canJoin: false, reason: "declined", invitationStatus: "declined" };
+      return {
+        isLoading: false,
+        canJoin: false,
+        reason: "declined",
+        invitationStatus: "declined",
+        invitationId: Number(myInvitation.id) || null,
+      };
+    }
+
+    const invitationId = Number(myInvitation.id) || null;
+
+    // Anything not yet answered holds the door. Read as "not accepted" rather
+    // than matching the literal "pending", so a row that omits the field or
+    // spells it differently is treated as unanswered — the safe direction,
+    // since the worst case is one extra click on a button that is right there.
+    const answered = String(myInvitation.status ?? "").toLowerCase() === "accepted";
+    if (!answered) {
+      return {
+        isLoading: false,
+        canJoin: false,
+        reason: "pending",
+        invitationStatus: myInvitation.status ?? null,
+        invitationId,
+      };
     }
 
     return {
@@ -100,6 +133,7 @@ export function useMeetingAccess(meetingId: number | string): MeetingAccess {
       canJoin: true,
       reason: "invited",
       invitationStatus: myInvitation.status ?? null,
+      invitationId,
     };
   }, [
     loadingMeeting,

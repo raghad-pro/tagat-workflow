@@ -470,8 +470,10 @@
     },
     "viewTaskTitle": "Task Details",
     "statusOptions": {
+      "todo": "To Do",
       "pending": "Pending",
       "in_progress": "In Progress",
+      "in_review": "In Review",
       "completed": "Completed",
       "on_hold": "On Hold"
     },
@@ -681,7 +683,8 @@
       "createFailed": "Could not create the role",
       "updateFailed": "Could not update the role",
       "deleteFailed": "Could not delete the role"
-    }
+    },
+    "permissionCount": "{count, plural, =0 {no permissions} one {# permission} other {# permissions}}"
   },
   "companyRequest": {
     "title": "Join Requests",
@@ -1762,7 +1765,10 @@
       "declinedBody": "You turned down the invitation to this meeting. Ask the host to invite you again if you need to join.",
       "notInvitedTitle": "You have not been invited",
       "notInvitedBody": "This meeting is open to invited people only. Ask the host to send you an invitation, then reload this page.",
-      "backToMeetings": "Back to Meetings"
+      "backToMeetings": "Back to Meetings",
+      "pendingTitle": "Accept your invitation first",
+      "pendingBody": "You have been invited to this meeting but have not answered yet. Accept the invitation and you can go straight in.",
+      "goToInvitation": "Go to the invitation"
     },
     "passwordGate": {
       "backToMeeting": "Back to meeting",
@@ -1863,7 +1869,15 @@
         "invitedBy": "Invited by",
         "status": "Status",
         "sent": "Sent"
-      }
+      },
+      "accept": "Accept",
+      "decline": "Decline",
+      "invitedBanner": "You have been invited to this meeting.",
+      "invitedBannerHint": "Accepting is what opens the meeting for you.",
+      "invitationAccepted": "You accepted this invitation.",
+      "acceptFirst": "Accept to join",
+      "pendingHint": "Accept the invitation below to join.",
+      "invitationsUnreadable": "Invitations could not be loaded for this account."
     },
     "connection": {
       "connected": "Connected",
@@ -2060,5 +2074,161 @@
     "pageSubtitle": "Executive business metrics, financial health, and operational performance",
     "year": "Year {year}",
     "allMonths": "All Months (Annual)"
+  },
+  "onboarding": {
+    "title": "Guided tour",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "done": "Done",
+    "replay": "Replay the guide",
+    "welcome": {
+      "title": "Welcome 👋",
+      "body": "A quick tour of the platform. Your account sees it once, and you can skip it any time."
+    },
+    "outro": {
+      "title": "You are all set 🚀",
+      "body": "Each page gives you a short hint like this the first time you open it. You can replay the guide from your account menu."
+    },
+    "steps": {
+      "sidebar": {
+        "title": "The sidebar",
+        "body": "Every part of the platform is grouped into hubs here — tap a hub to unfold its pages."
+      },
+      "sidebarTrigger": {
+        "title": "Menu button",
+        "body": "Open the navigation menu from here at any time."
+      },
+      "navbarActions": {
+        "title": "The top bar",
+        "body": "Language, chats, notifications, dark mode and your account — all from here."
+      },
+      "pageActions": {
+        "title": "Add new",
+        "body": "This is where you create a new item on this page."
+      },
+      "search": {
+        "title": "Search and filter",
+        "body": "Find an item, or narrow the list down by status."
+      },
+      "table": {
+        "title": "The table",
+        "body": "Each row ends with its view, edit and delete buttons."
+      },
+      "hubs": {
+        "title": "Your hubs",
+        "body": "A shortcut into every section your permissions let you reach."
+      },
+      "stats": {
+        "title": "Quick numbers",
+        "body": "A live summary of the figures that matter for your account."
+      },
+      "sprintView": {
+        "title": "Switch the view",
+        "body": "Flip between the backlog list and the kanban board here."
+      },
+      "backlog": {
+        "title": "The backlog",
+        "body": "Unscheduled tasks — move one into a sprint to start work on it."
+      }
+    },
+    "pages": {
+      "dashboard": {
+        "title": "Dashboard",
+        "body": "Your starting point: your key numbers and a way into every section."
+      },
+      "kpis": {
+        "title": "KPIs",
+        "body": "Track company performance through figures and charts."
+      },
+      "companies": {
+        "title": "Companies",
+        "body": "Every company on the platform, with its details."
+      },
+      "companyRequests": {
+        "title": "Company requests",
+        "body": "Incoming requests from companies, waiting for your review."
+      },
+      "clients": {
+        "title": "Clients",
+        "body": "Your company's clients and how to reach them."
+      },
+      "contracts": {
+        "title": "Contracts",
+        "body": "Client contracts, their term and their value."
+      },
+      "currencies": {
+        "title": "Currencies",
+        "body": "The currencies you bill in and their exchange rates."
+      },
+      "wallets": {
+        "title": "Wallets",
+        "body": "Your company's wallet balances."
+      },
+      "walletTransactions": {
+        "title": "Wallet transactions",
+        "body": "Every deposit and withdrawal on each wallet."
+      },
+      "invoices": {
+        "title": "Invoices",
+        "body": "Issue invoices and follow what is paid and what is due."
+      },
+      "payments": {
+        "title": "Payments",
+        "body": "Payments recorded against your invoices."
+      },
+      "projects": {
+        "title": "Projects",
+        "body": "Your projects, each with its team and its lead."
+      },
+      "tasks": {
+        "title": "Tasks",
+        "body": "Every task with its owner, its timing and its status."
+      },
+      "sprints": {
+        "title": "Sprints",
+        "body": "Plan a sprint out of the backlog, then run it on the kanban board."
+      },
+      "timesheets": {
+        "title": "Timesheets",
+        "body": "Recorded working hours for each employee."
+      },
+      "developments": {
+        "title": "Developments",
+        "body": "Change requests raised on running projects."
+      },
+      "conversations": {
+        "title": "Conversations",
+        "body": "Message your team and your clients without leaving the platform."
+      },
+      "meetings": {
+        "title": "Meetings",
+        "body": "Create a meeting, or join the room once you accept the invitation."
+      },
+      "employees": {
+        "title": "Employees",
+        "body": "Your team, with each member's details and pay."
+      },
+      "roles": {
+        "title": "Roles",
+        "body": "Define roles and the permissions each one carries."
+      },
+      "access": {
+        "title": "Access",
+        "body": "Give each employee the roles they are allowed."
+      },
+      "salaries": {
+        "title": "Salaries",
+        "body": "Work out and pay your team's salaries."
+      },
+      "settings": {
+        "title": "Settings",
+        "body": "Your account settings and the platform's."
+      },
+      "profile": {
+        "title": "Profile",
+        "body": "Your personal details and your password."
+      }
+    }
   }
 }

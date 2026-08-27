@@ -112,7 +112,10 @@ export function SearchFilterBar({
   searchPlaceholder = "Searching...",
 }: SearchFilterBarProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+    <div
+      data-tour="search"
+      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+    >
       {/* Search */}
       <div className="relative flex-1">
         <Search

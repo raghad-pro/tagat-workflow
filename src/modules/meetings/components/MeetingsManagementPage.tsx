@@ -125,64 +125,64 @@ export function MeetingsManagementPage() {
     { label: t("type.instant"), value: "instant" },
   ];
 
-  // Status Badge Formatter matching Figma EXACT styles
+  // Compact status chips that retain their contrast in both themes.
   const renderStatusBadge = (status: MeetingStatus) => {
     switch (status) {
       case "live":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#EDF7EE] text-[#4CAF50] text-[13px] font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
             <span className="w-2 h-2 rounded-full bg-[#4CAF50] animate-pulse" />
             {t("status.live")}
           </span>
         );
       case "waiting":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#FFFDEB] text-[#D97706] text-[13px] font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-400">
             <span className="w-2 h-2 rounded-full bg-[#E8D636]" />
             {t("status.waiting")}
           </span>
         );
       case "ended":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#FEECEB] text-[#F44336] text-[13px] font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-xs font-bold text-rose-600 dark:text-rose-400">
             <span className="w-2 h-2 rounded-full bg-[#F44336]" />
             {t("list.overdue")}
           </span>
         );
       case "cancelled":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-[#F3F4F6] text-[#6B7280] text-[13px] font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-400/20 bg-slate-500/10 px-2.5 py-1 text-xs font-bold text-slate-600 dark:text-slate-400">
             <span className="w-2 h-2 rounded-full bg-[#9CA3AF]" />
             {t("status.cancelled")}
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[12px] bg-muted text-foreground text-[13px] font-medium">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-foreground">
             {status}
           </span>
         );
     }
   };
 
-  // Type Badge Formatter matching Figma EXACT styles
+  // Type chips deliberately sit quieter than the lifecycle status.
   const renderTypeBadge = (type: MeetingType) => {
     if (type === "scheduled") {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#E6F6FE] text-[#03A9F4] text-[11px] font-bold">
+        <span className="inline-flex items-center rounded-md bg-sky-500/10 px-2 py-1 text-[11px] font-bold text-sky-600 dark:text-sky-400">
           {t("type.scheduled")}
         </span>
       );
     }
     if (type === "instant") {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#FAF5FF] text-[#9810FA] text-[11px] font-bold">
+        <span className="inline-flex items-center rounded-md bg-violet-500/10 px-2 py-1 text-[11px] font-bold text-violet-600 dark:text-violet-400">
           {t("type.instant")}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] text-[11px] font-bold capitalize">
+      <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-bold capitalize text-emerald-600 dark:text-emerald-400">
         {type}
       </span>
     );
@@ -395,47 +395,47 @@ export function MeetingsManagementPage() {
         </div>
 
         {/* ── Table Container ── */}
-        <div className="overflow-x-auto rounded-[8px] border border-[#E2E8F0] dark:border-border">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="h-[40px] bg-[#F1F5F9]/50 dark:bg-muted/40 border-b border-[#E2E8F0] dark:border-border">
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider w-[60px]">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_32px_-24px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-[#0d151e] dark:shadow-[0_16px_40px_-24px_rgba(0,0,0,0.9)]">
+          <table className="w-full min-w-[980px] text-left border-collapse">
+            <thead className="sticky top-0 z-10">
+              <tr className="h-12 border-b border-slate-200/80 bg-slate-50/95 backdrop-blur dark:border-slate-800 dark:bg-[#121d28]/95">
+                <th className="w-[60px] px-5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   #
                 </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                <th className="px-5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   {t("list.columns.title")}
                 </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                <th className="px-5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   {t("list.columns.code")}
                 </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                <th className="px-5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   {t("list.columns.company")}
                 </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                <th className="px-5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   {t("list.columns.type")}
                 </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                <th className="px-5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   {t("list.columns.scheduled")}
                 </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider">
+                <th className="px-5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   {t("list.columns.status")}
                 </th>
-                <th className="px-6 text-[13px] font-semibold text-[#000000] dark:text-white uppercase tracking-wider text-right">
+                <th className="px-5 text-right text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                   {tc("actions")}
                 </th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-[#E2E8F0] dark:divide-border ds-bg-form border border-slate-100 dark:border-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/90">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                    <td colSpan={8} className="py-16 text-center">
                     <div className="inline-block w-8 h-8 border-4 border-[#25C6DA]/20 border-t-[#25C6DA] rounded-full animate-spin" />
                   </td>
                 </tr>
               ) : meetings.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-[#707070]">
+                    <td colSpan={8} className="py-16 text-center text-sm font-medium text-slate-400">
                     {t("list.empty")}
                   </td>
                 </tr>
@@ -464,61 +464,76 @@ export function MeetingsManagementPage() {
                     <tr
                       key={meeting.id}
                       onClick={() => handleEnterRoom(meeting.id)}
-                      className="h-[76px] hover:bg-slate-50/70 dark:hover:bg-muted/30 transition-colors cursor-pointer"
+                      className="group h-[84px] cursor-pointer transition-colors hover:bg-sky-50/65 dark:hover:bg-sky-400/[0.055]"
                     >
                       {/* Row number */}
-                      <td className="px-6 text-[13px] font-medium text-[#94A3B8]">
+                      <td className="px-5 text-xs font-bold tabular-nums text-slate-400 dark:text-slate-600">
                         {(currentPage - 1) * PAGE_SIZE + index + 1}
                       </td>
 
                       {/* Title */}
-                      <td className="px-6">
-                        <span className="text-[14px] font-semibold text-[#111827] dark:text-white hover:text-[#25C6DA] transition-colors">
-                          {meeting.title}
-                        </span>
+                      <td className="px-5">
+                        <div className="flex min-w-[215px] items-center gap-3">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#25C6DA] to-sky-500 text-white shadow-sm shadow-sky-500/20">
+                            <Video className="size-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="block truncate text-sm font-bold text-slate-800 transition-colors group-hover:text-[#149daf] dark:text-slate-100 dark:group-hover:text-[#51d1e1]">
+                              {meeting.title}
+                            </span>
+                            <span className="mt-0.5 block max-w-[270px] truncate text-xs text-slate-400 dark:text-slate-500">
+                              {meeting.description || meeting.meeting_code}
+                            </span>
+                          </div>
+                        </div>
                       </td>
 
                       {/* Code */}
-                      <td className="px-6">
+                      <td className="px-5">
                         <button
                           type="button"
                           onClick={(e) => handleCopyCode(meeting.meeting_code, e)}
-                          className="inline-flex items-center gap-1.5 font-mono text-[13px] font-medium text-[#424242] dark:text-gray-300 hover:text-[#25C6DA] transition-colors group"
+                          className="group/code inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-xs font-bold tracking-wide text-slate-600 transition-colors hover:border-[#25C6DA]/40 hover:text-[#149daf] dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300 dark:hover:text-[#51d1e1]"
                         >
                           <span>{meeting.meeting_code}</span>
-                          <Copy className="w-3 h-3 text-muted-foreground group-hover:text-[#25C6DA] transition-colors" />
+                          <Copy className="size-3 text-slate-400 transition-colors group-hover/code:text-[#25C6DA]" />
                         </button>
                       </td>
 
                       {/* Company */}
-                      <td className="px-6 text-[13px] font-medium text-[#000000] dark:text-gray-300">
-                        {companyName}
+                      <td className="px-5">
+                        <span className="inline-flex max-w-[150px] truncate rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                          {companyName}
+                        </span>
                       </td>
 
                       {/* Type */}
-                      <td className="px-6">
+                      <td className="px-5">
                         {renderTypeBadge(meeting.type || "scheduled")}
                       </td>
 
                       {/* Scheduled */}
-                      <td className="px-6 text-[13px] font-medium text-[#424242] dark:text-gray-300">
-                        {scheduledFormatted}
+                      <td className="px-5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="block whitespace-nowrap">{scheduledFormatted}</span>
+                        <span className="mt-1 block text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                          {meeting.type === "instant" ? t("type.instant") : t("type.scheduled")}
+                        </span>
                       </td>
 
                       {/* Status */}
-                      <td className="px-6">
+                      <td className="px-5">
                         {renderStatusBadge(meeting.status)}
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-5" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1.5">
                           {/* Join Button */}
                           <button
                             type="button"
                             onClick={() => handleEnterRoom(meeting.id)}
                             title={t("joinMeeting")}
-                            className="w-8 h-8 rounded-[16px] bg-[#E6F6FE] text-[#03A9F4] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                            className="flex size-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 transition-colors hover:bg-sky-500 hover:text-white dark:text-sky-400"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </button>
@@ -529,7 +544,7 @@ export function MeetingsManagementPage() {
                               type="button"
                               onClick={() => startMeeting(meeting.id)}
                               title={t("startMeeting")}
-                              className="w-8 h-8 rounded-[16px] bg-[#EDF7EE] text-[#4CAF50] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                              className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-400"
                             >
                               <Play className="w-4 h-4" />
                             </button>
@@ -545,7 +560,7 @@ export function MeetingsManagementPage() {
                                 }
                               }}
                               title={t("endMeeting")}
-                              className="w-8 h-8 rounded-[16px] bg-[#FFF7ED] text-[#F97316] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                              className="flex size-8 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 transition-colors hover:bg-orange-500 hover:text-white dark:text-orange-400"
                             >
                               <PhoneOff className="w-4 h-4" />
                             </button>
@@ -557,7 +572,7 @@ export function MeetingsManagementPage() {
                               type="button"
                               onClick={() => setEditingMeeting(meeting)}
                               title={t("editMeeting")}
-                              className="w-8 h-8 rounded-[16px] bg-[#EDF7EE] text-[#4CAF50] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                              className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-400"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -569,7 +584,7 @@ export function MeetingsManagementPage() {
                               type="button"
                               onClick={() => setDeletingMeeting(meeting)}
                               title={t("deleteMeeting")}
-                              className="w-8 h-8 rounded-[16px] bg-[#FEECEB] text-[#F44336] flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                              className="flex size-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 transition-colors hover:bg-rose-500 hover:text-white dark:text-rose-400"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

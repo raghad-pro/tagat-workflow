@@ -16,6 +16,9 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
   const isCompanyAdmin = user?.role === "company";
   const isClient = user?.role === "client";
 
+  const t = useTranslations("invoice");
+  const tc = useTranslations("common");
+
   const { data: invoiceData, isLoading } = useInvoice(invoiceId);
   const data: any = (invoiceData as any)?.data || invoiceData || null;
 
@@ -40,9 +43,6 @@ export function ViewInvoiceModal({ isOpen, onClose, invoiceId }: { isOpen: boole
     if (typeof data.currency === "object" && data.currency?.symbol) return data.currency.symbol;
     return "$";
   };
-
-  const t = useTranslations("invoice");
-  const tc = useTranslations("common");
 
   return (
     <ViewDetailsLayout

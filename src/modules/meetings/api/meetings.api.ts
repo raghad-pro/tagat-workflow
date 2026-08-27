@@ -1,6 +1,7 @@
 import apiClient from "@/services/apiClient";
 import axiosInstance from "@/services/axiosConfig";
 import { getRolePrefix } from "@/utils/rolePrefix";
+import { invitationUserId } from "../types/meetings.types";
 import type {
   Meeting,
   CreateMeetingPayload,
@@ -37,8 +38,14 @@ interface ApiResponse<T> {
   errors?: Record<string, string[]>;
 }
 
-/** How many meetings the invitation scan may probe in one pass. */
-const MY_INVITATION_SCAN_LIMIT = 8;
+/** Role prefixes whose invitation index answered 404 in this session, so the
+ *  bell stops asking. Cleared on reload, which is when a newly deployed route
+ *  gets picked up. */
+const invitationIndexMissing = new Set<string>();
+
+/** Role prefixes with no per-meeting invitation list — see `getInvitations`.
+ *  Without this a client fires eight guaranteed 404s on every bell poll. */
+const invitationListMissing = new Set<string>();
 
 interface PaginatedData<T> {
   data: T[];
@@ -107,11 +114,45 @@ export const meetingsApi = {
   },
 
   // ─── 02 - Invitations ───────────────────────────────────────────────────────
+  /**
+   * The invitation list for one meeting.
+   *
+   * Not available to every role. Probed against the live API (2026-08-26):
+   *
+   *   GET /employee/meetings/{id}/invitations     401 — exists
+   *   GET /company/meetings/{id}/invitations      401 — exists
+   *   GET /super_admin/meetings/{id}/invitations  401 — exists
+   *   GET /client/meetings/{id}/invitations       404 — NOT REGISTERED
+   *
+   * The published Postman collection agrees: it documents this route for the
+   * other three roles and gives clients only
+   * `PUT /client/meeting-invitations/{id}`. So a client can answer an
+   * invitation but cannot read one, which is why their bell finds nothing and
+   * their Accept button never appears — the id it needs lives in a response
+   * they are not allowed to fetch.
+   *
+   * The 404 is remembered per role prefix and the request skipped after the
+   * first, but it still rejects rather than returning `[]`: callers have to be
+   * able to tell "no invitations" from "cannot see invitations". The room gate
+   * depends on that distinction to avoid locking out an invited client, and
+   * the details page uses it to stop claiming a meeting has no invitations
+   * when it simply could not look.
+   */
   getInvitations: async (role: string, meetingId: number | string) => {
     const prefix = getRolePrefix(role);
-    const response = await apiClient.get<ApiResponse<PaginatedData<MeetingInvitation> | MeetingInvitation[]>>(
-      `${prefix}/meetings/${meetingId}/invitations`
-    );
+    if (invitationListMissing.has(prefix)) {
+      throw new Error(`No invitation list route for ${prefix}`);
+    }
+
+    let response;
+    try {
+      response = await apiClient.get<ApiResponse<PaginatedData<MeetingInvitation> | MeetingInvitation[]>>(
+        `${prefix}/meetings/${meetingId}/invitations`
+      );
+    } catch (err: any) {
+      if (err?.response?.status === 404) invitationListMissing.add(prefix);
+      throw err;
+    }
     const res = response?.data;
     if (Array.isArray(res)) return res;
     if (res && "data" in res && Array.isArray(res.data)) return res.data;
@@ -135,11 +176,23 @@ export const meetingsApi = {
    * there, so nothing ever reaches `GET /{prefix}/notifications`. Until the
    * backend dispatches one, the bell has to go and find these itself.
    *
-   * Two tiers, because the API surface is only partly known:
-   *   1. `GET /{prefix}/meeting-invitations` — an index route, if it exists.
-   *   2. Otherwise scan the meetings that can still be joined. Bounded by
-   *      `MY_INVITATION_SCAN_LIMIT`; the bell refetches on every open, so an
-   *      unbounded fan-out would cost a request per meeting each time.
+   * Probed against the live API (2026-08-26), for all four role prefixes:
+   *
+   *   POST /{prefix}/meetings/{id}/invitations   401 — exists
+   *   GET  /{prefix}/meetings/{id}/invitations   401 — exists
+   *   PUT  /{prefix}/meeting-invitations/{id}    401 — exists, `allow: PUT`
+   *   GET  /{prefix}/meeting-invitations         404 — NO index route
+   *
+   * So there is no way to ask "what am I invited to?" directly. The only
+   * route that lists invitations is per meeting, which means the meetings
+   * this scans must already include the one the invitee was invited to — if
+   * the API scopes `/{prefix}/meetings` to meetings the caller has *joined*,
+   * an invitation is undiscoverable and the backend has to grow the index
+   * route.
+   *
+   * The index is still attempted once per session, so the day it ships this
+   * picks it up with no change here — but only once, because a 404 on every
+   * poll is a wasted request and a console error that hides real ones.
    *
    * A meeting whose invitation list we may not read simply contributes nothing
    * — `allSettled`, never a thrown error that would blank the whole bell.
@@ -148,25 +201,36 @@ export const meetingsApi = {
     const prefix = getRolePrefix(role);
     const mine = (rows: unknown) =>
       (Array.isArray(rows) ? rows : []).filter(
-        (row: any) => Number(row?.user_id) === Number(userId)
+        (row: any) => invitationUserId(row) === Number(userId)
       ) as MeetingInvitation[];
 
-    try {
-      const response = await apiClient.get<any>(`${prefix}/meeting-invitations`);
-      const rows = response?.data?.data ?? response?.data ?? response;
-      const found = mine(rows);
-      if (found.length > 0) return found;
-    } catch {
-      // No index route, or not readable for this role — fall through.
+    if (!invitationIndexMissing.has(prefix)) {
+      try {
+        const response = await apiClient.get<any>(`${prefix}/meeting-invitations`);
+        const rows = response?.data?.data ?? response?.data ?? response;
+        const found = mine(rows);
+        if (found.length > 0) return found;
+      } catch (err: any) {
+        // A 404 is the route being absent, which will not change while the tab
+        // is open. Anything else (a timeout, a 500) might, so keep trying.
+        if (err?.response?.status === 404) invitationIndexMissing.add(prefix);
+      }
     }
 
-    const list = await meetingsApi.getAll(role, { per_page: 25 });
-    const joinable = list.data
-      .filter((meeting) => meeting.status === "waiting" || meeting.status === "live")
-      .slice(0, MY_INVITATION_SCAN_LIMIT);
+    // Do not cap this to the newest handful of meetings. Inviting somebody to
+    // an older scheduled meeting is valid, and a cap made that invitation
+    // permanently invisible to the employee. Read every page the API exposes.
+    const firstPage = await meetingsApi.getAll(role, { page: 1, per_page: 50 });
+    const pageCount = Math.max(1, Number(firstPage.last_page) || 1);
+    const remainingPages = await Promise.all(
+      Array.from({ length: pageCount - 1 }, (_, index) =>
+        meetingsApi.getAll(role, { page: index + 2, per_page: 50 })
+      )
+    );
+    const meetings = [firstPage, ...remainingPages].flatMap((page) => page.data);
 
     const settled = await Promise.allSettled(
-      joinable.map(async (meeting) => {
+      meetings.map(async (meeting) => {
         const rows = await meetingsApi.getInvitations(role, meeting.id);
         // Carry the meeting along: the per-meeting route does not embed it, and
         // the notification needs a title to show.

@@ -35,7 +35,10 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
       </div>
 
       {visibleActions.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap self-start sm:self-auto">
+        <div
+          data-tour="page-actions"
+          className="flex items-center gap-3 flex-wrap self-start sm:self-auto"
+        >
           {visibleActions.map((action, i) => {
             const Icon = action.icon ?? Plus;
             return (
