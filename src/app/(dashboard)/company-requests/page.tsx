@@ -5,7 +5,7 @@ export default function Page() {
   return (
     <RoleGuard
       allowedRoles={["super_admin", "company"]}
-      grantedByPermission="companyRequests.view"
+      grantedByPermission="company_requests.view"
     >
       <Joinrequestspage />
     </RoleGuard>

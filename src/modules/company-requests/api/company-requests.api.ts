@@ -1,5 +1,6 @@
 import apiClient from "@/services/apiClient";
 import type {
+  JoinRequestClient,
   JoinRequestsApiResponse,
   JoinRequestsQueryParams,
   JoinRequestStats,
@@ -13,6 +14,23 @@ import { getRolePrefix } from "@/utils/rolePrefix";
 // بس بنحتاج الـ role لـ approve/reject بعد ما بيرجع من أول response
 const getBasePath = (role: string) =>
   `${getRolePrefix(role)}/requests`;
+
+/**
+ * The clients array out of whatever envelope the list endpoint used.
+ *
+ * Every other list module in the app unwraps a Laravel paginator
+ * (`{ data: { data: [...] } }`), while this one was written expecting a bare
+ * `{ data: [...] }`. Reading either — plus a raw array — means a change of
+ * envelope on the backend stops silently emptying the table.
+ */
+export function unwrapClients(body: unknown): JoinRequestClient[] {
+  if (Array.isArray(body)) return body as JoinRequestClient[];
+  const payload = (body as { data?: unknown } | null)?.data;
+  if (Array.isArray(payload)) return payload as JoinRequestClient[];
+  const nested = (payload as { data?: unknown } | null)?.data;
+  if (Array.isArray(nested)) return nested as JoinRequestClient[];
+  return [];
+}
 
 export const joinRequestApi = {
   // ─── GET — بدون role، الـ backend بيختار الـ endpoint من الـ token ──────────

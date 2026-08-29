@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import React from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { cn } from "@/lib/utils";
+import { KPI_CARD, readableInk } from "../tones";
 import type { TasksKpis } from "../types/kpis.types";
 
 interface TaskStatusDonutChartProps {
@@ -55,6 +57,7 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
     innerRadius,
     outerRadius,
     percent,
+    fill,
   }: any) => {
     if (!percent || percent < 0.08) return null;
     const RADIAN = Math.PI / 180;
@@ -66,11 +69,11 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
       <text
         x={x}
         y={y}
-        fill="#000000"
+        fill={readableInk(String(fill))}
         textAnchor="middle"
         dominantBaseline="central"
-        className="text-[12px] font-extrabold tracking-tight select-none"
-        style={{ fontWeight: 800, textShadow: "0 0 2px rgba(255,255,255,0.8)" }}
+        className="select-none text-[12px] font-extrabold tracking-tight"
+        style={{ fontWeight: 800 }}
       >
         {`${(percent * 100).toFixed(1)}%`}
       </text>
@@ -78,9 +81,9 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
   };
 
   return (
-    <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+    <div className={cn(KPI_CARD, "flex flex-col gap-4 p-6")}>
       {/* Title */}
-      <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">
+      <h3 className="text-[18px] font-bold ds-text-primary">
         {t("heading")}
       </h3>
 
@@ -99,7 +102,7 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
                 dataKey="value"
                 labelLine={false}
                 label={renderCustomizedLabel}
-                stroke="#FFFFFF"
+                stroke="var(--color-bg-form)"
                 strokeWidth={2}
               >
                 {chartData.map((entry, index) => (
@@ -112,10 +115,8 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
                     const d = payload[0].payload as StatusSlice;
                     return (
                       <div
-                        className="px-3.5 py-1.5 rounded-[8px] text-white font-bold text-xs shadow-lg flex items-center justify-center"
-                        style={{
-                          backgroundColor: d.key === "Pending" ? "#FFA500" : d.color,
-                        }}
+                        className="flex items-center justify-center rounded-lg px-3.5 py-1.5 text-xs font-bold shadow-lg"
+                        style={{ backgroundColor: d.color, color: readableInk(d.color) }}
                       >
                         <span>{d.name}: {d.value}</span>
                       </div>
@@ -136,7 +137,7 @@ export function TaskStatusDonutChart({ tasks }: TaskStatusDonutChartProps) {
                 className="w-3 h-3 rounded-full shrink-0"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-[#424242] dark:text-gray-200 font-medium truncate">
+              <span className="truncate font-medium ds-text-gray-100">
                 {item.name}
               </span>
               <span className="ms-auto font-bold text-xs text-muted-foreground">

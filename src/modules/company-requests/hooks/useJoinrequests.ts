@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { joinRequestApi } from "../api/company-requests.api";
+import { joinRequestApi, unwrapClients } from "../api/company-requests.api";
 import { useAuth } from "@/providers/AuthProvider";
 import type {
   JoinRequestsQueryParams,
@@ -30,28 +30,21 @@ function flattenRequests(clients: JoinRequestClient[]): JoinRequest[] {
 // ─── Hook ──────────────────────────────────────────────────────────────────────
 export const useJoinRequests = (params: JoinRequestsQueryParams) => {
   const { user } = useAuth();
-  const role = user?.role || "super_admin";
+  const role = user?.role;
 
   return useQuery({
     queryKey: ["join-requests", role, params],
     queryFn: async () => {
-      try {
-        const res: any = await joinRequestApi.getAll(role, params);
-        const dataArray = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        return {
-          role: res?.role || role,
-          rows: flattenRequests(dataArray),
-          raw: dataArray,
-        };
-      } catch (err) {
-        console.error("Failed to fetch join requests:", err);
-        return {
-          role,
-          rows: [],
-          raw: [],
-        };
-      }
+      const res = (await joinRequestApi.getAll(role as string, params)) as {
+        role?: string;
+      };
+      const clients = unwrapClients(res);
+      return { role: res?.role || role, rows: flattenRequests(clients), raw: clients };
     },
+    // The endpoint is role-prefixed, so firing before the session resolves would
+    // ask `/super_admin/requests` on behalf of a company user, then throw the
+    // answer away when the real role arrives under a different key.
+    enabled: !!role,
     placeholderData: keepPreviousData,
     retry: 1,
   });

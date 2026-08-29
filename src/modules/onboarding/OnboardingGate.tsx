@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/AuthProvider";
 import { OnboardingTour, type ResolvedStep } from "./OnboardingTour";
-import { markTourSeen, seenTours } from "./storage";
-import { WELCOME_TOUR, tourForPath, type Tour } from "./tours";
+import { hasOnboarded, markOnboarded } from "./storage";
+import { firstRunTour, type Tour } from "./tours";
 
 /** Fired by the "replay the guide" entry in the account menu. */
 export const RESTART_EVENT = "wf:onboarding-restart";
@@ -17,13 +17,14 @@ const POLL_MS = 350;
 const MAX_POLLS = 8;
 
 /**
- * Decides which guided tour to run, if any, and remembers that it ran.
+ * Runs the guided tour once per account, per device, and never again.
  *
  * Two things are being balanced. A tour must not open over a skeleton — half
  * its targets would not exist yet and the steps would drop out — so it waits
  * for the page to settle and keeps re-resolving until the set of visible
- * targets stops growing. And it must not nag: a tour is written off the moment
- * it is closed, finished or skipped alike.
+ * targets stops growing. And it must not nag: the account is written off the
+ * moment the tour opens, so a refresh, a route change or a second session on
+ * the same browser does not bring it back. Only the account menu does.
  */
 export function OnboardingGate() {
   const { user } = useAuth();
@@ -45,16 +46,6 @@ export function OnboardingGate() {
 
   const userId = user?.id;
 
-  /** The next tour this account has not read on this page, welcome first. */
-  const nextTour = useCallback((): Tour | null => {
-    if (!userId) return null;
-    const seen = seenTours(userId);
-    if (!seen.includes(WELCOME_TOUR.id)) return WELCOME_TOUR;
-    const pageTour = tourForPath(pathname);
-    if (!pageTour || seen.includes(pageTour.id)) return null;
-    return pageTour;
-  }, [userId, pathname]);
-
   /** Steps whose target is actually on screen. Untargeted steps always keep. */
   const resolve = useCallback((candidate: Tour): ResolvedStep[] => {
     const tr = translate.current;
@@ -66,6 +57,7 @@ export function OnboardingGate() {
         body: tr(`${step.copy}.body`),
         target: step.target,
         padding: step.padding,
+        icon: step.icon,
       }));
   }, []);
 
@@ -77,14 +69,14 @@ export function OnboardingGate() {
   };
 
   useEffect(() => {
-    clearTimers();
-    setTour(null);
-    // Replacing an already-empty array would re-render for nothing, and this
-    // effect runs on every route change.
-    setSteps((current) => (current.length === 0 ? current : []));
+    // A tour already on screen keeps running: the account is navigating inside
+    // its own walkthrough, not asking for a new one.
+    if (tour) return;
 
-    const candidate = nextTour();
-    if (!candidate) return;
+    clearTimers();
+    if (!userId || hasOnboarded(userId)) return;
+
+    const candidate = firstRunTour(pathname);
 
     let polls = 0;
     let best: ResolvedStep[] = [];
@@ -103,33 +95,40 @@ export function OnboardingGate() {
         return;
       }
 
-      // A tour with nothing left to point at is not worth spending: leave it
-      // unread so the account still gets it once the page has content.
+      // A tour with nothing left to point at is not worth spending: leave the
+      // account unmarked so it still gets one once a page has content.
       if (best.length === 0) return;
+
+      // Marked as it opens, not as it closes. Someone who reloads halfway
+      // through has still been shown the guide, and showing it again is the
+      // interruption this whole flag exists to prevent.
+      markOnboarded(userId);
       setSteps(best);
       setTour(candidate);
     };
 
     timers.current.push(window.setTimeout(attempt, SETTLE_MS));
     return clearTimers;
-  }, [nextTour, resolve, restartToken]);
+  }, [userId, pathname, resolve, restartToken, tour]);
 
   useEffect(() => {
-    const onRestart = () => setRestartToken((token) => token + 1);
+    const onRestart = () => {
+      setTour(null);
+      setSteps([]);
+      setRestartToken((token) => token + 1);
+    };
     window.addEventListener(RESTART_EVENT, onRestart);
     return () => window.removeEventListener(RESTART_EVENT, onRestart);
   }, []);
 
   const handleClose = () => {
-    if (tour) markTourSeen(userId, tour.id);
     setTour(null);
     setSteps([]);
-    // The welcome tour ends on a page that has its own hints; run them straight
-    // away rather than making the account come back for them.
-    setRestartToken((token) => token + 1);
   };
 
   if (!tour || steps.length === 0) return null;
 
-  return <OnboardingTour key={tour.id} steps={steps} onClose={handleClose} />;
+  return (
+    <OnboardingTour key={`${tour.id}:${restartToken}`} steps={steps} onClose={handleClose} />
+  );
 }

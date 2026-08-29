@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { joinRequestApi } from "../api/company-requests.api";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 interface ApproveParams {
   role: string;
@@ -12,18 +13,19 @@ interface ApproveParams {
 
 export const useApproveJoinRequest = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("companyRequest.toast");
 
   return useMutation({
     mutationFn: ({ role, clientId, companyId }: ApproveParams) =>
       joinRequestApi.approve(role, clientId, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["join-requests"] });
-      toast.success("Request approved successfully", {
+      toast.success(t("approved"), {
         style: { background: "#1d9e75", color: "#fff" },
       });
     },
     onError: () => {
-      toast.error("Something went wrong while approving the request", {
+      toast.error(t("approveFailed"), {
         style: { background: "#F92929", color: "#fff" },
       });
     },

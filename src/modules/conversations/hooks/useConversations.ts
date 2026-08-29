@@ -33,6 +33,18 @@ export function useConversations(role: string, params?: ConversationsQueryParams
     return invalidateAll();
   };
 
+  /**
+   * Throws away a thread's cached messages outright.
+   *
+   * Invalidating is not enough here. The list key is `["conversations", role]`
+   * and a thread's is `["conversation", role, id]`, so `invalidateAll` never
+   * reaches a thread — and even a direct invalidate only marks it stale, which
+   * with the app's five-minute `staleTime` still paints the old messages first.
+   * A deleted conversation has no messages worth painting, so the entry goes.
+   */
+  const dropThread = (id: number | string) =>
+    queryClient.removeQueries({ queryKey: conversationKeys.detail(role, id), exact: true });
+
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: conversationKeys.list(role, params),
     queryFn: () => conversationsApi.getAll(role, params),
@@ -49,6 +61,10 @@ export function useConversations(role: string, params?: ConversationsQueryParams
       // visible before the refetch lands. The server de-duplicates 1-on-1
       // chats, so a "created" conversation may already be in the list.
       if (created?.id) {
+        // The de-duplication reaches soft-deleted chats too, so starting a new
+        // chat with someone you deleted hands back the *same* id — and with it
+        // whatever that id's thread was still holding. Start it empty.
+        dropThread(created.id);
         queryClient.setQueriesData<ConversationsListResult>(
           { queryKey: conversationKeys.all(role) },
           (old) => {
@@ -74,7 +90,25 @@ export function useConversations(role: string, params?: ConversationsQueryParams
 
   const deleteMutation = useMutation({
     mutationFn: (id: number | string) => conversationsApi.delete(role, id),
-    onSuccess: invalidateAll,
+    onSuccess: (_result, id) => {
+      dropThread(id);
+      // Out of every cached list at once, rather than waiting on the refetch:
+      // the row is gone as soon as the modal closes.
+      queryClient.setQueriesData<ConversationsListResult>(
+        { queryKey: conversationKeys.all(role) },
+        (old) => {
+          if (!old?.data) return old;
+          const data = old.data.filter((c) => String(c.id) !== String(id));
+          if (data.length === old.data.length) return old;
+          return {
+            ...old,
+            data,
+            meta: { ...old.meta, total: Math.max(0, (old.meta?.total ?? old.data.length) - 1) },
+          };
+        }
+      );
+      return invalidateAll();
+    },
   });
 
   const sendMessageMutation = useMutation({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useLocale } from "next-intl";
 import ThemeButton from "@/components/atoms/ThemeButton";
 import { useAuth } from "@/providers/AuthProvider";
@@ -29,6 +29,7 @@ import {
   isGroupConversation,
   toTimestamp,
 } from "@/modules/conversations/utils/conversation.helpers";
+import { useClearedChats } from "@/modules/conversations/utils/clearedChats";
 import { formatListStamp } from "@/modules/conversations/utils/message.format";
 
 /**
@@ -759,19 +760,37 @@ function ConversationsDropdown() {
   // cache entry instead of polling the endpoint twice.
   const { conversations: unsorted, isLoading } = useConversations(role);
 
+  /**
+   * When each conversation was last wiped by this account. A chat that was
+   * deleted and restarted comes back under the same id still carrying its old
+   * preview, so the dropdown has to suppress it exactly as the list does.
+   */
+  const { clearedAt } = useClearedChats(user?.id);
+
+  const sortStamp = useCallback(
+    (conv: Conversation) => {
+      const cleared = clearedAt(conv.id);
+      return toTimestamp(getLastActivityAt(conv, cleared)) || toTimestamp(cleared);
+    },
+    [clearedAt]
+  );
+
   // Newest activity first — the endpoint returns no explicit ordering, and the
   // preview only shows the top few, so an unsorted list shows arbitrary ones.
   const conversations = useMemo(
-    () =>
-      [...unsorted]
-        .sort((a, b) => toTimestamp(getLastActivityAt(b)) - toTimestamp(getLastActivityAt(a)))
-        .slice(0, 5),
-    [unsorted]
+    () => [...unsorted].sort((a, b) => sortStamp(b) - sortStamp(a)).slice(0, 5),
+    [sortStamp, unsorted]
   );
 
   const unreadTotal = useMemo(
-    () => unsorted.reduce((acc: number, c: Conversation) => acc + Number(c.unread_count ?? 0), 0),
-    [unsorted]
+    () =>
+      unsorted.reduce(
+        (acc: number, c: Conversation) =>
+          // Messages the account deleted are not unread — they are gone.
+          acc + (getLastMessage(c, clearedAt(c.id)) ? Number(c.unread_count ?? 0) : 0),
+        0
+      ),
+    [clearedAt, unsorted]
   );
 
   useEffect(() => {
@@ -847,14 +866,15 @@ function ConversationsDropdown() {
                   isAr ? "محادثة" : "Conversation"
                 );
                 const image = getConversationImage(conv, user?.id);
-                const lastMessage = getLastMessage(conv);
+                const convClearedAt = clearedAt(conv.id);
+                const lastMessage = getLastMessage(conv, convClearedAt);
                 const preview = lastMessage
                   ? getMessageText(lastMessage) ||
                     (isAr ? "مرفق" : "Attachment")
                   : isAr
                   ? "لا توجد رسائل بعد"
                   : isAr ? "لا توجد رسائل بعد" : "No messages yet";
-                const unread = Number(conv.unread_count ?? 0);
+                const unread = lastMessage ? Number(conv.unread_count ?? 0) : 0;
 
                 return (
                   <button
@@ -888,7 +908,7 @@ function ConversationsDropdown() {
                           {title}
                         </h5>
                         <span className="text-[10px] text-slate-400 shrink-0">
-                          {formatListStamp(getLastActivityAt(conv), locale)}
+                          {formatListStamp(getLastActivityAt(conv, convClearedAt), locale)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2">

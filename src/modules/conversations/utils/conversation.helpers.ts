@@ -131,21 +131,37 @@ export function extractMessages(conversation?: Conversation | null): Message[] {
 /**
  * Newest message, for the sidebar preview. The list endpoint has no
  * `last_message` field — it returns the latest message inside `messages`.
+ *
+ * `clearedAt` is when this account last wiped the conversation (see
+ * `./clearedChats`). Anything at or before that instant belongs to a chat the
+ * account already deleted: the server hands the same id back when the chat is
+ * restarted, and its old last line must not surface as the new one.
  */
-export function getLastMessage(conversation?: Conversation | null): Message | undefined {
-  if (conversation?.last_message) return conversation.last_message;
-  const messages = extractMessages(conversation);
-  return messages[messages.length - 1];
+export function getLastMessage(
+  conversation?: Conversation | null,
+  clearedAt?: string | null
+): Message | undefined {
+  const message = conversation?.last_message ?? extractMessages(conversation).at(-1);
+  if (!message) return undefined;
+  if (clearedAt && toTimestamp(message.created_at) <= toTimestamp(clearedAt)) return undefined;
+  return message;
 }
 
 /** Newest-activity timestamp, used for both the preview time and sorting. */
-export function getLastActivityAt(conversation?: Conversation | null): string | undefined {
-  return (
+export function getLastActivityAt(
+  conversation?: Conversation | null,
+  clearedAt?: string | null
+): string | undefined {
+  const stamp =
     conversation?.messages_max_created_at ??
-    getLastMessage(conversation)?.created_at ??
+    getLastMessage(conversation, clearedAt)?.created_at ??
     conversation?.last_message_at ??
-    conversation?.updated_at
-  );
+    conversation?.updated_at;
+
+  // `updated_at` moves for reasons that are not messages, so the guard has to
+  // sit on the result rather than on the branch that produced it.
+  if (clearedAt && toTimestamp(stamp) <= toTimestamp(clearedAt)) return undefined;
+  return stamp;
 }
 
 /**

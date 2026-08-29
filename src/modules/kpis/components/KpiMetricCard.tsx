@@ -1,35 +1,45 @@
 "use client";
 
 import React from "react";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { KPI_CARD, toneEdge, toneInk, toneWash, type KpiTone } from "../tones";
 import type { KpiMetric } from "../types/kpis.types";
 
 interface KpiMetricCardProps {
   label: string;
   metric?: KpiMetric<number | string>;
   valueOverride?: string | number;
-  icon: React.ElementType;
-  iconBg?: string;
-  iconColor?: string;
+  icon: LucideIcon;
+  /** Which accent this figure belongs to. See `../tones`. */
+  tone?: KpiTone;
   prefix?: string;
   suffix?: string;
   subLabel?: string;
   className?: string;
 }
 
+/** Up is not always good — spending more is a worse month, not a better one. */
+const TREND_TONE: Record<"up" | "down" | "neutral", KpiTone> = {
+  up: "green",
+  down: "red",
+  neutral: "slate",
+};
+
 export function KpiMetricCard({
   label,
   metric,
   valueOverride,
   icon: Icon,
-  iconBg = "#E6F6FE",
-  iconColor = "#03A9F4",
+  tone = "sky",
   prefix,
   suffix,
   subLabel,
   className,
 }: KpiMetricCardProps) {
+  const t = useTranslations("kpis");
+
   const rawValue = valueOverride !== undefined ? valueOverride : metric?.value ?? 0;
   const displayValue =
     typeof rawValue === "number" ? rawValue.toLocaleString("en-US") : rawValue;
@@ -37,68 +47,80 @@ export function KpiMetricCard({
   const change = metric?.change_percentage;
   const trend = metric?.trend ?? "neutral";
   const hasChange = change !== null && change !== undefined;
+  const trendTone = TREND_TONE[trend];
+  const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
 
   return (
     <div
       className={cn(
-        "ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 h-[145px] flex items-center shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.09)] transition-all min-w-0",
+        KPI_CARD,
+        "group relative flex h-[145px] items-center overflow-hidden p-5 min-w-0",
+        "transition-[transform,box-shadow,border-color] duration-200",
+        "hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_16px_38px_-18px_rgba(15,23,42,0.28)]",
         className
       )}
     >
-      <div className="flex items-center gap-4 min-w-0 w-full">
-        {/* 48x48 rounded 8px Icon */}
+      {/* A sliver of the tone down the leading edge. It is what tells four
+          otherwise identical cards apart at a glance. */}
+      <span
+        aria-hidden
+        className="absolute inset-y-0 start-0 w-[3px]"
+        style={{ backgroundColor: toneWash(tone, 55) }}
+      />
+
+      <div className="flex w-full min-w-0 items-center gap-4">
         <div
-          className="w-[48px] h-[48px] rounded-[8px] flex items-center justify-center shrink-0"
-          style={{ backgroundColor: iconBg }}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105"
+          style={{
+            color: toneInk(tone),
+            backgroundColor: toneWash(tone),
+            border: `1px solid ${toneEdge(tone)}`,
+          }}
         >
-          {(() => {
-            const IconEl = Icon as any;
-            return <IconEl size={24} style={{ color: iconColor }} />;
-          })()}
+          <Icon size={22} strokeWidth={2.1} />
         </div>
 
-        {/* Text Details */}
-        <div className="flex flex-col min-w-0 flex-1 justify-center">
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[13px] font-medium text-[#000000] dark:text-gray-300 truncate leading-[20px]">
+            <span className="truncate text-[13px] font-medium leading-5 ds-text-gray-100">
               {label}
             </span>
 
-            {/* Trend Indicator */}
             {hasChange && (
               <span
-                className={cn(
-                  "inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0",
-                  trend === "up" && "bg-[#EDF7EE] text-[#4CAF50]",
-                  trend === "down" && "bg-[#FEECEB] text-[#F44336]",
-                  trend === "neutral" && "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                )}
+                className="inline-flex shrink-0 items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                style={{
+                  color: toneInk(trendTone),
+                  backgroundColor: toneWash(trendTone, 15),
+                }}
               >
-                {trend === "up" && <TrendingUp size={11} />}
-                {trend === "down" && <TrendingDown size={11} />}
-                {trend === "neutral" && <Minus size={11} />}
-                <span>
-                  {change > 0 ? `+${change}%` : `${change}%`}
-                </span>
+                <TrendIcon size={11} strokeWidth={2.6} />
+                <span>{change > 0 ? `+${change}%` : `${change}%`}</span>
               </span>
             )}
           </div>
 
-          <div className="flex items-baseline gap-1 mt-0.5">
-            <span className="text-[30px] font-bold text-[#000000] dark:text-white leading-[36px] truncate tracking-tight">
-              {prefix && <span className="text-[22px] me-1 font-semibold">{prefix}</span>}
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <span className="truncate text-[30px] font-bold leading-9 tracking-tight ds-text-primary">
+              {prefix && <span className="me-1 text-[22px] font-semibold">{prefix}</span>}
               {displayValue}
-              {suffix && <span className="text-[14px] ms-1 font-medium text-gray-500">{suffix}</span>}
+              {suffix && (
+                <span className="ms-1 text-[14px] font-medium ds-text-gray-200">{suffix}</span>
+              )}
             </span>
           </div>
 
-          {/* Sub Label / Comparison text */}
-          <div className="flex items-center gap-1.5 text-[11px] text-[#707070] dark:text-gray-400 truncate mt-0.5">
+          <div className="mt-0.5 truncate text-[11px] ds-text-gray-200">
             {subLabel ? (
               <span>{subLabel}</span>
             ) : metric?.previous !== null && metric?.previous !== undefined ? (
               <span>
-                Prev: {typeof metric.previous === "number" ? metric.previous.toLocaleString("en-US") : metric.previous}
+                {t("previous", {
+                  value:
+                    typeof metric.previous === "number"
+                      ? metric.previous.toLocaleString("en-US")
+                      : String(metric.previous),
+                })}
               </span>
             ) : null}
           </div>

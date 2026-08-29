@@ -60,6 +60,7 @@ import {
   isGroupConversation,
   toTimestamp,
 } from "../utils/conversation.helpers";
+import { markConversationCleared, useClearedChats } from "../utils/clearedChats";
 import {
   formatClock,
   formatDayLabel,
@@ -91,6 +92,8 @@ export default function ConversationsManagementPage() {
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  /** When each conversation was last wiped, so a restarted chat starts blank. */
+  const { clearedAt } = useClearedChats(user?.id);
   const [viewMode, setViewMode] = useState<"all" | "hidden">("all");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -213,6 +216,19 @@ export default function ConversationsManagementPage() {
       toast.error(err?.response?.data?.message || t("deleteFailed"));
     }
   }, [conversationToDelete, deleteConversation, activeConversationId, user?.id, t]);
+
+  /**
+   * How recent a conversation is. A cleared one has no activity left to sort
+   * on, so it falls back to when it was cleared — otherwise restarting a chat
+   * would drop it to the bottom of the list the instant it was opened.
+   */
+  const sortStamp = useCallback(
+    (conv: Conversation) => {
+      const cleared = clearedAt(conv.id);
+      return toTimestamp(getLastActivityAt(conv, cleared)) || toTimestamp(cleared);
+    },
+    [clearedAt]
+  );
 
   // Most recently active first — the endpoint returns no explicit ordering.
   // Compared as parsed instants, since the API mixes two timestamp formats.
@@ -522,8 +538,11 @@ export default function ConversationsManagementPage() {
               const isActive = String(activeConversationId) === String(conv.id);
               const convTitle = getConversationTitle(conv, user?.id, t("title"));
               const convImage = getConversationImage(conv, user?.id);
-              const unread = Number(conv.unread_count ?? 0);
-              const lastMessage = getLastMessage(conv);
+              const convClearedAt = clearedAt(conv.id);
+              const lastMessage = getLastMessage(conv, convClearedAt);
+              // The unread count is the server's, and it counts messages this
+              // account deleted. Suppress it alongside the preview.
+              const unread = lastMessage ? Number(conv.unread_count ?? 0) : 0;
               const preview = lastMessage
                 ? getMessageText(lastMessage) || t("attachFile")
                 : t("noLastMessage");
@@ -579,7 +598,7 @@ export default function ConversationsManagementPage() {
                         {convTitle}
                       </h4>
                       <span className="ds-text-gray-200 shrink-0 text-[11px] font-medium">
-                        {formatListStamp(getLastActivityAt(conv), locale)}
+                        {formatListStamp(getLastActivityAt(conv, convClearedAt), locale)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-2">

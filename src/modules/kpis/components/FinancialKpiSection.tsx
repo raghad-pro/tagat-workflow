@@ -3,13 +3,18 @@
 import React from "react";
 import { DollarSign, FileText, TrendingUp, CreditCard, Receipt, Wallet } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 import { KpiMetricCard } from "./KpiMetricCard";
+import { KpiSectionHeading } from "./KpiSectionHeading";
+import { KPI_CARD, toneEdge, toneInk, toneWash } from "../tones";
 import type { FinancialKpis, InvoicesKpis } from "../types/kpis.types";
 
 interface FinancialKpiSectionProps {
   financial?: FinancialKpis;
   invoices?: InvoicesKpis;
 }
+
+const money = (value: number | undefined) => `$${(value || 0).toLocaleString("en-US")}`;
 
 export function FinancialKpiSection({ financial, invoices }: FinancialKpiSectionProps) {
   const t = useTranslations("kpis.financial");
@@ -18,122 +23,126 @@ export function FinancialKpiSection({ financial, invoices }: FinancialKpiSection
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-[8px] bg-[#E6F6FE] flex items-center justify-center text-[#03A9F4]">
-          <DollarSign className="w-5 h-5" />
-        </div>
-        <h2 className="text-[20px] sm:text-[22px] font-bold text-[#000000] dark:text-white tracking-tight leading-[32px]">
-          {t("heading")}
-        </h2>
-      </div>
+      <KpiSectionHeading icon={DollarSign} title={t("heading")} tone="sky" />
 
-      {/* Primary Financial Metric Cards (4 cards, unified 145px) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiMetricCard
           label={t("totalRevenue")}
           metric={financial?.revenue}
           icon={DollarSign}
-          iconBg="#E6F6FE"
-          iconColor="#03A9F4"
+          tone="sky"
           prefix="$"
         />
-
         <KpiMetricCard
           label={t("totalInvoiced")}
           metric={financial?.invoiced}
           icon={Receipt}
-          iconBg="#FAF5FF"
-          iconColor="#9810FA"
+          tone="violet"
           prefix="$"
         />
-
         <KpiMetricCard
           label={t("totalExpenses")}
           metric={financial?.expenses}
           icon={CreditCard}
-          iconBg="#FEECEB"
-          iconColor="#F44336"
+          tone="red"
           prefix="$"
         />
-
         <KpiMetricCard
           label={t("netProfit")}
           metric={financial?.profit}
           icon={TrendingUp}
-          iconBg="#EDF7EE"
-          iconColor="#4CAF50"
+          tone="green"
           prefix="$"
         />
       </div>
 
-      {/* Secondary Invoices & Cashflow row */}
       {invoices && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <KpiMetricCard
             label={t("paidInvoices")}
-            valueOverride={`$${(invoices.paid_amount || 0).toLocaleString("en-US")}`}
-            subLabel={`${invoices.paid_count || 0} invoices settled`}
+            valueOverride={money(invoices.paid_amount)}
+            subLabel={t("invoicesSettled", { count: invoices.paid_count || 0 })}
             icon={Receipt}
-            iconBg="#EDF7EE"
-            iconColor="#4CAF50"
+            tone="green"
           />
-
           <KpiMetricCard
             label={t("outstandingInvoices")}
-            valueOverride={`$${(invoices.outstanding_amount || 0).toLocaleString("en-US")}`}
-            subLabel={`${invoices.unpaid_count || 0} unpaid • ${invoices.overdue_count || 0} overdue`}
+            valueOverride={money(invoices.outstanding_amount)}
+            subLabel={t("unpaidOverdue", {
+              unpaid: invoices.unpaid_count || 0,
+              overdue: invoices.overdue_count || 0,
+            })}
             icon={FileText}
-            iconBg="#FFFDEB"
-            iconColor="#E8D636"
+            tone="amber"
           />
-
           <KpiMetricCard
             label={t("employeePayouts")}
             metric={financial?.employee_payouts}
             icon={Wallet}
-            iconBg="rgba(37, 198, 218, 0.12)"
-            iconColor="#25C6DA"
+            tone="brand"
             prefix="$"
           />
         </div>
       )}
 
-      {/* Multi-Currency Breakdown if present */}
       {financial?.by_currency && financial.by_currency.length > 0 && (
-        <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-[15px] font-bold text-[#000000] dark:text-white">{t("multiCurrency")}</h4>
-            <span className="text-xs text-[#707070] dark:text-gray-400">
-              {financial.by_currency.length} currencies tracked
+        <div className={cn(KPI_CARD, "flex flex-col gap-4 p-6")}>
+          <div className="flex items-center justify-between gap-3">
+            <h4 className="text-[15px] font-bold ds-text-primary">{t("multiCurrency")}</h4>
+            <span className="text-xs ds-text-gray-200">
+              {t("currenciesTracked", { count: financial.by_currency.length })}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {financial.by_currency.map((curr) => (
               <div
                 key={curr.currency_id}
-                className="p-4 rounded-[8px] bg-[#FAF5FF] dark:bg-muted/40 flex flex-col gap-2"
+                className="flex flex-col gap-2 rounded-xl p-4"
+                style={{
+                  backgroundColor: toneWash("violet", 8),
+                  border: `1px solid ${toneEdge("violet", 16)}`,
+                }}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#9810FA]/15 text-[#9810FA] flex items-center justify-center font-bold text-xs">
+                    <div
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
+                      style={{
+                        color: toneInk("violet"),
+                        backgroundColor: toneWash("violet", 18),
+                      }}
+                    >
                       {curr.symbol}
                     </div>
-                    <span className="font-bold text-[14px] text-[#000000] dark:text-white">
-                      {curr.code}
-                    </span>
+                    <span className="text-[14px] font-bold ds-text-primary">{curr.code}</span>
                   </div>
-                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E6F6FE] text-[#03A9F4]">
-                    {curr.symbol}{curr.invoiced.toLocaleString("en-US")}
+
+                  <span
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                    style={{ color: toneInk("sky"), backgroundColor: toneWash("sky", 15) }}
+                  >
+                    {curr.symbol}
+                    {curr.invoiced.toLocaleString("en-US")}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-black/5 dark:border-white/5">
-                  <span className="text-[#707070] dark:text-gray-400">
-                    Collected: <strong className="text-[#4CAF50]">{curr.symbol}{curr.collected.toLocaleString("en-US")}</strong>
+                <div className="flex items-center justify-between border-t pt-1 text-xs ds-text-gray-200"
+                  style={{ borderColor: "color-mix(in srgb, var(--color-text-primary) 10%, transparent)" }}
+                >
+                  <span>
+                    {t("collected")}{" "}
+                    <strong style={{ color: toneInk("green") }}>
+                      {curr.symbol}
+                      {curr.collected.toLocaleString("en-US")}
+                    </strong>
                   </span>
-                  <span className="text-[#707070] dark:text-gray-400">
-                    Due: <strong className="text-[#F44336]">{curr.symbol}{curr.outstanding.toLocaleString("en-US")}</strong>
+                  <span>
+                    {t("due")}{" "}
+                    <strong style={{ color: toneInk("red") }}>
+                      {curr.symbol}
+                      {curr.outstanding.toLocaleString("en-US")}
+                    </strong>
                   </span>
                 </div>
               </div>
