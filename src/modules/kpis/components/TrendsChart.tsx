@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { DollarSign, FileText, CheckSquare, Users, Video, Clock, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { KPI_CARD } from "../tones";
 import type { KpiTrends, TrendDataPoint } from "../types/kpis.types";
 
 interface TrendsChartProps {
@@ -67,23 +68,33 @@ export function TrendsChart({ trends }: TrendsChartProps) {
   const avgForMetric = chartData.length > 0 ? (totalForMetric / chartData.length).toFixed(1) : "0";
 
   return (
-    <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-6">
+    <div className={cn(KPI_CARD, "flex flex-col gap-6 p-6")}>
       {/* Header & Tabs */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-[8px] bg-[rgba(37,198,218,0.12)] flex items-center justify-center text-[#25C6DA]">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-xl"
+              style={{
+                color: "var(--kpi-brand)",
+                backgroundColor: "color-mix(in srgb, var(--kpi-brand) 14%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--kpi-brand) 22%, transparent)",
+              }}
+            >
               <TrendingUp className="w-4 h-4" />
             </div>
-            <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">{t("heading", { year: trends?.year || 2026 })}</h3>
+            <h3 className="text-[18px] font-bold ds-text-primary">{t("heading", { year: trends?.year || 2026 })}</h3>
           </div>
-          <p className="text-xs text-[#707070] dark:text-gray-400 mt-1">
+          <p className="mt-1 text-xs ds-text-gray-200">
             {t("subtitle")}
           </p>
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex items-center gap-1.5 flex-wrap bg-[#F3F4F6] dark:bg-muted p-1 rounded-[8px]">
+        <div
+          className="flex flex-wrap items-center gap-1.5 rounded-xl p-1"
+          style={{ backgroundColor: "color-mix(in srgb, var(--color-text-primary) 7%, transparent)" }}
+        >
           {METRIC_TABS.map((tab) => {
             const IconEl = tab.icon as any;
             const isActive = tab.key === activeMetric;
@@ -95,11 +106,12 @@ export function TrendsChart({ trends }: TrendsChartProps) {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all cursor-pointer",
                   isActive
-                    ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                    : "text-[#707070] dark:text-gray-300 hover:text-foreground hover:bg-white/50"
+                    ? "font-bold text-white shadow-sm"
+                    : "ds-text-gray-100 hover:text-[color:var(--color-text-primary)]"
                 )}
+                style={isActive ? { backgroundColor: "var(--color-btn-brand)" } : undefined}
               >
-                <IconEl className="w-3.5 h-3.5" style={{ color: isActive ? "#ffffff" : tab.color }} />
+                <IconEl className="w-3.5 h-3.5" style={{ color: isActive ? "currentColor" : tab.color }} />
                 <span>{t(tab.key)}</span>
               </button>
             );
@@ -108,24 +120,27 @@ export function TrendsChart({ trends }: TrendsChartProps) {
       </div>
 
       {/* Summary Chips */}
-      <div className="flex items-center gap-4 flex-wrap text-xs text-[#707070] dark:text-gray-400 border-b border-border/40 pb-4">
+      <div
+        className="flex flex-wrap items-center gap-4 border-b pb-4 text-xs ds-text-gray-200"
+        style={{ borderColor: "color-mix(in srgb, var(--color-text-primary) 10%, transparent)" }}
+      >
         <div className="flex items-center gap-2">
           <span>{t("activeMetric")}</span>
-          <span className="font-bold text-[#000000] dark:text-white">{currentLabel}</span>
+          <span className="font-bold ds-text-primary">{currentLabel}</span>
         </div>
-        <div className="w-1 h-1 rounded-full bg-[#707070]" />
+        <div className="h-1 w-1 rounded-full" style={{ backgroundColor: "var(--color-text-gray-200)" }} />
         <div className="flex items-center gap-2">
           <span>{t("annualTotal")}</span>
-          <span className="font-bold text-[#000000] dark:text-white">
+          <span className="font-bold ds-text-primary">
             {currentPrefix}
             {totalForMetric.toLocaleString("en-US")}
             {currentSuffix}
           </span>
         </div>
-        <div className="w-1 h-1 rounded-full bg-[#707070]" />
+        <div className="h-1 w-1 rounded-full" style={{ backgroundColor: "var(--color-text-gray-200)" }} />
         <div className="flex items-center gap-2">
           <span>{t("monthlyAverage")}</span>
-          <span className="font-bold text-[#000000] dark:text-white">
+          <span className="font-bold ds-text-primary">
             {currentPrefix}
             {avgForMetric}
             {currentSuffix}
@@ -149,13 +164,13 @@ export function TrendsChart({ trends }: TrendsChartProps) {
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 12, fill: "currentColor" }}
-              className="text-[#707070]"
+              className="ds-text-gray-200"
             />
             <YAxis
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 12, fill: "currentColor" }}
-              className="text-[#707070]"
+              className="ds-text-gray-200"
               tickFormatter={(v) => `${currentPrefix}${v}${currentSuffix}`}
             />
             <Tooltip
@@ -163,8 +178,8 @@ export function TrendsChart({ trends }: TrendsChartProps) {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload as TrendDataPoint;
                   return (
-                    <div className="ds-bg-form border border-slate-100 dark:border-slate-800 border border-border px-3.5 py-2.5 rounded-[8px] shadow-xl text-xs">
-                      <p className="font-bold text-[#000000] dark:text-white mb-1">{data.label}</p>
+                    <div className={cn(KPI_CARD, "rounded-lg px-3.5 py-2.5 text-xs shadow-xl")}>
+                      <p className="mb-1 font-bold ds-text-primary">{data.label}</p>
                       <p className="flex items-center gap-1.5" style={{ color: currentTab.color }}>
                         <span className="font-semibold">{currentLabel}:</span>
                         <span className="font-mono font-bold">
@@ -186,8 +201,8 @@ export function TrendsChart({ trends }: TrendsChartProps) {
               strokeWidth={3}
               fillOpacity={1}
               fill="url(#kpiGradient)"
-              dot={{ r: 4, fill: currentTab.color, strokeWidth: 2, stroke: "#ffffff" }}
-              activeDot={{ r: 6, fill: currentTab.color, stroke: "#ffffff", strokeWidth: 3 }}
+              dot={{ r: 4, fill: currentTab.color, strokeWidth: 2, stroke: "var(--color-bg-form)" }}
+              activeDot={{ r: 6, fill: currentTab.color, stroke: "var(--color-bg-form)", strokeWidth: 3 }}
             />
           </AreaChart>
         </ResponsiveContainer>

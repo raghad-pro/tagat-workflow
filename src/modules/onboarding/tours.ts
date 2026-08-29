@@ -1,5 +1,5 @@
 /**
- * What the guided tours point at.
+ * What the guided tour points at.
  *
  * A step names a **selector**, not a component: the highlight is resolved from
  * the DOM at the moment the step opens, so a control that this account cannot
@@ -10,6 +10,8 @@
  * namespace, so nothing here builds a translation key that might not exist.
  */
 
+import type { StepIcon } from "./OnboardingTour";
+
 export interface TourStep {
   /** Unique within its tour; also the React key. */
   id: string;
@@ -19,6 +21,8 @@ export interface TourStep {
   target?: string;
   /** Extra breathing room around the highlight, in px. */
   padding?: number;
+  /** Which glyph rides in the card's badge. */
+  icon?: StepIcon;
 }
 
 export interface Tour {
@@ -26,19 +30,17 @@ export interface Tour {
   steps: TourStep[];
 }
 
-/** Shown once per account, on the first dashboard page they land on. */
-export const WELCOME_TOUR: Tour = {
-  id: "welcome",
-  steps: [
-    { id: "welcome", copy: "welcome" },
-    // The rail is `hidden md:block`, so on a phone this resolves to nothing and
-    // the trigger step below takes over.
-    { id: "sidebar", copy: "steps.sidebar", target: '[data-slot="sidebar-inner"]', padding: 0 },
-    { id: "sidebarTrigger", copy: "steps.sidebarTrigger", target: '[data-slot="sidebar-trigger"]' },
-    { id: "navbarActions", copy: "steps.navbarActions", target: '[data-tour="navbar-actions"]' },
-    { id: "outro", copy: "outro" },
-  ],
-};
+/** The furniture that is on screen whichever page they happened to land on. */
+const WELCOME_STEPS: TourStep[] = [
+  { id: "welcome", copy: "welcome", icon: "sparkles" },
+  // The rail is `hidden md:block`, so on a phone this resolves to nothing and
+  // the trigger step below takes over.
+  { id: "sidebar", copy: "steps.sidebar", target: '[data-slot="sidebar-inner"]', padding: 0, icon: "sidebar" },
+  { id: "sidebarTrigger", copy: "steps.sidebarTrigger", target: '[data-slot="sidebar-trigger"]', icon: "menu" },
+  { id: "navbarActions", copy: "steps.navbarActions", target: '[data-tour="navbar-actions"]', icon: "bell" },
+];
+
+const OUTRO_STEP: TourStep = { id: "outro", copy: "outro", icon: "rocket" };
 
 /**
  * The furniture every management page shares. Pages are built from the same
@@ -46,15 +48,15 @@ export const WELCOME_TOUR: Tour = {
  * own opening line.
  */
 const COMMON_STEPS: TourStep[] = [
-  { id: "pageActions", copy: "steps.pageActions", target: '[data-tour="page-actions"]' },
-  { id: "search", copy: "steps.search", target: '[data-tour="search"]' },
-  { id: "table", copy: "steps.table", target: '[data-tour="table"]' },
+  { id: "pageActions", copy: "steps.pageActions", target: '[data-tour="page-actions"]', icon: "plus" },
+  { id: "search", copy: "steps.search", target: '[data-tour="search"]', icon: "search" },
+  { id: "table", copy: "steps.table", target: '[data-tour="table"]', icon: "table" },
 ];
 
 /**
  * Every dashboard route that has an opening line written for it, keyed by the
- * first path segment. A route missing from here gets no tour at all rather than
- * a lookup for copy that does not exist.
+ * first path segment. A route missing from here gets no page chapter at all
+ * rather than a lookup for copy that does not exist.
  */
 const PAGE_KEYS: Record<string, string> = {
   dashboard: "dashboard",
@@ -86,13 +88,13 @@ const PAGE_KEYS: Record<string, string> = {
 /** Steps a particular page adds after its opening line. */
 const PAGE_STEPS: Record<string, TourStep[]> = {
   dashboard: [
-    { id: "hubs", copy: "steps.hubs", target: '[data-tour="hubs"]' },
-    { id: "stats", copy: "steps.stats", target: '[data-tour="stats"]' },
+    { id: "hubs", copy: "steps.hubs", target: '[data-tour="hubs"]', icon: "hubs" },
+    { id: "stats", copy: "steps.stats", target: '[data-tour="stats"]', icon: "stats" },
   ],
   sprints: [
-    { id: "sprintView", copy: "steps.sprintView", target: '[data-tour="sprint-view-toggle"]' },
-    { id: "pageActions", copy: "steps.pageActions", target: '[data-tour="page-actions"]' },
-    { id: "backlog", copy: "steps.backlog", target: '[data-tour="table"]' },
+    { id: "sprintView", copy: "steps.sprintView", target: '[data-tour="sprint-view-toggle"]', icon: "board" },
+    { id: "pageActions", copy: "steps.pageActions", target: '[data-tour="page-actions"]', icon: "plus" },
+    { id: "backlog", copy: "steps.backlog", target: '[data-tour="table"]', icon: "table" },
   ],
   conversations: [],
   profile: [],
@@ -104,19 +106,27 @@ function routeSegment(pathname: string): string {
   return pathname.split("?")[0].split("/").filter(Boolean)[0] ?? "";
 }
 
-/**
- * The tour for a route, or `null` where none is written. Ids are namespaced by
- * route so each page is remembered separately — reading the projects hint does
- * not silence the invoices one.
- */
-export function tourForPath(pathname: string): Tour | null {
+/** The chapter about the page they are standing on, or `null` where none is written. */
+export function tourForPath(pathname: string): TourStep[] | null {
   const segment = routeSegment(pathname);
   const key = PAGE_KEYS[segment];
   if (!key) return null;
 
   const extra = PAGE_STEPS[key] ?? COMMON_STEPS;
+  return [{ id: "intro", copy: `pages.${key}`, icon: "compass" }, ...extra];
+}
+
+/**
+ * The one guide an account is ever shown by itself: the platform's furniture,
+ * then whatever the page they landed on is for, then a sign-off.
+ *
+ * It is a single tour rather than a welcome plus a hint per page because it
+ * runs exactly once — anything left out of it is something the account will
+ * never be told unless they ask for the replay.
+ */
+export function firstRunTour(pathname: string): Tour {
   return {
-    id: `page:${key}`,
-    steps: [{ id: "intro", copy: `pages.${key}` }, ...extra],
+    id: "first-run",
+    steps: [...WELCOME_STEPS, ...(tourForPath(pathname) ?? []), OUTRO_STEP],
   };
 }

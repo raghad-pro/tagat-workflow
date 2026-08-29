@@ -31,6 +31,7 @@ const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/developments": ["super_admin", "company"],
   "/contracts": ["super_admin", "company"],
   "/salaries": ["super_admin", "company"],
+  "/data-import": ["super_admin", "company"],
 };
 
 /**
@@ -62,6 +63,7 @@ const ROUTE_GRANTED_BY_PERMISSION: Record<string, string> = {
   "/developments": "developments.view",
   "/contracts": "contracts.view",
   "/conversations": "conversations.view",
+  "/data-import": "data_import.view",
 };
 
 export default function RouteGuard({ children }: { children: React.ReactNode }) {

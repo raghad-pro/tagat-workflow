@@ -695,7 +695,9 @@
       "new": "New Requests",
       "underReview": "Under Review",
       "approved": "Approved",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "total": "Total Requests",
+      "pending": "Pending"
     },
     "columns": {
       "companyName": "Company Name",
@@ -720,7 +722,13 @@
       "approved": "Approved",
       "rejected": "Rejected"
     },
-    "noRequests": "No join requests"
+    "noRequests": "No join requests",
+    "toast": {
+      "approved": "Request approved successfully",
+      "approveFailed": "Something went wrong while approving the request",
+      "rejected": "Request rejected successfully",
+      "rejectFailed": "Something went wrong while rejecting the request"
+    }
   },
   "client": {
     "title": "Client Management",
@@ -821,7 +829,247 @@
     "teamHubDesc": "Employees, roles and permissions",
     "backToHubs": "All sections",
     "sections": "Sections",
-    "openSection": "Open"
+    "openSection": "Open",
+    "dataImport": "Data Import"
+  },
+  "dataImport": {
+    "title": "Data Import",
+    "subtitle": "Migrate currencies, clients, employees, projects and tasks from CSV or Excel files.",
+    "history": "Import history",
+    "newImport": "New import",
+    "noFile": "No file yet",
+    "sessionName": "Data Import #{number}",
+    "backToList": "Back to imports",
+    "start": {
+      "title": "Start a new import",
+      "formats": "Accepted formats: CSV and Excel (.xlsx). Older .xls files are not supported.",
+      "draftNote": "Creates a draft session — nothing is imported until you confirm.",
+      "chooseCompany": "Choose a company…"
+    },
+    "sessions": {
+      "title": "Your import sessions",
+      "count": "{count, plural, =1 {# session} other {# sessions}}",
+      "emptyTitle": "No import sessions yet",
+      "emptyDescription": "Start a new import to migrate your data from a CSV or Excel file.",
+      "stageFiles": "{files, plural, =1 {# sheet} other {# sheets}} · {rows, plural, =1 {# row} other {# rows}}",
+      "open": "Open",
+      "delete": "Delete",
+      "sheetCount": "{count, plural, =0 {not parsed yet} =1 {# sheet} other {# sheets}}"
+    },
+    "stages": {
+      "currency": "currency",
+      "client": "client",
+      "employee": "employee",
+      "project": "project",
+      "task": "task"
+    },
+    "stageStatus": {
+      "empty": "Waiting for a file",
+      "ready": "Ready to import",
+      "incomplete": "Needs mapping",
+      "imported": "Imported",
+      "failed": "Failed"
+    },
+    "status": {
+      "draft": "draft",
+      "processing": "processing",
+      "completed": "completed",
+      "failed": "failed",
+      "ready": "ready",
+      "committing": "committing",
+      "committed": "committed",
+      "pending": "pending"
+    },
+    "notFound": {
+      "title": "This import session no longer exists",
+      "description": "It may have been deleted, or opened on another device."
+    },
+    "wizard": {
+      "steps": {
+        "upload": "Upload",
+        "parse": "Parse",
+        "mapping": "Mapping",
+        "preview": "Preview",
+        "import": "Import",
+        "result": "Result"
+      }
+    },
+    "upload": {
+      "title": "1. Upload your files",
+      "hint": "CSV or Excel (.xlsx). Up to {max} files per import, 10 MB each.",
+      "drop": "Drop files here or",
+      "browse": "browse",
+      "dropHint": "Each file should hold one kind of record — currencies, clients, employees, projects or tasks",
+      "cta": "Upload",
+      "next": "Next — Parse",
+      "counter": "{count} of {max} files",
+      "uploaded": "uploaded",
+      "queued": "ready to upload",
+      "errors": {
+        "type": "{name} is not a CSV or .xlsx file",
+        "size": "{name} is larger than 10 MB",
+        "max": "You can attach at most {max} files to one import"
+      }
+    },
+    "parse": {
+      "title": "2. Check the parsed sheets",
+      "description": "Confirm each file was read correctly before mapping its columns.",
+      "empty": "Upload a file first.",
+      "next": "Next — Mapping",
+      "rows": "Rows",
+      "columns": "Columns",
+      "recordType": "Record type",
+      "chooseType": "Choose a type…",
+      "unnamedColumn": "Column {index}",
+      "summary": "{files, plural, =1 {# sheet} other {# sheets}}, {rows, plural, =1 {# row} other {# rows}} ready",
+      "untyped": "{count, plural, =1 {# sheet still needs a record type} other {# sheets still need a record type}}",
+      "notes": {
+        "excel": "Excel files are read after upload, so their columns are mapped on the server. Pick the record type here.",
+        "empty": "This file has no header row, so nothing could be read from it.",
+        "unreadable": "This file could not be read in the browser."
+      },
+      "sheets": "Sheets",
+      "delimiter": "Delimiter",
+      "reparse": "Re-parse",
+      "noSheets": "This file has not produced any sheet yet. Try re-parsing it, or check the delimiter.",
+      "sheetMeta": "{rows} rows · {columns} columns",
+      "unparsed": "{count, plural, =1 {# file has no sheets yet} other {# files have no sheets yet}}",
+      "delimiters": {
+        "comma": "Comma ( , )",
+        "semicolon": "Semicolon ( ; )",
+        "tab": "Tab",
+        "pipe": "Pipe ( | )"
+      },
+      "serverFailed": "the server marked this file as failed"
+    },
+    "mapping": {
+      "title": "3. Map your columns",
+      "description": "Tell the importer what each column means. Required fields must all be filled.",
+      "empty": "No parsed sheets to map yet.",
+      "next": "Next — Preview",
+      "notMapped": "Not mapped",
+      "allMapped": "Every required field has a column",
+      "missingRequired": "{count, plural, =1 {# required field has no column} other {# required fields have no column}}",
+      "serverSide": "This file's columns are mapped on the server after upload.",
+      "entity": "Record type",
+      "chooseEntity": "Choose a type…",
+      "chooseEntityFirst": "Choose a record type first",
+      "analyze": "Auto-match",
+      "aiSuggest": "AI suggestion",
+      "aiDone": "Suggestion applied — review it, then save",
+      "save": "Save mapping",
+      "saved": "Mapping saved",
+      "loading": "Loading the mapping…",
+      "noColumns": "No columns were read from this sheet."
+    },
+    "fields": {
+      "name": "Name",
+      "code": "Code",
+      "symbol": "Symbol",
+      "exchangeRate": "Exchange rate",
+      "email": "Email",
+      "phone": "Phone",
+      "company": "Company",
+      "jobTitle": "Job title",
+      "salary": "Salary",
+      "title": "Title",
+      "client": "Client",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "budget": "Budget",
+      "project": "Project",
+      "assignee": "Assignee",
+      "status": "Status",
+      "dueDate": "Due date"
+    },
+    "preview": {
+      "title": "4. Preview the result",
+      "description": "See exactly what would be imported. Nothing is created at this step.",
+      "empty": "No data to preview yet.",
+      "build": "Build preview",
+      "next": "Next — Import",
+      "showing": "Showing {shown} of {total} rows",
+      "rowsReady": "{count} ready",
+      "rowsWithIssues": "{count} invalid",
+      "rowsDuplicate": "{count} duplicate",
+      "issuesFound": "{count, plural, =1 {# issue found in the previewed rows} other {# issues found in the previewed rows}}",
+      "noIssues": "No issues in the previewed rows",
+      "serverSide": "This file is checked on the server after upload.",
+      "issue": {
+        "missing": "This field is required",
+        "email": "Not a valid email address",
+        "number": "Not a number",
+        "date": "Not a valid date",
+        "duplicate": "This row repeats a key already seen in this sheet"
+      },
+      "notBuilt": "Build the preview to see this sheet's rows.",
+      "loading": "Loading the preview…",
+      "noRows": "No rows came back for this sheet.",
+      "needsMapping": "Map at least one sheet first"
+    },
+    "run": {
+      "title": "5. Import",
+      "description": "Review the totals for the whole import, then confirm.",
+      "start": "Import now",
+      "warning": "Imported records become normal company data. There is no rollback, so review the preview before importing.",
+      "tiles": {
+        "duplicate": "Skipped — duplicate",
+        "invalid": "Skipped — invalid",
+        "ready": "Will be imported",
+        "sheets": "Sheets"
+      },
+      "stageRows": "{files, plural, =1 {# sheet} other {# sheets}} · {rows, plural, =1 {# row} other {# rows}}",
+      "nothingToImport": "No sheet has a record type yet, so there is nothing to import.",
+      "unparsedNote": "{count, plural, =1 {# Excel file is} other {# Excel files are}} counted after the server reads them.",
+      "stagedRows": "{rows} rows staged for import"
+    },
+    "result": {
+      "title": "6. Import result",
+      "description": "What the import did, stage by stage.",
+      "notRunYet": "Nothing has been imported for this session yet.",
+      "tiles": {
+        "stage": "Stage",
+        "notRun": "Not run",
+        "failed": "Failed",
+        "skippedDuplicate": "Skipped — duplicate",
+        "skippedInvalid": "Skipped — invalid",
+        "reused": "Reused",
+        "created": "Created"
+      },
+      "allImports": "All imports",
+      "auditTrail": "View audit trail",
+      "backToList": "Back to imports",
+      "skippedNote": "Skipped rows were either duplicates or failed a check — fix them in the file and import it again.",
+      "loading": "Loading the result…",
+      "rollbackPossible": "A rollback of this import would still be possible.",
+      "rollbackBlocked": "This import can no longer be rolled back.",
+      "auditEmpty": "No audit rows for this import.",
+      "auditRow": "Row",
+      "auditEntity": "Record",
+      "auditStatus": "Status",
+      "auditMessage": "Message",
+      "auditAt": "When"
+    },
+    "historyPage": {
+      "title": "Import history",
+      "subtitle": "Every import session, including those that failed.",
+      "filters": {
+        "clear": "Clear",
+        "month": "Month",
+        "year": "Year",
+        "anySession": "Any session status",
+        "anyExecution": "Any execution status"
+      },
+      "execution": {
+        "notRun": "Not run",
+        "imported": "Imported",
+        "partial": "Imported with skips",
+        "failed": "Failed"
+      },
+      "empty": "No imports match these filters.",
+      "emptyAll": "No imports yet.",
+      "rowSummary": "{created} created · {skipped} skipped"
+    }
   },
   "currencies": {
     "title": "Currencies",
@@ -2002,13 +2250,21 @@
       "paidInvoices": "Paid Invoices Amount",
       "outstandingInvoices": "Outstanding Invoices",
       "employeePayouts": "Employee Payouts",
-      "multiCurrency": "Multi-Currency Portfolio"
+      "multiCurrency": "Multi-Currency Portfolio",
+      "invoicesSettled": "{count} invoices settled",
+      "unpaidOverdue": "{unpaid} unpaid • {overdue} overdue",
+      "currenciesTracked": "{count} currencies tracked",
+      "collected": "Collected:",
+      "due": "Due:"
     },
     "operations": {
       "heading": "Operations KPIs",
       "totalProjects": "Total Projects",
       "totalTasks": "Total Tasks",
-      "trackedHours": "Tracked Hours"
+      "trackedHours": "Tracked Hours",
+      "completionRate": "{rate}% completion rate",
+      "tasksDone": "{rate}% done ({count} tasks)",
+      "hoursSplit": "{approved} approved • {pending} pending"
     },
     "people": {
       "heading": "People & Collaboration KPIs",
@@ -2073,7 +2329,8 @@
     "pageTitle": "KPIs & Performance Dashboard",
     "pageSubtitle": "Executive business metrics, financial health, and operational performance",
     "year": "Year {year}",
-    "allMonths": "All Months (Annual)"
+    "allMonths": "All Months (Annual)",
+    "previous": "Prev: {value}"
   },
   "onboarding": {
     "title": "Guided tour",
@@ -2082,13 +2339,15 @@
     "skip": "Skip",
     "done": "Done",
     "replay": "Replay the guide",
+    "progress": "{current} / {total}",
+    "keyboardHint": "Use ← → to move, Esc to close",
     "welcome": {
       "title": "Welcome 👋",
-      "body": "A quick tour of the platform. Your account sees it once, and you can skip it any time."
+      "body": "A quick tour of the platform — a minute at most. Your account sees it once, and you can skip it any time."
     },
     "outro": {
       "title": "You are all set 🚀",
-      "body": "Each page gives you a short hint like this the first time you open it. You can replay the guide from your account menu."
+      "body": "That is the whole tour, and it will not interrupt you again. Whenever you want it back, it is under your account menu at the top."
     },
     "steps": {
       "sidebar": {

@@ -4,6 +4,7 @@ import React from "react";
 import { FolderKanban, CheckSquare, Clock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { KpiMetricCard } from "./KpiMetricCard";
+import { KpiSectionHeading } from "./KpiSectionHeading";
 import { ProjectStatusDonutChart } from "./ProjectStatusDonutChart";
 import { TaskStatusDonutChart } from "./TaskStatusDonutChart";
 import type { ProjectsKpis, TasksKpis, TimesheetsKpis } from "../types/kpis.types";
@@ -22,57 +23,48 @@ export function OperationsKpiSection({ projects, tasks, timesheets }: Operations
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-[8px] bg-[#FAF5FF] flex items-center justify-center text-[#9810FA]">
-          <FolderKanban className="w-5 h-5" />
-        </div>
-        <h2 className="text-[20px] sm:text-[22px] font-bold text-[#000000] dark:text-white tracking-tight leading-[32px]">
-          {t("heading")}
-        </h2>
-      </div>
+      <KpiSectionHeading icon={FolderKanban} title={t("heading")} tone="violet" />
 
-      {/* Top 3 Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Projects Card */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {projects && (
           <KpiMetricCard
             label={t("totalProjects")}
             metric={projects.total}
-            subLabel={`${projects.completion_rate || 0}% Completion Rate`}
+            subLabel={t("completionRate", { rate: projects.completion_rate || 0 })}
             icon={FolderKanban}
-            iconBg="#FAF5FF"
-            iconColor="#9810FA"
+            tone="violet"
           />
         )}
 
-        {/* Tasks Card */}
         {tasks && (
           <KpiMetricCard
             label={t("totalTasks")}
             metric={tasks.total}
-            subLabel={`${tasks.completion_rate || 0}% Done (${tasks.completed?.value || 0} tasks)`}
+            subLabel={t("tasksDone", {
+              rate: tasks.completion_rate || 0,
+              count: tasks.completed?.value || 0,
+            })}
             icon={CheckSquare}
-            iconBg="#EDF7EE"
-            iconColor="#4CAF50"
+            tone="green"
           />
         )}
 
-        {/* Timesheets Card */}
         {timesheets && (
           <KpiMetricCard
             label={t("trackedHours")}
             metric={timesheets.hours}
             suffix={th("hoursSuffix")}
-            subLabel={`${timesheets.approved_hours || 0} approved • ${timesheets.pending_hours || 0} pending`}
+            subLabel={t("hoursSplit", {
+              approved: timesheets.approved_hours || 0,
+              pending: timesheets.pending_hours || 0,
+            })}
             icon={Clock}
-            iconBg="#FFFDEB"
-            iconColor="#E8D636"
+            tone="amber"
           />
         )}
       </div>
 
-      {/* Interactive Donut Charts Grid matching user screenshot */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ProjectStatusDonutChart projects={projects} />
         <TaskStatusDonutChart tasks={tasks} />
       </div>

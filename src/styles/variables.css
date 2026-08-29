@@ -80,6 +80,19 @@
     --color-priority-medium: #f59e0b;
     --color-priority-low: #22c55e;
 
+    /* ============== KPI accents ================== */
+    /* One hue per accent, and every tint on the KPI page is mixed from it at
+       runtime — so a tile, a chip and an icon can never drift apart, and the
+       dark theme only has to restate the six hues below. They are pitched for
+       contrast on white here, and lifted for near-black in the dark block. */
+    --kpi-sky: #0284c7;
+    --kpi-violet: #8b23e0;
+    --kpi-green: #16a34a;
+    --kpi-red: #e11d48;
+    --kpi-amber: #b45309;
+    --kpi-brand: #0e9cb0;
+    --kpi-slate: #64748b;
+
     /* ============== States ================== */
     --color-success: #22c55e;
     --color-processing-bg: #fef3c7;
@@ -296,6 +309,19 @@
     --color-task-active-bg: rgba(14, 165, 233, 0.18);
     --color-task-logged-bg: rgba(234, 179, 8, 0.18);
     --color-task-budget-bg: rgba(34, 197, 94, 0.18);
+
+    /* ============== KPI accents ================== */
+    /* The light values are pitched to be readable on white and go muddy on a
+       near-black card, so each hue is restated a few steps brighter. Nothing
+       else about the KPI palette is duplicated — the tints are mixed from
+       these. */
+    --kpi-sky: #38bdf8;
+    --kpi-violet: #c084fc;
+    --kpi-green: #4ade80;
+    --kpi-red: #fb7185;
+    --kpi-amber: #fbbf24;
+    --kpi-brand: #22c8e0;
+    --kpi-slate: #94a3b8;
 
     /* ─── Status Badge Colors ─────────────────────────────────────────── */
     --color-status-active-bg: rgba(76, 175, 80, 0.18);

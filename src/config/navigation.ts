@@ -92,6 +92,10 @@ export const NAV_HUBS: NavHub[] = [
       { key: "sprints", href: "/sprints", icon: KanbanSquare, roles: ["super_admin", "company", "employee"], permission: "tasks.view" },
       { key: "timesheets", href: "/timesheets", icon: Clock, roles: ["super_admin", "company", "employee"], permission: "timesheets.view" },
       { key: "developments", href: "/developments", icon: Wrench, roles: ["super_admin", "company"], permission: "developments.view" },
+      // Front end only so far — the screen migrates CSV/Excel into the same
+      // records this hub already owns, so it belongs beside them rather than
+      // in a hub of its own.
+      { key: "dataImport", href: "/data-import", icon: ArrowUpDown, roles: ["super_admin", "company"], permission: "data_import.view" },
     ],
   },
   {

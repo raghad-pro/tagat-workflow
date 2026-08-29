@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import {
-  BarChart3,
   Calendar,
   RotateCw,
   TrendingUp,
@@ -11,6 +10,7 @@ import {
   FolderKanban,
   Users,
   Layers,
+  type LucideIcon,
 } from "lucide-react";
 import { PageContainer } from "@/components/template/PageContainer";
 import { useKpiDashboard, useKpiFilters, useKpiTrends } from "../hooks/useKpis";
@@ -18,31 +18,49 @@ import { FinancialKpiSection } from "./FinancialKpiSection";
 import { OperationsKpiSection } from "./OperationsKpiSection";
 import { PeopleAndMeetingsKpiSection } from "./PeopleAndMeetingsKpiSection";
 import { TrendsChart } from "./TrendsChart";
+import { KPI_CARD } from "../tones";
 import { cn } from "@/lib/utils";
 
 type KpiTab = "all" | "financial" | "operations" | "people" | "trends";
 
+/** The tab strip, in reading order. `all` shows every section below. */
+const TABS: { key: KpiTab; copy: string; icon: LucideIcon }[] = [
+  { key: "all", copy: "tabs.overview", icon: Layers },
+  { key: "financial", copy: "tabs.financial", icon: DollarSign },
+  { key: "operations", copy: "tabs.operations", icon: FolderKanban },
+  { key: "people", copy: "tabs.people", icon: Users },
+  { key: "trends", copy: "tabs.trends", icon: TrendingUp },
+];
+
+/** The control shell the year and month pickers share. */
+const CONTROL = cn(KPI_CARD, "flex h-10 items-center gap-2 rounded-xl px-3.5");
+
 export function KpisDashboardPage() {
-  const t = useTranslations("common");
   const tk = useTranslations("kpis");
 
   const [activeTab, setActiveTab] = useState<KpiTab>("all");
-  const [selectedYear, setSelectedYear] = useState<number>(2026);
-  const [selectedMonth, setSelectedMonth] = useState<number | undefined>(8);
+  // Opening on today rather than a pinned year and month, which quietly became
+  // wrong the moment the calendar moved past them.
+  const now = useMemo(() => new Date(), []);
+  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number | undefined>(now.getMonth() + 1);
 
   const { data: filtersData } = useKpiFilters();
-  const { data: kpiData, isLoading, refetch, isRefetching } = useKpiDashboard({
-    year: selectedYear,
-    month: selectedMonth,
-  });
+  const {
+    data: kpiData,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useKpiDashboard({ year: selectedYear, month: selectedMonth });
   const { data: trendsData } = useKpiTrends(selectedYear);
 
-  // Available years from filters API or fallback
+  // Years the API knows about, falling back to a window around today.
   const availableYears = useMemo(() => {
-    return filtersData?.years || [2026, 2025, 2024];
-  }, [filtersData?.years]);
+    if (filtersData?.years?.length) return filtersData.years;
+    const thisYear = now.getFullYear();
+    return [thisYear, thisYear - 1, thisYear - 2];
+  }, [filtersData?.years, now]);
 
-  // Available months from filters API or standard 12 months
   const availableMonths = useMemo(() => {
     const monthList = filtersData?.months?.[String(selectedYear)];
     if (monthList && monthList.length > 0) return monthList;
@@ -55,38 +73,36 @@ export function KpisDashboardPage() {
     }));
   }, [filtersData?.months, selectedYear, tk]);
 
-  // Combined trends data (either from dashboard payload or trends endpoint)
   const finalTrends = kpiData?.trends || trendsData;
 
   return (
     <PageContainer isLoading={isLoading} skeletonVariant="dashboard">
       <div className="flex flex-col gap-8 pb-12">
-        {/* ── Background Glow Overlay matching Meetings page ── */}
+        {/* Background glow, matching the meetings page. */}
         <div
-          className="pointer-events-none fixed top-0 end-0 w-[820px] h-[688px] rounded-full blur-[96px] -z-10"
-          style={{ backgroundColor: "rgba(81, 209, 225, 0.15)" }}
+          className="pointer-events-none fixed top-0 end-0 -z-10 h-[688px] w-[820px] rounded-full blur-[96px]"
+          style={{ backgroundColor: "color-mix(in srgb, var(--color-btn-brand) 14%, transparent)" }}
         />
 
-        {/* ── Page Header (Exact Figma match) ── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex flex-col gap-1">
-            <h1 className="text-[31px] font-bold tracking-tight text-[#000000] dark:text-white leading-[47px]">
+            <h1 className="text-[31px] font-bold leading-[47px] tracking-tight ds-text-primary">
               {tk("pageTitle")}
             </h1>
-            <p className="text-[16px] text-[#424242] dark:text-gray-300 font-normal leading-[24px]">
+            <p className="text-[16px] font-normal leading-6 ds-text-gray-100">
               {tk("pageSubtitle")}
             </p>
           </div>
 
-          {/* ── Date Filters & Actions ── */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Year Selector */}
-            <div className="flex items-center gap-2 ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
-              <Calendar className="w-4 h-4 text-[#25C6DA]" />
+          <div className="flex flex-wrap items-center gap-3">
+            <div className={CONTROL}>
+              <Calendar className="h-4 w-4" style={{ color: "var(--color-btn-brand)" }} />
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-transparent text-[14px] font-medium text-[#000000] dark:text-white focus:outline-none cursor-pointer"
+                aria-label={tk("pageTitle")}
+                className="cursor-pointer bg-transparent text-[14px] font-medium ds-text-primary focus:outline-none"
               >
                 {availableYears.map((yr) => (
                   <option key={yr} value={yr} className="bg-popover text-foreground">
@@ -96,17 +112,19 @@ export function KpisDashboardPage() {
               </select>
             </div>
 
-            {/* Month Selector */}
-            <div className="flex items-center gap-2 ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] px-4 py-2 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
+            <div className={CONTROL}>
               <select
                 value={selectedMonth ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   setSelectedMonth(val ? Number(val) : undefined);
                 }}
-                className="bg-transparent text-[14px] font-medium text-[#000000] dark:text-white focus:outline-none cursor-pointer"
+                aria-label={tk("allMonths")}
+                className="cursor-pointer bg-transparent text-[14px] font-medium ds-text-primary focus:outline-none"
               >
-                <option value="" className="bg-popover text-foreground">{tk("allMonths")}</option>
+                <option value="" className="bg-popover text-foreground">
+                  {tk("allMonths")}
+                </option>
                 {availableMonths.map((m) => (
                   <option key={m.value} value={m.value} className="bg-popover text-foreground">
                     {m.label}
@@ -115,98 +133,79 @@ export function KpisDashboardPage() {
               </select>
             </div>
 
-            {/* Refresh Button */}
             <button
+              type="button"
               onClick={() => refetch()}
               disabled={isRefetching}
-              className="flex items-center gap-2 px-5 py-2.5 h-[40px] rounded-[8px] ds-bg-form border border-slate-100 dark:border-slate-800 text-[#424242] dark:text-gray-200 text-[15px] font-medium hover:bg-gray-50 dark:hover:bg-muted transition-all cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)] disabled:opacity-50"
+              className={cn(
+                CONTROL,
+                "cursor-pointer text-[14px] font-medium ds-text-gray-100 transition-colors",
+                "hover:text-[color:var(--color-text-primary)]",
+                "disabled:cursor-default disabled:opacity-50"
+              )}
               title={tk("refreshTitle")}
             >
-              <RotateCw className={cn("w-4 h-4 text-[#25C6DA]", isRefetching && "animate-spin")} />
+              <RotateCw
+                className={cn("h-4 w-4", isRefetching && "animate-spin")}
+                style={{ color: "var(--color-btn-brand)" }}
+              />
               <span className="hidden sm:inline">{tk("refresh")}</span>
             </button>
           </div>
         </div>
 
-        {/* ── Navigation Tabs ── */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={cn(
-              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
-              activeTab === "all"
-                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-            )}
-          >
-            <Layers className="w-4 h-4" />
-            <span>{tk("tabs.overview")}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("financial")}
-            className={cn(
-              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
-              activeTab === "financial"
-                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-            )}
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>{tk("tabs.financial")}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("operations")}
-            className={cn(
-              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
-              activeTab === "operations"
-                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-            )}
-          >
-            <FolderKanban className="w-4 h-4" />
-            <span>{tk("tabs.operations")}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("people")}
-            className={cn(
-              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
-              activeTab === "people"
-                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-            )}
-          >
-            <Users className="w-4 h-4" />
-            <span>{tk("tabs.people")}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("trends")}
-            className={cn(
-              "flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold transition-all cursor-pointer whitespace-nowrap",
-              activeTab === "trends"
-                ? "bg-[#25C6DA] text-white shadow-sm font-bold"
-                : "ds-bg-form border border-slate-100 dark:border-slate-800 text-[#707070] dark:text-gray-300 hover:text-foreground shadow-[0_2px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-            )}
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span>{tk("tabs.trends")}</span>
-          </button>
+        {/* ── Tabs ───────────────────────────────────────────────────────── */}
+        <div
+          role="tablist"
+          aria-label={tk("pageTitle")}
+          className="flex items-center gap-2 overflow-x-auto pb-1"
+        >
+          {TABS.map(({ key, copy, icon: Icon }) => {
+            const isActive = activeTab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  "flex h-10 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl px-4",
+                  "text-[14px] font-semibold transition-all duration-200",
+                  isActive
+                    ? "font-bold text-white"
+                    : cn(
+                        KPI_CARD,
+                        "ds-text-gray-100 hover:-translate-y-px",
+                        "hover:text-[color:var(--color-text-primary)]"
+                      )
+                )}
+                // The lit-tab glow is a brand-tinted colour-mix, which Tailwind
+                // cannot express as an arbitrary shadow without the commas
+                // being parsed as class separators.
+                style={
+                  isActive
+                    ? {
+                        backgroundColor: "var(--color-btn-brand)",
+                        boxShadow:
+                          "0 8px 20px -8px color-mix(in srgb, var(--color-btn-brand) 85%, transparent)",
+                      }
+                    : undefined
+                }
+              >
+                <Icon className="h-4 w-4" />
+                <span>{tk(copy as never)}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* ── Content Sections ── */}
+        {/* ── Sections ───────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-8">
-          {(activeTab === "all" || activeTab === "trends") && (
-            <TrendsChart trends={finalTrends} />
-          )}
+          {(activeTab === "all" || activeTab === "trends") && <TrendsChart trends={finalTrends} />}
 
           {(activeTab === "all" || activeTab === "financial") && (
-            <FinancialKpiSection
-              financial={kpiData?.financial}
-              invoices={kpiData?.invoices}
-            />
+            <FinancialKpiSection financial={kpiData?.financial} invoices={kpiData?.invoices} />
           )}
 
           {(activeTab === "all" || activeTab === "operations") && (

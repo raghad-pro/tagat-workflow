@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from "recharts";
+import { cn } from "@/lib/utils";
+import { KPI_CARD, readableInk } from "../tones";
 import type { ProjectsKpis } from "../types/kpis.types";
 
 interface ProjectStatusDonutChartProps {
@@ -53,6 +55,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
     innerRadius,
     outerRadius,
     percent,
+    fill,
   }: any) => {
     if (!percent || percent < 0.05) return null;
     const RADIAN = Math.PI / 180;
@@ -64,11 +67,11 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
       <text
         x={x}
         y={y}
-        fill="#000000"
+        fill={readableInk(String(fill))}
         textAnchor="middle"
         dominantBaseline="central"
-        className="text-[13px] font-extrabold tracking-tight select-none"
-        style={{ fontWeight: 800, textShadow: "0 0 2px rgba(255,255,255,0.8)" }}
+        className="select-none text-[13px] font-extrabold tracking-tight"
+        style={{ fontWeight: 800 }}
       >
         {`${(percent * 100).toFixed(1)}%`}
       </text>
@@ -76,9 +79,9 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
   };
 
   return (
-    <div className="ds-bg-form border border-slate-100 dark:border-slate-800 rounded-[8px] p-6 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_20px_0_rgba(0,0,0,0.35)] flex flex-col gap-4">
+    <div className={cn(KPI_CARD, "flex flex-col gap-4 p-6")}>
       {/* Title */}
-      <h3 className="text-[18px] font-bold text-[#000000] dark:text-white">
+      <h3 className="text-[18px] font-bold ds-text-primary">
         {t("heading")}
       </h3>
 
@@ -97,7 +100,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
                 dataKey="value"
                 labelLine={false}
                 label={renderCustomizedLabel}
-                stroke="#FFFFFF"
+                stroke="var(--color-bg-form)"
                 strokeWidth={2}
               >
                 {chartData.map((entry, index) => (
@@ -110,10 +113,8 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
                     const d = payload[0].payload as StatusSlice;
                     return (
                       <div
-                        className="px-3.5 py-1.5 rounded-[8px] text-white font-bold text-xs shadow-lg flex items-center justify-center"
-                        style={{
-                          backgroundColor: d.key === "Completed" ? "#FFA500" : d.color,
-                        }}
+                        className="flex items-center justify-center rounded-lg px-3.5 py-1.5 text-xs font-bold shadow-lg"
+                        style={{ backgroundColor: d.color, color: readableInk(d.color) }}
                       >
                         <span>{d.name}: {d.value}</span>
                       </div>
@@ -133,7 +134,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
               className="w-3.5 h-3.5 rounded-full shrink-0"
               style={{ backgroundColor: COLORS.Pending }}
             />
-            <span className="text-[#424242] dark:text-gray-200 font-medium">{t("pending")}</span>
+            <span className="font-medium ds-text-gray-100">{t("pending")}</span>
             {pending > 0 && (
               <span className="ms-auto font-bold text-xs text-muted-foreground">
                 ({pending})
@@ -146,7 +147,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
               className="w-3.5 h-3.5 rounded-full shrink-0"
               style={{ backgroundColor: COLORS["In progress"] }}
             />
-            <span className="text-[#424242] dark:text-gray-200 font-medium">{t("inProgress")}</span>
+            <span className="font-medium ds-text-gray-100">{t("inProgress")}</span>
             {inProgress > 0 && (
               <span className="ms-auto font-bold text-xs text-muted-foreground">
                 ({inProgress})
@@ -159,7 +160,7 @@ export function ProjectStatusDonutChart({ projects }: ProjectStatusDonutChartPro
               className="w-3.5 h-3.5 rounded-full shrink-0"
               style={{ backgroundColor: COLORS.Completed }}
             />
-            <span className="text-[#424242] dark:text-gray-200 font-medium">{t("completed")}</span>
+            <span className="font-medium ds-text-gray-100">{t("completed")}</span>
             {completed > 0 && (
               <span className="ms-auto font-bold text-xs text-muted-foreground">
                 ({completed})

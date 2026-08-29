@@ -19,6 +19,7 @@ import { JOIN_REQUEST_STATUS_MAP } from "../types/company-requests.types";
 import type {
   JoinRequestClient,
   JoinRequestCompany,
+  JoinRequestsQueryParams,
   JoinRequestStatus,
 } from "../types/company-requests.types";
 
@@ -66,6 +67,7 @@ export default function JoinRequestsPage() {
   const tCommon = useTranslations("common");
 
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const { user } = useAuth();
@@ -74,8 +76,7 @@ export default function JoinRequestsPage() {
 
   const { data, isLoading, isError, error, refetch } = useJoinRequests({
     search: search || undefined,
-    page: 1,
-    per_page: 1000,
+    status: (status || undefined) as JoinRequestsQueryParams["status"],
   });
 
   const { mutate: approve } = useApproveJoinRequest();
@@ -89,8 +90,17 @@ export default function JoinRequestsPage() {
       if (!client || !Array.isArray(client.companies)) return;
       client.companies.forEach((company: JoinRequestCompany) => {
         if (!company) return;
-        // Hide other companies' requests from the current company admin
-        if (!isSuperAdmin && company.id !== user?.company_id && company.email !== user?.email) {
+        // Hide other companies' requests from the current company admin. Only
+        // when there is something to compare against — a company account with
+        // no `company_id` and a different contact email would otherwise be
+        // filtered down to an empty table.
+        const canScope = user?.company_id != null || !!user?.email;
+        if (
+          !isSuperAdmin &&
+          canScope &&
+          company.id !== user?.company_id &&
+          company.email !== user?.email
+        ) {
           return;
         }
 
@@ -102,15 +112,19 @@ export default function JoinRequestsPage() {
       });
     });
 
-    if (!search.trim()) return flat;
+    const byStatus = status
+      ? flat.filter((r) => (r.company.pivot?.status || "pending") === status)
+      : flat;
+
+    if (!search.trim()) return byStatus;
     const q = search.trim().toLowerCase();
-    return flat.filter(
+    return byStatus.filter(
       (r) =>
         r.client.name.toLowerCase().includes(q) ||
         r.company.name.toLowerCase().includes(q) ||
         r.company.email.toLowerCase().includes(q)
     );
-  }, [data?.raw, search, isSuperAdmin, user?.company_id, user?.email]);
+  }, [data?.raw, search, status, isSuperAdmin, user?.company_id, user?.email]);
 
   const pagedRequests = flatRequests.slice(
     (currentPage - 1) * PAGE_SIZE,
@@ -119,6 +133,11 @@ export default function JoinRequestsPage() {
 
   const handleSearch = (v: string) => {
     setSearch(v);
+    setCurrentPage(1);
+  };
+
+  const handleStatus = (v: string) => {
+    setStatus(v);
     setCurrentPage(1);
   };
 
@@ -131,14 +150,14 @@ export default function JoinRequestsPage() {
 
     return [
       {
-        label: t("stats.total") || "Total Requests",
+        label: t("stats.total"),
         value: total,
         icon: Users,
         iconBg: "#E6F6FE",
         iconColor: "#03A9F4",
       },
       {
-        label: t("stats.pending") || "Pending",
+        label: t("stats.pending"),
         value: pending,
         icon: Clock,
         iconBg: "#FFFDEB",
@@ -254,7 +273,14 @@ export default function JoinRequestsPage() {
   }, [isSuperAdmin, approve, reject, role, t]);
 
   return (
-    <PageContainer isLoading={isLoading} skeletonVariant="table" skeletonRows={PAGE_SIZE}>
+    <PageContainer
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      skeletonVariant="table"
+      skeletonRows={PAGE_SIZE}
+    >
       <PageHeader
         title={t("title") || "Company Requests"}
         subtitle={t("subtitle") || "Manage and review client join requests to companies"}
@@ -269,6 +295,18 @@ export default function JoinRequestsPage() {
           search={search}
           onSearchChange={handleSearch}
           searchPlaceholder={t("searchPlaceholder") || "Searching..."}
+          filters={[
+            {
+              value: status,
+              onChange: handleStatus,
+              options: [
+                { value: "", label: t("filter.all") },
+                { value: "pending", label: t("statusOptions.pending") },
+                { value: "approved", label: t("statusOptions.approved") },
+                { value: "rejected", label: t("statusOptions.rejected") },
+              ],
+            },
+          ]}
         />
       </div>
 
