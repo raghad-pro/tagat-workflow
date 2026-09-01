@@ -1,4 +1,4 @@
-import { ENV } from "@/config/env";
+import { getFilesBaseUrl } from "@/services/apiFailover";
 import type {
   Conversation,
   ConversationMember,
@@ -199,13 +199,13 @@ export function getMessageSender(message: Message): ConversationUser | undefined
  *
  * Attachments come back as `{ file_name, file_path, mime_type }`, where
  * `file_path` is storage-relative (`messages/ab12….png`) — so it has to be
- * resolved against `ENV.FILES_URL`. `url`/`path`/`name` are only read as a
- * fallback for legacy payloads.
+ * resolved against the files host (which follows the API failover). `url`,
+ * `path` and `name` are only read as a fallback for legacy payloads.
  */
 function resolveAttachmentUrl(raw: string): string {
   if (!raw) return "";
   if (/^(https?:)?\/\//i.test(raw) || raw.startsWith("data:")) return raw;
-  return `${ENV.FILES_URL.replace(/\/+$/, "")}/${raw.replace(/^\/+/, "")}`;
+  return `${getFilesBaseUrl().replace(/\/+$/, "")}/${raw.replace(/^\/+/, "")}`;
 }
 
 export function getMessageAttachments(message: Message) {
