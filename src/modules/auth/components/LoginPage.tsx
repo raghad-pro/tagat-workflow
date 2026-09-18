@@ -40,7 +40,7 @@ export default function LoginPage() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    login({ email: data.email, password: data.password });
+    login({ email: data.email, password: data.password, remember: rememberMe });
   };
 
   return (

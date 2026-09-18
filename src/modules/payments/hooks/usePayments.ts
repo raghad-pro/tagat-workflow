@@ -61,10 +61,11 @@ export const useDeletePayment = () => {
   });
 };
 
+/** `/payments-data/{companyId}` is a super-admin / company-admin route and always needs the id. */
 export const usePaymentData = (role: string, companyId?: string | number) => {
   return useQuery({
     queryKey: ["paymentData", role, companyId],
     queryFn: () => paymentApi.getCompanyData(role, companyId),
-    enabled: role === "super_admin" ? !!companyId : true,
+    enabled: (role === "super_admin" || role === "company") && !!companyId,
   });
 };

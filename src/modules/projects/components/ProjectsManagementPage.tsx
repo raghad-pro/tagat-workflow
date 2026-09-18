@@ -616,6 +616,9 @@ export function ProjectsManagementPage() {
       </div>
 
       {/* ── Add Modal ───────────────────────────────────────────────────── */}
+      {/* Mounted only while open: the dialog's own client/employee/currency
+          queries would otherwise run on every visit to the page. */}
+      {isModalOpen && (
       <AddProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -640,6 +643,7 @@ export function ProjectsManagementPage() {
           });
         }}
       />
+      )}
 
       {/* ── Delete Modal ─────────────────────────────────────────────────── */}
       <DeleteConfirmationModal
@@ -665,6 +669,7 @@ export function ProjectsManagementPage() {
       />
 
       {/* ── Edit Modal ───────────────────────────────────────────────────── */}
+      {activeModal === "edit" && (
       <EditProjectModal
         isOpen={activeModal === "edit"}
         onClose={closeModal}
@@ -693,6 +698,7 @@ export function ProjectsManagementPage() {
           );
         }}
       />
+      )}
     </div>
   );
 }

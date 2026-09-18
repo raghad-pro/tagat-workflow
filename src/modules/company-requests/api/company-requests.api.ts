@@ -40,27 +40,21 @@ export const joinRequestApi = {
       params as Record<string, unknown>
     ),
 
-  getStats: async (role = "super_admin") => {
-    try {
-      return await apiClient.get<JoinRequestStats>(`${getBasePath(role)}/stats`);
-    } catch (error: any) {
-      // The backend currently returns 404 for /requests/stats. Derive the same
-      // counters from the working list endpoint until the backend route exists.
-      if (error?.response?.status !== 404) throw error;
-      const response = await joinRequestApi.getAll(role);
-      const clients = Array.isArray((response as any)?.data) ? (response as any).data : [];
-      const statuses = clients.flatMap((client: any) =>
-        Array.isArray(client.companies)
-          ? client.companies.map((company: any) => company?.pivot?.status)
-          : []
-      );
-      return {
-        total: statuses.length,
-        pending: statuses.filter((status: string) => status === "pending").length,
-        approved: statuses.filter((status: string) => status === "approved").length,
-        rejected: statuses.filter((status: string) => status === "rejected").length,
-      };
-    }
+  /** There is no `/requests/stats` route; the counters are derived from the list. */
+  getStats: async (role = "super_admin"): Promise<JoinRequestStats> => {
+    const response = await joinRequestApi.getAll(role);
+    const clients = unwrapClients(response);
+    const statuses = clients.flatMap((client: any) =>
+      Array.isArray(client.companies)
+        ? client.companies.map((company: any) => company?.pivot?.status)
+        : []
+    );
+    return {
+      total: statuses.length,
+      pending: statuses.filter((status: string) => status === "pending").length,
+      approved: statuses.filter((status: string) => status === "approved").length,
+      rejected: statuses.filter((status: string) => status === "rejected").length,
+    };
   },
 
   // ─── POST — محتاجين الـ role هون عشان نختار الـ endpoint الصح ───────────────

@@ -273,20 +273,24 @@ export function WalletTransactionsManagementPage() {
         />
       </div>
 
-      {/* Modals */}
-      <AddTransactionModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-      />
+      {/* Dialogs are mounted only while open so their lookups do not run on every page visit */}
+      {isAddModalOpen && (
+        <AddTransactionModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+        />
+      )}
 
-      <EditTransactionModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedTransaction(null);
-        }} 
-        data={selectedTransaction}
-      />
+      {isEditModalOpen && (
+        <EditTransactionModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedTransaction(null);
+          }}
+          data={selectedTransaction}
+        />
+      )}
 
       <ViewTransactionModal 
         isOpen={isViewModalOpen} 

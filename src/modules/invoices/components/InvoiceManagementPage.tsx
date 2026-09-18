@@ -339,13 +339,15 @@ export default function InvoiceManagementPage() {
         </PageCardFooter>
       </PageCard>
 
-      {/* Modal */}
-      <CreateInvoiceModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSave={handleCreate}
-        isPending={isCreating}
-      />
+      {/* Modal — mounted only while open so its lookups do not run on every page visit */}
+      {showModal && (
+        <CreateInvoiceModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSave={handleCreate}
+          isPending={isCreating}
+        />
+      )}
 
       {/* Edit Modal */}
       {editInvoice && (

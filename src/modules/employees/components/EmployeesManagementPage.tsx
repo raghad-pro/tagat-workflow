@@ -490,11 +490,14 @@ export default function EmployeesManagementPage() {
         </PageCard>
       </PageContainer>
 
-      <AddEmployeeModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreate}
-      />
+      {/* Dialogs are mounted only while open so their lookups do not run on every page visit */}
+      {isModalOpen && (
+        <AddEmployeeModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleCreate}
+        />
+      )}
 
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
@@ -511,12 +514,14 @@ export default function EmployeesManagementPage() {
         data={selectedRow}
       />
 
-      <EditEmployeeModal
-        isOpen={activeModal === "edit"}
-        onClose={closeModal}
-        data={selectedRow}
-        onUpdate={handleUpdate}
-      />
+      {activeModal === "edit" && (
+        <EditEmployeeModal
+          isOpen={activeModal === "edit"}
+          onClose={closeModal}
+          data={selectedRow}
+          onUpdate={handleUpdate}
+        />
+      )}
     </>
   );
 }

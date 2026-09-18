@@ -2,19 +2,29 @@
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { companyApi } from "@/modules/companies/api/companies.api";
+import { useAuth } from "@/providers/AuthProvider";
 import type { CompaniesQueryParams, AddCompanyRequest } from "@/modules/companies/types/companies.types";
 
+/**
+ * `/super_admin/companies` is refused (403) for every other role, and the
+ * server revokes the token after enough refused requests — so the query must
+ * not run at all unless the signed-in account is a super admin.
+ */
 export const useCompanies = (params: CompaniesQueryParams) => {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ["companies", params],
     queryFn:  () => companyApi.getAll(params),
     placeholderData: keepPreviousData,
+    enabled: user?.role === "super_admin",
   });
 };
 
 export const useCompanyStats = () => {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ["companyStats"],
+    enabled: user?.role === "super_admin",
     queryFn: async () => {
       // Fetch a large page to compute stats from local data as requested
       const res = await companyApi.getAll({ per_page: 50, page: 1 } as any);

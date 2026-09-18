@@ -144,7 +144,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }: AddEmplo
             <div className="rounded-2xl p-5 flex flex-col gap-5" style={{ border: "1px solid var(--color-border-form)" }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <TextField control={form.control} name="employeeName" label={t("labels.name")} placeholder={t("placeholders.name")} required icon={User} />
-                <TextField control={form.control} name="email" label={t("labels.email")} placeholder={t("placeholders.email")} type="email" required icon={Mail} checkExistsUrl="/check-email" />
+                <TextField control={form.control} name="email" label={t("labels.email")} placeholder={t("placeholders.email")} type="email" required icon={Mail} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SelectField control={form.control} name="paymentType" label={t("labels.paymentType")} options={PAYMENT_OPTIONS} required placeholder={t("placeholders.paymentType")} />

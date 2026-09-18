@@ -25,16 +25,8 @@ export const contractApi = {
     }
   },
 
-  getStats: async (role: string): Promise<ContractStats> => {
-    try {
-      const res = await apiClient.get(`${getRolePrefix(role)}/contracts/stats`);
-      const payload = (res as any)?.data ?? res;
-      if (payload && payload.activeContracts) return payload;
-    } catch {
-      // Ignore error for stats
-    }
-
-    // Fallback if stats API is not ready
+  /** There is no `/contracts/stats` route; the cards show zeros until one exists. */
+  getStats: async (): Promise<ContractStats> => {
     return {
       activeContracts: { value: "0", label: "Active" },
       pendingSignature: { value: "0", label: "Pending" },

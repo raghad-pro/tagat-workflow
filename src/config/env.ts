@@ -10,10 +10,10 @@ const stripTrailingSlash = (url: string) => url.replace(/\/+$/, "");
  */
 export const API_ORIGINS = {
   primary: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_API_ORIGIN || "https://workflow.aliservice.site"
+    process.env.NEXT_PUBLIC_API_ORIGIN || "https://work.isradev.shop"
   ),
   fallback: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_API_ORIGIN_FALLBACK || "https://work.aliservice.site"
+    process.env.NEXT_PUBLIC_API_ORIGIN_FALLBACK || "https://workflow.aliservice.site"
   ),
 } as const;
 

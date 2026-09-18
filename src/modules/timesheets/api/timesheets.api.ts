@@ -72,14 +72,14 @@ export const timesheetsApi = {
   },
 
   approve: async (role: string, id: number) => {
-    const response = await apiClient.patch<ApiResponse<null>>(
+    const response = await apiClient.post<ApiResponse<null>>(
       `${getRolePrefix(role)}/timesheets/${id}/approve`
     );
     return response.data;
   },
 
   reject: async (role: string, id: number) => {
-    const response = await apiClient.patch<ApiResponse<null>>(
+    const response = await apiClient.post<ApiResponse<null>>(
       `${getRolePrefix(role)}/timesheets/${id}/reject`
     );
     return response.data;

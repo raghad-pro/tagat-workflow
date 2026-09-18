@@ -74,11 +74,10 @@ export const taskApi = {
     budgetUtilization:  { value: "0%", label: "Budget Utilization"   },
   }),
 
-  getTasksData: async (role: string, companyId?: number) => {
-    const url = companyId
-      ? `${getRolePrefix(role)}/tasks-data/${companyId}`
-      : `${getRolePrefix(role)}/tasks-data`;
-    const response = await apiClient.get<ApiResponse<{ projects: any[]; employees: any[] }>>(url);
+  getTasksData: async (role: string, companyId: number) => {
+    const response = await apiClient.get<ApiResponse<{ projects: any[]; employees: any[] }>>(
+      `${getRolePrefix(role)}/tasks-data/${companyId}`
+    );
     return response.data;
   },
 

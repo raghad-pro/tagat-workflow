@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { employeeApi } from "../api/employees.api";
-import type { Employee, EmployeesQueryParams } from "../types/employees.types";
+import type { Employee, EmployeeStats, EmployeesQueryParams } from "../types/employees.types";
 import { useAuth } from "@/providers/AuthProvider";
 
+/** No role prefix exposes an employee roster to a client, so the query is skipped for them. */
 export const useEmployees = (params?: EmployeesQueryParams) => {
   const { user } = useAuth();
   const role = user?.role || "super_admin";
@@ -13,6 +15,7 @@ export const useEmployees = (params?: EmployeesQueryParams) => {
     queryKey: ["employees", role, params],
     queryFn: () => employeeApi.getAll(role, params),
     placeholderData: keepPreviousData,
+    enabled: role !== "client",
   });
 };
 
@@ -31,17 +34,30 @@ export const useAllEmployees = () => {
     queryKey: ["employees", role, "all"],
     queryFn: () => employeeApi.getAllPages(role),
     placeholderData: keepPreviousData,
+    enabled: role !== "client",
   });
 };
 
+/**
+ * Counted off `useAllEmployees` — the same rows the management page renders —
+ * rather than walking the paginator a second time. Off `user.is_active`: the
+ * record has no `status` column of its own.
+ */
 export const useEmployeeStats = () => {
-  const { user } = useAuth();
-  const role = user?.role || "super_admin";
+  const { data: res } = useAllEmployees();
 
-  return useQuery({
-    queryKey: ["employeeStats", role],
-    queryFn: () => employeeApi.getStats(role),
-  });
+  const data = useMemo<EmployeeStats | undefined>(() => {
+    if (!res) return undefined;
+    const employees = res.data;
+    const isActive = (e: any) => Number(e?.user?.is_active ?? e?.is_active ?? 1) === 1;
+    return {
+      total:    res.meta.total || employees.length,
+      active:   employees.filter(isActive).length,
+      inactive: employees.filter((e: any) => !isActive(e)).length,
+    };
+  }, [res]);
+
+  return { data };
 };
 
 export const useCompanyData = (companyId?: string | number) => {
@@ -51,7 +67,7 @@ export const useCompanyData = (companyId?: string | number) => {
   return useQuery({
     queryKey: ["companyData", role, companyId],
     queryFn: async () => employeeApi.getCompanyData(role, companyId),
-    enabled: role === "company" || !!companyId,
+    enabled: (role === "super_admin" || role === "company") && !!companyId,
   });
 };
 

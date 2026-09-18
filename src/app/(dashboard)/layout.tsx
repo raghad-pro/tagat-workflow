@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import AuthGuard from "@/guards/AuthGuard";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,12 @@ import DashboardNavbar from "@/components/organisms/Dashboardnavbar";
 
 import RouteGuard from "@/guards/RouteGuard";
 import { OnboardingGate } from "@/modules/onboarding/OnboardingGate";
+
+/** Everything under here needs a session; nothing here belongs in a search index. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false, nocache: true },
+  alternates: { canonical: undefined },
+};
 
 export default function DashboardLayout({
   children,

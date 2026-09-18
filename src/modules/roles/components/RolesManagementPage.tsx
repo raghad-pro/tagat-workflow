@@ -163,12 +163,15 @@ export default function RolesManagementPage() {
         </PageCard>
       </PageContainer>
 
-      <AddRoleModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleAddRole}
-        isSubmitting={createRoleMutation.isPending}
-      />
+      {/* Dialogs are mounted only while open so the permission catalog is not fetched on every page visit */}
+      {isModalOpen && (
+        <AddRoleModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleAddRole}
+          isSubmitting={createRoleMutation.isPending}
+        />
+      )}
 
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
@@ -181,13 +184,15 @@ export default function RolesManagementPage() {
 
       <ViewRoleModal isOpen={activeModal === "view"} onClose={closeModal} data={selectedRow} />
 
-      <EditRoleModal
-        isOpen={activeModal === "edit"}
-        onClose={closeModal}
-        data={selectedRow}
-        onUpdate={handleUpdateRole}
-        isSubmitting={updateRoleMutation.isPending}
-      />
+      {activeModal === "edit" && (
+        <EditRoleModal
+          isOpen={activeModal === "edit"}
+          onClose={closeModal}
+          data={selectedRow}
+          onUpdate={handleUpdateRole}
+          isSubmitting={updateRoleMutation.isPending}
+        />
+      )}
     </>
   );
 }

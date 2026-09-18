@@ -4,7 +4,6 @@ import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import apiClient from "@/services/apiClient";
-import { getRolePrefix } from "@/utils/rolePrefix";
 import { useAuth } from "@/providers/AuthProvider";
 
 interface CompanyRow {
@@ -19,8 +18,9 @@ interface CompanyRow {
  * relation — so the list and detail screens have to look the name up.
  *
  * Where that name comes from depends on the role: `/super_admin/companies`
- * answers 403 for anyone but a super admin, so every other role reads its own
- * company off `/{role}/account`, which embeds the full company object.
+ * answers 403 for anyone but a super admin, so every other role uses its own
+ * company — which `AuthProvider` already read off `/{role}/account` at sign-in
+ * and keeps on the user (`company_name`), so no second request is needed.
  */
 export function useCompanyNames() {
   const { user } = useAuth();
@@ -32,13 +32,6 @@ export function useCompanyNames() {
     queryFn: () =>
       apiClient.get<any>("/super_admin/companies", { per_page: 100 }),
     enabled: isSuperAdmin,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: account, isLoading: loadingAccount } = useQuery({
-    queryKey: ["meetings", "own-company", role],
-    queryFn: () => apiClient.get<any>(`${getRolePrefix(role)}/account`),
-    enabled: !isSuperAdmin && Boolean(user),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -54,11 +47,11 @@ export function useCompanyNames() {
       const rows: any[] = allCompanies?.data?.data ?? allCompanies?.data ?? [];
       if (Array.isArray(rows)) rows.forEach(add);
     } else {
-      add(account?.data?.company);
+      add({ id: user?.company_id ?? undefined, name: user?.company_name ?? undefined });
     }
 
     return map;
-  }, [isSuperAdmin, allCompanies, account]);
+  }, [isSuperAdmin, allCompanies, user?.company_id, user?.company_name]);
 
   const resolveCompanyName = useCallback(
     (companyId: unknown, fallback = "—"): string =>
@@ -82,11 +75,9 @@ export function useCompanyNames() {
    */
   const ownCompanyId = useMemo(() => {
     if (isSuperAdmin) return null;
-    const fromAccount = Number(account?.data?.company?.id);
-    if (Number.isFinite(fromAccount)) return fromAccount;
     const fromUser = Number(user?.company_id);
     return Number.isFinite(fromUser) ? fromUser : null;
-  }, [isSuperAdmin, account, user?.company_id]);
+  }, [isSuperAdmin, user?.company_id]);
 
   return {
     namesById,
@@ -94,6 +85,6 @@ export function useCompanyNames() {
     ownCompanyId,
     isSuperAdmin,
     resolveCompanyName,
-    isLoading: isSuperAdmin ? loadingList : loadingAccount,
+    isLoading: isSuperAdmin ? loadingList : false,
   };
 }

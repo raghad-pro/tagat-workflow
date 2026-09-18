@@ -39,6 +39,11 @@ export type User = {
    * "none", and `usePermission` treats it as unrestricted. See AuthProvider.
    */
   permissions?: string[];
+  /**
+   * The company this account belongs to, as `/{role}/account` embeds it.
+   * Kept here so screens that only need the name do not re-read the account.
+   */
+  company_name?: string | null;
 };
 
 /**
@@ -183,6 +188,7 @@ export function normalizeUser(rawUser: any, rawPayload?: any): User | null {
     // Preserved when re-normalizing an already-resolved user (e.g. reading it
     // back from localStorage) so the resolution is not thrown away.
     permissions: Array.isArray(u.permissions) ? u.permissions : undefined,
+    company_name: u.company_name ?? u.company?.name ?? rawPayload?.company?.name ?? null,
   };
 }
 
@@ -192,6 +198,9 @@ export type LoginRequest = {
   email: string;
   password: string;
 };
+
+/** What the form submits: the credentials plus whether the session should outlive the browser window. */
+export type LoginInput = LoginRequest & { remember?: boolean };
 
 export type RegisterRequest = {
   name: string;

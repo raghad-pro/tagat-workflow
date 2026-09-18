@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { walletsApi } from "../api/wallets.api";
 import type { WalletsQueryParams, AddWalletRequest, Wallet } from "../types/wallets.types";
@@ -29,34 +30,35 @@ export const useCompanyCurrencies = (companyId: number | null) => {
   });
 };
 
+/**
+ * Same query key as the management page's unfiltered first load, so the two
+ * share one request instead of fetching the list twice.
+ */
 export const useWalletStats = () => {
-  const { user } = useAuth();
-  const role = user?.role || "super_admin";
+  const { data: res } = useWallets({ search: "", page: 1, per_page: 100 });
 
-  return useQuery({
-    queryKey: ["walletStats", role],
-    queryFn: async () => {
-      // Fetch a large page to compute stats locally (similar to companies)
-      const res = await walletsApi.getAll({ per_page: 50, page: 1 }, role);
-      const list = res?.data?.data ?? [];
-      const meta = res?.data;
+  const data = useMemo(() => {
+    if (!res) return undefined;
+    const list = res?.data?.data ?? [];
+    const meta = res?.data;
 
-      let totalUSD = 0;
-      let totalEUR = 0;
+    let totalUSD = 0;
+    let totalEUR = 0;
 
-      list.forEach((w: Wallet) => {
-        const code = w.currency?.code?.toUpperCase();
-        if (code === "USD") totalUSD += Number(w.balance);
-        if (code === "EUR" || code === "ERU") totalEUR += Number(w.balance);
-      });
+    list.forEach((w: Wallet) => {
+      const code = w.currency?.code?.toUpperCase();
+      if (code === "USD") totalUSD += Number(w.balance);
+      if (code === "EUR" || code === "ERU") totalEUR += Number(w.balance);
+    });
 
-      return {
-        totalWallets: meta?.total ?? list.length,
-        totalUSD,
-        totalEUR,
-      };
-    },
-  });
+    return {
+      totalWallets: meta?.total ?? list.length,
+      totalUSD,
+      totalEUR,
+    };
+  }, [res]);
+
+  return { data };
 };
 
 export const useCreateWallet = () => {

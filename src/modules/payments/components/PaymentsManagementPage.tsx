@@ -97,7 +97,7 @@ export function PaymentsManagementPage() {
 
   // Stats mapped
   const stats: StatItem[] = useMemo(() => {
-    const s = statsRes?.data;
+    const s = statsRes;
     return [
       {
         value: s ? `$${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
@@ -277,19 +277,24 @@ export function PaymentsManagementPage() {
         </div>
       </div>
 
-      <AddPaymentModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-      />
+      {/* Dialogs are mounted only while open so their lookups do not run on every page visit */}
+      {isAddModalOpen && (
+        <AddPaymentModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+        />
+      )}
 
-      <EditPaymentModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedPayment(null);
-        }} 
-        data={selectedPayment}
-      />
+      {isEditModalOpen && (
+        <EditPaymentModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedPayment(null);
+          }}
+          data={selectedPayment}
+        />
+      )}
 
       <ViewPaymentModal 
         isOpen={isViewModalOpen} 

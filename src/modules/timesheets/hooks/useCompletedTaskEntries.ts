@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import apiClient from "@/services/apiClient";
 import { getRolePrefix } from "@/utils/rolePrefix";
@@ -82,13 +82,22 @@ const toNumber = (value: unknown): number => {
 export function useCompletedTaskEntries() {
   const { user } = useAuth();
   const role = user?.role || "super_admin";
+  const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: ["timesheets", "from-tasks", role],
     queryFn: async (): Promise<DerivedTimesheetRow[]> => {
       const [tasks, employees] = await Promise.all([
         fetchAllTasks(role),
-        employeeApi.getAllPages(role).then((r) => r.data ?? []),
+        // Same entry `useAllEmployees` fills for the add/edit dialogs, so the
+        // roster is walked once per page, not once per consumer.
+        queryClient
+          .fetchQuery({
+            queryKey: ["employees", role, "all"],
+            queryFn: () => employeeApi.getAllPages(role),
+            staleTime: 60_000,
+          })
+          .then((r) => r.data ?? []),
       ]);
 
       // `user.employee` is what the table reads for rate, currency and payment

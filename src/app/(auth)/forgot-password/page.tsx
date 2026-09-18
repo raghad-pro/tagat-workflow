@@ -1,10 +1,8 @@
-import ForgotPasswordPage from '@/modules/auth/components/ForgotPasswordPage';
-import React from 'react';
+import type { Metadata } from "next";
+import ForgotPasswordPage from "@/modules/auth/components/ForgotPasswordPage";
 
-export default function  Page () {
-  return (
- <ForgotPasswordPage/>
-  );
+export const metadata: Metadata = { title: "Reset password" };
+
+export default function Page() {
+  return <ForgotPasswordPage />;
 }
-
-

@@ -101,7 +101,7 @@ function clearUser(): void {
  */
 async function fetchAccess(
   user: User
-): Promise<{ roleIds: number[]; permissions: string[] } | undefined> {
+): Promise<{ roleIds: number[]; permissions: string[]; companyName: string | null } | undefined> {
   try {
     const account = await authApi.me(user.role);
     const roles = Array.isArray(account?.roles) ? account.roles : null;
@@ -118,7 +118,11 @@ async function fetchAccess(
       }
     }
 
-    return { roleIds, permissions: Array.from(names) };
+    return {
+      roleIds,
+      permissions: Array.from(names),
+      companyName: account?.company?.name ?? null,
+    };
   } catch {
     return undefined;
   }
@@ -129,7 +133,11 @@ function sameAccess(a: User, b: User): boolean {
   const same = (x: (string | number)[] = [], y: (string | number)[] = []) =>
     x.length === y.length &&
     [...x].map(String).sort().join("|") === [...y].map(String).sort().join("|");
-  return same(a.role_ids, b.role_ids) && same(a.permissions, b.permissions);
+  return (
+    same(a.role_ids, b.role_ids) &&
+    same(a.permissions, b.permissions) &&
+    (a.company_name ?? null) === (b.company_name ?? null)
+  );
 }
 
 // ─── Provider ──────────────────────────────────────────────────────────────────
@@ -170,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...current,
       role_ids: access.roleIds.length ? access.roleIds : current.role_ids,
       permissions: access.permissions,
+      company_name: access.companyName ?? current.company_name ?? null,
     };
 
     // Nothing changed — skip the write so the user object keeps its identity

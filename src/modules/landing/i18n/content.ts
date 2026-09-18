@@ -12,6 +12,7 @@ export const content = {
       pricing: 'Pricing',
       contact: 'Contact Us',
       getStarted: 'Get Started',
+      goToDashboard: 'Go to Dashboard',
     },
     hero: {
       titleA: 'Forget Task Chaos Manage Your ',
@@ -250,6 +251,7 @@ export const content = {
       pricing: 'الأسعار',
       contact: 'تواصل معنا',
       getStarted: 'ابدأ الآن',
+      goToDashboard: 'الذهاب إلى لوحة التحكم',
     },
     hero: {
       titleA: 'ودّع فوضى المهام وأدر ',

@@ -1,6 +1,12 @@
-
+import type { Metadata } from "next";
 import Logo from "@/components/atoms/Logo";
 import { BackButton } from "@/components/molecules/BackButton";
+
+/** Sign-in and account screens: crawlable links are fine, indexing them is not. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: true },
+  alternates: { canonical: undefined },
+};
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

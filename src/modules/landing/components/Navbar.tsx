@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext'
 import { MoonIcon, SunIcon, GlobeIcon } from './Icons'
 
 export default function Navbar() {
-  const { t, theme, lang, toggleTheme, toggleLang } = useApp()
+  const { t, theme, lang, isAuthenticated, toggleTheme, toggleLang } = useApp()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [activeLink, setActiveLink] = useState<string>('#home')
@@ -76,9 +76,15 @@ export default function Navbar() {
               <GlobeIcon size={18} />
               <span>{lang === 'en' ? 'ع' : 'EN'}</span>
             </button>
-            <Link href="/register" className="btn btn--primary nav__cta">
-              {t.nav.getStarted}
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/dashboard" className="btn btn--primary nav__cta">
+                {t.nav.goToDashboard}
+              </Link>
+            ) : (
+              <Link href="/register" className="btn btn--primary nav__cta">
+                {t.nav.getStarted}
+              </Link>
+            )}
           </div>
 
           <button
