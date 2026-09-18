@@ -27,24 +27,11 @@ export const paymentApi = {
   },
 
   /**
-   * `/payments/stats` is unreachable: the server declares `/payments/{id}`
-   * ahead of it, so Laravel binds the literal "stats" as an id and answers
-   * `404 No query results for model [App\Models\Payment] stats`.
-   *
-   * Until the routes are reordered server-side, the totals are derived from
-   * the payments list — the alternative is three cards permanently reading
-   * $0.00, which looks like real data and is worse than an approximation.
+   * There is no `/payments/stats` route, so the totals are derived from the
+   * payments list — the alternative is three cards permanently reading $0.00,
+   * which looks like real data and is worse than an approximation.
    */
   getStats: async (role: string) => {
-    try {
-      const response = await apiClient.get<ApiResponse<any>>(
-        `${getRolePrefix(role)}/payments/stats`
-      );
-      if (response?.data) return response.data;
-    } catch {
-      // fall through to deriving them
-    }
-
     const list = await paymentApi.getAll(role, { page: 1 });
     const rows: any[] = Array.isArray(list) ? list : (list?.data ?? []);
     const amount = (p: any) => Number(p?.amount ?? 0) || 0;
@@ -84,17 +71,8 @@ export const paymentApi = {
   },
 
   getCompanyData: async (role: string, companyId?: string | number) => {
-    const url = companyId
-      ? `${getRolePrefix(role)}/payments-data/${companyId}`
-      : `${getRolePrefix(role)}/payments-data`;
-    const response = await apiClient.get<ApiResponse<{ invoices: any[]; wallets: any[]; employees: any[] }>>(url);
-    return response.data;
-  },
-
-  payInvoice: async (role: string, invoiceId: string | number, gateway: string) => {
-    const response = await apiClient.post<ApiResponse<{ payment_url: string }>>(
-      `${getRolePrefix(role)}/invoices/${invoiceId}/pay`,
-      { payment_gateway: gateway }
+    const response = await apiClient.get<ApiResponse<{ invoices: any[]; wallets: any[]; employees: any[] }>>(
+      `${getRolePrefix(role)}/payments-data/${companyId}`
     );
     return response.data;
   },

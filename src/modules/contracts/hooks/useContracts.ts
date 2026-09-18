@@ -16,7 +16,7 @@ export const useContracts = (role: string, params: ContractsQueryParams) => {
 export const useContractStats = (role: string) => {
   return useQuery({
     queryKey: ["contract-stats", role],
-    queryFn: () => contractApi.getStats(role),
+    queryFn: () => contractApi.getStats(),
   });
 };
 

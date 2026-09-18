@@ -27,7 +27,12 @@ export default function About() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/dashboard.png"
-              alt="Dashboard"
+              alt=""
+              aria-hidden="true"
+              width="1024"
+              height="560"
+              loading="lazy"
+              decoding="async"
               className="about__dashboard-img"
             />
           </div>
@@ -35,7 +40,11 @@ export default function About() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/dashboard.png"
-              alt="Dashboard"
+              alt="Workflow workspace with projects, files and team communication in one view"
+              width="1024"
+              height="560"
+              loading="lazy"
+              decoding="async"
               className="about__dashboard-img"
             />
           </div>

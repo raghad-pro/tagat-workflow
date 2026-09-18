@@ -30,13 +30,10 @@ export const useCompanyDataInfo = (companyId: string | number | undefined | null
   return useQuery({
     queryKey: ["company-data-info", companyId],
     queryFn: async () => {
-      const url = companyId
-        ? `${getRolePrefix(role)}/company-data/${companyId}`
-        : `${getRolePrefix(role)}/company-data`;
-      const response = await apiClient.get(url) as any;
+      const response = await apiClient.get(`${getRolePrefix(role)}/company-data/${companyId}`) as any;
       return response.data;
     },
-    enabled: role === "company" || !!companyId,
+    enabled: (role === "super_admin" || role === "company") && !!companyId,
   });
 };
 

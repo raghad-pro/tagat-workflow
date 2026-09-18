@@ -22,7 +22,20 @@ export const conversationKeys = {
     ["conversation", role, id] as const,
 };
 
-export function useConversations(role: string, params?: ConversationsQueryParams) {
+interface ConversationsOptions {
+  /**
+   * How often the list is re-read. The chat screen wants `LIST_POLL_MS`; the
+   * navbar badge, which is mounted on every page, can afford far less. When
+   * both are mounted React Query uses the shortest interval.
+   */
+  pollMs?: number;
+}
+
+export function useConversations(
+  role: string,
+  params?: ConversationsQueryParams,
+  options?: ConversationsOptions
+) {
   const queryClient = useQueryClient();
 
   const invalidateAll = () =>
@@ -48,7 +61,7 @@ export function useConversations(role: string, params?: ConversationsQueryParams
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: conversationKeys.list(role, params),
     queryFn: () => conversationsApi.getAll(role, params),
-    refetchInterval: LIST_POLL_MS,
+    refetchInterval: options?.pollMs ?? LIST_POLL_MS,
     refetchIntervalInBackground: false,
     placeholderData: (previous) => previous,
   });

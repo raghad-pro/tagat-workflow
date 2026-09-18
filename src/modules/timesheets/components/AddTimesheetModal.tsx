@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl";
 import { SelectField } from "@/components/molecules/FormFields";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCompanies } from "@/modules/companies/hooks/useCompanies";
-import { useEmployees } from "@/modules/employees/hooks/useEmployees";
+import { useAllEmployees } from "@/modules/employees/hooks/useEmployees";
 import { useWatch } from "react-hook-form";
 
 const getTimesheetSchema = (tCommon: any) => z.object({
@@ -46,7 +46,7 @@ export default function AddTimesheetModal({ isOpen, onClose, onSubmit = () => {}
   const companyOptions = companies.map((c: any) => ({ value: c.id.toString(), label: c.name }));
 
   // Fetch all employees and filter by company locally
-  const { data: allEmployeesResponse } = useEmployees({ page: 1, per_page: 1000 });
+  const { data: allEmployeesResponse } = useAllEmployees();
   const allEmployeesList = allEmployeesResponse?.data ?? [];
   let employeeOptions = (isCompanyAdmin ? allEmployeesList : selectedCompanyId ? allEmployeesList.filter((e: any) => e.company_id == selectedCompanyId || e.company?.id == selectedCompanyId) : [])
     .map((e: any) => ({

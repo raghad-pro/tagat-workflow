@@ -26,20 +26,32 @@ export const sprintKeys = {
     ["sprints", role, "employees", projectId] as const,
 };
 
+/**
+ * Long enough for the page to adopt the server-chosen project (see
+ * `SprintsManagementPage`) without the re-keyed query refetching what it was
+ * just seeded with. Mutations invalidate `sprintKeys.all`, so edits still land.
+ */
+const BOARD_STALE_MS = 30_000;
+
 export function useSprintBoard(role: string, projectId?: number | null) {
   return useQuery({
     queryKey: sprintKeys.board(role, projectId),
     queryFn: () => sprintsApi.getBoard(role, projectId),
+    staleTime: BOARD_STALE_MS,
     // Keep the previous project's board on screen while the next one loads,
     // instead of collapsing the page to a spinner on every switch.
     placeholderData: (previous) => previous,
   });
 }
 
+/** Waits for a project: the board's first reply names one, and asking the
+ *  kanban before that only produced a second, identical request. */
 export function useKanban(role: string, projectId?: number | null) {
   return useQuery({
     queryKey: sprintKeys.kanban(role, projectId),
     queryFn: () => sprintsApi.getKanban(role, projectId),
+    staleTime: BOARD_STALE_MS,
+    enabled: projectId != null,
     placeholderData: (previous) => previous,
   });
 }

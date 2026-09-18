@@ -1,19 +1,44 @@
 import apiClient from "@/services/apiClient";
 import { getRolePrefix } from "@/utils/rolePrefix";
-import type { Employee, EmployeeStats, EmployeesQueryParams } from "../types/employees.types";
+import type { Employee, EmployeesQueryParams } from "../types/employees.types";
+
+/**
+ * `/employees` is a super-admin / company-admin route: an employee gets 403,
+ * and the server revokes the token after refused requests. The documented
+ * alternative, `/employee/projects/employees`, answers 404 on the live API, so
+ * the roster an employee can actually read comes from
+ * `/employee/tasks-data/{companyId}` — `{ projects, employees }`, unpaginated.
+ */
+const storedCompanyId = (): string => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") ?? "null");
+    return String(user?.company_id ?? "");
+  } catch {
+    return "";
+  }
+};
+
+const listUrl = (role: string) =>
+  role === "employee"
+    ? `${getRolePrefix(role)}/tasks-data/${storedCompanyId()}`
+    : `${getRolePrefix(role)}/employees`;
+
+const rowsOf = (payload: any): any[] | null => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.employees)) return payload.employees;
+  return null;
+};
 
 export const employeeApi = {
   getAll: async (role: string, params?: EmployeesQueryParams) => {
     // `apiClient.get` wraps its second argument as axios `{ params }` itself;
     // passing `{ params }` produced `?params[page]=…`, which the server ignores.
-    const response = await apiClient.get(
-      `${getRolePrefix(role)}/employees`,
-      params as Record<string, unknown>
-    );
+    const response = await apiClient.get(listUrl(role), params as Record<string, unknown>);
     const payload = (response as any).data;
 
-    if (Array.isArray(payload)) {
-      return { data: payload, meta: { total: payload.length } };
+    const rows = rowsOf(payload);
+    if (rows) {
+      return { data: rows, meta: { total: rows.length } };
     }
 
     return {
@@ -46,7 +71,7 @@ export const employeeApi = {
    * — have to walk the paginator instead of asking for a big page.
    */
   getAllPages: async (role: string, params?: EmployeesQueryParams) => {
-    const url = `${getRolePrefix(role)}/employees`;
+    const url = listUrl(role);
 
     const fetchPage = async (page: number) => {
       const response = await apiClient.get(url, {
@@ -57,7 +82,8 @@ export const employeeApi = {
     };
 
     const first = await fetchPage(1);
-    if (Array.isArray(first)) return { data: first, meta: { total: first.length } };
+    const firstRows = rowsOf(first);
+    if (firstRows) return { data: firstRows, meta: { total: firstRows.length } };
 
     const rows: any[] = Array.isArray(first?.data) ? [...first.data] : [];
     const lastPage = Number(first?.last_page ?? 1);
@@ -72,24 +98,6 @@ export const employeeApi = {
     }
 
     return { data: rows, meta: { total: Number(first?.total ?? rows.length) } };
-  },
-
-  /**
-   * Counted over every page, and off `user.is_active` rather than a `status`
-   * column that does not exist on the record — reading `e.status` gave
-   * `undefined` for every row, so "active" fell through to the total and
-   * "onboarding" was always zero.
-   */
-  getStats: async (role: string): Promise<EmployeeStats> => {
-    const res = await employeeApi.getAllPages(role);
-    const employees = res.data;
-    const isActive = (e: any) => Number(e?.user?.is_active ?? e?.is_active ?? 1) === 1;
-
-    return {
-      total:    res.meta.total || employees.length,
-      active:   employees.filter(isActive).length,
-      inactive: employees.filter((e: any) => !isActive(e)).length,
-    };
   },
 
   create: async (role: string, data: Partial<Employee>) => {
@@ -108,10 +116,7 @@ export const employeeApi = {
   },
 
   getCompanyData: async (role: string, companyId?: string | number) => {
-    const url = companyId
-      ? `${getRolePrefix(role)}/company-data/${companyId}`
-      : `${getRolePrefix(role)}/company-data`;
-    const response = await apiClient.get(url);
+    const response = await apiClient.get(`${getRolePrefix(role)}/company-data/${companyId}`);
     return (response as any).data;
   },
 

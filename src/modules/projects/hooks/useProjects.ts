@@ -7,7 +7,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "next-intl";
 import toast from "react-hot-toast";
 
-export const useProjects = (params: ProjectsQueryParams) => {
+export const useProjects = (params: ProjectsQueryParams, options?: { enabled?: boolean }) => {
   const { user } = useAuth();
   const role = user?.role || "super_admin";
 
@@ -15,6 +15,7 @@ export const useProjects = (params: ProjectsQueryParams) => {
     queryKey: ["projects", role, params],
     queryFn: () => projectApi.getAll(role, params),
     placeholderData: keepPreviousData,
+    enabled: options?.enabled ?? true,
   });
 };
 

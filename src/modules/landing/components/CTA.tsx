@@ -6,7 +6,7 @@ import { ArrowIcon } from './Icons'
 import Reveal from './Reveal'
 
 export default function CTA() {
-  const { t, isRTL } = useApp()
+  const { t, isRTL, isAuthenticated } = useApp()
 
   return (
     <section className="section cta-section">
@@ -14,8 +14,8 @@ export default function CTA() {
         <Reveal className="cta">
           <h2>{t.cta.title}</h2>
           <p>{t.cta.subtitle}</p>
-          <Link href="/register" className="btn btn--white">
-            {t.cta.button}
+          <Link href={isAuthenticated ? "/dashboard" : "/register"} className="btn btn--white">
+            {isAuthenticated ? t.nav.goToDashboard : t.cta.button}
             <ArrowIcon flip={isRTL} size={16} />
           </Link>
         </Reveal>

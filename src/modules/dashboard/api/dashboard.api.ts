@@ -85,9 +85,12 @@ async function apiFetch<T>(path: string, token: string): Promise<T> {
 
   if (!res.ok) throw new Error(`API error ${res.status} — ${path}`);
 
-  const json: ApiResponse<T> = await res.json();
+  const json = await res.json();
+  // `/invoices` answers a bare Laravel paginator with no `{ success, data }`
+  // envelope (see the Postman notes on InvoiceController); treat that as data.
+  if (!("success" in json)) return json as T;
   if (!json.success) throw new Error(json.message);
-  return json.data;
+  return (json as ApiResponse<T>).data;
 }
 
 // ─── Safe fetch — returns fallback on failure ──────────────────────────────────
@@ -104,6 +107,12 @@ async function safeFetch<T>(
 }
 
 // ─── Data builders ─────────────────────────────────────────────────────────────
+// `/{role}/timesheets` nests its paginator: `{ timesheets: { data }, summary }`.
+function unwrapTimesheets(payload: any): ApiTimesheet[] {
+  const rows = payload?.timesheets?.data ?? payload?.data ?? payload;
+  return Array.isArray(rows) ? rows : [];
+}
+
 function monthLabel(dateStr: string): string {
   return new Date(dateStr).toLocaleString("en-US", { month: "short" });
 }
@@ -275,49 +284,33 @@ async function fetchSuperAdminDashboard(
 async function fetchCompanyDashboard(
   token: string
 ): Promise<DashboardResponse> {
-  // الـ company admin لا يحتاج يرسل company_id — الـ backend يعرفه من الـ token
-  const [
-    invoicesResult,
-    paymentsResult,
-    tasksResult,
-    timesheetsResult,
-    dashboardResult,
-    projectsResult,
-    clientsResult,
-    employeesResult,
-    walletsResult
-  ] = await Promise.allSettled([
+  // `/company/dashboard` already carries the four counters the screen shows
+  // (`projectsCount`, `clientsCount`, `employeesCount`, `walletBalance`), so
+  // the only lists worth fetching are the ones rendered next to them.
+  const [invoicesResult, tasksResult, dashboardResult, projectsResult] = await Promise.allSettled([
     safeFetch<ApiInvoicesResponse>("/company/invoices?page=1", token, { data: [] }),
-    safeFetch<ApiPaymentsResponse>("/company/payments?page=1", token, { data: [] }),
     safeFetch<ApiTasksResponse>("/company/tasks?month=current", token, { data: [] }),
-    safeFetch<ApiTimesheetsResponse>("/timesheets?status=pending&page=1", token, { data: [] }),
     safeFetch<any>("/company/dashboard", token, {}),
     safeFetch<any>("/company/projects", token, { data: [] }),
-    safeFetch<any>("/company/clients", token, { data: [] }),
-    safeFetch<any>("/company/employees", token, { data: [] }),
-    safeFetch<any>("/company/wallets", token, { data: [] }),
   ]);
 
   const invoices = invoicesResult.status === "fulfilled" ? invoicesResult.value.data ?? [] : [];
-  const payments = paymentsResult.status === "fulfilled" ? paymentsResult.value.data ?? [] : [];
   const tasks = tasksResult.status === "fulfilled" ? tasksResult.value.data ?? [] : [];
-  const timesheets = timesheetsResult.status === "fulfilled" ? timesheetsResult.value.data ?? [] : [];
 
   const totalInvoices = invoices.reduce((s, i) => s + parseFloat(i.amount || "0"), 0);
-  const totalPayments = payments.reduce((s, p) => s + parseFloat(p.amount || "0"), 0);
   const overdueCount = invoices.filter(
     (i) => i.status === "unpaid" && new Date(i.due_date) < new Date()
   ).length;
 
   const stats: DashboardStats = {
-    mrr: Math.round(totalPayments),
+    mrr: 0,
     mrrTrend: "",
     companiesActive: 0,
     companiesTotal: 0,
     engagementRate: "—",
     invoicesAmount: Math.round(totalInvoices),
     invoicesOverdue: overdueCount,
-    pending: timesheets.filter((t) => t.status === "pending").length,
+    pending: 0,
   };
 
   // الـ pending invoices للـ company (unpaid) — لعرضها في Pending Approvals
@@ -343,24 +336,7 @@ async function fetchCompanyDashboard(
   // Projects
   const _projectsData =
     projectsResult.status === "fulfilled" ? projectsResult.value?.data || projectsResult.value || [] : [];
-  let projectsArray = Array.isArray(_projectsData) ? _projectsData : (Array.isArray(_projectsData.data) ? _projectsData.data : []);
-
-  // Clients
-  const _clientsData =
-    clientsResult.status === "fulfilled" ? clientsResult.value?.data || clientsResult.value || [] : [];
-  let clientsArray = Array.isArray(_clientsData) ? _clientsData : (Array.isArray(_clientsData.data) ? _clientsData.data : []);
-
-  // Employees
-  const _employeesData =
-    employeesResult.status === "fulfilled" ? employeesResult.value?.data || employeesResult.value || [] : [];
-  let employeesArray = Array.isArray(_employeesData) ? _employeesData : (Array.isArray(_employeesData.data) ? _employeesData.data : []);
-
-  // Wallets
-  const _walletsData =
-    walletsResult.status === "fulfilled" ? walletsResult.value?.data || walletsResult.value || [] : [];
-  let walletsArray = Array.isArray(_walletsData) ? _walletsData : (Array.isArray(_walletsData.data) ? _walletsData.data : []);
-
-  const totalWalletBalance = walletsArray.reduce((sum: number, w: any) => sum + (parseFloat(w.balance || "0") || 0), 0);
+  const projectsArray = Array.isArray(_projectsData) ? _projectsData : (Array.isArray(_projectsData.data) ? _projectsData.data : []);
 
   const latestProjects = projectsArray.slice(0, 5);
 
@@ -376,10 +352,10 @@ async function fetchCompanyDashboard(
     .map(([month, amount]) => ({ month, amount }));
 
   const companyData = {
-    projectsCount: dashboardData.projectsCount ?? dashboardData.projects_count ?? projectsArray.length,
-    clientsCount: dashboardData.clientsCount ?? dashboardData.clients_count ?? clientsArray.length,
-    employeesCount: dashboardData.employeesCount ?? dashboardData.employees_count ?? employeesArray.length,
-    walletBalance: dashboardData.walletBalance ?? dashboardData.total_balance ?? dashboardData.totalBalance ?? totalWalletBalance,
+    projectsCount: dashboardData.projectsCount ?? projectsArray.length,
+    clientsCount: dashboardData.clientsCount ?? 0,
+    employeesCount: dashboardData.employeesCount ?? 0,
+    walletBalance: dashboardData.walletBalance ?? 0,
     latestProjects,
     latestTasks: tasks.slice(0, 5),
     monthlyInvoices,
@@ -387,7 +363,7 @@ async function fetchCompanyDashboard(
 
   return {
     stats,
-    cashFlow: buildCashFlow(invoices, payments),
+    cashFlow: [],
     churn: buildChurn(tasks),
     packageDistribution: buildPackageDistribution(invoices),
     recentCompanies: [],
@@ -404,12 +380,12 @@ async function fetchEmployeeDashboard(
   const [dashboardResult, tasksResult, timesheetsResult] = await Promise.allSettled([
     safeFetch<any>("/employee/dashboard", token, { myTasks: 0, myHours: "0", totalEarned: 0 }),
     safeFetch<ApiTasksResponse>("/employee/tasks?month=current", token, { data: [] } as any),
-    safeFetch<ApiTimesheetsResponse>("/timesheets?page=1", token, { data: [] } as any),
+    safeFetch<ApiTimesheetsResponse>("/employee/timesheets?page=1", token, { data: [] } as any),
   ]);
 
   const d = dashboardResult.status === "fulfilled" ? (dashboardResult.value || {}) : {};
   const tasks = tasksResult.status === "fulfilled" ? (tasksResult.value.data ?? []) : [];
-  const timesheets = timesheetsResult.status === "fulfilled" ? (timesheetsResult.value.data ?? []) : [];
+  const timesheets = timesheetsResult.status === "fulfilled" ? unwrapTimesheets(timesheetsResult.value) : [];
 
   const completedTasks = tasks.filter((t) => t.status === "completed").length;
   

@@ -54,23 +54,8 @@ export const invoiceApi = {
     return response.data;
   },
 
-  /**
-   * `/invoices/stats` is unreachable for the same reason as the payments one:
-   * `/invoices/{id}` is declared first, so "stats" is bound as an id and the
-   * server answers `404 No query results for model [App\Models\Invoice] stats`.
-   *
-   * Derived from the list until the routes are reordered server-side.
-   */
+  /** There is no `/invoices/stats` route; the counters are derived from the list. */
   getStats: async (role: string): Promise<InvoiceStats> => {
-    try {
-      const response = await apiClient.get<ApiResponse<InvoiceStats>>(
-        `${getRolePrefix(role)}/invoices/stats`
-      );
-      if (response?.data) return response.data;
-    } catch {
-      // fall through to deriving them
-    }
-
     const list = await invoiceApi.getAll(role, { page: 1 } as InvoicesQueryParams);
     const rows: Invoice[] = list?.data ?? [];
     const countBy = (...statuses: string[]) =>
@@ -109,10 +94,9 @@ export const invoiceApi = {
   },
 
   getCompanyData: async (role: string, companyId?: string | number) => {
-    const url = companyId
-      ? `${getRolePrefix(role)}/company-data/${companyId}`
-      : `${getRolePrefix(role)}/company-data`;
-    const response = await apiClient.get<ApiResponse<{ clients: any[]; projects: any[]; currencies: any[] }>>(url);
+    const response = await apiClient.get<ApiResponse<{ clients: any[]; projects: any[]; currencies: any[] }>>(
+      `${getRolePrefix(role)}/company-data/${companyId}`
+    );
     return response.data;
   },
 

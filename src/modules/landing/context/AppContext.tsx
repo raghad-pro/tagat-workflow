@@ -1,9 +1,10 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { content as defaults, mergeContent } from '../i18n/content'
+import { useRouter } from 'next/navigation'
+import { content as defaults } from '../i18n/content'
 import { useLocaleSwitcher } from '@/hooks/useLocaleSwitcher'
-import type { Locale } from '@/i18n/config'
+import { landingPathFor, type Locale } from '@/i18n/config'
 
 const AppContext = createContext<any>({} as any)
 
@@ -28,39 +29,36 @@ function applyTheme(theme: any) {
   document.documentElement.classList.toggle('dark', isDark)
 }
 
-export function AppProvider({ initialTheme, children }: any) {
+interface AppProviderProps {
+  initialTheme?: string
+  /**
+   * Decided on the server from the session cookie, so the page renders the
+   * right call to action on the first paint instead of flashing "Get Started"
+   * at someone who is already signed in.
+   */
+  isAuthenticated?: boolean
+  children: React.ReactNode
+}
+
+export function AppProvider({ initialTheme, isAuthenticated = false, children }: AppProviderProps) {
   // The landing page no longer keeps its own idea of the language. It reads and
   // writes the same cookie next-intl serves the auth and dashboard screens
   // from, so a visitor who picks العربية here lands on an Arabic /login.
   const { locale, setLocale } = useLocaleSwitcher()
+  const router = useRouter()
 
   const [theme, setTheme] = useState(() => {
     return getCookie('wf-theme') || initialTheme || 'light'
   })
-  const [overrides, setOverrides] = useState(null)
-
   useEffect(() => {
     applyTheme(theme)
     persist('wf-theme', theme)
   }, [theme])
 
-  useEffect(() => {
-    const ctrl = new AbortController()
-    fetch('/api/content', { signal: ctrl.signal, headers: { Accept: 'application/json' } })
-      .then((r: any) => (r.ok ? r.json() : null))
-      .then((data: any) => {
-        if (data && typeof data === 'object') setOverrides(data)
-      })
-      .catch(() => {})
-    return () => ctrl.abort()
-  }, [])
-
   const t = useMemo(() => {
     const key = locale as keyof typeof defaults
-    const base = defaults[key] ?? defaults.en
-    const over = overrides && (overrides as any)[key]
-    return over ? mergeContent(base, over) : base
-  }, [locale, overrides])
+    return defaults[key] ?? defaults.en
+  }, [locale])
 
   const value = useMemo(
     () => ({
@@ -68,10 +66,17 @@ export function AppProvider({ initialTheme, children }: any) {
       lang: locale,
       t,
       isRTL: locale === 'ar',
+      isAuthenticated,
       toggleTheme: () => setTheme((p: any) => (p === 'dark' ? 'light' : 'dark')),
-      toggleLang: () => setLocale((locale === 'en' ? 'ar' : 'en') as Locale),
+      // Each language of the landing page has its own URL, so switching moves
+      // there as well as writing the cookie the rest of the app reads.
+      toggleLang: () => {
+        const next = (locale === 'en' ? 'ar' : 'en') as Locale
+        setLocale(next)
+        router.replace(landingPathFor(next))
+      },
     }),
-    [theme, locale, t, setLocale]
+    [theme, locale, t, isAuthenticated, setLocale, router]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -25,14 +25,16 @@ export const useTaskStats = () => {
   });
 };
 
+/** `/tasks-data/{companyId}` — a super admin picks the company, everyone else gets their own. */
 export const useTasksData = (companyId?: number) => {
   const { user } = useAuth();
   const role = user?.role || "super_admin";
+  const resolvedId = role === "super_admin" ? companyId : (user?.company_id ?? undefined);
 
   return useQuery({
-    queryKey: ["tasks-data", role, companyId],
-    queryFn: () => taskApi.getTasksData(role, companyId),
-    enabled: role === "super_admin" ? !!companyId : true,
+    queryKey: ["tasks-data", role, resolvedId],
+    queryFn: () => taskApi.getTasksData(role, resolvedId as number),
+    enabled: !!resolvedId,
   });
 };
 

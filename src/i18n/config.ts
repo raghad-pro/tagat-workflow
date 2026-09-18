@@ -15,6 +15,26 @@ export const LOCALE_COOKIE = "locale";
 /** Kept in step with `LOCALE_COOKIE` for the landing page's own persistence. */
 export const LANG_COOKIE = "wf-lang";
 
+/** Set by the middleware on the landing URLs, where the path decides the language. */
+export const LOCALE_HEADER = "x-locale";
+
+/** The public landing page, one URL per language so each can be indexed. */
+export const LANDING_PATHS: Record<Locale, string> = {
+  en: "/",
+  ar: "/ar",
+};
+
+export function landingPathFor(locale: unknown): string {
+  return LANDING_PATHS[resolveLocale(locale)];
+}
+
+export function localeForLandingPath(pathname: string): Locale | null {
+  const match = (Object.entries(LANDING_PATHS) as [Locale, string][]).find(
+    ([, path]) => pathname === path || pathname === `${path}/`
+  );
+  return match ? match[0] : null;
+}
+
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export function isLocale(value: unknown): value is Locale {

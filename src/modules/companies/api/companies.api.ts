@@ -1,7 +1,6 @@
 import apiClient from "@/services/apiClient";
 import type {
   Company,
-  CompanyStats,
   CompaniesQueryParams,
   AddCompanyRequest,
 } from "@/modules/companies/types/companies.types";
@@ -31,10 +30,6 @@ export const companyApi = {
   // ─── GET /super_admin/companies ───────────────────────────────────────────
   getAll: (params?: CompaniesQueryParams) =>
     apiClient.get<ApiCompaniesResponse>("/super_admin/companies", params as Record<string, unknown>),
-
-  // ─── GET /super_admin/companies/stats ─────────────────────────────────────
-  getStats: () =>
-    apiClient.get<CompanyStats>("/super_admin/companies/stats"),
 
   // ─── POST /super_admin/companies ──────────────────────────────────────────
   create: (data: AddCompanyRequest) => {

@@ -1,9 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ORIGINS, ENV } from "@/config/env";
 import { UNREACHABLE_STATUSES } from "@/services/apiFailover";
+import {
+  LOCALE_COOKIE,
+  LOCALE_HEADER,
+  landingPathFor,
+  localeForLandingPath,
+  resolveLocale,
+} from "@/i18n/config";
 
 const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password", "/verify"];
+/** Pointless with a session in hand — a signed-in visitor is sent on to the app instead. */
+const SIGNED_OUT_ONLY_ROUTES = ["/login", "/register"];
 const DEFAULT_REDIRECT = "/dashboard";
+
+/**
+ * The landing page is the one place the URL, not the cookie, decides the
+ * language: `/` is always English and `/ar` always Arabic, so each has a
+ * stable address a search engine can index and link to. A visitor whose
+ * cookie says Arabic is sent from `/` to `/ar` rather than served Arabic at
+ * the English address.
+ */
+function landingResponse(request: NextRequest, pathname: string): NextResponse | null {
+  const pathLocale = localeForLandingPath(pathname);
+  if (!pathLocale) return null;
+
+  if (pathname === "/") {
+    const preferred = resolveLocale(request.cookies.get(LOCALE_COOKIE)?.value);
+    if (preferred !== "en") {
+      return NextResponse.redirect(new URL(landingPathFor(preferred), request.url));
+    }
+  }
+
+  const headers = new Headers(request.headers);
+  headers.set(LOCALE_HEADER, pathLocale);
+  return NextResponse.next({ request: { headers } });
+}
 
 /**
  * One dev proxy path per backend host, so the client can fail over between them
@@ -74,21 +106,33 @@ export async function middleware(request: NextRequest) {
     });
   }
 
+  const landing = landingResponse(request, pathname);
+  if (landing) return landing;
+
   if (ENV.DISABLE_DASHBOARD_PROTECTION) return NextResponse.next();
 
   const token = request.cookies.get(ENV.ACCESS_TOKEN_KEY)?.value;
 
-  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  ) || pathname === "/";
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
   if (!token && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  if (token && SIGNED_OUT_ONLY_ROUTES.some((route) => pathname.startsWith(route))) {
+    return NextResponse.redirect(new URL(DEFAULT_REDIRECT, request.url));
+  }
+
   return NextResponse.next();
 }
 
+/**
+ * Crawler-facing files are listed by name: `robots.txt`, `sitemap.xml` and the
+ * manifest used to fall through to the auth redirect and answer 307 → /login,
+ * which reads to a search engine as "no robots file, no sitemap".
+ */
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|sanctum|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|sanctum|favicon.ico|icon|robots.txt|sitemap.xml|manifest.webmanifest|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|json|webmanifest)$).*)",
+  ],
 };

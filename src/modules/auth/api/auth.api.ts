@@ -6,7 +6,6 @@ import type {
   RegisterRequest,
   ForgotPasswordRequest,
   VerifyOtpRequest,
-  VerifyOtpResponse,
   ResetPasswordRequest,
   MessageResponse,
 } from "../types/auth.types";
@@ -69,11 +68,6 @@ export const authApi = {
 
   verifyEmailOtp: async (data: VerifyOtpRequest) => {
     const response = await apiClient.post<{ status: number | boolean; message: string; success?: boolean }>('/verify-email-otp', data);
-    return response;
-  },
-
-  verifyOtp: async (data: VerifyOtpRequest) => {
-    const response = await apiClient.post<{ success: boolean; data: VerifyOtpResponse }>("/verify-otp", data);
     return response;
   },
 

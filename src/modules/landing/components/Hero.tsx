@@ -7,7 +7,7 @@ import WorldMapBg from './WorldMapBg'
 import Reveal from './Reveal'
 
 export default function Hero() {
-  const { t, theme, isRTL } = useApp()
+  const { t, theme, isRTL, isAuthenticated } = useApp()
 
   return (
     <section id="home" className="hero">
@@ -32,8 +32,8 @@ export default function Hero() {
         </Reveal>
 
         <Reveal className="hero__actions" delay={220}>
-          <Link href="/register" className="btn btn--primary btn--lg">
-            {t.hero.ctaPrimary}
+          <Link href={isAuthenticated ? "/dashboard" : "/register"} className="btn btn--primary btn--lg">
+            {isAuthenticated ? t.nav.goToDashboard : t.hero.ctaPrimary}
             <ArrowIcon flip={isRTL} size={18} />
           </Link>
           <a href="#pricing" className="btn btn--ghost btn--lg">
@@ -45,7 +45,11 @@ export default function Hero() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/dashboard.png"
-            alt="Dashboard"
+            alt="Workflow dashboard showing project stats, monthly invoices and the latest tasks"
+            width="1024"
+            height="560"
+            fetchPriority="high"
+            decoding="async"
             className="hero__dashboard-img"
           />
         </Reveal>

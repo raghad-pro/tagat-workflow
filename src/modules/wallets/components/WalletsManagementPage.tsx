@@ -195,16 +195,19 @@ export function WalletsManagementPage() {
         />
       </div>
 
-      <AddWalletModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        isLoading={createWallet.isPending}
-        onSave={async (data) => {
-          await createWallet.mutateAsync(data);
-          setIsAddModalOpen(false);
-          toast.success(t("messages.createSuccess"));
-        }}
-      />
+      {/* Dialogs are mounted only while open so their lookups do not run on every page visit */}
+      {isAddModalOpen && (
+        <AddWalletModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          isLoading={createWallet.isPending}
+          onSave={async (data) => {
+            await createWallet.mutateAsync(data);
+            setIsAddModalOpen(false);
+            toast.success(t("messages.createSuccess"));
+          }}
+        />
+      )}
 
       <ViewWalletModal
         isOpen={activeModal === "view"}
@@ -212,17 +215,19 @@ export function WalletsManagementPage() {
         data={selectedRow}
       />
 
-      <EditWalletModal
-        isOpen={activeModal === "edit"}
-        onClose={closeModal}
-        data={selectedRow}
-        isLoading={updateWallet.isPending}
-        onUpdate={async (id, data) => {
-          await updateWallet.mutateAsync({ id, data });
-          closeModal();
-          toast.success(t("messages.updateSuccess"));
-        }}
-      />
+      {activeModal === "edit" && (
+        <EditWalletModal
+          isOpen={activeModal === "edit"}
+          onClose={closeModal}
+          data={selectedRow}
+          isLoading={updateWallet.isPending}
+          onUpdate={async (id, data) => {
+            await updateWallet.mutateAsync({ id, data });
+            closeModal();
+            toast.success(t("messages.updateSuccess"));
+          }}
+        />
+      )}
 
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}

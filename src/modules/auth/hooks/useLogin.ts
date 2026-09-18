@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { authApi } from "../api/auth.api";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTranslations } from "next-intl";
-import type { LoginRequest } from "../types/auth.types";
+import type { LoginInput } from "../types/auth.types";
 import { normalizeUser } from "../types/auth.types";
 import toast from "react-hot-toast";
 
@@ -16,14 +16,15 @@ export const useLogin = () => {
   const t = useTranslations("auth");
 
   return useMutation({
-    mutationFn: async (data: LoginRequest) => {
-      const res = await authApi.login(data);
+    // `remember` is a browser-side decision (cookie lifetime); the API never sees it.
+    mutationFn: async ({ email, password }: LoginInput) => {
+      const res = await authApi.login({ email, password });
       if (res && (res as any).success === false) {
         throw new Error((res as any).message || "Login failed");
       }
       return res;
     },
-    onSuccess: (response: any) => {
+    onSuccess: (response: any, { remember }) => {
       console.log("Login Response Payload:", response);
       
       const payload = response?.data ? response.data : response;
@@ -40,7 +41,7 @@ export const useLogin = () => {
       const normalized = normalizeUser(rawUser, payload);
 
       if (token) {
-        tokenService.setToken(token);
+        tokenService.setToken(token, { remember: Boolean(remember) });
       }
 
       if (normalized) {
@@ -53,7 +54,7 @@ export const useLogin = () => {
       }
     },
     
-    onError: (error: any, variables: LoginRequest) => {
+    onError: (error: any, variables: LoginInput) => {
       const backendMsg = error?.response?.data?.message || error?.message || "";
       const lowerMsg = backendMsg.toLowerCase();
       

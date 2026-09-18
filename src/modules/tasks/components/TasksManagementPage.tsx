@@ -22,7 +22,6 @@ import {
   useDeleteTask,
   useTasksData,
 } from "../hooks/useTasks";
-import { useEmployees } from "@/modules/employees/hooks/useEmployees";
 import { useProjects } from "@/modules/projects/hooks/useProjects";
 import { isProjectLeader } from "@/modules/projects/types/projects.types";
 import AddTaskModal from "./AddTaskModal";
@@ -127,9 +126,10 @@ export function TasksManagementPage() {
   /**
    * Adding work is the project lead's job: a plain member only moves the tasks
    * already assigned to them. An employee therefore gets the add button only
-   * while they lead a project — the same list the dialog offers them.
+   * while they lead a project — the same list the dialog offers them. Nobody
+   * else needs `leader_id`, so the list is only fetched for an employee.
    */
-  const { data: projectsResponse } = useProjects({ page: 1, per_page: 1000 });
+  const { data: projectsResponse } = useProjects({ page: 1, per_page: 1000 }, { enabled: isEmployee });
   const allProjects = projectsResponse?.data?.data ?? projectsResponse?.data ?? [];
   const leadsAProject = allProjects.some((project: any) =>
     isProjectLeader(project, user?.id)
@@ -153,9 +153,9 @@ export function TasksManagementPage() {
 
   const stats          = statsData ?? DUMMY_STATS;
 
-  // Use full employees list to resolve employee names properly
-  const { data: employeesResponse } = useEmployees({ page: 1, per_page: 100 });
-  const employeesList = (employeesResponse?.data?.data ?? employeesResponse?.data ?? []) as any[];
+  // `tasks-data` already carries the company's `{ id, name }` roster, which is
+  // all name resolution needs — no separate employees request.
+  const employeesList = (tasksDataResponse?.employees ?? []) as any[];
 
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns = useMemo<TableColumn<Task>[]>(() => {
@@ -387,18 +387,20 @@ export function TasksManagementPage() {
         </div>
       </div>
 
-      {/* Add Modal */}
-      <AddTaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        isLoading={createTask.isPending}
-        onSubmit={(v, setError) => {
-          createTask.mutate(buildPayload(v), {
-            onSuccess: () => setIsModalOpen(false),
-            onError:   (err) => handleServerErrors(err, setError),
-          });
-        }}
-      />
+      {/* Add Modal — mounted only while open so its project lookup does not run on every page visit */}
+      {isModalOpen && (
+        <AddTaskModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          isLoading={createTask.isPending}
+          onSubmit={(v, setError) => {
+            createTask.mutate(buildPayload(v), {
+              onSuccess: () => setIsModalOpen(false),
+              onError:   (err) => handleServerErrors(err, setError),
+            });
+          }}
+        />
+      )}
 
       {/* Delete Modal */}
       <DeleteConfirmationModal
@@ -423,27 +425,29 @@ export function TasksManagementPage() {
       />
 
       {/* Edit Modal */}
-      <EditTaskModal
-        isOpen={activeModal === "edit"}
-        onClose={closeModal}
-        data={selectedRow}
-        isLoading={updateTask.isPending}
-        onUpdate={(id, v, setError) => {
-          updateTask.mutate(
-            {
-              id,
-              data: buildPayload(
-                v,
-                selectedRow?.task_date ?? selectedRow?.taskDate
-              ),
-            },
-            {
-              onSuccess: () => closeModal(),
-              onError:   (err) => handleServerErrors(err, setError),
-            }
-          );
-        }}
-      />
+      {activeModal === "edit" && (
+        <EditTaskModal
+          isOpen={activeModal === "edit"}
+          onClose={closeModal}
+          data={selectedRow}
+          isLoading={updateTask.isPending}
+          onUpdate={(id, v, setError) => {
+            updateTask.mutate(
+              {
+                id,
+                data: buildPayload(
+                  v,
+                  selectedRow?.task_date ?? selectedRow?.taskDate
+                ),
+              },
+              {
+                onSuccess: () => closeModal(),
+                onError:   (err) => handleServerErrors(err, setError),
+              }
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

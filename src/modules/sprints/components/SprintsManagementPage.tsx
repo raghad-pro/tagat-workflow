@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { KanbanSquare, ListChecks, Plus } from "lucide-react";
@@ -19,7 +20,7 @@ import { useCreateTask, useDeleteTask, useUpdateTask } from "@/modules/tasks/hoo
 import type { Task } from "@/modules/tasks/types/tasks.types";
 import { isProjectLeader } from "@/modules/projects/types/projects.types";
 
-import { useKanban, useSprintBoard, useSprintMutations } from "../hooks/useSprints";
+import { sprintKeys, useKanban, useSprintBoard, useSprintMutations } from "../hooks/useSprints";
 import { BacklogTable } from "./BacklogTable";
 import { SprintRow } from "./SprintRow";
 import { KanbanBoard } from "./KanbanBoard";
@@ -52,6 +53,7 @@ export default function SprintsManagementPage() {
   const { user } = useAuth();
   const role = user?.role || "company";
   const { can } = usePermission();
+  const queryClient = useQueryClient();
 
   // A client may read the plan but not reshape it. Everyone else rides on the
   // same permission as the tasks page — moving a task between sprints is an
@@ -121,8 +123,12 @@ export default function SprintsManagementPage() {
    * about a different project.
    */
   useEffect(() => {
-    if (projectId === null && selectedProject?.id) setProjectId(selectedProject.id);
-  }, [projectId, selectedProject?.id]);
+    if (projectId !== null || !selectedProject?.id || !board.data) return;
+    // The unkeyed reply *is* this project's board — hand it to the keyed entry
+    // so the switch below does not fetch the same thing again.
+    queryClient.setQueryData(sprintKeys.board(role, selectedProject.id), board.data);
+    setProjectId(selectedProject.id);
+  }, [projectId, selectedProject?.id, board.data, queryClient, role]);
 
   // Switching project invalidates the page the user was on.
   useEffect(() => setBacklogPage(1), [projectId]);
@@ -370,6 +376,8 @@ export default function SprintsManagementPage() {
         isLoading={isCompletingSprint}
       />
 
+      {/* Task dialogs are mounted only while open so their project lookup does not run on every page visit */}
+      {isAddTaskOpen && (
       <AddTaskModal
         isOpen={isAddTaskOpen}
         onClose={() => setIsAddTaskOpen(false)}
@@ -410,6 +418,7 @@ export default function SprintsManagementPage() {
           );
         }}
       />
+      )}
       {/* ── Card actions ──────────────────────────────────────────────────── */}
       <ViewTaskModal
         isOpen={activeModal === "view"}
@@ -417,6 +426,7 @@ export default function SprintsManagementPage() {
         data={selectedTaskRow}
       />
 
+      {activeModal === "edit" && (
       <EditTaskModal
         isOpen={activeModal === "edit"}
         onClose={closeModal}
@@ -464,6 +474,7 @@ export default function SprintsManagementPage() {
           );
         }}
       />
+      )}
 
       <DeleteConfirmationModal
         isOpen={activeModal === "delete"}
