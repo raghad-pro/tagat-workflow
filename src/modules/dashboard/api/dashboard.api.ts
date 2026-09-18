@@ -17,10 +17,14 @@ import type {
   ApiPaymentsResponse,
   ApiTimesheetsResponse,
 } from "../types/dashboard.types";
+import {
+  UNREACHABLE_STATUSES,
+  getDirectApiBaseUrl,
+  reportReachable,
+  reportUnreachable,
+} from "@/services/apiFailover";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
-const BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "https://workflow.aliservice.site/api/v1";
 
 const EMPTY_DASHBOARD: DashboardResponse = {
   stats: {
@@ -41,14 +45,43 @@ const EMPTY_DASHBOARD: DashboardResponse = {
 };
 
 // ─── HTTP helper ───────────────────────────────────────────────────────────────
+/**
+ * Sends the request to the live backend host, moving to the second one when the
+ * first never answers. These calls skip the dev proxy, so they need the
+ * absolute host.
+ */
+async function fetchWithFailover(path: string, token: string): Promise<Response> {
+  const send = (baseUrl: string) =>
+    fetch(`${baseUrl}${path}`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+  const baseUrl = getDirectApiBaseUrl();
+  let response: Response | undefined;
+  let unreachable: unknown;
+
+  try {
+    response = await send(baseUrl);
+    if (!UNREACHABLE_STATUSES.includes(response.status)) {
+      reportReachable(baseUrl);
+      return response;
+    }
+  } catch (error) {
+    unreachable = error; // DNS failure, refused connection, offline
+  }
+
+  const nextBaseUrl = reportUnreachable(baseUrl);
+  if (nextBaseUrl) return send(nextBaseUrl);
+  if (response) return response;
+  throw unreachable;
+}
+
 async function apiFetch<T>(path: string, token: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
+  const res = await fetchWithFailover(path, token);
 
   if (!res.ok) throw new Error(`API error ${res.status} — ${path}`);
 
