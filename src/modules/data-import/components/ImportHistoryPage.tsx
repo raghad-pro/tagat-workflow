@@ -10,14 +10,16 @@ import { PageCard } from "@/components/molecules/Pagecard";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 import { useImportHistory } from "../hooks/useDataImport";
-import type { DataImportSession } from "../types/data-import.types";
+import {
+  SESSION_STATUSES,
+  type DataImportSession,
+  type SessionStatus,
+} from "../types/data-import.types";
 import { formatDate, str } from "../utils/shape";
 import { SELECT_CLASS } from "./wizard/WizardCard";
 import { SessionStatusBadge } from "./SessionStatusBadge";
 
-/** Session statuses the filter offers. The server may use others; those still
- *  show in the list, they just have no dedicated filter entry. */
-const SESSION_STATUSES = ["draft", "ready", "committed", "failed"];
+const PER_PAGE = 25;
 
 /** How the run ended, as opposed to where the session stands. */
 const EXECUTION_STATUSES = ["notRun", "imported", "partial", "failed"] as const;
@@ -56,21 +58,35 @@ function executionOf(session: DataImportSession): ExecutionStatus {
 /**
  * Import history — every session, including the ones that failed.
  *
- * Reads `GET {prefix}/dataImports/history`. The four filters are applied here
- * because the route's query parameters are not documented; the moment they are,
- * they move into the request and this becomes a thin list.
+ * Reads `GET {prefix}/dataImports/history`. Month, year and status are the
+ * route's own query parameters, so they filter the whole history, and the list
+ * is paged the way the server pages it. The execution filter is derived from
+ * each row and has no server counterpart, so it narrows the page it is on.
  */
 export default function ImportHistoryPage() {
   const t = useTranslations("dataImport");
   const isAr = useLocale() === "ar";
   const router = useRouter();
 
-  const { data: sessions = [], isLoading, isError, error, refetch } = useImportHistory();
-
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
-  const [sessionStatus, setSessionStatus] = useState("");
+  const [sessionStatus, setSessionStatus] = useState<SessionStatus | "">("");
   const [execution, setExecution] = useState("");
+  const [page, setPage] = useState(1);
+
+  // The route validates month 1–12 and year 2000–2100; a half-typed year is
+  // left out of the request rather than sent to be refused.
+  const monthParam = Number(month);
+  const yearParam = Number(year);
+  const { data, isLoading, isError, error, refetch, isFetching } = useImportHistory({
+    page,
+    per_page: PER_PAGE,
+    ...(monthParam >= 1 && monthParam <= 12 && { month: monthParam }),
+    ...(yearParam >= 2000 && yearParam <= 2100 && { year: yearParam }),
+    ...(sessionStatus && { status: sessionStatus }),
+  });
+  const sessions = data?.items ?? [];
+  const lastPage = data?.lastPage ?? 1;
 
   const hasFilters = Boolean(month || year || sessionStatus || execution);
 
@@ -79,19 +95,24 @@ export default function ImportHistoryPage() {
     setYear("");
     setSessionStatus("");
     setExecution("");
+    setPage(1);
   };
 
-  const filtered = useMemo(() => {
-    return sessions.filter((session) => {
-      const date = new Date(str(session, ["created_at"]));
-      const valid = !Number.isNaN(date.getTime());
-      if (month && (!valid || date.getMonth() + 1 !== Number(month))) return false;
-      if (year && (!valid || date.getFullYear() !== Number(year))) return false;
-      if (sessionStatus && str(session, ["status"]) !== sessionStatus) return false;
-      if (execution && executionOf(session) !== execution) return false;
-      return true;
-    });
-  }, [sessions, month, year, sessionStatus, execution]);
+  /** A filter change starts again from the first page. */
+  const withReset =
+    <T,>(set: (value: T) => void) =>
+    (value: T) => {
+      set(value);
+      setPage(1);
+    };
+
+  const filtered = useMemo(
+    () =>
+      execution
+        ? sessions.filter((session) => executionOf(session) === execution)
+        : sessions,
+    [sessions, execution]
+  );
 
   return (
     <PageContainer
@@ -142,7 +163,7 @@ export default function ImportHistoryPage() {
             max={12}
             inputMode="numeric"
             value={month}
-            onChange={(event) => setMonth(event.target.value)}
+            onChange={(event) => withReset(setMonth)(event.target.value)}
             placeholder={t("historyPage.filters.month")}
             className={INPUT_CLASS}
           />
@@ -152,20 +173,22 @@ export default function ImportHistoryPage() {
             max={2100}
             inputMode="numeric"
             value={year}
-            onChange={(event) => setYear(event.target.value)}
+            onChange={(event) => withReset(setYear)(event.target.value)}
             placeholder={t("historyPage.filters.year")}
             className={INPUT_CLASS}
           />
 
           <select
             value={sessionStatus}
-            onChange={(event) => setSessionStatus(event.target.value)}
+            onChange={(event) =>
+              withReset(setSessionStatus)(event.target.value as SessionStatus | "")
+            }
             className={cn(SELECT_CLASS, "w-auto min-w-[170px]")}
           >
             <option value="">{t("historyPage.filters.anySession")}</option>
             {SESSION_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {status}
+                {t(`status.${status}` as Parameters<typeof t>[0])}
               </option>
             ))}
           </select>
@@ -247,6 +270,40 @@ export default function ImportHistoryPage() {
               );
             })}
           </ul>
+        )}
+
+        {/* ── Pages ── */}
+        {lastPage > 1 && (
+          <div
+            className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6"
+            style={{ borderTop: "1px solid var(--color-border-form)" }}
+          >
+            <span className="text-[12px] text-slate-400 dark:text-slate-500">
+              {t("historyPage.pagination.page", { page, last: lastPage })}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-lg"
+                disabled={page <= 1 || isFetching}
+                licon={<ChevronLeft size={14} className={isAr ? "rotate-180" : undefined} />}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                {t("historyPage.pagination.previous")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-lg"
+                disabled={page >= lastPage || isFetching}
+                ricon={<ChevronRight size={14} className={isAr ? "rotate-180" : undefined} />}
+                onClick={() => setPage((current) => Math.min(lastPage, current + 1))}
+              >
+                {t("historyPage.pagination.next")}
+              </Button>
+            </div>
+          </div>
         )}
       </PageCard>
     </PageContainer>

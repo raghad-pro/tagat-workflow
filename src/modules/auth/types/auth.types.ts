@@ -110,7 +110,7 @@ export function normalizeRole(roleInput: any, roleIdInput?: any): Role {
     if (s === "company" || s === "company_admin" || s === "companyadmin" || s === "company_request" || s === "company_user") return "company";
     if (s === "employee" || s === "staff") return "employee";
     if (s === "client" || s === "customer") return "client";
-  }
+      }
 
   const explicitId = roleIdInput ?? source.id;
   if (explicitId !== undefined && explicitId !== null) {

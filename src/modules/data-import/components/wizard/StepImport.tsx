@@ -4,8 +4,14 @@ import { useTranslations } from "next-intl";
 import { AlertTriangle, ArrowUp } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
-import { useCommitImport, useSessionPreview } from "../../hooks/useDataImport";
 import {
+  useCommitImport,
+  useCommitPreflight,
+  useSessionPreview,
+} from "../../hooks/useDataImport";
+import {
+  preflightBlocked,
+  preflightBlockers,
   previewDuplicate,
   previewInvalid,
   previewTotal,
@@ -18,9 +24,10 @@ import { WizardCard, WizardTile } from "./WizardCard";
  * Step 5 — the totals, then the confirmation.
  *
  * The figures are the session's own preview summary, so what is confirmed here
- * is what the server staged. `POST .../commit` is idempotent, which is why a
- * failed request can simply be retried without risking a double import — but it
- * does create real records, and there is no rollback route.
+ * is what the server staged; `GET .../commit` is the preflight, and its refusal
+ * disables the button with its reasons. `POST .../commit` is idempotent, which
+ * is why a failed request can simply be retried without risking a double import
+ * — but it does create real records, and there is no rollback route.
  */
 export function StepImport({
   sessionId,
@@ -31,13 +38,16 @@ export function StepImport({
 }) {
   const t = useTranslations("dataImport");
   const { data: summary, isLoading } = useSessionPreview(sessionId);
+  const { data: preflight } = useCommitPreflight(sessionId);
   const commit = useCommitImport(sessionId);
 
   const ready = previewValid(summary);
   const invalid = previewInvalid(summary);
   const duplicate = previewDuplicate(summary);
   const sheets = num(summary, ["sheets_count", "sheets"], Array.isArray(summary?.sheets) ? summary!.sheets!.length : 0);
-  const nothingToImport = !isLoading && ready === 0;
+  const blocked = preflightBlocked(preflight);
+  const blockers = preflightBlockers(preflight);
+  const nothingToImport = (!isLoading && ready === 0) || blocked;
 
   return (
     <WizardCard
@@ -61,7 +71,7 @@ export function StepImport({
           </Button>
           {nothingToImport && (
             <span className="text-[12px] text-slate-400 dark:text-slate-500">
-              {t("run.nothingToImport")}
+              {blocked ? t("run.preflightBlocked") : t("run.nothingToImport")}
             </span>
           )}
         </>
@@ -74,6 +84,21 @@ export function StepImport({
         <WizardTile value={ready} label={t("run.tiles.ready")} tone="green" />
         <WizardTile value={sheets} label={t("run.tiles.sheets")} tone="slate" />
       </div>
+
+      {/* ── What the preflight objects to ── */}
+      {blockers.length > 0 && (
+        <ul className="mx-auto mt-5 flex max-w-3xl flex-col gap-1.5 rounded-xl bg-red-500/[0.08] px-4 py-3.5">
+          {blockers.map((reason, index) => (
+            <li
+              key={index}
+              className="flex items-start gap-2 text-[13px] leading-relaxed text-red-600 dark:text-red-400"
+            >
+              <AlertTriangle size={15} className="mt-[2px] shrink-0" />
+              {reason}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* ── The warning that this is not reversible ── */}
       <div className="mx-auto mt-5 flex max-w-3xl items-start gap-2.5 rounded-xl bg-amber-500/[0.10] px-4 py-3.5">

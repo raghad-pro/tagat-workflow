@@ -1,21 +1,27 @@
 import apiClient from "@/services/apiClient";
 import axiosInstance from "@/services/axiosConfig";
 import { getRolePrefix } from "@/utils/rolePrefix";
-import type {
-  AuditRow,
-  CommitResult,
-  CsvDelimiter,
-  DataImportFile,
-  DataImportSession,
-  Id,
-  PreviewRow,
-  RollbackEligibility,
-  SessionPreviewSummary,
-  SheetMapping,
-  SheetPreview,
-  UpdateMappingPayload,
+import {
+  DELIMITER_CHARS,
+  type AuditRow,
+  type AuditRowsParams,
+  type CommitResult,
+  type CsvDelimiter,
+  type DataImportFile,
+  type DataImportSession,
+  type FieldOption,
+  type HistoryParams,
+  type Id,
+  type Page,
+  type PreviewRow,
+  type PreviewRowsParams,
+  type RollbackEligibility,
+  type SessionPreviewSummary,
+  type SheetMapping,
+  type SheetPreview,
+  type UpdateMappingPayload,
 } from "../types/data-import.types";
-import { unwrap, unwrapList } from "../utils/shape";
+import { unwrap, unwrapList, unwrapPage } from "../utils/shape";
 
 /**
  * Data import — v3.
@@ -94,10 +100,11 @@ export const dataImportApi = {
     return unwrap<DataImportFile>(response);
   },
 
-  /** CSV only; re-parses the file, so the sheets come back rebuilt. */
+  /** CSV only; re-parses the file, so the sheets come back rebuilt. The route
+   *  takes the separator character itself, not its name. */
   setDelimiter: async (role: string, fileId: Id, delimiter: CsvDelimiter) => {
     const response = await apiClient.put<unknown>(`${files(role)}/${fileId}/delimiter`, {
-      delimiter,
+      delimiter: DELIMITER_CHARS[delimiter],
     });
     return unwrap<DataImportFile>(response);
   },
@@ -135,6 +142,19 @@ export const dataImportApi = {
     return unwrap<SheetMapping>(response);
   },
 
+  /**
+   * The records a relation field may point at — the currencies for a project
+   * sheet, the clients, the possible leaders. Answers 409 until the sheet's
+   * entity has been saved, since the options depend on it.
+   */
+  getFieldOptions: async (role: string, sheetId: Id, field: string) => {
+    const response = await apiClient.get<unknown>(
+      `${sheets(role)}/${sheetId}/field-options`,
+      { field }
+    );
+    return unwrapList<FieldOption>(response);
+  },
+
   // ─── Preview ────────────────────────────────────────────────────────────────
 
   /** Stages and validates. Creates no business records. */
@@ -151,9 +171,15 @@ export const dataImportApi = {
     return unwrap<SheetPreview>(response);
   },
 
-  getPreviewRows: async (role: string, sheetId: Id, params?: Record<string, unknown>) => {
-    const response = await apiClient.get<unknown>(`${sheets(role)}/${sheetId}/rows`, params);
-    return unwrapList<PreviewRow>(response);
+  getPreviewRows: async (role: string, sheetId: Id, params?: PreviewRowsParams) => {
+    // Laravel's `boolean` rule takes 1/0, not the "true"/"false" axios would send.
+    const { has_errors, has_warnings, ...rest } = params ?? {};
+    const response = await apiClient.get<unknown>(`${sheets(role)}/${sheetId}/rows`, {
+      ...rest,
+      ...(has_errors !== undefined && { has_errors: has_errors ? 1 : 0 }),
+      ...(has_warnings !== undefined && { has_warnings: has_warnings ? 1 : 0 }),
+    });
+    return unwrapPage<PreviewRow>(response);
   },
 
   getSessionPreview: async (role: string, id: Id) => {
@@ -169,16 +195,18 @@ export const dataImportApi = {
     return unwrap<CommitResult>(response);
   },
 
-  getCommitResult: async (role: string, id: Id) => {
+  /** Preflight before the run — can this session be committed, and why not —
+   *  and the result once it has run. */
+  getCommitPreflight: async (role: string, id: Id) => {
     const response = await apiClient.get<unknown>(`${sessions(role)}/${id}/commit`);
     return unwrap<CommitResult>(response);
   },
 
   // ─── Audit & history ────────────────────────────────────────────────────────
 
-  getHistory: async (role: string, params?: Record<string, unknown>) => {
+  getHistory: async (role: string, params?: HistoryParams) => {
     const response = await apiClient.get<unknown>(`${sessions(role)}/history`, params);
-    return unwrapList<DataImportSession>(response);
+    return unwrapPage<DataImportSession>(response);
   },
 
   getAudit: async (role: string, id: Id) => {
@@ -186,12 +214,12 @@ export const dataImportApi = {
     return unwrap<Record<string, unknown>>(response);
   },
 
-  getAuditRows: async (role: string, id: Id, params?: Record<string, unknown>) => {
+  getAuditRows: async (role: string, id: Id, params?: AuditRowsParams) => {
     const response = await apiClient.get<unknown>(
       `${sessions(role)}/${id}/audit/rows`,
       params
     );
-    return unwrapList<AuditRow>(response);
+    return unwrapPage<AuditRow>(response);
   },
 
   /** Read-only analysis. There is no rollback route — this only reports. */

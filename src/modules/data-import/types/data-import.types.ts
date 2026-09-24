@@ -20,15 +20,59 @@ export type Id = number | string;
 export const ENTITIES = ["currency", "client", "employee", "project", "task"] as const;
 export type Entity = (typeof ENTITIES)[number];
 
-/** CSV separators the delimiter route accepts. */
+/** CSV separators the UI offers. */
 export const DELIMITERS = ["comma", "semicolon", "tab", "pipe"] as const;
 export type CsvDelimiter = (typeof DELIMITERS)[number];
+
+/** What the delimiter route is actually sent — the collection's example is `","`,
+ *  the character itself, not a name. */
+export const DELIMITER_CHARS: Record<CsvDelimiter, string> = {
+  comma: ",",
+  semicolon: ";",
+  tab: "\t",
+  pipe: "|",
+};
+
+/** The session statuses the history route filters on — its `in:` rule. */
+export const SESSION_STATUSES = [
+  "draft",
+  "uploading",
+  "uploaded",
+  "parsing",
+  "parsed",
+  "failed",
+  "cancelled",
+] as const;
+export type SessionStatus = (typeof SESSION_STATUSES)[number];
+
+/** A staged row's verdict — the rows route's `status` filter. */
+export const ROW_STATUSES = ["valid", "invalid", "duplicate"] as const;
+export type RowStatus = (typeof ROW_STATUSES)[number];
+
+/**
+ * How a sheet-wide field value applies.
+ *
+ * The collection validates `field_values.*.mode` as `required · string` and
+ * gives no vocabulary; these two are the modes the field-options design implies
+ * — one value for every row, or a fallback for rows that left the cell blank.
+ * Correct here if the server names them differently.
+ */
+export const FIELD_VALUE_MODES = ["fixed", "default"] as const;
+export type FieldValueMode = (typeof FIELD_VALUE_MODES)[number];
+
+/**
+ * Target fields that point at another record and so take a value from
+ * `field-options` rather than free text. The server is the authority — a
+ * target that declares a relation type is one whatever its name — but these
+ * are the ones the route's description names.
+ */
+export const RELATION_FIELDS = ["currency", "client", "leader", "project", "assignee"];
 
 // ─── Session ──────────────────────────────────────────────────────────────────
 
 export interface DataImportSession {
   id: Id;
-  /** draft · ready · committing · committed · failed — server vocabulary. */
+  /** See SESSION_STATUSES; a committed session may report beyond that list. */
   status?: string;
   created_at?: string;
   updated_at?: string;
@@ -53,7 +97,8 @@ export interface DataImportFile {
   mime_type?: string;
   /** uploaded · parsing · parsed · failed */
   status?: string;
-  delimiter?: CsvDelimiter;
+  /** The character, as the route takes it — or a name from an older serializer. */
+  delimiter?: string;
   error?: string | null;
   error_message?: string | null;
   sheets?: DataImportSheet[];
@@ -107,9 +152,29 @@ export interface TargetField {
   [key: string]: unknown;
 }
 
+/** One option of a relation field, as `field-options` lists it. */
+export interface FieldOption {
+  id?: Id;
+  value?: Id;
+  name?: string;
+  label?: string;
+  title?: string;
+  code?: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+/** A value applied to a whole sheet rather than read from a column. */
+export interface FieldValue {
+  mode: FieldValueMode;
+  value: Id;
+}
+
 export interface SheetMapping {
   entity?: string | null;
   columns?: MappingColumn[];
+  /** Keyed by target field, the way the update route takes it back. */
+  field_values?: Record<string, Partial<FieldValue>>;
   /** Either a map of entity → fields, or the fields for the current entity. */
   available_targets?: Record<string, TargetField[]> | TargetField[];
   available_entities?: string[];
@@ -125,6 +190,43 @@ export interface UpdateMappingPayload {
     target_field: string | null;
     ignored: boolean;
   }>;
+  /** Only sent when at least one field has a sheet-wide value. */
+  field_values?: Record<string, FieldValue>;
+}
+
+// ─── Query parameters ─────────────────────────────────────────────────────────
+
+/** `GET .../sheets/{id}/rows` */
+export type PreviewRowsParams = {
+  status?: RowStatus;
+  has_errors?: boolean;
+  has_warnings?: boolean;
+  per_page?: number;
+  page?: number;
+};
+
+/** `GET .../dataImports/history` */
+export type HistoryParams = {
+  status?: SessionStatus;
+  year?: number;
+  month?: number;
+  per_page?: number;
+  page?: number;
+};
+
+/** `GET .../dataImports/{id}/audit/rows` */
+export type AuditRowsParams = {
+  entity?: Entity;
+  per_page?: number;
+  page?: number;
+};
+
+/** A Laravel paginator's page, flattened. */
+export interface Page<T> {
+  items: T[];
+  page: number;
+  lastPage: number;
+  total: number;
 }
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
@@ -182,9 +284,17 @@ export interface CommitEntityResult {
   [key: string]: unknown;
 }
 
+/**
+ * `GET .../commit` before the run is a preflight — whether the session can be
+ * committed and why not — and after it, the result. One shape covers both.
+ */
 export interface CommitResult extends CommitEntityResult {
   status?: string;
   committed_at?: string | null;
+  can_commit?: boolean;
+  ready?: boolean;
+  blockers?: Array<string | { message?: string; reason?: string; sheet?: string }>;
+  warnings?: Array<string | { message?: string }>;
   entities?: CommitEntityResult[];
   results?: CommitEntityResult[];
   [key: string]: unknown;

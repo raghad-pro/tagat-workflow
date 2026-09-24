@@ -3,7 +3,7 @@ import {
   Building2, MessageSquare, MessageCircleMore, UsersRound, UserRoundPlus,
   FileText, CustomCardIcon, Wallet, ArrowUpDown, BadgePercent,
   ShieldCheck, FolderKanban, SquareCheck, Clock,
-  Wrench, ScrollText, KeyRound, KanbanSquare, Video, BarChart3,
+  Wrench, ScrollText, KeyRound, KanbanSquare, Video, BarChart3, Sparkles,
 } from "@/assets/icons/icons";
 import type { LucideIcon } from "lucide-react";
 
@@ -96,6 +96,10 @@ export const NAV_HUBS: NavHub[] = [
       // records this hub already owns, so it belongs beside them rather than
       // in a hub of its own.
       { key: "dataImport", href: "/data-import", icon: ArrowUpDown, roles: ["super_admin", "company"], permission: "data_import.view" },
+      // The AI routes exist under `/super_admin` and `/company` only, so a
+      // custom role holding `project_ai.view` under another prefix would reach
+      // a page whose every request 404s — hence no permission grant.
+      { key: "projectAi", href: "/project-ai", icon: Sparkles, roles: ["super_admin", "company"] },
     ],
   },
   {

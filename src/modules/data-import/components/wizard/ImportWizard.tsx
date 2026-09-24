@@ -7,12 +7,12 @@ import { ArrowLeft } from "lucide-react";
 import { PageContainer } from "@/components/template/PageContainer";
 import { Button } from "@/components/atoms/Button";
 import {
-  useCommitResult,
+  useCommitPreflight,
   useImportFiles,
   useImportSession,
 } from "../../hooks/useDataImport";
 import { WIZARD_STEPS, type WizardStep } from "../../types/data-import.types";
-import { sheetsOf } from "../../utils/shape";
+import { commitHasRun, sheetsOf } from "../../utils/shape";
 import { StepImport } from "./StepImport";
 import { StepMapping } from "./StepMapping";
 import { StepParse } from "./StepParse";
@@ -43,12 +43,12 @@ export function ImportWizard({ sessionId }: { sessionId: string }) {
     refetch,
   } = useImportSession(sessionId);
   const { data: files = [] } = useImportFiles(sessionId);
-  const { data: commitResult } = useCommitResult(sessionId);
+  const { data: commitResult } = useCommitPreflight(sessionId);
 
   const sheets = useMemo(() => files.flatMap(sheetsOf), [files]);
 
   const reached: WizardStep = useMemo(() => {
-    if (commitResult && Object.keys(commitResult).length > 0) return "result";
+    if (commitHasRun(commitResult)) return "result";
     if (sheets.some((sheet) => sheet.entity)) return "import";
     if (sheets.length > 0) return "mapping";
     if (files.length > 0) return "parse";

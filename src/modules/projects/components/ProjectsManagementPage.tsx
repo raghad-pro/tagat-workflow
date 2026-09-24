@@ -298,7 +298,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Eye, Edit2, Trash2, Folder, Clock, CheckSquare, Crown } from "lucide-react";
+import { Plus, Eye, Edit2, Trash2, Folder, Clock, CheckSquare, Crown, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/molecules/Pageheader";
 import { StatsGrid } from "@/components/molecules/Statsgrid";
 import { SearchFilterBar } from "@/components/molecules/Searchfilterbar";
@@ -529,10 +529,12 @@ export function ProjectsManagementPage() {
       return [
         { icon: Eye,    label: tCommon("view"),   colorScheme: "send",   onClick: openView   },
         { icon: Edit2,  label: tCommon("edit"),   colorScheme: "edit",   onClick: openEdit   },
+        // Straight into the project's AI workspace — documents, plans, alerts.
+        { icon: Sparkles, label: t("aiWorkspace"), colorScheme: "send", onClick: (row) => router.push(`/project-ai/${row.id}`) },
         { icon: Trash2, label: tCommon("delete"), colorScheme: "delete", onClick: openDelete },
       ];
     },
-    [tCommon, openView, openEdit, openDelete]
+    [t, tCommon, openView, openEdit, openDelete, router]
   );
 
   const queryClient               = useQueryClient();

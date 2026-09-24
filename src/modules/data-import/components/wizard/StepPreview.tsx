@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, CheckCircle2, ChevronRight, Copy, Eye, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
@@ -10,6 +10,7 @@ import {
   PREVIEW_ROWS_SHOWN,
   type DataImportFile,
   type DataImportSheet,
+  type RowStatus,
 } from "../../types/data-import.types";
 import {
   previewDuplicate,
@@ -102,9 +103,18 @@ function SheetPreviewCard({
 }) {
   const t = useTranslations("dataImport");
   const { data: preview, isLoading } = useSheetPreview(sheet.id, enabled);
-  const { data: rows = [] } = usePreviewRows(sheet.id, enabled);
 
-  const shown = rows.slice(0, PREVIEW_ROWS_SHOWN);
+  // The filter is the route's own `status` parameter, so "invalid" shows the
+  // first invalid rows of the whole sheet — not the invalid ones among the
+  // first five.
+  const [status, setStatus] = useState<RowStatus | "">("");
+  const { data: page } = usePreviewRows(
+    sheet.id,
+    { per_page: PREVIEW_ROWS_SHOWN, ...(status && { status }) },
+    enabled
+  );
+
+  const shown = page?.items ?? [];
   // The row shape is the server's; its keys are the target fields it mapped.
   const fields = useMemo(() => {
     const fromPreview = preview?.fields ?? preview?.columns;
@@ -136,21 +146,34 @@ function SheetPreviewCard({
 
         {enabled && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-[3px] text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+            {/* The counts double as the filter: click one to see those rows. */}
+            <CountChip
+              active={status === "valid"}
+              onClick={() => setStatus(status === "valid" ? "" : "valid")}
+              className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+            >
               <CheckCircle2 size={12} />
               {t("preview.rowsReady", { count: valid })}
-            </span>
+            </CountChip>
             {invalid > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-[3px] text-[11px] font-bold text-red-500">
+              <CountChip
+                active={status === "invalid"}
+                onClick={() => setStatus(status === "invalid" ? "" : "invalid")}
+                className="bg-red-500/10 text-red-500"
+              >
                 <AlertTriangle size={12} />
                 {t("preview.rowsWithIssues", { count: invalid })}
-              </span>
+              </CountChip>
             )}
             {duplicate > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-[3px] text-[11px] font-bold text-amber-600 dark:text-amber-400">
+              <CountChip
+                active={status === "duplicate"}
+                onClick={() => setStatus(status === "duplicate" ? "" : "duplicate")}
+                className="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              >
                 <Copy size={12} />
                 {t("preview.rowsDuplicate", { count: duplicate })}
-              </span>
+              </CountChip>
             )}
           </div>
         )}
@@ -166,7 +189,11 @@ function SheetPreviewCard({
         </p>
       ) : shown.length === 0 ? (
         <p className="px-4 pb-4 text-[12px] text-slate-400 dark:text-slate-500">
-          {t("preview.noRows")}
+          {status
+            ? t("preview.noRowsWithStatus", {
+                status: t(`preview.rowStatus.${status}` as Parameters<typeof t>[0]),
+              })
+            : t("preview.noRows")}
         </p>
       ) : (
         <>
@@ -231,11 +258,40 @@ function SheetPreviewCard({
           >
             {t("preview.showing", {
               shown: shown.length,
-              total: previewTotal(preview).toLocaleString("en-US"),
+              total: (status ? (page?.total ?? shown.length) : previewTotal(preview)).toLocaleString(
+                "en-US"
+              ),
             })}
           </p>
         </>
       )}
     </div>
+  );
+}
+
+function CountChip({
+  active,
+  onClick,
+  className,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[11px] font-bold transition-shadow",
+        className,
+        active && "ring-2 ring-current"
+      )}
+    >
+      {children}
+    </button>
   );
 }

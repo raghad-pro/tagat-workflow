@@ -6,15 +6,21 @@
  * real payload is known this file is where the guesswork gets deleted — not
  * every component.
  */
-import type {
-  CommitEntityResult,
-  CommitResult,
-  DataImportFile,
-  DataImportSheet,
-  MappingColumn,
-  PreviewRow,
-  SheetMapping,
-  TargetField,
+import {
+  DELIMITERS,
+  DELIMITER_CHARS,
+  RELATION_FIELDS,
+  type CommitEntityResult,
+  type CommitResult,
+  type CsvDelimiter,
+  type DataImportFile,
+  type DataImportSheet,
+  type FieldOption,
+  type MappingColumn,
+  type Page,
+  type PreviewRow,
+  type SheetMapping,
+  type TargetField,
 } from "../types/data-import.types";
 
 /** The first key that actually holds a value. */
@@ -57,6 +63,28 @@ export function unwrapList<T = unknown>(body: unknown): T[] {
   const second = (first as { data?: unknown } | null)?.data;
   if (Array.isArray(second)) return second as T[];
   return [];
+}
+
+/**
+ * A paginated list with its page numbers.
+ *
+ * A Laravel paginator puts `current_page` / `last_page` / `total` beside `data`,
+ * a resource collection moves them under `meta`, and the envelope may wrap
+ * either. A plain array is a single page.
+ */
+export function unwrapPage<T = unknown>(body: unknown): Page<T> {
+  const items = unwrapList<T>(body);
+  const envelope = body as { data?: unknown; meta?: unknown } | null;
+  const inner = envelope?.data as { meta?: unknown } | null;
+  const candidates = [envelope?.meta, inner?.meta, inner, envelope];
+  const meta = candidates.find((c) => c && typeof c === "object" && "current_page" in c);
+
+  return {
+    items,
+    page: num(meta, ["current_page"], 1),
+    lastPage: num(meta, ["last_page"], 1),
+    total: num(meta, ["total"], items.length),
+  };
 }
 
 // ─── Files & sheets ───────────────────────────────────────────────────────────
@@ -108,6 +136,15 @@ export const isCsv = (file: DataImportFile) => {
   const extension = str(file, ["extension"]).toLowerCase();
   return extension === "csv" || name.endsWith(".csv");
 };
+
+/** The file's delimiter as the select knows it — the server stores the
+ *  character, but an older serializer may still hand back the name. */
+export function fileDelimiter(file: DataImportFile): CsvDelimiter {
+  const raw = str(file, ["delimiter"], ",");
+  const byChar = DELIMITERS.find((name) => DELIMITER_CHARS[name] === raw);
+  if (byChar) return byChar;
+  return (DELIMITERS as readonly string[]).includes(raw) ? (raw as CsvDelimiter) : "comma";
+}
 
 export const sheetsOf = (file: DataImportFile): DataImportSheet[] =>
   Array.isArray(file.sheets) ? file.sheets : [];
@@ -176,6 +213,29 @@ export const targetKey = (field: TargetField) => str(field, ["field", "key", "na
 export const targetLabel = (field: TargetField) =>
   str(field, ["label", "name", "field", "key"]);
 
+/**
+ * Whether a target points at another record — a currency, a client, a leader —
+ * and so can be given one value for the whole sheet from `field-options`.
+ * A declared relation type wins; otherwise the name decides.
+ */
+export function isRelationTarget(field: TargetField): boolean {
+  const type = str(field, ["type", "kind"]).toLowerCase();
+  if (["relation", "belongs_to", "belongsto", "foreign", "reference", "lookup"].includes(type)) {
+    return true;
+  }
+  if (field.relation || field.options || field.lookup) return true;
+  const key = targetKey(field).toLowerCase().replace(/_id$/, "");
+  return RELATION_FIELDS.includes(key);
+}
+
+/** A field option's id, whichever key carries it. */
+export const optionValue = (option: FieldOption) => str(option, ["id", "value", "code"]);
+
+export const optionLabel = (option: FieldOption) => {
+  const label = str(option, ["label", "name", "title", "code", "email"]);
+  return label || optionValue(option);
+};
+
 // ─── Preview ──────────────────────────────────────────────────────────────────
 
 export const previewTotal = (source: unknown) => num(source, ["total_rows", "total", "rows"]);
@@ -211,6 +271,44 @@ export function commitEntities(result: CommitResult | undefined): CommitEntityRe
   if (Array.isArray(result.entities)) return result.entities;
   if (Array.isArray(result.results)) return result.results;
   return [];
+}
+
+/**
+ * Whether `GET .../commit` describes a run that happened.
+ *
+ * The same route answers a preflight for a session that has not run, so an
+ * answer alone is not proof — only a commit stamp or its figures are.
+ */
+export function commitHasRun(result: CommitResult | undefined): boolean {
+  if (!result) return false;
+  return (
+    Boolean(result.committed_at) ||
+    ["committed", "completed"].includes(str(result, ["status"]).toLowerCase()) ||
+    commitEntities(result).length > 0 ||
+    commitCreated(result) > 0
+  );
+}
+
+/**
+ * Whether the preflight says no.
+ *
+ * Only an explicit refusal blocks: a preflight that says nothing about
+ * readiness (or has not answered yet) leaves the decision to the staged totals.
+ */
+export function preflightBlocked(result: CommitResult | undefined): boolean {
+  if (!result) return false;
+  if (result.can_commit === false || result.ready === false) return true;
+  return preflightBlockers(result).length > 0;
+}
+
+export function preflightBlockers(result: CommitResult | undefined): string[] {
+  const list = result?.blockers ?? (result as { errors?: unknown } | undefined)?.errors;
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((item) =>
+      typeof item === "string" ? item : str(item, ["message", "reason", "error"])
+    )
+    .filter(Boolean);
 }
 
 export const commitCreated = (source: unknown) => num(source, ["created", "created_count"]);

@@ -32,6 +32,7 @@ const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/contracts": ["super_admin", "company"],
   "/salaries": ["super_admin", "company"],
   "/data-import": ["super_admin", "company"],
+  "/project-ai": ["super_admin", "company"],
 };
 
 /**

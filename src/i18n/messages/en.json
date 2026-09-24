@@ -335,7 +335,8 @@
     },
     "validation": {
       "leaderNotMember": "The lead must be one of the selected team members"
-    }
+    },
+    "aiWorkspace": "Project AI"
   },
   "employee": {
     "title": "Employees Management",
@@ -830,7 +831,8 @@
     "backToHubs": "All sections",
     "sections": "Sections",
     "openSection": "Open",
-    "dataImport": "Data Import"
+    "dataImport": "Data Import",
+    "projectAi": "Project AI"
   },
   "dataImport": {
     "title": "Data Import",
@@ -878,7 +880,12 @@
       "ready": "ready",
       "committing": "committing",
       "committed": "committed",
-      "pending": "pending"
+      "pending": "pending",
+      "uploading": "uploading",
+      "uploaded": "uploaded",
+      "parsing": "parsing",
+      "parsed": "parsed",
+      "cancelled": "cancelled"
     },
     "notFound": {
       "title": "This import session no longer exists",
@@ -960,7 +967,20 @@
       "save": "Save mapping",
       "saved": "Mapping saved",
       "loading": "Loading the mapping…",
-      "noColumns": "No columns were read from this sheet."
+      "noColumns": "No columns were read from this sheet.",
+      "fieldValues": {
+        "title": "Values for the whole sheet",
+        "description": "Fields that point at another record — a currency, a client, a lead — can take one value for every row, or a fallback for rows that left the cell blank.",
+        "saveFirst": "Save the mapping with a record type first; the choices depend on it.",
+        "mode": {
+          "fixed": "Every row",
+          "default": "Blank cells only"
+        },
+        "loading": "Loading…",
+        "unavailable": "Choices unavailable",
+        "fromColumn": "From the column",
+        "none": "No value"
+      }
     },
     "fields": {
       "name": "Name",
@@ -1005,7 +1025,13 @@
       "notBuilt": "Build the preview to see this sheet's rows.",
       "loading": "Loading the preview…",
       "noRows": "No rows came back for this sheet.",
-      "needsMapping": "Map at least one sheet first"
+      "needsMapping": "Map at least one sheet first",
+      "noRowsWithStatus": "No {status} rows in this sheet.",
+      "rowStatus": {
+        "valid": "valid",
+        "invalid": "invalid",
+        "duplicate": "duplicate"
+      }
     },
     "run": {
       "title": "5. Import",
@@ -1021,7 +1047,8 @@
       "stageRows": "{files, plural, =1 {# sheet} other {# sheets}} · {rows, plural, =1 {# row} other {# rows}}",
       "nothingToImport": "No sheet has a record type yet, so there is nothing to import.",
       "unparsedNote": "{count, plural, =1 {# Excel file is} other {# Excel files are}} counted after the server reads them.",
-      "stagedRows": "{rows} rows staged for import"
+      "stagedRows": "{rows} rows staged for import",
+      "preflightBlocked": "The server will not commit this session yet — see why below."
     },
     "result": {
       "title": "6. Import result",
@@ -1068,7 +1095,163 @@
       },
       "empty": "No imports match these filters.",
       "emptyAll": "No imports yet.",
-      "rowSummary": "{created} created · {skipped} skipped"
+      "rowSummary": "{created} created · {skipped} skipped",
+      "pagination": {
+        "page": "Page {page} of {last}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    }
+  },
+  "projectAi": {
+    "title": "Project AI",
+    "subtitle": "Turn requirement documents into a reviewed sprint plan, and keep an eye on project risk.",
+    "chooseProject": "Choose a project",
+    "searchPlaceholder": "Search projects...",
+    "noProjects": "No projects found",
+    "open": "Open AI workspace",
+    "backToProjects": "All projects",
+    "workspaceSubtitle": "AI suggests — you decide. Nothing is created until you approve.",
+    "projectFallback": "Project #{number}",
+    "loadFailed": "Could not load this section.",
+    "retry": "Try again",
+    "steps": {
+      "documents": {
+        "title": "Upload requirements",
+        "description": "Add the project's requirement documents. They are stored privately."
+      },
+      "plans": {
+        "title": "Review the AI plan",
+        "description": "Generate a sprint and task suggestion, adjust it, then approve it."
+      },
+      "alerts": {
+        "title": "Watch the risks",
+        "description": "Rule-based risk alerts, with an optional AI explanation."
+      }
+    },
+    "tabs": {
+      "documents": "Documents",
+      "plans": "Plans",
+      "alerts": "Risk alerts"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "generating": "Generating",
+      "processing": "Processing",
+      "suggested": "Suggested",
+      "generated": "Generated",
+      "reviewed": "Reviewed",
+      "in_review": "In review",
+      "approved": "Approved",
+      "failed": "Failed",
+      "rejected": "Rejected",
+      "uploaded": "Uploaded",
+      "processed": "Processed",
+      "extracted": "Extracted",
+      "open": "Open",
+      "acknowledged": "Acknowledged",
+      "resolved": "Resolved"
+    },
+    "severity": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical",
+      "urgent": "Urgent"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "documents": {
+      "title": "Requirement documents",
+      "description": "The AI plan is generated from these files. They are kept on a private disk and can't be downloaded.",
+      "upload": "Upload documents",
+      "uploading": "Uploading…",
+      "dropzone": "Drop files here or click to choose",
+      "privacy": "Stored privately — used only to generate this project's plan",
+      "emptyTitle": "No documents yet",
+      "emptyDescription": "Upload at least one requirement document before generating a plan.",
+      "delete": "Delete document",
+      "deleted": "Document deleted",
+      "uploaded": "{count, plural, one {# document uploaded} other {# documents uploaded}}"
+    },
+    "plans": {
+      "title": "AI plan suggestions",
+      "description": "Each suggestion proposes sprints and tasks from the uploaded documents. Nothing is written to the project until a plan is approved.",
+      "generate": "Generate plan",
+      "generating": "Generating…",
+      "generated": "Plan suggestion ready for review",
+      "needsDocuments": "Upload a requirement document first.",
+      "emptyTitle": "No plans yet",
+      "emptyDescription": "Generate a plan to get a sprint and task suggestion you can review.",
+      "planName": "Plan #{number}",
+      "counts": "{sprints} sprints · {tasks} tasks"
+    },
+    "review": {
+      "title": "Plan",
+      "heading": "Plan #{number}",
+      "description": "Untick what you don't want, adjust titles, priorities, points and assignees, save, then approve.",
+      "approvedNote": "This plan has been approved — its sprints and tasks now exist in the project.",
+      "source": "Source: {source}",
+      "includedSprints": "{included} of {total} sprints included",
+      "includedTasks": "{included} of {total} tasks included",
+      "empty": "This suggestion has no sprints or tasks.",
+      "include": "Include",
+      "fields": {
+        "sprintTitle": "Sprint title",
+        "goal": "Sprint goal",
+        "start": "Start date",
+        "end": "End date",
+        "taskTitle": "Task title",
+        "priority": "Priority",
+        "points": "Story points",
+        "assignee": "Assignee",
+        "unassigned": "Unassigned",
+        "sprint": "Sprint",
+        "description": "Description"
+      },
+      "unscheduled": "Not in a sprint",
+      "unsaved": "{count, plural, one {# unsaved change} other {# unsaved changes}}",
+      "aiNeverDecides": "The AI only suggests. Approval is yours.",
+      "discard": "Discard",
+      "save": "Save review",
+      "saved": "Review saved",
+      "saveFirst": "Save your changes before approving",
+      "noTasks": "No tasks in this sprint.",
+      "more": "Details",
+      "less": "Hide",
+      "approve": {
+        "button": "Approve plan",
+        "title": "Approve this plan?",
+        "confirm": "Approve & create",
+        "body": "This creates {sprints} sprints and {tasks} tasks in the project. It can't be undone from here.",
+        "additional": "This project already has an approved plan. I want to add these sprints and tasks as well.",
+        "confirmRequired": "Tick the box to confirm adding a second plan.",
+        "done": "Plan approved — sprints and tasks created"
+      }
+    },
+    "alerts": {
+      "title": "Risk alerts",
+      "description": "Raised by deterministic checks on the project's sprints and tasks. The AI can explain an alert, but never raises one.",
+      "refresh": "Re-run checks",
+      "refreshed": "Risk checks refreshed",
+      "filter": {
+        "all": "All",
+        "open": "Open",
+        "acknowledged": "Acknowledged",
+        "resolved": "Resolved"
+      },
+      "emptyTitle": "No risk alerts",
+      "emptyDescription": "Run the checks to look for risks in this project.",
+      "explain": "Explain with AI",
+      "explainAgain": "Explain again",
+      "noExplanation": "No AI explanation is available right now ({outcome}).",
+      "acknowledge": "Acknowledge",
+      "acknowledged": "Alert acknowledged"
     }
   },
   "currencies": {

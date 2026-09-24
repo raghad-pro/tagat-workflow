@@ -8,13 +8,14 @@ import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 import {
   useAuditRows,
-  useCommitResult,
+  useCommitPreflight,
   useRollbackEligibility,
 } from "../../hooks/useDataImport";
 import {
   commitCreated,
   commitEntities,
   commitFailed,
+  commitHasRun,
   commitReused,
   commitSkippedDuplicate,
   commitSkippedInvalid,
@@ -36,13 +37,14 @@ export function StepResult({ sessionId }: { sessionId: string }) {
   const t = useTranslations("dataImport");
   const router = useRouter();
 
-  const { data: result, isLoading } = useCommitResult(sessionId);
+  const { data: result, isLoading } = useCommitPreflight(sessionId);
   const [showAudit, setShowAudit] = useState(false);
-  const { data: auditRows = [] } = useAuditRows(sessionId, showAudit);
+  const { data: audit } = useAuditRows(sessionId, undefined, showAudit);
+  const auditRows = audit?.items ?? [];
   const { data: rollback } = useRollbackEligibility(sessionId);
 
   const entities = commitEntities(result);
-  const hasRun = Boolean(result && Object.keys(result).length > 0);
+  const hasRun = commitHasRun(result);
 
   // Totals come from the per-entity rows when the server sends them, and from
   // the top level when it only sends one set.

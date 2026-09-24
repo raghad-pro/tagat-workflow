@@ -10,18 +10,28 @@ import { useTranslations } from "next-intl";
  * the server's, so an unknown one is shown verbatim in the neutral style rather
  * than swallowed.
  */
-const STYLES: Record<string, { bg: string; color: string }> = {
-  draft: { bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
-  pending: { bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
-  ready: { bg: "rgba(34,200,224,0.14)", color: "#0e9bb0" },
-  processing: { bg: "rgba(245,158,11,0.14)", color: "#d97706" },
-  committing: { bg: "rgba(245,158,11,0.14)", color: "#d97706" },
-  committed: { bg: "rgba(16,185,129,0.14)", color: "#059669" },
-  completed: { bg: "rgba(16,185,129,0.14)", color: "#059669" },
-  failed: { bg: "rgba(239,68,68,0.12)", color: "#dc2626" },
-};
-
 const NEUTRAL = { bg: "rgba(107,114,128,0.12)", color: "#6b7280" };
+const BUSY = { bg: "rgba(245,158,11,0.14)", color: "#d97706" };
+const READY = { bg: "rgba(34,200,224,0.14)", color: "#0e9bb0" };
+const DONE = { bg: "rgba(16,185,129,0.14)", color: "#059669" };
+const BAD = { bg: "rgba(239,68,68,0.12)", color: "#dc2626" };
+
+/** The history route's vocabulary first, then what a committed session reports. */
+const STYLES: Record<string, { bg: string; color: string }> = {
+  draft: NEUTRAL,
+  uploading: BUSY,
+  uploaded: READY,
+  parsing: BUSY,
+  parsed: READY,
+  failed: BAD,
+  cancelled: NEUTRAL,
+  pending: NEUTRAL,
+  ready: READY,
+  processing: BUSY,
+  committing: BUSY,
+  committed: DONE,
+  completed: DONE,
+};
 
 export function SessionStatusBadge({ status }: { status: string }) {
   const t = useTranslations("dataImport");

@@ -32,6 +32,7 @@ export const PRIVATE_PATH_PREFIXES = [
   "/timesheets",
   "/developments",
   "/data-import",
+  "/project-ai",
   "/conversations",
   "/meetings",
   "/employees",

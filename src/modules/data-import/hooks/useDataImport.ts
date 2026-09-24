@@ -5,8 +5,11 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/providers/AuthProvider";
 import { dataImportApi } from "../api/data-import.api";
 import type {
+  AuditRowsParams,
   CsvDelimiter,
+  HistoryParams,
   Id,
+  PreviewRowsParams,
   UpdateMappingPayload,
 } from "../types/data-import.types";
 
@@ -207,6 +210,24 @@ export function useUpdateMapping() {
   });
 }
 
+/**
+ * The records a relation field may take as a sheet-wide value.
+ *
+ * The route answers 409 until the sheet's entity has been saved, so this is
+ * only asked once the caller knows it has — and a 409 is still not retried;
+ * it is the answer "save the mapping first", which the screen says in words.
+ */
+export function useFieldOptions(sheetId: Id | undefined, field: string, enabled = true) {
+  const role = useRole();
+  return useQuery({
+    queryKey: [KEY, "field-options", role, sheetId, field],
+    queryFn: () => dataImportApi.getFieldOptions(role as string, sheetId as Id, field),
+    enabled: !!role && !!sheetId && !!field && enabled,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 /** A suggestion only — it lands in the mapping response for confirmation. */
 export function useAiSuggest() {
   const role = useRole();
@@ -231,13 +252,20 @@ export function useSheetPreview(sheetId: Id | undefined, enabled = true) {
   });
 }
 
-export function usePreviewRows(sheetId: Id | undefined, enabled = true) {
+export function usePreviewRows(
+  sheetId: Id | undefined,
+  params?: PreviewRowsParams,
+  enabled = true
+) {
   const role = useRole();
   return useQuery({
-    queryKey: [KEY, "rows", role, sheetId],
-    queryFn: () => dataImportApi.getPreviewRows(role as string, sheetId as Id),
+    queryKey: [KEY, "rows", role, sheetId, params],
+    queryFn: () => dataImportApi.getPreviewRows(role as string, sheetId as Id, params),
     enabled: !!role && !!sheetId && enabled,
     retry: false,
+    // Switching the status filter should not blank the table while the next
+    // page loads.
+    placeholderData: (previous) => previous,
   });
 }
 
@@ -278,26 +306,29 @@ export function useCommitImport(id: Id | undefined) {
   });
 }
 
-export function useCommitResult(id: Id | undefined, enabled = true) {
+/** Preflight before the run; the result after it. Same route, same hook. */
+export function useCommitPreflight(id: Id | undefined, enabled = true) {
   const role = useRole();
   return useQuery({
     queryKey: [KEY, "commit", role, id],
-    queryFn: () => dataImportApi.getCommitResult(role as string, id as Id),
+    queryFn: () => dataImportApi.getCommitPreflight(role as string, id as Id),
     enabled: !!role && !!id && enabled,
-    // A session that has not been committed has no result; that is an answer,
-    // not a failure worth retrying.
+    // A session with nothing staged may be refused outright; that is an
+    // answer, not a failure worth retrying.
     retry: false,
   });
 }
 
 // ─── Audit & history ──────────────────────────────────────────────────────────
 
-export function useImportHistory(params?: Record<string, unknown>) {
+export function useImportHistory(params?: HistoryParams) {
   const role = useRole();
   return useQuery({
     queryKey: [KEY, "history", role, params],
     queryFn: () => dataImportApi.getHistory(role as string, params),
     enabled: !!role,
+    // Keep the list on screen while the next filter or page loads.
+    placeholderData: (previous) => previous,
   });
 }
 
@@ -311,12 +342,13 @@ export function useRollbackEligibility(id: Id | undefined, enabled = true) {
   });
 }
 
-export function useAuditRows(id: Id | undefined, enabled = true) {
+export function useAuditRows(id: Id | undefined, params?: AuditRowsParams, enabled = true) {
   const role = useRole();
   return useQuery({
-    queryKey: [KEY, "audit-rows", role, id],
-    queryFn: () => dataImportApi.getAuditRows(role as string, id as Id),
+    queryKey: [KEY, "audit-rows", role, id, params],
+    queryFn: () => dataImportApi.getAuditRows(role as string, id as Id, params),
     enabled: !!role && !!id && enabled,
     retry: false,
+    placeholderData: (previous) => previous,
   });
 }

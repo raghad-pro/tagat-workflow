@@ -11,6 +11,7 @@ import {
   type DataImportFile,
 } from "../../types/data-import.types";
 import {
+  fileDelimiter,
   fileError,
   fileName,
   fileSize,
@@ -21,7 +22,6 @@ import {
   sheetName,
   sheetRows,
   sheetsOf,
-  str,
 } from "../../utils/shape";
 import { SELECT_CLASS, WizardCard, WizardEmpty, WizardStat } from "./WizardCard";
 
@@ -117,7 +117,7 @@ export function StepParse({
                         </span>
                         <select
                           className={SELECT_CLASS}
-                          value={str(file, ["delimiter"], "comma")}
+                          value={fileDelimiter(file)}
                           disabled={setDelimiter.isPending}
                           onChange={(event) =>
                             setDelimiter.mutate({

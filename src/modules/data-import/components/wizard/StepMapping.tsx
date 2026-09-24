@@ -9,19 +9,27 @@ import { cn } from "@/lib/utils";
 import {
   useAiSuggest,
   useAnalyzeSheet,
+  useFieldOptions,
   useSheetMapping,
   useUpdateMapping,
 } from "../../hooks/useDataImport";
-import type {
-  DataImportFile,
-  DataImportSheet,
-  Id,
+import {
+  FIELD_VALUE_MODES,
+  type DataImportFile,
+  type DataImportSheet,
+  type FieldValue,
+  type FieldValueMode,
+  type Id,
+  type TargetField,
 } from "../../types/data-import.types";
 import {
   availableEntities,
+  isRelationTarget,
   mappingColumns,
   mappingHeaders,
   num,
+  optionLabel,
+  optionValue,
   sheetHeaders,
   sheetName,
   sheetsOf,
@@ -116,6 +124,8 @@ function SheetMappingCard({
   const [entity, setEntity] = useState<string>("");
   /** Column index → target field. An empty string means the column is ignored. */
   const [columns, setColumns] = useState<Record<number, string>>({});
+  /** Target field → one value for the whole sheet. Absent means "from the column". */
+  const [fieldValues, setFieldValues] = useState<Record<string, FieldValue>>({});
 
   // Whatever the server last stored is the starting point; re-running analyze or
   // the AI suggestion replaces it through the same effect.
@@ -129,18 +139,39 @@ function SheetMappingCard({
       next[index] = column.ignored ? "" : str(column, ["target_field"], "");
     }
     setColumns(next);
+
+    const values: Record<string, FieldValue> = {};
+    for (const [field, stored] of Object.entries(mapping.field_values ?? {})) {
+      const value = str(stored, ["value"]);
+      if (!value) continue;
+      values[field] = { mode: (stored.mode as FieldValueMode) ?? "fixed", value };
+    }
+    setFieldValues(values);
   }, [mapping, sheet.entity]);
 
   const targets = targetsFor(mapping, entity);
   const required = targets.filter((field) => field.required);
   const mapped = new Set(Object.values(columns).filter(Boolean));
-  const missing = required.filter((field) => !mapped.has(targetKey(field)));
+  // A required field is covered by a column — or by a value for every row.
+  const missing = required.filter(
+    (field) => !mapped.has(targetKey(field)) && fieldValues[targetKey(field)]?.mode !== "fixed"
+  );
+
+  // Field options depend on the entity the server has on record, and it answers
+  // 409 until there is one — so the value pickers appear only once the entity
+  // chosen here is the one that has been saved.
+  const savedEntity = str(mapping, ["entity"]);
+  const entityConfirmed = Boolean(entity) && entity === savedEntity;
+  const relationTargets = targets.filter(isRelationTarget);
 
   const handleSave = () => {
     if (!entity) {
       toast.error(t("mapping.chooseEntityFirst"));
       return;
     }
+    const field_values = Object.fromEntries(
+      Object.entries(fieldValues).filter(([, fv]) => fv.value !== "")
+    );
     save.mutate(
       {
         sheetId,
@@ -151,6 +182,7 @@ function SheetMappingCard({
             target_field: columns[index] || null,
             ignored: !columns[index],
           })),
+          ...(Object.keys(field_values).length > 0 && { field_values }),
         },
       },
       { onSuccess: () => toast.success(t("mapping.saved")) }
@@ -214,9 +246,11 @@ function SheetMappingCard({
             className={SELECT_CLASS}
             value={entity}
             onChange={(event) => {
-              // Targets differ per entity, so a change invalidates the columns.
+              // Targets differ per entity, so a change invalidates the columns
+              // and the sheet-wide values alike.
               setEntity(event.target.value);
               setColumns({});
+              setFieldValues({});
             }}
           >
             <option value="">{t("mapping.chooseEntity")}</option>
@@ -290,6 +324,44 @@ function SheetMappingCard({
         </div>
       )}
 
+      {/* ── Sheet-wide values ── */}
+      {entity && relationTargets.length > 0 && (
+        <div className="mt-4 rounded-lg bg-[var(--color-btn-brand)]/[0.05] p-3.5">
+          <p className="text-[12px] font-semibold ds-text-main">
+            {t("mapping.fieldValues.title")}
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-slate-400 dark:text-slate-500">
+            {entityConfirmed
+              ? t("mapping.fieldValues.description")
+              : t("mapping.fieldValues.saveFirst")}
+          </p>
+
+          {entityConfirmed && (
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {relationTargets.map((field) => (
+                <FieldValuePicker
+                  key={targetKey(field)}
+                  sheetId={sheetId}
+                  field={field}
+                  fromColumn={mapped.has(targetKey(field))}
+                  value={fieldValues[targetKey(field)]}
+                  onChange={(next) =>
+                    setFieldValues((current) => {
+                      const key = targetKey(field);
+                      if (!next) {
+                        const { [key]: _dropped, ...rest } = current;
+                        return rest;
+                      }
+                      return { ...current, [key]: next };
+                    })
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mt-4 flex justify-start">
         <Button
           size="md"
@@ -299,6 +371,83 @@ function SheetMappingCard({
         >
           {t("mapping.save")}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── One sheet-wide value ─────────────────────────────────────────────────────
+
+/**
+ * A relation field's value for the whole sheet.
+ *
+ * `field-options` lists what the field may point at. When the field also has a
+ * column, the value can only be a fallback for blank cells; without one it has
+ * to apply to every row, since there is nowhere else for the value to come from.
+ */
+function FieldValuePicker({
+  sheetId,
+  field,
+  fromColumn,
+  value,
+  onChange,
+}: {
+  sheetId: Id;
+  field: TargetField;
+  fromColumn: boolean;
+  value: FieldValue | undefined;
+  onChange: (next: FieldValue | undefined) => void;
+}) {
+  const t = useTranslations("dataImport");
+  const key = targetKey(field);
+  const { data: options = [], isLoading, isError } = useFieldOptions(sheetId, key);
+
+  const mode: FieldValueMode = value?.mode ?? (fromColumn ? "default" : "fixed");
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="truncate text-[12px] font-semibold ds-text-main">
+        {targetLabel(field)}
+        {field.required ? " *" : ""}
+      </span>
+      <div className="flex gap-2">
+        <select
+          className={cn(SELECT_CLASS, "w-[42%] shrink-0")}
+          value={mode}
+          disabled={!value}
+          onChange={(event) =>
+            value && onChange({ ...value, mode: event.target.value as FieldValueMode })
+          }
+        >
+          {FIELD_VALUE_MODES.map((option) => (
+            <option key={option} value={option}>
+              {t(`mapping.fieldValues.mode.${option}` as Parameters<typeof t>[0])}
+            </option>
+          ))}
+        </select>
+        <select
+          className={SELECT_CLASS}
+          value={value ? String(value.value) : ""}
+          disabled={isLoading || isError}
+          onChange={(event) =>
+            onChange(event.target.value ? { mode, value: event.target.value } : undefined)
+          }
+        >
+          <option value="">
+            {isLoading
+              ? t("mapping.fieldValues.loading")
+              : isError
+                ? t("mapping.fieldValues.unavailable")
+                : fromColumn
+                  ? t("mapping.fieldValues.fromColumn")
+                  : t("mapping.fieldValues.none")}
+          </option>
+          {options.map((option) => (
+            <option key={optionValue(option)} value={optionValue(option)}>
+              {optionLabel(option)}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );
