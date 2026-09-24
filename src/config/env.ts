@@ -13,7 +13,7 @@ export const API_ORIGINS = {
     process.env.NEXT_PUBLIC_API_ORIGIN || "https://work.isradev.shop"
   ),
   fallback: stripTrailingSlash(
-    process.env.NEXT_PUBLIC_API_ORIGIN_FALLBACK || "https://workflow.aliservice.site"
+    process.env.NEXT_PUBLIC_API_ORIGIN_FALLBACK || "https://work.isradev.shop"
   ),
 } as const;
 
