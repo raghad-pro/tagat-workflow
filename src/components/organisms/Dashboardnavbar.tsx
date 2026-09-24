@@ -229,21 +229,6 @@ function ConversationsDropdown() {
     [clearedAt]
   );
 
-  /**
-   * When each conversation was last wiped by this account. A chat that was
-   * deleted and restarted comes back under the same id still carrying its old
-   * preview, so the dropdown has to suppress it exactly as the list does.
-   */
-  const { clearedAt } = useClearedChats(user?.id);
-
-  const sortStamp = useCallback(
-    (conv: Conversation) => {
-      const cleared = clearedAt(conv.id);
-      return toTimestamp(getLastActivityAt(conv, cleared)) || toTimestamp(cleared);
-    },
-    [clearedAt]
-  );
-
   // Newest activity first — the endpoint returns no explicit ordering, and the
   // preview only shows the top few, so an unsorted list shows arbitrary ones.
   const conversations = useMemo(
