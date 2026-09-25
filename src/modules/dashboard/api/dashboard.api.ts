@@ -19,7 +19,7 @@ import type {
 } from "../types/dashboard.types";
 import {
   UNREACHABLE_STATUSES,
-  getDirectApiBaseUrl,
+  getApiBaseUrl,
   reportReachable,
   reportUnreachable,
 } from "@/services/apiFailover";
@@ -47,8 +47,8 @@ const EMPTY_DASHBOARD: DashboardResponse = {
 // ─── HTTP helper ───────────────────────────────────────────────────────────────
 /**
  * Sends the request to the live backend host, moving to the second one when the
- * first never answers. These calls skip the dev proxy, so they need the
- * absolute host.
+ * first never answers. Goes through the same-origin proxy like axios does — a
+ * direct call to the backend is blocked by its CORS policy outside localhost.
  */
 async function fetchWithFailover(path: string, token: string): Promise<Response> {
   const send = (baseUrl: string) =>
@@ -60,7 +60,7 @@ async function fetchWithFailover(path: string, token: string): Promise<Response>
       cache: "no-store",
     });
 
-  const baseUrl = getDirectApiBaseUrl();
+  const baseUrl = getApiBaseUrl();
   let response: Response | undefined;
   let unreachable: unknown;
 
