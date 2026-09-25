@@ -17,7 +17,7 @@ export const API_ORIGINS = {
   ),
 } as const;
 
-/** Absolute API roots — what the browser talks to in production. */
+/** Absolute API roots — what the proxy forwards to. */
 const API_DIRECT = {
   primary: stripTrailingSlash(
     process.env.NEXT_PUBLIC_API_URL || `${API_ORIGINS.primary}/api/v1`
@@ -27,17 +27,17 @@ const API_DIRECT = {
   ),
 } as const;
 
-const isDev = process.env.NODE_ENV === "development";
-
 export const ENV = {
   /**
-   * In development requests go through the middleware proxy (bypasses CORS and
-   * CSRF), which exposes one path per host — `/backend-api` for the primary,
-   * `/backend-api-fallback` for the second one.
+   * Browser requests always go through the middleware proxy, in development and
+   * on Vercel alike: the backend's CORS policy only admits `http://localhost:3000`,
+   * so a direct call from any deployed origin is blocked by the browser. The
+   * proxy makes every call same-origin and exposes one path per host —
+   * `/backend-api` for the primary, `/backend-api-fallback` for the second one.
    */
-  API_URL: isDev ? "/backend-api" : API_DIRECT.primary,
-  API_URL_FALLBACK: isDev ? "/backend-api-fallback" : API_DIRECT.fallback,
-  /** The same two hosts, always absolute — for callers that skip the dev proxy. */
+  API_URL: "/backend-api",
+  API_URL_FALLBACK: "/backend-api-fallback",
+  /** The same two hosts, always absolute — for server-side callers only. */
   API_URL_DIRECT: API_DIRECT.primary,
   API_URL_DIRECT_FALLBACK: API_DIRECT.fallback,
   API_TIMEOUT: Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000,
